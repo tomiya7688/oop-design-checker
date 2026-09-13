@@ -76,6 +76,16 @@ Warn when the inheritance chain becomes deep enough to make behavior difficult t
 
 Warn when a shared abstraction exists but callers routinely downcast or depend on concrete child types to perform normal behavior.
 
+## OOP306 Avoidable concrete construction dependency
+
+Warn when a class repeatedly constructs concrete collaborators directly even though those collaborators represent replaceable behavior or already have a suitable abstraction.
+
+A `new` expression by itself is not a violation. Value objects, owned internal objects, immutable data, and objects whose lifecycle clearly belongs to the creator are valid direct constructions. This rule should focus on replaceable service-like dependencies and high-confidence cases.
+
+## OOP307 Composition may be more appropriate than inheritance
+
+Warn conservatively when a child type uses inheritance mainly to obtain implementation while its semantic relationship to the parent is weak, especially when it overrides or hides a large part of the inherited behavior.
+
 ## OOP401 Possible multiple objects in one class
 
 Do not enforce one class = one responsibility.
@@ -100,6 +110,43 @@ DTOs, serialization models, database records, and other explicit data-carrier ty
 ## OOP403 Excessive unrelated dependencies
 
 Warn when an object directly knows about many unrelated subsystems or dependency groups with no clear relation to its identity.
+
+## OOP404 Excessive navigation through object internals
+
+Warn when code repeatedly traverses deep object chains such as `a.B.C.D.DoSomething()` and therefore depends on the internal object graph of another object.
+
+This is inspired by the Law of Demeter, but raw dot-counting must not be used as the only criterion. Fluent APIs, LINQ-style pipelines, builders, immutable value transformations, namespaces, and ordinary static qualification can legitimately contain long chains.
+
+Prefer semantic detection of repeated navigation across object boundaries.
+
+## OOP405 Getter/setter-only object candidate
+
+Warn when a class is overwhelmingly composed of trivial getters and setters while meaningful operations on its state are implemented elsewhere.
+
+This is a supporting signal for OOP402 rather than an automatic error. Explicit data-carrier types are exempt.
+
+## Metric-assisted signals
+
+The checker may calculate traditional metrics such as:
+
+- LOC
+- method count
+- field count
+- cyclomatic complexity
+- maximum nesting depth
+- LCOM or similar cohesion metrics
+- coupling / dependency counts
+- inheritance depth
+
+These metrics are evidence, not definitions of object-oriented correctness.
+
+In particular:
+
+- a large class is not automatically invalid;
+- many methods do not automatically mean multiple responsibilities;
+- low cohesion should strengthen OOP401 only when independent object clusters can also be identified;
+- high complexity should strengthen OOP201 rather than becoming a generic OOP violation;
+- SOLID rules may be provided as optional or supporting analyses, but SOLID is not defined as identical to OOP in this project.
 
 ## Severity idea
 
