@@ -13,6 +13,14 @@ The checker does not judge whether OOP itself is good or bad. It analyzes whethe
 - A class may have multiple behaviors. The checker does not enforce one class = one responsibility.
 - The checker should warn when multiple clearly independent objects appear to be packed into one class.
 
+## Checker implementation policy
+
+The checker itself is written in C# and must follow the object-oriented design rules defined by this project strictly.
+
+The checker is treated as a primary self-test target. A rule that the checker reports against its own implementation should be regarded as a defect in either the implementation, the rule definition, or the analyzer accuracy and must be reviewed rather than ignored by default.
+
+The implementation should therefore prefer clear object boundaries, appropriate abstractions, minimal visibility, correct use of static/sealed modifiers, meaningful function decomposition, and explicit dependency relationships.
+
 ## Non-goals
 
 - Do not define SOLID as identical to OOP.
