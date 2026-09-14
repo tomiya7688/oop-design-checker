@@ -48,7 +48,11 @@ jobs:
         run: dotnet build OopDesignChecker.sln -c Release --no-restore
 
       - name: Strict OOP self-check
-        run: dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- src --fail-on attention
+        shell: bash
+        run: |
+          dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- src/OopDesignChecker/OopDesignChecker.csproj --fail-on attention
+          dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- src/frontends/cui/OopDesignChecker.Cui.csproj --fail-on attention
+          dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- src/frontends/gui/OopDesignChecker.Gui.csproj --fail-on attention
 
   code-analyzers:
     name: code-analyzers
