@@ -256,7 +256,11 @@ internal static class CoreRuleSmokeTests
         }
     }
 
-    private static void AssertNone(IAnalysisRule rule, string source, string ruleId)
+    private static void AssertNone(
+        MultipleObjectsInClassRule rule,
+        string source,
+        string ruleId
+    )
     {
         var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
         if (diagnostics.Length == 0)
