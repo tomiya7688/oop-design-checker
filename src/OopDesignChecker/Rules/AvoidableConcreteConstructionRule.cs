@@ -28,9 +28,16 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
                 if (
                     semanticModel.GetTypeInfo(creation).Type is not INamedTypeSymbol concreteType
                     || concreteType.TypeKind != TypeKind.Class
-                    || !IsReplaceableProjectService(concreteType)
                     || IsOwnedConstruction(creation)
                 )
+                {
+                    continue;
+                }
+
+                var abstraction = ProjectAbstractionClassifier.FindMeaningfulAbstraction(
+                    concreteType
+                );
+                if (abstraction is null || !HasBehavior(concreteType))
                 {
                     continue;
                 }
@@ -46,26 +53,20 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
                     continue;
                 }
 
-                var abstraction = concreteType.AllInterfaces.First(IsSourceDefinedInterface);
                 yield return DiagnosticFactory.Create(
                     Descriptor,
                     creation.NewKeyword.GetLocation(),
-                    $"{containingType.Name} directly constructs replaceable collaborator {concreteType.Name}, which implements project abstraction {abstraction.Name}. Prefer receiving the abstraction when the collaborator lifecycle is not owned here.",
+                    $"{containingType.Name} directly constructs replaceable collaborator {concreteType.Name}, while project abstraction {abstraction.Name} defines a behavioral contract. Prefer receiving the abstraction when the collaborator lifecycle is not owned here.",
                     containingType.ToDisplayString()
                 );
             }
         }
     }
 
-    private static bool IsReplaceableProjectService(INamedTypeSymbol type) =>
-        type.AllInterfaces.Any(IsSourceDefinedInterface)
-        && type.GetMembers()
+    private static bool HasBehavior(INamedTypeSymbol type) =>
+        type.GetMembers()
             .OfType<IMethodSymbol>()
-            .Any(method => method.MethodKind == MethodKind.Ordinary);
-
-    private static bool IsSourceDefinedInterface(INamedTypeSymbol interfaceType) =>
-        interfaceType.TypeKind == TypeKind.Interface
-        && interfaceType.Locations.Any(location => location.IsInSource);
+            .Any(method => method.MethodKind == MethodKind.Ordinary && !method.IsStatic);
 
     private static bool IsOwnedConstruction(ObjectCreationExpressionSyntax creation) =>
         creation

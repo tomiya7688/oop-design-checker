@@ -33,8 +33,8 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
                         continue;
                     }
 
-                    var abstraction = concreteType.AllInterfaces.FirstOrDefault(
-                        IsSourceDefinedInterface
+                    var abstraction = ProjectAbstractionClassifier.FindMeaningfulAbstraction(
+                        concreteType
                     );
                     if (abstraction is null)
                     {
@@ -44,15 +44,11 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
                     yield return DiagnosticFactory.Create(
                         Descriptor,
                         parameter.Identifier.GetLocation(),
-                        $"This constructor depends on concrete type {concreteType.Name} even though it implements project abstraction {abstraction.Name}. Depend on the abstraction when replacement is part of the design.",
+                        $"This constructor depends on concrete type {concreteType.Name} even though project abstraction {abstraction.Name} defines a behavioral contract. Depend on the abstraction when replacement is part of the design.",
                         parameterSymbol.ToDisplayString()
                     );
                 }
             }
         }
     }
-
-    private static bool IsSourceDefinedInterface(INamedTypeSymbol interfaceType) =>
-        interfaceType.TypeKind == TypeKind.Interface
-        && interfaceType.Locations.Any(location => location.IsInSource);
 }
