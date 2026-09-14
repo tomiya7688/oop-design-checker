@@ -210,7 +210,10 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         }
     }
 
-    private static void ValidateCompilation(CSharpCompilation compilation, List<string> workspaceFailures)
+    private static void ValidateCompilation(
+        CSharpCompilation compilation,
+        List<string> workspaceFailures
+    )
     {
         var errors = compilation
             .GetDiagnostics()
