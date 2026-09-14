@@ -9,7 +9,9 @@ internal static class MetadataReferenceProvider
         var trustedAssemblies = AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string;
         if (string.IsNullOrWhiteSpace(trustedAssemblies))
         {
-            throw new InvalidOperationException("The runtime did not provide trusted platform assemblies.");
+            throw new InvalidOperationException(
+                "The runtime did not provide trusted platform assemblies."
+            );
         }
 
         return trustedAssemblies

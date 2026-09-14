@@ -9,7 +9,8 @@ internal static class DiagnosticFactory
         Location location,
         string message,
         string? symbolName = null,
-        DesignDiagnosticSeverity? severity = null)
+        DesignDiagnosticSeverity? severity = null
+    )
     {
         var lineSpan = location.GetLineSpan();
         var start = lineSpan.StartLinePosition;
@@ -20,6 +21,7 @@ internal static class DiagnosticFactory
             severity ?? descriptor.DefaultSeverity,
             message,
             symbolName,
-            new SourceLocation(filePath, start.Line + 1, start.Character + 1));
+            new SourceLocation(filePath, start.Line + 1, start.Character + 1)
+        );
     }
 }

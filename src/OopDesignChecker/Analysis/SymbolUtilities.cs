@@ -5,7 +5,10 @@ namespace OopDesignChecker.Analysis;
 
 internal static class SymbolUtilities
 {
-    public static bool IsPrimaryDeclaration(INamedTypeSymbol symbol, TypeDeclarationSyntax declaration)
+    public static bool IsPrimaryDeclaration(
+        INamedTypeSymbol symbol,
+        TypeDeclarationSyntax declaration
+    )
     {
         var firstReference = symbol.DeclaringSyntaxReferences.FirstOrDefault();
         if (firstReference is null)
@@ -37,7 +40,9 @@ internal static class SymbolUtilities
         {
             foreach (var interfaceMember in interfaceType.GetMembers().OfType<IMethodSymbol>())
             {
-                var implementation = method.ContainingType.FindImplementationForInterfaceMember(interfaceMember);
+                var implementation = method.ContainingType.FindImplementationForInterfaceMember(
+                    interfaceMember
+                );
                 if (SymbolEqualityComparer.Default.Equals(implementation, method))
                 {
                     return true;

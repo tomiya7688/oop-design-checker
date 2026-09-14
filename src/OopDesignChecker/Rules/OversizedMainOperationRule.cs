@@ -11,10 +11,8 @@ internal sealed class OversizedMainOperationRule : IAnalysisRule
     private const int ComplexMethodLineCount = 60;
     private const int HighComplexity = 20;
 
-    public RuleDescriptor Descriptor { get; } = new(
-        "OOP201",
-        "Oversized main operation",
-        DesignDiagnosticSeverity.Warning);
+    public RuleDescriptor Descriptor { get; } =
+        new("OOP201", "Oversized main operation", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -34,8 +32,10 @@ internal sealed class OversizedMainOperationRule : IAnalysisRule
                 var lineCount = lineSpan.EndLinePosition.Line - lineSpan.StartLinePosition.Line + 1;
                 var complexity = MethodComplexityCalculator.Calculate(method);
 
-                if (lineCount < LargeMethodLineCount
-                    && (lineCount < ComplexMethodLineCount || complexity < HighComplexity))
+                if (
+                    lineCount < LargeMethodLineCount
+                    && (lineCount < ComplexMethodLineCount || complexity < HighComplexity)
+                )
                 {
                     continue;
                 }
@@ -44,7 +44,8 @@ internal sealed class OversizedMainOperationRule : IAnalysisRule
                     Descriptor,
                     method.Identifier.GetLocation(),
                     $"This operation is {lineCount} lines with estimated cyclomatic complexity {complexity}. Split meaningful processing phases into methods.",
-                    methodSymbol.ToDisplayString());
+                    methodSymbol.ToDisplayString()
+                );
             }
         }
     }

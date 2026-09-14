@@ -23,9 +23,11 @@ internal static class MethodComplexityCalculator
                 CasePatternSwitchLabelSyntax => 1,
                 CatchClauseSyntax => 1,
                 ConditionalExpressionSyntax => 1,
-                BinaryExpressionSyntax binary when binary.IsKind(SyntaxKind.LogicalAndExpression) => 1,
-                BinaryExpressionSyntax binary when binary.IsKind(SyntaxKind.LogicalOrExpression) => 1,
-                _ => 0
+                BinaryExpressionSyntax binary when binary.IsKind(SyntaxKind.LogicalAndExpression) =>
+                    1,
+                BinaryExpressionSyntax binary when binary.IsKind(SyntaxKind.LogicalOrExpression) =>
+                    1,
+                _ => 0,
             };
         }
 

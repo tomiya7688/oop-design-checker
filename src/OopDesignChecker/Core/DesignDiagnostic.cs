@@ -5,4 +5,5 @@ public sealed record DesignDiagnostic(
     DesignDiagnosticSeverity Severity,
     string Message,
     string? SymbolName,
-    SourceLocation Location);
+    SourceLocation Location
+);

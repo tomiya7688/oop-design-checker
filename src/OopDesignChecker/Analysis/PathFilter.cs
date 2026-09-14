@@ -12,7 +12,8 @@ internal static class PathFilter
     public static bool ShouldIgnore(
         string path,
         string rootPath,
-        IReadOnlyList<string> ignoredPatterns)
+        IReadOnlyList<string> ignoredPatterns
+    )
     {
         if (HasBuiltInIgnoredSegment(path))
         {
@@ -26,7 +27,9 @@ internal static class PathFilter
     private static bool HasBuiltInIgnoredSegment(string path)
     {
         var segments = path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        return segments.Any(segment => IgnoredDirectoryNames.Contains(segment, StringComparer.OrdinalIgnoreCase));
+        return segments.Any(segment =>
+            IgnoredDirectoryNames.Contains(segment, StringComparer.OrdinalIgnoreCase)
+        );
     }
 
     private static bool MatchesPattern(string relativePath, string pattern)
@@ -37,9 +40,11 @@ internal static class PathFilter
             return false;
         }
 
-        if (!normalizedPattern.Contains('/')
+        if (
+            !normalizedPattern.Contains('/')
             && !normalizedPattern.Contains('*')
-            && !normalizedPattern.Contains('?'))
+            && !normalizedPattern.Contains('?')
+        )
         {
             return relativePath
                 .Split('/', StringSplitOptions.RemoveEmptyEntries)
@@ -50,7 +55,8 @@ internal static class PathFilter
         return Regex.IsMatch(
             relativePath,
             regexPattern,
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+        );
     }
 
     private static string BuildGlobRegex(string pattern)

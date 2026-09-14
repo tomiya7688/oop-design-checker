@@ -35,7 +35,12 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(new MissingCommonAbstractionRule(), source, "OOP001", DesignDiagnosticSeverity.Warning);
+        AssertSingle(
+            new MissingCommonAbstractionRule(),
+            source,
+            "OOP001",
+            DesignDiagnosticSeverity.Warning
+        );
     }
 
     private static void SealingCandidateIsAttention()
@@ -48,7 +53,12 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(new SealingCandidateRule(), source, "OOP102", DesignDiagnosticSeverity.Attention);
+        AssertSingle(
+            new SealingCandidateRule(),
+            source,
+            "OOP102",
+            DesignDiagnosticSeverity.Attention
+        );
     }
 
     private static void StatefulStaticDesignIsWarning()
@@ -61,7 +71,12 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(new StatefulStaticDesignRule(), source, "OOP105", DesignDiagnosticSeverity.Warning);
+        AssertSingle(
+            new StatefulStaticDesignRule(),
+            source,
+            "OOP105",
+            DesignDiagnosticSeverity.Warning
+        );
     }
 
     private static void ConcreteDependencyDespiteAbstractionIsWarning()
@@ -85,23 +100,35 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(new ConcreteTypeDependencyRule(), source, "OOP305", DesignDiagnosticSeverity.Warning);
+        AssertSingle(
+            new ConcreteTypeDependencyRule(),
+            source,
+            "OOP305",
+            DesignDiagnosticSeverity.Warning
+        );
     }
 
     private static void AssertSingle(
         IAnalysisRule rule,
         string source,
         string ruleId,
-        DesignDiagnosticSeverity severity)
+        DesignDiagnosticSeverity severity
+    )
     {
         var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
-        if (diagnostics.Length != 1
+        if (
+            diagnostics.Length != 1
             || diagnostics[0].Rule.Id != ruleId
-            || diagnostics[0].Severity != severity)
+            || diagnostics[0].Severity != severity
+        )
         {
-            var found = string.Join(", ", diagnostics.Select(item => $"{item.Rule.Id}:{item.Severity}"));
+            var found = string.Join(
+                ", ",
+                diagnostics.Select(item => $"{item.Rule.Id}:{item.Severity}")
+            );
             throw new InvalidOperationException(
-                $"Expected one {ruleId}:{severity} diagnostic, found [{found}].");
+                $"Expected one {ruleId}:{severity} diagnostic, found [{found}]."
+            );
         }
     }
 }

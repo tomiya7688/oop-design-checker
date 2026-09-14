@@ -5,7 +5,9 @@ namespace OopDesignChecker;
 public sealed record CheckerRunResult(
     IReadOnlyList<DesignDiagnostic> Diagnostics,
     DesignDiagnosticSeverity FailureThreshold,
-    string? ConfigurationPath)
+    string? ConfigurationPath
+)
 {
-    public bool ShouldFail => Diagnostics.Any(diagnostic => diagnostic.Severity >= FailureThreshold);
+    public bool ShouldFail =>
+        Diagnostics.Any(diagnostic => diagnostic.Severity >= FailureThreshold);
 }

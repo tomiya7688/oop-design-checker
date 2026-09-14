@@ -18,7 +18,8 @@ internal sealed class CheckerApplication
             var result = CheckerService.Analyze(
                 options.TargetPath,
                 options.ConfigurationPath,
-                options.FailureThreshold);
+                options.FailureThreshold
+            );
 
             _diagnosticWriter.Write(result.Diagnostics, options.Verbose);
 
@@ -29,7 +30,12 @@ internal sealed class CheckerApplication
 
             return result.ShouldFail ? 1 : 0;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+        catch (Exception exception)
+            when (exception
+                    is IOException
+                        or UnauthorizedAccessException
+                        or InvalidOperationException
+            )
         {
             Console.Error.WriteLine($"Analysis failed: {exception.Message}");
             return 2;

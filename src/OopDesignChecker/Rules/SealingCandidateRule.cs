@@ -7,10 +7,8 @@ namespace OopDesignChecker.Rules;
 
 internal sealed class SealingCandidateRule : IAnalysisRule
 {
-    public RuleDescriptor Descriptor { get; } = new(
-        "OOP102",
-        "Sealing candidate",
-        DesignDiagnosticSeverity.Attention);
+    public RuleDescriptor Descriptor { get; } =
+        new("OOP102", "Sealing candidate", DesignDiagnosticSeverity.Attention);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -19,11 +17,16 @@ internal sealed class SealingCandidateRule : IAnalysisRule
             yield break;
         }
 
-        var declarations = context.Project.SyntaxTrees
-            .SelectMany(tree => tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
+        var declarations = context
+            .Project.SyntaxTrees.SelectMany(tree =>
+                tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>()
+            )
             .Select(declaration => new TypeDeclaration(
                 declaration,
-                context.Project.GetSemanticModel(declaration.SyntaxTree).GetDeclaredSymbol(declaration) as INamedTypeSymbol))
+                context
+                    .Project.GetSemanticModel(declaration.SyntaxTree)
+                    .GetDeclaredSymbol(declaration) as INamedTypeSymbol
+            ))
             .Where(item => item.Symbol is not null)
             .ToArray();
 
@@ -35,13 +38,15 @@ internal sealed class SealingCandidateRule : IAnalysisRule
         foreach (var item in declarations)
         {
             var symbol = item.Symbol!;
-            if (!SymbolUtilities.IsPrimaryDeclaration(symbol, item.Declaration)
+            if (
+                !SymbolUtilities.IsPrimaryDeclaration(symbol, item.Declaration)
                 || symbol.IsAbstract
                 || symbol.IsStatic
                 || symbol.IsSealed
                 || symbol.DeclaredAccessibility == Accessibility.Public
                 || inheritedTypes.Contains(symbol)
-                || HasInheritanceIntent(symbol))
+                || HasInheritanceIntent(symbol)
+            )
             {
                 continue;
             }
@@ -50,16 +55,23 @@ internal sealed class SealingCandidateRule : IAnalysisRule
                 Descriptor,
                 item.Declaration.Identifier.GetLocation(),
                 "This application class has no known derived type or inheritance contract. Consider sealing it to make the design intent explicit.",
-                symbol.ToDisplayString());
+                symbol.ToDisplayString()
+            );
         }
     }
 
     private static bool HasInheritanceIntent(INamedTypeSymbol symbol) =>
-        symbol.GetMembers().Any(member =>
-            member.DeclaredAccessibility is Accessibility.Protected or Accessibility.ProtectedOrInternal
-            || member is IMethodSymbol { IsVirtual: true });
+        symbol
+            .GetMembers()
+            .Any(member =>
+                member.DeclaredAccessibility
+                    is Accessibility.Protected
+                        or Accessibility.ProtectedOrInternal
+                || member is IMethodSymbol { IsVirtual: true }
+            );
 
     private sealed record TypeDeclaration(
         ClassDeclarationSyntax Declaration,
-        INamedTypeSymbol? Symbol);
+        INamedTypeSymbol? Symbol
+    );
 }

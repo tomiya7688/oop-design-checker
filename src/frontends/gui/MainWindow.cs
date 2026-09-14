@@ -39,8 +39,8 @@ internal sealed class MainWindow : Window
                 _configurationPath,
                 _analyzeButton,
                 _status,
-                _diagnostics
-            }
+                _diagnostics,
+            },
         };
 
         Content = controls;
@@ -61,18 +61,30 @@ internal sealed class MainWindow : Window
             }
 
             var configurationPath = NormalizeOptionalPath(_configurationPath.Text);
-            var result = await Task.Run(() => CheckerService.Analyze(targetPath, configurationPath));
+            var result = await Task.Run(() =>
+                CheckerService.Analyze(targetPath, configurationPath)
+            );
 
-            _diagnostics.ItemsSource = result.Diagnostics
-                .Select(FormatDiagnostic)
-                .ToArray();
+            _diagnostics.ItemsSource = result.Diagnostics.Select(FormatDiagnostic).ToArray();
 
-            var dangerCount = result.Diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Danger);
-            var warningCount = result.Diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Warning);
-            var attentionCount = result.Diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Attention);
-            _status.Text = $"Danger {dangerCount} / Warning {warningCount} / Attention {attentionCount}";
+            var dangerCount = result.Diagnostics.Count(item =>
+                item.Severity == DesignDiagnosticSeverity.Danger
+            );
+            var warningCount = result.Diagnostics.Count(item =>
+                item.Severity == DesignDiagnosticSeverity.Warning
+            );
+            var attentionCount = result.Diagnostics.Count(item =>
+                item.Severity == DesignDiagnosticSeverity.Attention
+            );
+            _status.Text =
+                $"Danger {dangerCount} / Warning {warningCount} / Attention {attentionCount}";
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+        catch (Exception exception)
+            when (exception
+                    is IOException
+                        or UnauthorizedAccessException
+                        or InvalidOperationException
+            )
         {
             _diagnostics.ItemsSource = Array.Empty<string>();
             _status.Text = exception.Message;

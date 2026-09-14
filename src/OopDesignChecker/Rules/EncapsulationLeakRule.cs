@@ -8,10 +8,8 @@ namespace OopDesignChecker.Rules;
 
 internal sealed class EncapsulationLeakRule : IAnalysisRule
 {
-    public RuleDescriptor Descriptor { get; } = new(
-        "OOP106",
-        "Encapsulation leak",
-        DesignDiagnosticSeverity.Warning);
+    public RuleDescriptor Descriptor { get; } =
+        new("OOP106", "Encapsulation leak", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -39,7 +37,8 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
                         property.Identifier.GetLocation(),
                         "This property exposes mutable internal storage directly. Prefer a read-only view, copy, or behavior-oriented API.",
                         propertySymbol.ToDisplayString(),
-                        DesignDiagnosticSeverity.Danger);
+                        DesignDiagnosticSeverity.Danger
+                    );
                 }
 
                 if (HasUnnecessarilyPublicSetter(context, property, propertySymbol))
@@ -48,7 +47,8 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
                         Descriptor,
                         property.Identifier.GetLocation(),
                         "This public setter is only used by the declaring object. Narrow the setter visibility.",
-                        propertySymbol.ToDisplayString());
+                        propertySymbol.ToDisplayString()
+                    );
                 }
             }
         }
@@ -56,7 +56,8 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
 
     private IEnumerable<DesignDiagnostic> AnalyzeFields(
         SyntaxNode root,
-        SemanticModel semanticModel)
+        SemanticModel semanticModel
+    )
     {
         foreach (var variable in root.DescendantNodes().OfType<VariableDeclaratorSyntax>())
         {
@@ -65,9 +66,11 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
                 continue;
             }
 
-            if (semanticModel.GetDeclaredSymbol(variable) is not IFieldSymbol field
+            if (
+                semanticModel.GetDeclaredSymbol(variable) is not IFieldSymbol field
                 || field.DeclaredAccessibility != Accessibility.Public
-                || field.IsConst)
+                || field.IsConst
+            )
             {
                 continue;
             }
@@ -84,17 +87,21 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
                 variable.GetLocation(),
                 message,
                 field.ToDisplayString(),
-                severity);
+                severity
+            );
         }
     }
 
     private static bool ExposesMutableStoredValue(
         PropertyDeclarationSyntax declaration,
         IPropertySymbol property,
-        SemanticModel semanticModel)
+        SemanticModel semanticModel
+    )
     {
-        if (property.GetMethod?.DeclaredAccessibility != Accessibility.Public
-            || !MutableCollectionInspector.IsMutableCollection(property.Type))
+        if (
+            property.GetMethod?.DeclaredAccessibility != Accessibility.Public
+            || !MutableCollectionInspector.IsMutableCollection(property.Type)
+        )
         {
             return false;
         }
@@ -104,8 +111,9 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
             return ReferencesStoredValue(declaration.ExpressionBody.Expression, semanticModel);
         }
 
-        var getter = declaration.AccessorList?.Accessors
-            .FirstOrDefault(accessor => accessor.IsKind(SyntaxKind.GetAccessorDeclaration));
+        var getter = declaration.AccessorList?.Accessors.FirstOrDefault(accessor =>
+            accessor.IsKind(SyntaxKind.GetAccessorDeclaration)
+        );
         if (getter is null)
         {
             return false;
@@ -121,7 +129,10 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
             return ReferencesStoredValue(getter.ExpressionBody.Expression, semanticModel);
         }
 
-        if (getter.Body?.Statements is [ReturnStatementSyntax { Expression: not null } returnStatement])
+        if (
+            getter.Body?.Statements
+            is [ReturnStatementSyntax { Expression: not null } returnStatement]
+        )
         {
             return ReferencesStoredValue(returnStatement.Expression, semanticModel);
         }
@@ -129,25 +140,32 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
         return false;
     }
 
-    private static bool ReferencesStoredValue(ExpressionSyntax expression, SemanticModel semanticModel) =>
-        semanticModel.GetSymbolInfo(expression).Symbol is
-            IFieldSymbol { IsStatic: false }
-            or IPropertySymbol { IsStatic: false };
+    private static bool ReferencesStoredValue(
+        ExpressionSyntax expression,
+        SemanticModel semanticModel
+    ) =>
+        semanticModel.GetSymbolInfo(expression).Symbol
+            is IFieldSymbol { IsStatic: false }
+                or IPropertySymbol { IsStatic: false };
 
     private static bool HasUnnecessarilyPublicSetter(
         AnalysisContext context,
         PropertyDeclarationSyntax declaration,
-        IPropertySymbol property)
+        IPropertySymbol property
+    )
     {
-        if (!context.Project.IsApplication
+        if (
+            !context.Project.IsApplication
             || property.SetMethod?.DeclaredAccessibility != Accessibility.Public
             || property.IsAbstract
             || property.IsVirtual
             || property.IsOverride
             || property.ContainingType.TypeKind == TypeKind.Interface
             || ImplementsInterfaceProperty(property)
-            || declaration.AccessorList?.Accessors.Any(
-                accessor => accessor.IsKind(SyntaxKind.InitAccessorDeclaration)) == true)
+            || declaration.AccessorList?.Accessors.Any(accessor =>
+                accessor.IsKind(SyntaxKind.InitAccessorDeclaration)
+            ) == true
+        )
         {
             return false;
         }
@@ -162,7 +180,9 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
         {
             foreach (var interfaceProperty in interfaceType.GetMembers().OfType<IPropertySymbol>())
             {
-                var implementation = property.ContainingType.FindImplementationForInterfaceMember(interfaceProperty);
+                var implementation = property.ContainingType.FindImplementationForInterfaceMember(
+                    interfaceProperty
+                );
                 if (SymbolEqualityComparer.Default.Equals(implementation, property))
                 {
                     return true;

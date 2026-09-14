@@ -26,11 +26,14 @@ internal static class CommandLineOptionsParser
                     }
                     break;
                 case "--fail-on":
-                    if (!TryReadValue(args, ref index, out var thresholdText)
-                        || !TryParseSeverity(thresholdText, out var parsedThreshold))
+                    if (
+                        !TryReadValue(args, ref index, out var thresholdText)
+                        || !TryParseSeverity(thresholdText, out var parsedThreshold)
+                    )
                     {
                         return CommandLineParseResult.Failure(
-                            "--fail-on requires danger, warning, or attention.");
+                            "--fail-on requires danger, warning, or attention."
+                        );
                     }
 
                     failureThreshold = parsedThreshold;
@@ -52,7 +55,9 @@ internal static class CommandLineOptionsParser
 
                     if (targetPath is not null)
                     {
-                        return CommandLineParseResult.Failure("Only one target path can be specified.");
+                        return CommandLineParseResult.Failure(
+                            "Only one target path can be specified."
+                        );
                     }
 
                     targetPath = argument;
@@ -66,13 +71,12 @@ internal static class CommandLineOptionsParser
                 Path.GetFullPath(targetPath),
                 configurationPath is null ? null : Path.GetFullPath(configurationPath),
                 failureThreshold,
-                verbose));
+                verbose
+            )
+        );
     }
 
-    private static bool TryReadValue(
-        IReadOnlyList<string> args,
-        ref int index,
-        out string? value)
+    private static bool TryReadValue(IReadOnlyList<string> args, ref int index, out string? value)
     {
         if (index + 1 >= args.Count)
         {

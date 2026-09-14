@@ -10,7 +10,8 @@ public static class CheckerService
     public static CheckerRunResult Analyze(
         string targetPath,
         string? configurationPath = null,
-        DesignDiagnosticSeverity? failureThresholdOverride = null)
+        DesignDiagnosticSeverity? failureThresholdOverride = null
+    )
     {
         if (!Directory.Exists(targetPath) && !File.Exists(targetPath))
         {
@@ -18,11 +19,15 @@ public static class CheckerService
         }
 
         var fullTargetPath = Path.GetFullPath(targetPath);
-        var loadedConfiguration = CheckerConfigurationLoader.Load(fullTargetPath, configurationPath);
+        var loadedConfiguration = CheckerConfigurationLoader.Load(
+            fullTargetPath,
+            configurationPath
+        );
         var configuration = loadedConfiguration.Configuration;
 
         var disabledRules = configuration.DisabledRules.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var rules = RuleCatalog.CreateDefault()
+        var rules = RuleCatalog
+            .CreateDefault()
             .Where(rule => !disabledRules.Contains(rule.Descriptor.Id))
             .ToArray();
 
@@ -32,9 +37,6 @@ public static class CheckerService
         var diagnostics = engine.Analyze(project);
         var failureThreshold = failureThresholdOverride ?? configuration.FailureThreshold;
 
-        return new CheckerRunResult(
-            diagnostics,
-            failureThreshold,
-            loadedConfiguration.Path);
+        return new CheckerRunResult(diagnostics, failureThreshold, loadedConfiguration.Path);
     }
 }

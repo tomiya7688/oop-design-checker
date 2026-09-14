@@ -8,7 +8,8 @@ internal static class PropertyWriteInspector
 {
     public static PropertyWriteScope GetWriteScope(
         AnalysisContext context,
-        IPropertySymbol property)
+        IPropertySymbol property
+    )
     {
         var hasInternalWrite = false;
         var hasExternalWrite = false;
@@ -25,14 +26,26 @@ internal static class PropertyWriteInspector
                     continue;
                 }
 
-                ClassifyWrite(semanticModel, assignment.SpanStart, property, ref hasInternalWrite, ref hasExternalWrite);
+                ClassifyWrite(
+                    semanticModel,
+                    assignment.SpanStart,
+                    property,
+                    ref hasInternalWrite,
+                    ref hasExternalWrite
+                );
             }
 
             foreach (var unary in root.DescendantNodes().OfType<PrefixUnaryExpressionSyntax>())
             {
                 if (IsTargetProperty(semanticModel, unary.Operand, property))
                 {
-                    ClassifyWrite(semanticModel, unary.SpanStart, property, ref hasInternalWrite, ref hasExternalWrite);
+                    ClassifyWrite(
+                        semanticModel,
+                        unary.SpanStart,
+                        property,
+                        ref hasInternalWrite,
+                        ref hasExternalWrite
+                    );
                 }
             }
 
@@ -40,7 +53,13 @@ internal static class PropertyWriteInspector
             {
                 if (IsTargetProperty(semanticModel, unary.Operand, property))
                 {
-                    ClassifyWrite(semanticModel, unary.SpanStart, property, ref hasInternalWrite, ref hasExternalWrite);
+                    ClassifyWrite(
+                        semanticModel,
+                        unary.SpanStart,
+                        property,
+                        ref hasInternalWrite,
+                        ref hasExternalWrite
+                    );
                 }
             }
         }
@@ -51,15 +70,20 @@ internal static class PropertyWriteInspector
     private static bool IsTargetProperty(
         SemanticModel semanticModel,
         ExpressionSyntax expression,
-        IPropertySymbol property) =>
-        SymbolEqualityComparer.Default.Equals(semanticModel.GetSymbolInfo(expression).Symbol, property);
+        IPropertySymbol property
+    ) =>
+        SymbolEqualityComparer.Default.Equals(
+            semanticModel.GetSymbolInfo(expression).Symbol,
+            property
+        );
 
     private static void ClassifyWrite(
         SemanticModel semanticModel,
         int position,
         IPropertySymbol property,
         ref bool hasInternalWrite,
-        ref bool hasExternalWrite)
+        ref bool hasExternalWrite
+    )
     {
         var writingType = semanticModel.GetEnclosingSymbol(position)?.ContainingType;
         if (SymbolEqualityComparer.Default.Equals(writingType, property.ContainingType))
@@ -73,6 +97,4 @@ internal static class PropertyWriteInspector
     }
 }
 
-internal readonly record struct PropertyWriteScope(
-    bool HasInternalWrite,
-    bool HasExternalWrite);
+internal readonly record struct PropertyWriteScope(bool HasInternalWrite, bool HasExternalWrite);

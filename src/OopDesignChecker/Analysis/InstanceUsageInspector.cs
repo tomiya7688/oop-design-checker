@@ -5,9 +5,17 @@ namespace OopDesignChecker.Analysis;
 
 internal static class InstanceUsageInspector
 {
-    public static bool UsesInstanceState(MethodDeclarationSyntax method, IMethodSymbol symbol, SemanticModel semanticModel)
+    public static bool UsesInstanceState(
+        MethodDeclarationSyntax method,
+        IMethodSymbol symbol,
+        SemanticModel semanticModel
+    )
     {
-        if (method.DescendantNodes().Any(node => node is ThisExpressionSyntax or BaseExpressionSyntax))
+        if (
+            method
+                .DescendantNodes()
+                .Any(node => node is ThisExpressionSyntax or BaseExpressionSyntax)
+        )
         {
             return true;
         }
@@ -20,9 +28,16 @@ internal static class InstanceUsageInspector
                 continue;
             }
 
-            if (referencedSymbol is IFieldSymbol or IPropertySymbol or IEventSymbol or IMethodSymbol)
+            if (
+                referencedSymbol is IFieldSymbol or IPropertySymbol or IEventSymbol or IMethodSymbol
+            )
             {
-                if (SymbolEqualityComparer.Default.Equals(referencedSymbol.ContainingType, symbol.ContainingType))
+                if (
+                    SymbolEqualityComparer.Default.Equals(
+                        referencedSymbol.ContainingType,
+                        symbol.ContainingType
+                    )
+                )
                 {
                     return true;
                 }

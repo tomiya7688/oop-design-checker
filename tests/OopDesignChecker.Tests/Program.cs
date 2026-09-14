@@ -7,10 +7,19 @@ internal static class Program
 {
     private static readonly IReadOnlyList<TestCase> TestCases =
     [
-        new("OOP101 detects public classes confined to an inheritance hierarchy", ExcessiveVisibilityIsDetected),
+        new(
+            "OOP101 detects public classes confined to an inheritance hierarchy",
+            ExcessiveVisibilityIsDetected
+        ),
         new("OOP106 detects public mutable fields as danger", EncapsulationLeakIsDetected),
-        new("OOP106 detects mutable collection exposure as danger", MutableCollectionExposureIsDetected),
-        new("OOP106 detects unnecessarily public setters as warning", UnnecessaryPublicSetterIsDetected),
+        new(
+            "OOP106 detects mutable collection exposure as danger",
+            MutableCollectionExposureIsDetected
+        ),
+        new(
+            "OOP106 detects unnecessarily public setters as warning",
+            UnnecessaryPublicSetterIsDetected
+        ),
         new("OOP106 keeps externally used setters public", ExternallyUsedSetterIsAllowed),
         new("OOP103 static member candidates are attention", StaticMemberCandidateIsDetected),
         new("OOP104 static class candidates are attention", StaticClassCandidateIsDetected),
@@ -18,9 +27,18 @@ internal static class Program
         new("OOP303 disabled parent behavior is danger", DisabledParentBehaviorIsDetected),
         new("OOP304 deep inheritance is attention", DeepInheritanceIsDetected),
         new("core OOP rule sprint", CoreRuleSmokeTests.Run),
-        new("configuration disables selected rules", ConfigurationBehaviorTests.DisabledRulesAreSuppressed),
-        new("configuration ignores matching paths", ConfigurationBehaviorTests.IgnoredPathsAreExcluded),
-        new("configuration controls failure threshold", ConfigurationBehaviorTests.FailureThresholdIsLoaded)
+        new(
+            "configuration disables selected rules",
+            ConfigurationBehaviorTests.DisabledRulesAreSuppressed
+        ),
+        new(
+            "configuration ignores matching paths",
+            ConfigurationBehaviorTests.IgnoredPathsAreExcluded
+        ),
+        new(
+            "configuration controls failure threshold",
+            ConfigurationBehaviorTests.FailureThresholdIsLoaded
+        ),
     ];
 
     private static int Main()
@@ -252,28 +270,32 @@ internal static class Program
     private static void AssertSingleRule(
         IReadOnlyList<DesignDiagnostic> diagnostics,
         string ruleId,
-        DesignDiagnosticSeverity severity)
+        DesignDiagnosticSeverity severity
+    )
     {
         AssertRuleCount(diagnostics, ruleId, 1);
 
         if (diagnostics[0].Severity != severity)
         {
             throw new InvalidOperationException(
-                $"Expected severity {severity}, but found {diagnostics[0].Severity}.");
+                $"Expected severity {severity}, but found {diagnostics[0].Severity}."
+            );
         }
     }
 
     private static void AssertRuleCount(
         IReadOnlyList<DesignDiagnostic> diagnostics,
         string ruleId,
-        int expectedCount)
+        int expectedCount
+    )
     {
         var matching = diagnostics.Where(diagnostic => diagnostic.Rule.Id == ruleId).ToArray();
         if (matching.Length != expectedCount)
         {
             var found = string.Join(", ", diagnostics.Select(diagnostic => diagnostic.Rule.Id));
             throw new InvalidOperationException(
-                $"Expected {expectedCount} {ruleId} diagnostic(s), found {matching.Length}. All diagnostics: [{found}]");
+                $"Expected {expectedCount} {ruleId} diagnostic(s), found {matching.Length}. All diagnostics: [{found}]"
+            );
         }
     }
 

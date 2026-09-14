@@ -8,5 +8,6 @@ public sealed class CheckerConfiguration
 
     public IReadOnlyList<string> DisabledRules { get; init; } = [];
 
-    public DesignDiagnosticSeverity FailureThreshold { get; init; } = DesignDiagnosticSeverity.Danger;
+    public DesignDiagnosticSeverity FailureThreshold { get; init; } =
+        DesignDiagnosticSeverity.Danger;
 }

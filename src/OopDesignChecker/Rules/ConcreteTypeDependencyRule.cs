@@ -7,10 +7,8 @@ namespace OopDesignChecker.Rules;
 
 internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
 {
-    public RuleDescriptor Descriptor { get; } = new(
-        "OOP305",
-        "Concrete dependency despite abstraction",
-        DesignDiagnosticSeverity.Warning);
+    public RuleDescriptor Descriptor { get; } =
+        new("OOP305", "Concrete dependency despite abstraction", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -19,18 +17,25 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
             var semanticModel = context.Project.GetSemanticModel(syntaxTree);
             var root = syntaxTree.GetRoot();
 
-            foreach (var constructor in root.DescendantNodes().OfType<ConstructorDeclarationSyntax>())
+            foreach (
+                var constructor in root.DescendantNodes().OfType<ConstructorDeclarationSyntax>()
+            )
             {
                 foreach (var parameter in constructor.ParameterList.Parameters)
                 {
-                    if (semanticModel.GetDeclaredSymbol(parameter) is not IParameterSymbol parameterSymbol
-                        || parameterSymbol.Type is not INamedTypeSymbol { TypeKind: TypeKind.Class } concreteType)
+                    if (
+                        semanticModel.GetDeclaredSymbol(parameter)
+                            is not IParameterSymbol parameterSymbol
+                        || parameterSymbol.Type
+                            is not INamedTypeSymbol { TypeKind: TypeKind.Class } concreteType
+                    )
                     {
                         continue;
                     }
 
-                    var abstraction = concreteType.AllInterfaces
-                        .FirstOrDefault(IsSourceDefinedInterface);
+                    var abstraction = concreteType.AllInterfaces.FirstOrDefault(
+                        IsSourceDefinedInterface
+                    );
                     if (abstraction is null)
                     {
                         continue;
@@ -40,7 +45,8 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
                         Descriptor,
                         parameter.Identifier.GetLocation(),
                         $"This constructor depends on concrete type {concreteType.Name} even though it implements project abstraction {abstraction.Name}. Depend on the abstraction when replacement is part of the design.",
-                        parameterSymbol.ToDisplayString());
+                        parameterSymbol.ToDisplayString()
+                    );
                 }
             }
         }

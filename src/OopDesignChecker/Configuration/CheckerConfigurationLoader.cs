@@ -20,7 +20,8 @@ internal static class CheckerConfigurationLoader
         try
         {
             var json = File.ReadAllText(configurationPath);
-            var configuration = JsonSerializer.Deserialize<CheckerConfiguration>(json, JsonOptions)
+            var configuration =
+                JsonSerializer.Deserialize<CheckerConfiguration>(json, JsonOptions)
                 ?? throw new InvalidOperationException("The checker configuration is empty.");
 
             return new LoadedCheckerConfiguration(configuration, configurationPath);
@@ -29,7 +30,8 @@ internal static class CheckerConfigurationLoader
         {
             throw new InvalidOperationException(
                 $"Invalid checker configuration '{configurationPath}': {exception.Message}",
-                exception);
+                exception
+            );
         }
     }
 
@@ -40,7 +42,9 @@ internal static class CheckerConfigurationLoader
             var fullPath = Path.GetFullPath(explicitPath);
             if (!File.Exists(fullPath))
             {
-                throw new InvalidOperationException($"Configuration file does not exist: {fullPath}");
+                throw new InvalidOperationException(
+                    $"Configuration file does not exist: {fullPath}"
+                );
             }
 
             return fullPath;
@@ -60,13 +64,11 @@ internal static class CheckerConfigurationLoader
         {
             PropertyNameCaseInsensitive = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
-            AllowTrailingCommas = true
+            AllowTrailingCommas = true,
         };
         options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
         return options;
     }
 }
 
-internal sealed record LoadedCheckerConfiguration(
-    CheckerConfiguration Configuration,
-    string? Path);
+internal sealed record LoadedCheckerConfiguration(CheckerConfiguration Configuration, string? Path);

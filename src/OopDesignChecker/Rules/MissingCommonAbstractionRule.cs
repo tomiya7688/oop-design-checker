@@ -10,18 +10,21 @@ internal sealed class MissingCommonAbstractionRule : IAnalysisRule
     private const int MinimumRelatedTypes = 3;
     private const int MinimumSharedOperations = 2;
 
-    public RuleDescriptor Descriptor { get; } = new(
-        "OOP001",
-        "Missing common abstraction",
-        DesignDiagnosticSeverity.Warning);
+    public RuleDescriptor Descriptor { get; } =
+        new("OOP001", "Missing common abstraction", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
-        var candidates = context.Project.SyntaxTrees
-            .SelectMany(tree => FindCandidates(context, tree))
+        var candidates = context
+            .Project.SyntaxTrees.SelectMany(tree => FindCandidates(context, tree))
             .ToArray();
 
-        foreach (var group in candidates.GroupBy(candidate => candidate.SignatureKey, StringComparer.Ordinal))
+        foreach (
+            var group in candidates.GroupBy(
+                candidate => candidate.SignatureKey,
+                StringComparer.Ordinal
+            )
+        )
         {
             var related = group.ToArray();
             if (related.Length < MinimumRelatedTypes)
@@ -33,31 +36,38 @@ internal sealed class MissingCommonAbstractionRule : IAnalysisRule
             yield return DiagnosticFactory.Create(
                 Descriptor,
                 related[0].Declaration.Identifier.GetLocation(),
-                $"Types {names} expose the same {related[0].OperationCount} public instance operations but share no project abstraction. Consider an interface or meaningful base abstraction if callers treat them as the same concept.");
+                $"Types {names} expose the same {related[0].OperationCount} public instance operations but share no project abstraction. Consider an interface or meaningful base abstraction if callers treat them as the same concept."
+            );
         }
     }
 
     private static IEnumerable<AbstractionCandidate> FindCandidates(
         AnalysisContext context,
-        SyntaxTree syntaxTree)
+        SyntaxTree syntaxTree
+    )
     {
         var semanticModel = context.Project.GetSemanticModel(syntaxTree);
         var root = syntaxTree.GetRoot();
 
         foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
         {
-            if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
+            if (
+                semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
                 || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
-                || HasProjectAbstraction(symbol))
+                || HasProjectAbstraction(symbol)
+            )
             {
                 continue;
             }
 
-            var signatures = symbol.GetMembers()
+            var signatures = symbol
+                .GetMembers()
                 .OfType<IMethodSymbol>()
-                .Where(method => method.MethodKind == MethodKind.Ordinary
+                .Where(method =>
+                    method.MethodKind == MethodKind.Ordinary
                     && !method.IsStatic
-                    && method.DeclaredAccessibility == Accessibility.Public)
+                    && method.DeclaredAccessibility == Accessibility.Public
+                )
                 .Select(CreateSignature)
                 .OrderBy(signature => signature, StringComparer.Ordinal)
                 .ToArray();
@@ -71,17 +81,23 @@ internal sealed class MissingCommonAbstractionRule : IAnalysisRule
                 declaration,
                 symbol,
                 string.Join("|", signatures),
-                signatures.Length);
+                signatures.Length
+            );
         }
     }
 
     private static bool HasProjectAbstraction(INamedTypeSymbol symbol) =>
         symbol.BaseType is { SpecialType: not SpecialType.System_Object }
-        || symbol.AllInterfaces.Any(interfaceType => interfaceType.Locations.Any(location => location.IsInSource));
+        || symbol.AllInterfaces.Any(interfaceType =>
+            interfaceType.Locations.Any(location => location.IsInSource)
+        );
 
     private static string CreateSignature(IMethodSymbol method)
     {
-        var parameters = string.Join(",", method.Parameters.Select(parameter => parameter.Type.ToDisplayString()));
+        var parameters = string.Join(
+            ",",
+            method.Parameters.Select(parameter => parameter.Type.ToDisplayString())
+        );
         return $"{method.Name}({parameters}):{method.ReturnType.ToDisplayString()}";
     }
 
@@ -89,5 +105,6 @@ internal sealed class MissingCommonAbstractionRule : IAnalysisRule
         ClassDeclarationSyntax Declaration,
         INamedTypeSymbol Symbol,
         string SignatureKey,
-        int OperationCount);
+        int OperationCount
+    );
 }

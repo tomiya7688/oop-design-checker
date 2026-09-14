@@ -10,19 +10,23 @@ internal static class ConfigurationBehaviorTests
         {
             File.WriteAllText(
                 Path.Combine(rootPath, "Sample.cs"),
-                "internal sealed class Sample { public int Value; }");
+                "internal sealed class Sample { public int Value; }"
+            );
             File.WriteAllText(
                 Path.Combine(rootPath, "oop-design-checker.json"),
                 """
                 {
                   "disabledRules": ["OOP106"]
                 }
-                """);
+                """
+            );
 
             var result = CheckerService.Analyze(rootPath);
             if (result.Diagnostics.Any(diagnostic => diagnostic.Rule.Id == "OOP106"))
             {
-                throw new InvalidOperationException("OOP106 should be suppressed by disabledRules.");
+                throw new InvalidOperationException(
+                    "OOP106 should be suppressed by disabledRules."
+                );
             }
         });
     }
@@ -33,13 +37,15 @@ internal static class ConfigurationBehaviorTests
         {
             File.WriteAllText(
                 Path.Combine(rootPath, "Clean.cs"),
-                "internal sealed class Clean { private int _value; public int Value => _value; }");
+                "internal sealed class Clean { private int _value; public int Value => _value; }"
+            );
 
             var generatedPath = Path.Combine(rootPath, "Generated");
             Directory.CreateDirectory(generatedPath);
             File.WriteAllText(
                 Path.Combine(generatedPath, "Bad.cs"),
-                "internal sealed class GeneratedSample { public int Value; }");
+                "internal sealed class GeneratedSample { public int Value; }"
+            );
 
             File.WriteAllText(
                 Path.Combine(rootPath, "oop-design-checker.json"),
@@ -47,12 +53,15 @@ internal static class ConfigurationBehaviorTests
                 {
                   "ignoredPaths": ["**/Generated/**"]
                 }
-                """);
+                """
+            );
 
             var result = CheckerService.Analyze(rootPath);
             if (result.Diagnostics.Any(diagnostic => diagnostic.Rule.Id == "OOP106"))
             {
-                throw new InvalidOperationException("Files matched by ignoredPaths must not be analyzed.");
+                throw new InvalidOperationException(
+                    "Files matched by ignoredPaths must not be analyzed."
+                );
             }
         });
     }
@@ -63,20 +72,23 @@ internal static class ConfigurationBehaviorTests
         {
             File.WriteAllText(
                 Path.Combine(rootPath, "Clean.cs"),
-                "internal sealed class Clean { private int _value; public int Value => _value; }");
+                "internal sealed class Clean { private int _value; public int Value => _value; }"
+            );
             File.WriteAllText(
                 Path.Combine(rootPath, "oop-design-checker.json"),
                 """
                 {
                   "failureThreshold": "attention"
                 }
-                """);
+                """
+            );
 
             var result = CheckerService.Analyze(rootPath);
             if (result.FailureThreshold != DesignDiagnosticSeverity.Attention)
             {
                 throw new InvalidOperationException(
-                    $"Expected Attention threshold, found {result.FailureThreshold}.");
+                    $"Expected Attention threshold, found {result.FailureThreshold}."
+                );
             }
         });
     }
@@ -86,7 +98,8 @@ internal static class ConfigurationBehaviorTests
         var rootPath = Path.Combine(
             Path.GetTempPath(),
             "oop-design-checker-tests",
-            Guid.NewGuid().ToString("N"));
+            Guid.NewGuid().ToString("N")
+        );
         Directory.CreateDirectory(rootPath);
 
         try

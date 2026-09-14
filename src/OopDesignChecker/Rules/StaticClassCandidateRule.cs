@@ -7,10 +7,8 @@ namespace OopDesignChecker.Rules;
 
 internal sealed class StaticClassCandidateRule : IAnalysisRule
 {
-    public RuleDescriptor Descriptor { get; } = new(
-        "OOP104",
-        "Static class candidate",
-        DesignDiagnosticSeverity.Attention);
+    public RuleDescriptor Descriptor { get; } =
+        new("OOP104", "Static class candidate", DesignDiagnosticSeverity.Attention);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -21,9 +19,15 @@ internal sealed class StaticClassCandidateRule : IAnalysisRule
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
+                if (
+                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
                     || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
-                    || !StaticEligibilityEvaluator.CanClassBeStatic(declaration, symbol, semanticModel))
+                    || !StaticEligibilityEvaluator.CanClassBeStatic(
+                        declaration,
+                        symbol,
+                        semanticModel
+                    )
+                )
                 {
                     continue;
                 }
@@ -32,7 +36,8 @@ internal sealed class StaticClassCandidateRule : IAnalysisRule
                     Descriptor,
                     declaration.Identifier.GetLocation(),
                     "This class has no meaningful instance state or polymorphic role and can be static.",
-                    symbol.ToDisplayString());
+                    symbol.ToDisplayString()
+                );
             }
         }
     }
