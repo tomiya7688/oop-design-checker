@@ -167,14 +167,15 @@ internal sealed class AnemicObjectRule : IAnalysisRule
     }
 
     private static bool HasDataCarrierMarker(INamedTypeSymbol type) =>
-        type.GetAttributes().Any(attribute =>
-            attribute.AttributeClass?.Name
-                is "SerializableAttribute"
-                    or "DataContractAttribute"
-                    or "JsonObjectAttribute"
-                    or "MessagePackObjectAttribute"
-                    or "ProtoContractAttribute"
-        );
+        type.GetAttributes()
+            .Any(attribute =>
+                attribute.AttributeClass?.Name
+                    is "SerializableAttribute"
+                        or "DataContractAttribute"
+                        or "JsonObjectAttribute"
+                        or "MessagePackObjectAttribute"
+                        or "ProtoContractAttribute"
+            );
 
     private static bool IsProjectionInfrastructure(INamedTypeSymbol type)
     {
