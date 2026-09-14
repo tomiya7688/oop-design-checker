@@ -59,12 +59,12 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         }
 
         var projectFiles = ResolveProjectFiles(fullTargetPath);
-        return projectFiles.Count == 0
+        return projectFiles.Length == 0
             ? [LoadLooseSources(fullTargetPath)]
             : LoadMsBuildProjects(projectFiles);
     }
 
-    private IReadOnlyList<SourceProject> LoadMsBuildSolution(string solutionFile)
+    private SourceProject[] LoadMsBuildSolution(string solutionFile)
     {
         EnsureMsBuildRegistered();
 
@@ -103,7 +103,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         return projects;
     }
 
-    private IReadOnlyList<SourceProject> LoadSlnxProjects(string solutionFile)
+    private SourceProject[] LoadSlnxProjects(string solutionFile)
     {
         var rootPath =
             Path.GetDirectoryName(solutionFile)
@@ -163,9 +163,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         return CreateSourceProject(project, workspaceFailures);
     }
 
-    private IReadOnlyList<SourceProject> LoadMsBuildProjects(
-        IReadOnlyCollection<string> projectFiles
-    ) =>
+    private SourceProject[] LoadMsBuildProjects(IReadOnlyCollection<string> projectFiles) =>
         projectFiles
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .Select(LoadMsBuildProject)
@@ -278,7 +276,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         };
     }
 
-    private IReadOnlyList<string> ResolveProjectFiles(string targetDirectory)
+    private string[] ResolveProjectFiles(string targetDirectory)
     {
         var directProjects = Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.TopDirectoryOnly)
@@ -328,7 +326,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         }
     }
 
-    private static IDisposable RegisterWorkspaceFailureHandler(
+    private static WorkspaceEventRegistration RegisterWorkspaceFailureHandler(
         MSBuildWorkspace workspace,
         List<string> workspaceFailures
     ) =>
@@ -348,10 +346,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         return Path.GetFullPath(Path.Combine(rootPath, normalizedPath));
     }
 
-    private static void ThrowIfWorkspaceFailures(
-        string targetPath,
-        IReadOnlyCollection<string> workspaceFailures
-    )
+    private static void ThrowIfWorkspaceFailures(string targetPath, List<string> workspaceFailures)
     {
         if (workspaceFailures.Count == 0)
         {
