@@ -118,7 +118,11 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             .Where(path => !string.IsNullOrWhiteSpace(path))
             .Select(path => ResolveSlnxProjectPath(rootPath, path!))
             .Where(path =>
-                string.Equals(Path.GetExtension(path), ".csproj", StringComparison.OrdinalIgnoreCase)
+                string.Equals(
+                    Path.GetExtension(path),
+                    ".csproj",
+                    StringComparison.OrdinalIgnoreCase
+                )
             )
             .Where(path => !PathFilter.ShouldIgnore(path, rootPath, _ignoredPaths))
             .Distinct(StringComparer.OrdinalIgnoreCase)
