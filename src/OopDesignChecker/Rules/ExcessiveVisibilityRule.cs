@@ -52,7 +52,7 @@ internal sealed class ExcessiveVisibilityRule : IAnalysisRule
         }
     }
 
-    private static IReadOnlyList<INamedTypeSymbol> FindReferencingTypes(
+    private static List<INamedTypeSymbol> FindReferencingTypes(
         AnalysisContext context,
         INamedTypeSymbol target)
     {
