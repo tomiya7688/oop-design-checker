@@ -6,7 +6,6 @@ namespace OopDesignChecker.Gui;
 
 internal sealed class MainWindow : Window
 {
-    private readonly CheckerService _checkerService = new();
     private readonly TextBox _targetPath = new();
     private readonly TextBox _configurationPath = new();
     private readonly Button _analyzeButton = new();
@@ -62,7 +61,7 @@ internal sealed class MainWindow : Window
             }
 
             var configurationPath = NormalizeOptionalPath(_configurationPath.Text);
-            var result = await Task.Run(() => _checkerService.Analyze(targetPath, configurationPath));
+            var result = await Task.Run(() => CheckerService.Analyze(targetPath, configurationPath));
 
             _diagnostics.ItemsSource = result.Diagnostics
                 .Select(FormatDiagnostic)
