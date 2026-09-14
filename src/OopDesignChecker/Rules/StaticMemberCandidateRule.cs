@@ -46,7 +46,11 @@ internal sealed class StaticMemberCandidateRule : IAnalysisRule
                         || methodSymbol.IsVirtual
                         || methodSymbol.IsOverride
                         || method.ExplicitInterfaceSpecifier is not null
-                        || SymbolUtilities.ImplementsInterfaceMember(methodSymbol)
+                        || SymbolUtilities.ImplementsInterfaceMember(
+                            methodSymbol,
+                            declaration,
+                            semanticModel
+                        )
                     )
                     {
                         continue;
