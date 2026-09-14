@@ -68,7 +68,9 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
             }
 
             var stateMembers = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
-            foreach (var identifier in methodDeclaration.DescendantNodes().OfType<IdentifierNameSyntax>())
+            foreach (
+                var identifier in methodDeclaration.DescendantNodes().OfType<IdentifierNameSyntax>()
+            )
             {
                 var referencedSymbol = semanticModel.GetSymbolInfo(identifier).Symbol;
                 if (IsInstanceStateMember(referencedSymbol, containingType))
@@ -78,7 +80,9 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
             }
 
             var calledMethods = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
-            foreach (var invocation in methodDeclaration.DescendantNodes().OfType<InvocationExpressionSyntax>())
+            foreach (
+                var invocation in methodDeclaration.DescendantNodes().OfType<InvocationExpressionSyntax>()
+            )
             {
                 if (semanticModel.GetSymbolInfo(invocation).Symbol is not IMethodSymbol calledMethod)
                 {
