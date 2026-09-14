@@ -33,12 +33,7 @@ internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
                     continue;
                 }
 
-                var methodUsage = ReadMethodUsage(
-                    symbol,
-                    declaration,
-                    dependencies,
-                    semanticModel
-                );
+                var methodUsage = ReadMethodUsage(symbol, declaration, dependencies, semanticModel);
                 var effectiveUsage = BuildEffectiveDependencyUsage(methodUsage);
                 var clusters = CountDependencyClusters(dependencies, effectiveUsage);
                 if (clusters < MinimumClusters)
@@ -238,10 +233,7 @@ internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
 
     private static bool ShareMeaningfulProjectAbstraction(ITypeSymbol left, ITypeSymbol right)
     {
-        if (
-            left is not INamedTypeSymbol leftType
-            || right is not INamedTypeSymbol rightType
-        )
+        if (left is not INamedTypeSymbol leftType || right is not INamedTypeSymbol rightType)
         {
             return false;
         }
