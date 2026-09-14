@@ -25,7 +25,7 @@ internal sealed class GetterSetterOnlyObjectRule : IAnalysisRule
             {
                 if (
                     semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || IsExplicitDataCarrier(symbol)
+                    || DataCarrierClassifier.IsExplicitDataCarrier(symbol)
                 )
                 {
                     continue;
@@ -76,17 +76,5 @@ internal sealed class GetterSetterOnlyObjectRule : IAnalysisRule
         var accessors = property.AccessorList.Accessors;
         return accessors.Count >= 1
             && accessors.All(accessor => accessor.Body is null && accessor.ExpressionBody is null);
-    }
-
-    private static bool IsExplicitDataCarrier(INamedTypeSymbol type)
-    {
-        var name = type.Name;
-        return name.EndsWith("Dto", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Model", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Request", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Response", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Options", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Configuration", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Config", StringComparison.OrdinalIgnoreCase);
     }
 }
