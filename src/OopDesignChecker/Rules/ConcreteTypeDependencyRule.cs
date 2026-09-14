@@ -34,8 +34,7 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
                     }
 
                     var abstraction = ProjectAbstractionClassifier.FindMeaningfulAbstraction(
-                        concreteType,
-                        context
+                        concreteType
                     );
                     if (abstraction is null)
                     {
@@ -45,7 +44,7 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
                     yield return DiagnosticFactory.Create(
                         Descriptor,
                         parameter.Identifier.GetLocation(),
-                        $"This constructor depends on concrete type {concreteType.Name} even though project abstraction {abstraction.Name} is used as a replaceable contract. Depend on the abstraction when replacement is part of the design.",
+                        $"This constructor depends on concrete type {concreteType.Name} even though project abstraction {abstraction.Name} defines a behavioral contract. Depend on the abstraction when replacement is part of the design.",
                         parameterSymbol.ToDisplayString()
                     );
                 }
