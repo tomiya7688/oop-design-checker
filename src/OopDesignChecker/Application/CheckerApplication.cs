@@ -4,14 +4,10 @@ namespace OopDesignChecker.Application;
 
 internal sealed class CheckerApplication
 {
-    private readonly CheckerService _checkerService;
     private readonly IDiagnosticWriter _diagnosticWriter;
 
-    public CheckerApplication(
-        CheckerService checkerService,
-        IDiagnosticWriter diagnosticWriter)
+    public CheckerApplication(IDiagnosticWriter diagnosticWriter)
     {
-        _checkerService = checkerService;
         _diagnosticWriter = diagnosticWriter;
     }
 
@@ -19,7 +15,7 @@ internal sealed class CheckerApplication
     {
         try
         {
-            var result = _checkerService.Analyze(
+            var result = CheckerService.Analyze(
                 options.TargetPath,
                 options.ConfigurationPath,
                 options.FailureThreshold);
