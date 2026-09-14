@@ -14,6 +14,8 @@ internal static class ExtendedRuleSmokeTests
         ParentContractNoOpsAreWarning();
         ImplementationReuseInheritanceIsAttention();
         AnemicObjectWithExternalBehaviorIsWarning();
+        SerializableDataCarrierIsAllowed();
+        MapperProjectionDoesNotMakeObjectAnemic();
         UnrelatedDependencyClustersAreWarning();
         DeepObjectNavigationIsAttention();
         GetterSetterOnlyObjectIsAttention();
@@ -192,6 +194,51 @@ internal static class ExtendedRuleSmokeTests
         AssertSingle(new AnemicObjectRule(), source, "OOP402", DesignDiagnosticSeverity.Warning);
     }
 
+    private static void SerializableDataCarrierIsAllowed()
+    {
+        const string source = """
+            [System.Serializable]
+            internal sealed class Snapshot
+            {
+                public int X { get; set; }
+                public int Y { get; set; }
+                public int Z { get; set; }
+            }
+
+            internal sealed class SnapshotService
+            {
+                public int Sum(Snapshot snapshot)
+                {
+                    return snapshot.X + snapshot.Y + snapshot.Z;
+                }
+            }
+            """;
+
+        AssertNone(new AnemicObjectRule(), source, "OOP402");
+    }
+
+    private static void MapperProjectionDoesNotMakeObjectAnemic()
+    {
+        const string source = """
+            internal sealed class Person
+            {
+                public string Name { get; set; } = string.Empty;
+                public int Age { get; set; }
+                public string City { get; set; } = string.Empty;
+            }
+
+            internal sealed class PersonMapper
+            {
+                public string Map(Person person)
+                {
+                    return $"{person.Name}:{person.Age}:{person.City}";
+                }
+            }
+            """;
+
+        AssertNone(new AnemicObjectRule(), source, "OOP402");
+    }
+
     private static void UnrelatedDependencyClustersAreWarning()
     {
         const string source = """
@@ -307,5 +354,17 @@ internal static class ExtendedRuleSmokeTests
                 $"Expected one {ruleId}:{severity} diagnostic, found [{found}]."
             );
         }
+    }
+
+    private static void AssertNone(AnemicObjectRule rule, string source, string ruleId)
+    {
+        var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+        if (diagnostics.Length == 0)
+        {
+            return;
+        }
+
+        var found = string.Join(", ", diagnostics.Select(item => item.Rule.Id));
+        throw new InvalidOperationException($"Expected no {ruleId} diagnostic, found [{found}].");
     }
 }
