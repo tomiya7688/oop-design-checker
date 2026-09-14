@@ -45,7 +45,7 @@ internal static class CommandLineOptionsParser
                 case "-h":
                     return CommandLineParseResult.Failure(Usage);
                 default:
-                    if (argument.StartsWith("-", StringComparison.Ordinal))
+                    if (argument.StartsWith('-'))
                     {
                         return CommandLineParseResult.Failure($"Unknown option: {argument}");
                     }
