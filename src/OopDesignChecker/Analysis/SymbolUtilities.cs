@@ -77,7 +77,10 @@ internal static class SymbolUtilities
         return false;
     }
 
-    private static bool HasMatchingInterfaceMethod(IMethodSymbol method, INamedTypeSymbol interfaceType)
+    private static bool HasMatchingInterfaceMethod(
+        IMethodSymbol method,
+        INamedTypeSymbol interfaceType
+    )
     {
         foreach (var interfaceMember in interfaceType.GetMembers(method.Name).OfType<IMethodSymbol>())
         {
