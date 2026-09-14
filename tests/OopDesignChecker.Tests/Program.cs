@@ -7,7 +7,11 @@ internal static class Program
 {
     private static readonly IReadOnlyList<TestCase> TestCases =
     [
+        new("OOP101 detects public classes confined to an inheritance hierarchy", ExcessiveVisibilityIsDetected),
         new("OOP106 detects public mutable fields", EncapsulationLeakIsDetected),
+        new("OOP106 detects mutable collection exposure", MutableCollectionExposureIsDetected),
+        new("OOP106 detects unnecessarily public setters", UnnecessaryPublicSetterIsDetected),
+        new("OOP106 keeps externally used setters public", ExternallyUsedSetterIsAllowed),
         new("OOP103 detects instance methods that do not use instance state", StaticMemberCandidateIsDetected),
         new("OOP104 detects stateless classes", StaticClassCandidateIsDetected),
         new("OOP002 detects repeated runtime type branching", TypeBranchingIsDetected),
@@ -38,6 +42,22 @@ internal static class Program
         return failed == 0 ? 0 : 1;
     }
 
+    private static void ExcessiveVisibilityIsDetected()
+    {
+        const string source = """
+            public class Base
+            {
+            }
+
+            internal sealed class Child : Base
+            {
+            }
+            """;
+
+        var diagnostics = Run(new ExcessiveVisibilityRule(), source);
+        AssertRuleCount(diagnostics, "OOP101", 1);
+    }
+
     private static void EncapsulationLeakIsDetected()
     {
         const string source = """
@@ -49,6 +69,67 @@ internal static class Program
 
         var diagnostics = Run(new EncapsulationLeakRule(), source);
         AssertSingleRule(diagnostics, "OOP106", DesignDiagnosticSeverity.Error);
+    }
+
+    private static void MutableCollectionExposureIsDetected()
+    {
+        const string source = """
+            using System.Collections.Generic;
+
+            internal sealed class Bag
+            {
+                private readonly List<int> _items = new();
+
+                public List<int> Items => _items;
+            }
+            """;
+
+        var diagnostics = Run(new EncapsulationLeakRule(), source);
+        AssertRuleCount(diagnostics, "OOP106", 1);
+    }
+
+    private static void UnnecessaryPublicSetterIsDetected()
+    {
+        const string source = """
+            internal sealed class Counter
+            {
+                public int Value { get; set; }
+
+                public void Increment()
+                {
+                    Value++;
+                }
+            }
+            """;
+
+        var diagnostics = Run(new EncapsulationLeakRule(), source);
+        AssertRuleCount(diagnostics, "OOP106", 1);
+    }
+
+    private static void ExternallyUsedSetterIsAllowed()
+    {
+        const string source = """
+            internal sealed class Counter
+            {
+                public int Value { get; set; }
+
+                public void Increment()
+                {
+                    Value++;
+                }
+            }
+
+            internal sealed class CounterEditor
+            {
+                public void Reset(Counter counter)
+                {
+                    counter.Value = 0;
+                }
+            }
+            """;
+
+        var diagnostics = Run(new EncapsulationLeakRule(), source);
+        AssertRuleCount(diagnostics, "OOP106", 0);
     }
 
     private static void StaticMemberCandidateIsDetected()

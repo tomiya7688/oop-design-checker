@@ -11,9 +11,10 @@ The first implementation targets C# source through Roslyn.
 Implemented rules:
 
 - `OOP002` - polymorphism bypassed by repeated runtime type branching
+- `OOP101` - public application class is visible more widely than its actual inheritance-hierarchy usage requires
 - `OOP103` - instance method can be static
 - `OOP104` - class with no meaningful instance state can be static
-- `OOP106` - public field leaks object representation
+- `OOP106` - encapsulation leaks such as public mutable fields, directly exposed mutable collections, and unnecessarily public setters
 - `OOP201` - oversized or overly complex operation
 - `OOP303` - override disables inherited behavior by always rejecting it
 - `OOP304` - excessive inheritance depth

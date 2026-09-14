@@ -7,6 +7,7 @@ internal static class RuleCatalog
     public static IReadOnlyList<IAnalysisRule> CreateDefault() =>
     [
         new TypeBranchPolymorphismRule(),
+        new ExcessiveVisibilityRule(),
         new StaticMemberCandidateRule(),
         new StaticClassCandidateRule(),
         new EncapsulationLeakRule(),
