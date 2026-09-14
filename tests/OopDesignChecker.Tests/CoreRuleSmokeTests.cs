@@ -17,6 +17,7 @@ internal static class CoreRuleSmokeTests
         HelperConnectedStateIsNotFlagged();
         InheritancePrecisionSmokeTests.Run();
         PolymorphismPrecisionSmokeTests.Run();
+        EncapsulationPrecisionSmokeTests.Run();
         ObjectNavigationRuleTests.Run();
         ExtendedRuleSmokeTests.Run();
     }

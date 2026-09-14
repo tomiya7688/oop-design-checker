@@ -25,7 +25,10 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
 
             foreach (var property in root.DescendantNodes().OfType<PropertyDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(property) is not IPropertySymbol propertySymbol)
+                if (
+                    semanticModel.GetDeclaredSymbol(property) is not IPropertySymbol propertySymbol
+                    || DataCarrierClassifier.IsExplicitDataCarrier(propertySymbol.ContainingType)
+                )
                 {
                     continue;
                 }
@@ -70,6 +73,7 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
                 semanticModel.GetDeclaredSymbol(variable) is not IFieldSymbol field
                 || field.DeclaredAccessibility != Accessibility.Public
                 || field.IsConst
+                || DataCarrierClassifier.IsExplicitDataCarrier(field.ContainingType)
             )
             {
                 continue;

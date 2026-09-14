@@ -76,8 +76,9 @@ internal sealed class ExcessiveExternalStateManipulationRule : IAnalysisRule
         var targetType = member?.ContainingType;
         if (
             targetType is null
+            || !targetType.Locations.Any(location => location.IsInSource)
             || SymbolEqualityComparer.Default.Equals(targetType, method.ContainingType)
-            || IsExplicitDataCarrier(targetType)
+            || DataCarrierClassifier.IsExplicitDataCarrier(targetType)
             || !IsPublicInstanceState(member)
         )
         {
@@ -95,17 +96,6 @@ internal sealed class ExcessiveExternalStateManipulationRule : IAnalysisRule
                     SetMethod.DeclaredAccessibility: Accessibility.Public
                 }
                 or IFieldSymbol { IsStatic: false, DeclaredAccessibility: Accessibility.Public };
-
-    private static bool IsExplicitDataCarrier(INamedTypeSymbol type)
-    {
-        var name = type.Name;
-        return name.EndsWith("Dto", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Request", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Response", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Options", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Configuration", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Config", StringComparison.OrdinalIgnoreCase);
-    }
 
     private readonly record struct ExternalWrite(
         string Receiver,

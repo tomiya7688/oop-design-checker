@@ -28,6 +28,7 @@ internal sealed class ExcessiveVisibilityRule : IAnalysisRule
                     semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
                     || symbol.DeclaredAccessibility != Accessibility.Public
                     || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
+                    || FrameworkContractClassifier.HasExternalTypeContract(symbol)
                 )
                 {
                     continue;

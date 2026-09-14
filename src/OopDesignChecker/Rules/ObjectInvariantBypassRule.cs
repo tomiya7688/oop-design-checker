@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using OopDesignChecker.Analysis;
 using OopDesignChecker.Core;
@@ -21,6 +22,15 @@ internal sealed class ObjectInvariantBypassRule : IAnalysisRule
                 var classDeclaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>()
             )
             {
+                if (
+                    semanticModel.GetDeclaredSymbol(classDeclaration)
+                        is INamedTypeSymbol classSymbol
+                    && DataCarrierClassifier.IsExplicitDataCarrier(classSymbol)
+                )
+                {
+                    continue;
+                }
+
                 foreach (
                     var propertyDeclaration in classDeclaration.Members.OfType<PropertyDeclarationSyntax>()
                 )
@@ -30,6 +40,7 @@ internal sealed class ObjectInvariantBypassRule : IAnalysisRule
                             is not IPropertySymbol property
                         || property.SetMethod?.DeclaredAccessibility != Accessibility.Public
                         || property.IsStatic
+                        || SetterEnforcesValidation(propertyDeclaration, property, semanticModel)
                     )
                     {
                         continue;
@@ -54,6 +65,37 @@ internal sealed class ObjectInvariantBypassRule : IAnalysisRule
                 }
             }
         }
+    }
+
+    private static bool SetterEnforcesValidation(
+        PropertyDeclarationSyntax declaration,
+        IPropertySymbol property,
+        SemanticModel semanticModel
+    )
+    {
+        var setter = declaration.AccessorList?.Accessors.FirstOrDefault(accessor =>
+            accessor.IsKind(SyntaxKind.SetAccessorDeclaration)
+        );
+        if (
+            setter is null
+            || property.SetMethod is not IMethodSymbol setterSymbol
+            || setterSymbol.Parameters.Length != 1
+        )
+        {
+            return false;
+        }
+
+        var valueParameter = setterSymbol.Parameters[0];
+        return setter
+            .DescendantNodes()
+            .OfType<IfStatementSyntax>()
+            .Any(ifStatement =>
+                ReferencesParameter(ifStatement.Condition, valueParameter, semanticModel)
+                && ifStatement
+                    .Statement.DescendantNodesAndSelf()
+                    .OfType<ThrowStatementSyntax>()
+                    .Any()
+            );
     }
 
     private static bool HasGuardedAssignment(
