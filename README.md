@@ -27,16 +27,29 @@ The first implementation targets C# source through Roslyn.
 
 Implemented rules:
 
+- `OOP001` - several related concrete types expose the same public behavior but share no project abstraction
 - `OOP002` - polymorphism bypassed by repeated runtime type branching
 - `OOP101` - public application class is visible more widely than its actual inheritance-hierarchy usage requires
+- `OOP102` - application class is a conservative sealing candidate
 - `OOP103` - instance method can be static
 - `OOP104` - class with no meaningful instance state can be static
+- `OOP105` - static class owns mutable shared state
 - `OOP106` - encapsulation leaks such as public mutable fields, directly exposed mutable collections, and unnecessarily public setters
 - `OOP201` - oversized or overly complex operation
 - `OOP303` - override disables inherited behavior by always rejecting it
 - `OOP304` - excessive inheritance depth
+- `OOP305` - constructor depends on a concrete project type even though a project abstraction exists
 
 More rules in `specification/check-rules.md` are design targets and will be implemented incrementally.
+
+## Quality gates
+
+GitHub Actions exposes separate checks so failures are easy to identify:
+
+- `normal-ci` - restore, build, and rule smoke tests on Windows, Linux, and macOS
+- `self-check` - runs the checker against its own `src` tree with `--fail-on attention`
+- `code-analyzers` - .NET SDK analyzers at `latest-recommended`, code style enabled, warnings treated as errors
+- `csharpier` - CSharpier 1.3.0 formatting check using the repository-local tool manifest
 
 ## CUI
 
@@ -87,7 +100,7 @@ The GUI accepts a target path and an optional configuration path, then displays 
 
 ## Build
 
-The project targets .NET 10. Cross-platform CI builds the shared engine, CUI, and GUI and self-checks all source on Windows, Linux, and macOS.
+The project targets .NET 10. Cross-platform CI builds the shared engine, CUI, and GUI on Windows, Linux, and macOS.
 
 Example single-file CUI publish:
 
