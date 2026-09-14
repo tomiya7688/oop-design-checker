@@ -17,6 +17,14 @@ internal sealed class UnnecessaryAbstractionRule : IAnalysisRule
 
         foreach (var interfaceEntry in interfaces)
         {
+            if (
+                IsExternalExtensionPoint(interfaceEntry.Symbol)
+                || !ProjectAbstractionClassifier.IsMeaningfulAbstraction(interfaceEntry.Symbol)
+            )
+            {
+                continue;
+            }
+
             var implementations = classes
                 .Where(entry =>
                     entry.Symbol.AllInterfaces.Any(implemented =>
@@ -39,11 +47,18 @@ internal sealed class UnnecessaryAbstractionRule : IAnalysisRule
             yield return DiagnosticFactory.Create(
                 Descriptor,
                 interfaceEntry.Declaration.Identifier.GetLocation(),
-                $"{interfaceEntry.Symbol.Name} has one implementation and is not used as a declared type outside that implementation. The abstraction currently adds ceremony without enabling polymorphic use.",
+                $"Internal abstraction {interfaceEntry.Symbol.Name} has one implementation and is not used as a declared type outside that implementation. The abstraction currently adds ceremony without enabling polymorphic use.",
                 interfaceEntry.Symbol.ToDisplayString()
             );
         }
     }
+
+    private static bool IsExternalExtensionPoint(INamedTypeSymbol interfaceType) =>
+        interfaceType.DeclaredAccessibility
+            is Accessibility.Public
+                or Accessibility.Protected
+                or Accessibility.ProtectedOrInternal
+                or Accessibility.ProtectedAndInternal;
 
     private static IEnumerable<InterfaceEntry> ReadSourceInterfaces(AnalysisContext context)
     {
