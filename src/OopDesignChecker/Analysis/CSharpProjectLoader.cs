@@ -1,3 +1,4 @@
+using System.Xml.Linq;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -17,19 +18,31 @@ internal sealed class CSharpProjectLoader : IProjectLoader
 
     public SourceProject Load(string targetPath)
     {
+        var projects = LoadProjects(targetPath);
+        if (projects.Count != 1)
+        {
+            throw new InvalidOperationException(
+                $"Target contains {projects.Count} C# projects. Use project-set analysis for multi-project targets."
+            );
+        }
+
+        return projects[0];
+    }
+
+    public IReadOnlyList<SourceProject> LoadProjects(string targetPath)
+    {
         var fullTargetPath = Path.GetFullPath(targetPath);
 
         if (File.Exists(fullTargetPath))
         {
             return Path.GetExtension(fullTargetPath).ToLowerInvariant() switch
             {
-                ".cs" => LoadLooseSources(fullTargetPath),
-                ".csproj" => LoadMsBuildProject(fullTargetPath),
-                ".sln" or ".slnx" => throw new InvalidOperationException(
-                    "Solution-wide analysis is not implemented yet. Target a single .csproj instead."
-                ),
+                ".cs" => [LoadLooseSources(fullTargetPath)],
+                ".csproj" => [LoadMsBuildProject(fullTargetPath)],
+                ".sln" => LoadMsBuildSolution(fullTargetPath),
+                ".slnx" => LoadSlnxProjects(fullTargetPath),
                 _ => throw new InvalidOperationException(
-                    "Target file must be a C# source file (.cs) or project file (.csproj)."
+                    "Target file must be a C# source file (.cs), project file (.csproj), or solution file (.sln/.slnx)."
                 ),
             };
         }
@@ -39,10 +52,96 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             throw new InvalidOperationException($"Target does not exist: {fullTargetPath}");
         }
 
-        var projectFile = ResolveProjectFile(fullTargetPath);
-        return projectFile is null
-            ? LoadLooseSources(fullTargetPath)
-            : LoadMsBuildProject(projectFile);
+        var solutionFile = ResolveSolutionFile(fullTargetPath);
+        if (solutionFile is not null)
+        {
+            return LoadProjects(solutionFile);
+        }
+
+        var projectFiles = ResolveProjectFiles(fullTargetPath);
+        return projectFiles.Count == 0
+            ? [LoadLooseSources(fullTargetPath)]
+            : LoadMsBuildProjects(projectFiles);
+    }
+
+    private IReadOnlyList<SourceProject> LoadMsBuildSolution(string solutionFile)
+    {
+        EnsureMsBuildRegistered();
+
+        var workspaceFailures = new List<string>();
+        using var workspace = MSBuildWorkspace.Create();
+        using var workspaceFailureRegistration = RegisterWorkspaceFailureHandler(
+            workspace,
+            workspaceFailures
+        );
+
+        var solution = workspace.OpenSolutionAsync(solutionFile).GetAwaiter().GetResult();
+        ThrowIfWorkspaceFailures(solutionFile, workspaceFailures);
+
+        var rootPath =
+            Path.GetDirectoryName(solutionFile)
+            ?? throw new InvalidOperationException(
+                $"Could not determine solution directory for {solutionFile}."
+            );
+        var projects = solution
+            .Projects.Where(project => project.Language == LanguageNames.CSharp)
+            .Where(project =>
+                string.IsNullOrWhiteSpace(project.FilePath)
+                || !PathFilter.ShouldIgnore(project.FilePath, rootPath, _ignoredPaths)
+            )
+            .OrderBy(project => project.FilePath, StringComparer.OrdinalIgnoreCase)
+            .Select(project => CreateSourceProject(project, workspaceFailures))
+            .ToArray();
+
+        if (projects.Length == 0)
+        {
+            throw new InvalidOperationException(
+                $"No analyzable C# projects were found in solution: {solutionFile}"
+            );
+        }
+
+        return projects;
+    }
+
+    private IReadOnlyList<SourceProject> LoadSlnxProjects(string solutionFile)
+    {
+        var rootPath =
+            Path.GetDirectoryName(solutionFile)
+            ?? throw new InvalidOperationException(
+                $"Could not determine solution directory for {solutionFile}."
+            );
+        var document = XDocument.Load(solutionFile, LoadOptions.None);
+        var projectFiles = document
+            .Descendants()
+            .Where(element => element.Name.LocalName == "Project")
+            .Select(element => element.Attribute("Path")?.Value)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Select(path => ResolveSlnxProjectPath(rootPath, path!))
+            .Where(path =>
+                string.Equals(Path.GetExtension(path), ".csproj", StringComparison.OrdinalIgnoreCase)
+            )
+            .Where(path => !PathFilter.ShouldIgnore(path, rootPath, _ignoredPaths))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (projectFiles.Length == 0)
+        {
+            throw new InvalidOperationException(
+                $"No analyzable C# projects were found in solution: {solutionFile}"
+            );
+        }
+
+        var missingProjects = projectFiles.Where(path => !File.Exists(path)).ToArray();
+        if (missingProjects.Length > 0)
+        {
+            throw new InvalidOperationException(
+                "Solution references missing C# project files:\n"
+                    + string.Join("\n", missingProjects)
+            );
+        }
+
+        return LoadMsBuildProjects(projectFiles);
     }
 
     private SourceProject LoadMsBuildProject(string projectFile)
@@ -51,27 +150,42 @@ internal sealed class CSharpProjectLoader : IProjectLoader
 
         var workspaceFailures = new List<string>();
         using var workspace = MSBuildWorkspace.Create();
-        using var workspaceFailureRegistration = workspace.RegisterWorkspaceFailedHandler(args =>
-        {
-            if (args.Diagnostic.Kind == WorkspaceDiagnosticKind.Failure)
-            {
-                workspaceFailures.Add(args.Diagnostic.Message);
-            }
-        });
+        using var workspaceFailureRegistration = RegisterWorkspaceFailureHandler(
+            workspace,
+            workspaceFailures
+        );
 
         var project = workspace.OpenProjectAsync(projectFile).GetAwaiter().GetResult();
+        return CreateSourceProject(project, workspaceFailures);
+    }
+
+    private IReadOnlyList<SourceProject> LoadMsBuildProjects(
+        IReadOnlyCollection<string> projectFiles
+    ) =>
+        projectFiles
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .Select(LoadMsBuildProject)
+            .ToArray();
+
+    private SourceProject CreateSourceProject(Project project, List<string> workspaceFailures)
+    {
         if (
             project.GetCompilationAsync().GetAwaiter().GetResult()
             is not CSharpCompilation compilation
         )
         {
             throw new InvalidOperationException(
-                $"Could not create a C# compilation for {projectFile}."
+                $"Could not create a C# compilation for {project.FilePath ?? project.Name}."
             );
         }
 
         ValidateCompilation(compilation, workspaceFailures);
 
+        var projectFile =
+            project.FilePath
+            ?? throw new InvalidOperationException(
+                $"Could not determine project file path for {project.Name}."
+            );
         var rootPath =
             Path.GetDirectoryName(projectFile)
             ?? throw new InvalidOperationException(
@@ -141,45 +255,45 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         );
     }
 
-    private string? ResolveProjectFile(string targetDirectory)
+    private string? ResolveSolutionFile(string targetDirectory)
+    {
+        var solutionFiles = Directory
+            .EnumerateFiles(targetDirectory, "*.sln", SearchOption.TopDirectoryOnly)
+            .Concat(Directory.EnumerateFiles(targetDirectory, "*.slnx", SearchOption.TopDirectoryOnly))
+            .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return solutionFiles.Length switch
+        {
+            0 => null,
+            1 => solutionFiles[0],
+            _ => throw new InvalidOperationException(
+                $"Multiple solution files were found under {targetDirectory}. Target a specific .sln or .slnx file."
+            ),
+        };
+    }
+
+    private IReadOnlyList<string> ResolveProjectFiles(string targetDirectory)
     {
         var directProjects = Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.TopDirectoryOnly)
             .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        if (directProjects.Length == 1)
+        if (directProjects.Length > 0)
         {
-            return directProjects[0];
+            return directProjects;
         }
 
-        if (directProjects.Length > 1)
-        {
-            throw MultipleProjectsFound(targetDirectory, directProjects);
-        }
-
-        var recursiveProjects = Directory
+        return Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.AllDirectories)
             .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToArray();
-
-        return recursiveProjects.Length switch
-        {
-            0 => null,
-            1 => recursiveProjects[0],
-            _ => throw MultipleProjectsFound(targetDirectory, recursiveProjects),
-        };
     }
-
-    private static InvalidOperationException MultipleProjectsFound(
-        string targetDirectory,
-        IReadOnlyCollection<string> projectFiles
-    ) =>
-        new(
-            $"Multiple C# projects were found under {targetDirectory}. "
-                + "Target a single .csproj to avoid mixing unrelated project compilations. "
-                + $"Found: {string.Join(", ", projectFiles.Select(Path.GetFileName))}"
-        );
 
     private IEnumerable<string> DiscoverLooseSourceFiles(string targetPath, string rootPath)
     {
@@ -208,6 +322,42 @@ internal sealed class CSharpProjectLoader : IProjectLoader
                 yield return file;
             }
         }
+    }
+
+    private static IDisposable RegisterWorkspaceFailureHandler(
+        MSBuildWorkspace workspace,
+        List<string> workspaceFailures
+    ) =>
+        workspace.RegisterWorkspaceFailedHandler(args =>
+        {
+            if (args.Diagnostic.Kind == WorkspaceDiagnosticKind.Failure)
+            {
+                workspaceFailures.Add(args.Diagnostic.Message);
+            }
+        });
+
+    private static string ResolveSlnxProjectPath(string rootPath, string projectPath)
+    {
+        var normalizedPath = projectPath
+            .Replace('\\', Path.DirectorySeparatorChar)
+            .Replace('/', Path.DirectorySeparatorChar);
+        return Path.GetFullPath(Path.Combine(rootPath, normalizedPath));
+    }
+
+    private static void ThrowIfWorkspaceFailures(
+        string targetPath,
+        IReadOnlyCollection<string> workspaceFailures
+    )
+    {
+        if (workspaceFailures.Count == 0)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"Target {targetPath} could not be analyzed reliably because project loading contains errors:\n"
+                + string.Join("\n", workspaceFailures.Select(message => $"MSBuild: {message}"))
+        );
     }
 
     private static void ValidateCompilation(
