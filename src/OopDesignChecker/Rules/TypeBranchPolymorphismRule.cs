@@ -64,7 +64,7 @@ internal sealed class TypeBranchPolymorphismRule : IAnalysisRule
     private static bool TryReadTypeTest(ExpressionSyntax condition, out TypeTest test)
     {
         if (condition is BinaryExpressionSyntax binaryExpression
-            && binaryExpression.IsKind(SyntaxKind.IsExpression))
+            && binaryExpression.RawKind == (int)SyntaxKind.IsExpression)
         {
             test = new TypeTest(
                 binaryExpression.Left.ToString(),
