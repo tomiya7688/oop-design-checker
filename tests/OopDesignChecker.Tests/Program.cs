@@ -16,7 +16,10 @@ internal static class Program
         new("OOP104 static class candidates are attention", StaticClassCandidateIsDetected),
         new("OOP002 type branching is warning", TypeBranchingIsDetected),
         new("OOP303 disabled parent behavior is danger", DisabledParentBehaviorIsDetected),
-        new("OOP304 deep inheritance is attention", DeepInheritanceIsDetected)
+        new("OOP304 deep inheritance is attention", DeepInheritanceIsDetected),
+        new("configuration disables selected rules", ConfigurationBehaviorTests.DisabledRulesAreSuppressed),
+        new("configuration ignores matching paths", ConfigurationBehaviorTests.IgnoredPathsAreExcluded),
+        new("configuration controls failure threshold", ConfigurationBehaviorTests.FailureThresholdIsLoaded)
     ];
 
     private static int Main()
