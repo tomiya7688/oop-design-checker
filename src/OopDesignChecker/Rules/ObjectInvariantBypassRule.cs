@@ -23,7 +23,8 @@ internal sealed class ObjectInvariantBypassRule : IAnalysisRule
             )
             {
                 if (
-                    semanticModel.GetDeclaredSymbol(classDeclaration) is INamedTypeSymbol classSymbol
+                    semanticModel.GetDeclaredSymbol(classDeclaration)
+                        is INamedTypeSymbol classSymbol
                     && DataCarrierClassifier.IsExplicitDataCarrier(classSymbol)
                 )
                 {
