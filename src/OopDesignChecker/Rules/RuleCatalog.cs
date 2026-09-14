@@ -8,6 +8,7 @@ internal static class RuleCatalog
         [
             new MissingCommonAbstractionRule(),
             new TypeBranchPolymorphismRule(),
+            new UnnecessaryAbstractionRule(),
             new ExcessiveVisibilityRule(),
             new SealingCandidateRule(),
             new StaticMemberCandidateRule(),
@@ -24,6 +25,7 @@ internal static class RuleCatalog
             new AvoidableConcreteConstructionRule(),
             new CompositionCandidateRule(),
             new MultipleObjectsInClassRule(),
+            new AnemicObjectRule(),
             new ExcessiveObjectNavigationRule(),
             new GetterSetterOnlyObjectRule(),
         ];
