@@ -47,7 +47,7 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
         }
     }
 
-    private static IReadOnlyDictionary<IMethodSymbol, HashSet<IFieldSymbol>> BuildFieldUsage(
+    private static Dictionary<IMethodSymbol, HashSet<IFieldSymbol>> BuildFieldUsage(
         INamedTypeSymbol containingType,
         ClassDeclarationSyntax declaration,
         SemanticModel semanticModel
