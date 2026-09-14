@@ -1,3 +1,5 @@
+using Microsoft.CodeAnalysis;
+using OopDesignChecker.Analysis;
 using OopDesignChecker.Core;
 using OopDesignChecker.Rules;
 
@@ -7,12 +9,15 @@ internal static class Program
 {
     private static readonly IReadOnlyList<TestCase> TestCases =
     [
+        new("project loader resolves real project/package references", ProjectLoaderResolvesProjectReferences),
+        new("project loader rejects broken loose-source compilations", ProjectLoaderRejectsBrokenCompilation),
         new("OOP101 detects public classes confined to an inheritance hierarchy", ExcessiveVisibilityIsDetected),
         new("OOP106 detects public mutable fields", EncapsulationLeakIsDetected),
         new("OOP106 detects mutable collection exposure", MutableCollectionExposureIsDetected),
         new("OOP106 detects unnecessarily public setters", UnnecessaryPublicSetterIsDetected),
         new("OOP106 keeps externally used setters public", ExternallyUsedSetterIsAllowed),
         new("OOP103 detects instance methods that do not use instance state", StaticMemberCandidateIsDetected),
+        new("OOP103 does not suggest static when inherited instance state is used", InheritedInstanceStateIsNotStaticCandidate),
         new("OOP104 detects stateless classes", StaticClassCandidateIsDetected),
         new("OOP002 detects repeated runtime type branching", TypeBranchingIsDetected),
         new("OOP303 detects overrides that disable inherited behavior", DisabledParentBehaviorIsDetected),
@@ -40,6 +45,61 @@ internal static class Program
 
         Console.WriteLine($"{TestCases.Count - failed}/{TestCases.Count} tests passed.");
         return failed == 0 ? 0 : 1;
+    }
+
+    private static void ProjectLoaderResolvesProjectReferences()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var projectPath = Path.Combine(
+            repositoryRoot,
+            "src",
+            "OopDesignChecker",
+            "OopDesignChecker.csproj");
+
+        var project = new CSharpProjectLoader().Load(projectPath);
+        var errors = project.Compilation.GetDiagnostics()
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .ToArray();
+
+        if (errors.Length > 0)
+        {
+            throw new InvalidOperationException(
+                "Expected project compilation without errors:\n"
+                + string.Join("\n", errors.Select(error => error.ToString())));
+        }
+
+        if (project.SyntaxTrees.Any(tree => PathFilter.ShouldIgnore(tree.FilePath)))
+        {
+            throw new InvalidOperationException("Generated bin/obj source leaked into rule traversal.");
+        }
+    }
+
+    private static void ProjectLoaderRejectsBrokenCompilation()
+    {
+        var temporaryDirectory = Path.Combine(Path.GetTempPath(), $"oop-checker-test-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(temporaryDirectory);
+
+        try
+        {
+            var sourcePath = Path.Combine(temporaryDirectory, "Broken.cs");
+            File.WriteAllText(sourcePath, "internal sealed class Broken { MissingType Value; }");
+
+            try
+            {
+                _ = new CSharpProjectLoader().Load(sourcePath);
+            }
+            catch (InvalidOperationException exception)
+                when (exception.Message.Contains("compilation contains errors", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            throw new InvalidOperationException("Broken source was accepted as a reliable compilation.");
+        }
+        finally
+        {
+            Directory.Delete(temporaryDirectory, recursive: true);
+        }
     }
 
     private static void ExcessiveVisibilityIsDetected()
@@ -148,6 +208,24 @@ internal static class Program
         AssertRuleCount(diagnostics, "OOP103", 1);
     }
 
+    private static void InheritedInstanceStateIsNotStaticCandidate()
+    {
+        const string source = """
+            internal class BaseCalculator
+            {
+                protected int Offset => 1;
+            }
+
+            internal sealed class Calculator : BaseCalculator
+            {
+                public int AddOffset(int value) => value + Offset;
+            }
+            """;
+
+        var diagnostics = Run(new StaticMemberCandidateRule(), source);
+        AssertRuleCount(diagnostics, "OOP103", 0);
+    }
+
     private static void StaticClassCandidateIsDetected()
     {
         const string source = """
@@ -244,6 +322,31 @@ internal static class Program
 
     private static IReadOnlyList<DesignDiagnostic> Run(IAnalysisRule rule, string source) =>
         rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+
+    private static string FindRepositoryRoot()
+    {
+        var candidates = new[]
+        {
+            Directory.GetCurrentDirectory(),
+            AppContext.BaseDirectory
+        };
+
+        foreach (var candidate in candidates)
+        {
+            var current = new DirectoryInfo(candidate);
+            while (current is not null)
+            {
+                if (File.Exists(Path.Combine(current.FullName, "OopDesignChecker.sln")))
+                {
+                    return current.FullName;
+                }
+
+                current = current.Parent;
+            }
+        }
+
+        throw new InvalidOperationException("Could not locate repository root for integration test.");
+    }
 
     private static void AssertSingleRule(
         IReadOnlyList<DesignDiagnostic> diagnostics,
