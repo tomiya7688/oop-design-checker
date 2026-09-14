@@ -21,6 +21,7 @@ internal sealed class StaticMemberCandidateRule : IAnalysisRule
             {
                 if (
                     semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol classSymbol
+                    || HasUnresolvedBaseContract(declaration, semanticModel)
                 )
                 {
                     continue;
@@ -77,4 +78,12 @@ internal sealed class StaticMemberCandidateRule : IAnalysisRule
             }
         }
     }
+
+    private static bool HasUnresolvedBaseContract(
+        ClassDeclarationSyntax declaration,
+        SemanticModel semanticModel
+    ) =>
+        declaration.BaseList?.Types.Any(baseType =>
+            semanticModel.GetTypeInfo(baseType.Type).Type is null or { TypeKind: TypeKind.Error }
+        ) == true;
 }
