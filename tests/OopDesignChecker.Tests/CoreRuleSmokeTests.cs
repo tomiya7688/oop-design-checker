@@ -13,6 +13,7 @@ internal static class CoreRuleSmokeTests
         ConcreteDependencyDespiteAbstractionIsWarning();
         AvoidableConcreteConstructionIsWarning();
         IndependentObjectClustersAreWarning();
+        ExtendedRuleSmokeTests.Run();
     }
 
     private static void MissingCommonAbstractionIsDetected()
