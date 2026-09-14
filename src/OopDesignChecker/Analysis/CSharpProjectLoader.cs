@@ -77,8 +77,8 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             ?? throw new InvalidOperationException(
                 $"Could not determine project directory for {projectFile}."
             );
-        var syntaxTrees = project.Documents
-            .Select(document => document.GetSyntaxTreeAsync().GetAwaiter().GetResult())
+        var syntaxTrees = project
+            .Documents.Select(document => document.GetSyntaxTreeAsync().GetAwaiter().GetResult())
             .Where(tree => tree is not null)
             .Cast<SyntaxTree>()
             .Where(tree =>
@@ -217,7 +217,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
 
     private static void ValidateCompilation(
         CSharpCompilation compilation,
-        IReadOnlyCollection<string> workspaceFailures
+        List<string> workspaceFailures
     )
     {
         var errors = compilation
