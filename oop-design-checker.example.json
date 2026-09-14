@@ -1,0 +1,10 @@
+{
+  "ignoredPaths": [
+    "**/Generated/**",
+    "**/*.g.cs"
+  ],
+  "disabledRules": [
+    "OOP103"
+  ],
+  "failureThreshold": "danger"
+}
