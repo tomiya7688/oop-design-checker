@@ -82,7 +82,9 @@ internal static class SymbolUtilities
         INamedTypeSymbol interfaceType
     )
     {
-        foreach (var interfaceMember in interfaceType.GetMembers(method.Name).OfType<IMethodSymbol>())
+        foreach (
+            var interfaceMember in interfaceType.GetMembers(method.Name).OfType<IMethodSymbol>()
+        )
         {
             var implementation = method.ContainingType.FindImplementationForInterfaceMember(
                 interfaceMember
