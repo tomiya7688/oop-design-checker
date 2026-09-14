@@ -264,7 +264,7 @@ internal static class Program
         AssertSingleRule(diagnostics, "OOP304", DesignDiagnosticSeverity.Attention);
     }
 
-    private static IReadOnlyList<DesignDiagnostic> Run(IAnalysisRule rule, string source) =>
+    private static DesignDiagnostic[] Run(IAnalysisRule rule, string source) =>
         rule.Analyze(TestProjectFactory.Create(source)).ToArray();
 
     private static void AssertSingleRule(
