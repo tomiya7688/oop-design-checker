@@ -38,12 +38,22 @@ internal static class SymbolUtilities
     {
         foreach (var interfaceType in method.ContainingType.AllInterfaces)
         {
-            foreach (var interfaceMember in interfaceType.GetMembers().OfType<IMethodSymbol>())
+            foreach (
+                var interfaceMember in interfaceType.GetMembers(method.Name).OfType<IMethodSymbol>()
+            )
             {
                 var implementation = method.ContainingType.FindImplementationForInterfaceMember(
                     interfaceMember
                 );
                 if (SymbolEqualityComparer.Default.Equals(implementation, method))
+                {
+                    return true;
+                }
+
+                if (
+                    interfaceMember.Arity == method.Arity
+                    && interfaceMember.Parameters.Length == method.Parameters.Length
+                )
                 {
                     return true;
                 }
