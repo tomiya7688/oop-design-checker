@@ -4,6 +4,10 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker", "src\OopDesignChecker\OopDesignChecker.csproj", "{69AB7B1D-A2AD-4C0C-8E02-F5FC7A02B70F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker.Cui", "src\frontends\cui\OopDesignChecker.Cui.csproj", "{D2788BB0-88D9-4A34-8B0A-855B3CFC5AA1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker.Gui", "src\frontends\gui\OopDesignChecker.Gui.csproj", "{57C78729-94D5-4ACD-8334-D7EA3F9D60D1}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker.Tests", "tests\OopDesignChecker.Tests\OopDesignChecker.Tests.csproj", "{EA166BF2-4281-4C27-BBC0-72DA3797EBF6}"
 EndProject
 Global
@@ -16,6 +20,14 @@ Global
         {69AB7B1D-A2AD-4C0C-8E02-F5FC7A02B70F}.Debug|Any CPU.Build.0 = Debug|Any CPU
         {69AB7B1D-A2AD-4C0C-8E02-F5FC7A02B70F}.Release|Any CPU.ActiveCfg = Release|Any CPU
         {69AB7B1D-A2AD-4C0C-8E02-F5FC7A02B70F}.Release|Any CPU.Build.0 = Release|Any CPU
+        {D2788BB0-88D9-4A34-8B0A-855B3CFC5AA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {D2788BB0-88D9-4A34-8B0A-855B3CFC5AA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {D2788BB0-88D9-4A34-8B0A-855B3CFC5AA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {D2788BB0-88D9-4A34-8B0A-855B3CFC5AA1}.Release|Any CPU.Build.0 = Release|Any CPU
+        {57C78729-94D5-4ACD-8334-D7EA3F9D60D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {57C78729-94D5-4ACD-8334-D7EA3F9D60D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {57C78729-94D5-4ACD-8334-D7EA3F9D60D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {57C78729-94D5-4ACD-8334-D7EA3F9D60D1}.Release|Any CPU.Build.0 = Release|Any CPU
         {EA166BF2-4281-4C27-BBC0-72DA3797EBF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
         {EA166BF2-4281-4C27-BBC0-72DA3797EBF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
         {EA166BF2-4281-4C27-BBC0-72DA3797EBF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
