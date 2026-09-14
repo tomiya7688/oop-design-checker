@@ -29,18 +29,22 @@ internal static class InstanceUsageInspector
             }
 
             if (
-                referencedSymbol is IFieldSymbol or IPropertySymbol or IEventSymbol or IMethodSymbol
+                referencedSymbol
+                    is not (IFieldSymbol or IPropertySymbol or IEventSymbol or IMethodSymbol)
+                || referencedSymbol.ContainingType is null
             )
             {
-                if (
-                    SymbolEqualityComparer.Default.Equals(
-                        referencedSymbol.ContainingType,
-                        symbol.ContainingType
-                    )
+                continue;
+            }
+
+            if (
+                SymbolUtilities.IsSameOrBaseType(
+                    referencedSymbol.ContainingType,
+                    symbol.ContainingType
                 )
-                {
-                    return true;
-                }
+            )
+            {
+                return true;
             }
         }
 

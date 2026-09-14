@@ -10,6 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference
+      Include="Microsoft.Build.Framework"
+      Version="17.11.48"
+      ExcludeAssets="runtime"
+      PrivateAssets="all"
+    />
     <ProjectReference Include="../../src/OopDesignChecker/OopDesignChecker.csproj" />
   </ItemGroup>
 </Project>
