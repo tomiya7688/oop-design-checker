@@ -145,7 +145,7 @@ internal static class EncapsulationPrecisionSmokeTests
     }
 
     private static void AssertSingle(
-        IAnalysisRule rule,
+        ObjectInvariantBypassRule rule,
         string source,
         string ruleId,
         DesignDiagnosticSeverity severity
