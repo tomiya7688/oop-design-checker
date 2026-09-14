@@ -34,29 +34,67 @@ internal static class SymbolUtilities
         return depth;
     }
 
-    public static bool ImplementsInterfaceMember(IMethodSymbol method)
+    public static bool ImplementsInterfaceMember(
+        IMethodSymbol method,
+        ClassDeclarationSyntax declaration,
+        SemanticModel semanticModel
+    )
     {
         foreach (var interfaceType in method.ContainingType.AllInterfaces)
         {
-            foreach (
-                var interfaceMember in interfaceType.GetMembers(method.Name).OfType<IMethodSymbol>()
+            if (HasMatchingInterfaceMethod(method, interfaceType))
+            {
+                return true;
+            }
+        }
+
+        if (declaration.BaseList is null)
+        {
+            return false;
+        }
+
+        foreach (var baseType in declaration.BaseList.Types)
+        {
+            if (
+                semanticModel.GetTypeInfo(baseType.Type).Type is not INamedTypeSymbol type
+                || type.TypeKind != TypeKind.Interface
             )
             {
-                var implementation = method.ContainingType.FindImplementationForInterfaceMember(
-                    interfaceMember
-                );
-                if (SymbolEqualityComparer.Default.Equals(implementation, method))
-                {
-                    return true;
-                }
+                continue;
+            }
 
-                if (
-                    interfaceMember.Arity == method.Arity
-                    && interfaceMember.Parameters.Length == method.Parameters.Length
+            if (
+                HasMatchingInterfaceMethod(method, type)
+                || type.AllInterfaces.Any(interfaceType =>
+                    HasMatchingInterfaceMethod(method, interfaceType)
                 )
-                {
-                    return true;
-                }
+            )
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasMatchingInterfaceMethod(IMethodSymbol method, INamedTypeSymbol interfaceType)
+    {
+        foreach (var interfaceMember in interfaceType.GetMembers(method.Name).OfType<IMethodSymbol>())
+        {
+            var implementation = method.ContainingType.FindImplementationForInterfaceMember(
+                interfaceMember
+            );
+            if (SymbolEqualityComparer.Default.Equals(implementation, method))
+            {
+                return true;
+            }
+
+            if (
+                interfaceMember.Arity == method.Arity
+                && interfaceMember.Parameters.Length == method.Parameters.Length
+            )
+            {
+                return true;
             }
         }
 
