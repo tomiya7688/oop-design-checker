@@ -15,6 +15,7 @@ internal static class CoreRuleSmokeTests
         IndependentObjectClustersAreWarning();
         PropertyStateClustersAreWarning();
         HelperConnectedStateIsNotFlagged();
+        ObjectNavigationRuleTests.Run();
         ExtendedRuleSmokeTests.Run();
     }
 
