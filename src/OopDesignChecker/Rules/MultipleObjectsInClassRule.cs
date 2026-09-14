@@ -153,11 +153,9 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
     private static bool IsInstanceStateMember(ISymbol? symbol, INamedTypeSymbol containingType) =>
         symbol switch
         {
-            IFieldSymbol field =>
-                !field.IsStatic
+            IFieldSymbol field => !field.IsStatic
                 && SymbolEqualityComparer.Default.Equals(field.ContainingType, containingType),
-            IPropertySymbol property =>
-                !property.IsStatic
+            IPropertySymbol property => !property.IsStatic
                 && SymbolEqualityComparer.Default.Equals(property.ContainingType, containingType),
             _ => false,
         };
