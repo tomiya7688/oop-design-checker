@@ -1,9 +1,8 @@
-using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 
 namespace OopDesignChecker.Gui;
 
-internal sealed class App : Application
+internal sealed class App : Avalonia.Application
 {
     public override void OnFrameworkInitializationCompleted()
     {
