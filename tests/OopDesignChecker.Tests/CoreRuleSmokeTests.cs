@@ -16,6 +16,7 @@ internal static class CoreRuleSmokeTests
         PropertyStateClustersAreWarning();
         HelperConnectedStateIsNotFlagged();
         InheritancePrecisionSmokeTests.Run();
+        PolymorphismPrecisionSmokeTests.Run();
         ObjectNavigationRuleTests.Run();
         ExtendedRuleSmokeTests.Run();
     }
@@ -39,6 +40,13 @@ internal static class CoreRuleSmokeTests
             {
                 public void Move() { }
                 public void Eat() { }
+            }
+
+            internal sealed class Zoo
+            {
+                public void Handle(Dog animal) { }
+                public void Handle(Cat animal) { }
+                public void Handle(Bird animal) { }
             }
             """;
 

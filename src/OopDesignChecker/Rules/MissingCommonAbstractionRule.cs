@@ -27,7 +27,7 @@ internal sealed class MissingCommonAbstractionRule : IAnalysisRule
         )
         {
             var related = group.ToArray();
-            if (related.Length < MinimumRelatedTypes)
+            if (related.Length < MinimumRelatedTypes || !HasSharedUsageContext(context, related))
             {
                 continue;
             }
@@ -36,7 +36,7 @@ internal sealed class MissingCommonAbstractionRule : IAnalysisRule
             yield return DiagnosticFactory.Create(
                 Descriptor,
                 related[0].Declaration.Identifier.GetLocation(),
-                $"Types {names} expose the same {related[0].OperationCount} public instance operations but share no project abstraction. Consider an interface or meaningful base abstraction if callers treat them as the same concept."
+                $"Types {names} expose the same {related[0].OperationCount} public instance operations and are used in the same call-site role, but share no project abstraction. Consider an interface or meaningful base abstraction."
             );
         }
     }
@@ -84,6 +84,90 @@ internal sealed class MissingCommonAbstractionRule : IAnalysisRule
                 signatures.Length
             );
         }
+    }
+
+    private static bool HasSharedUsageContext(
+        AnalysisContext context,
+        IReadOnlyList<AbstractionCandidate> related
+    )
+    {
+        var methods = new List<IMethodSymbol>();
+
+        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        {
+            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            foreach (
+                var declaration in syntaxTree
+                    .GetRoot()
+                    .DescendantNodes()
+                    .OfType<MethodDeclarationSyntax>()
+            )
+            {
+                if (semanticModel.GetDeclaredSymbol(declaration) is IMethodSymbol method)
+                {
+                    methods.Add(method);
+                }
+            }
+        }
+
+        foreach (
+            var overloadGroup in methods.GroupBy(method =>
+                $"{method.ContainingType.ToDisplayString()}|{method.Name}|{method.Parameters.Length}"
+            )
+        )
+        {
+            var overloads = overloadGroup.ToArray();
+            if (overloads.Length < MinimumRelatedTypes || overloads[0].Parameters.Length == 0)
+            {
+                continue;
+            }
+
+            for (var index = 0; index < overloads[0].Parameters.Length; index++)
+            {
+                var matchedTypes = new List<INamedTypeSymbol>();
+                foreach (var overload in overloads)
+                {
+                    if (
+                        overload.Parameters[index].Type is not INamedTypeSymbol parameterType
+                        || !TryMatchRelated(parameterType, related, out var matched)
+                        || matchedTypes.Any(existing =>
+                            SymbolEqualityComparer.Default.Equals(existing, matched)
+                        )
+                    )
+                    {
+                        continue;
+                    }
+
+                    matchedTypes.Add(matched);
+                }
+
+                if (matchedTypes.Count >= MinimumRelatedTypes)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryMatchRelated(
+        INamedTypeSymbol type,
+        IReadOnlyList<AbstractionCandidate> related,
+        out INamedTypeSymbol matched
+    )
+    {
+        foreach (var candidate in related)
+        {
+            if (SymbolEqualityComparer.Default.Equals(type, candidate.Symbol))
+            {
+                matched = candidate.Symbol;
+                return true;
+            }
+        }
+
+        matched = null!;
+        return false;
     }
 
     private static bool HasProjectAbstraction(INamedTypeSymbol symbol) =>
