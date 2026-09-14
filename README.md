@@ -23,7 +23,7 @@ The checker itself is tested with `--fail-on attention` so its own source must s
 
 ## Current implementation
 
-The first implementation targets C# source through Roslyn.
+The first implementation targets C# through Roslyn and MSBuild. Real project compilations are preserved when analyzing `.csproj`, `.sln`, `.slnx`, or directories containing multiple C# projects; unrelated projects are never merged into one artificial compilation.
 
 Implemented rules:
 
@@ -56,6 +56,8 @@ GitHub Actions exposes separate checks so failures are easy to identify:
 ```bash
 dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-path>
 ```
+
+`<target-path>` can be a loose `.cs` file, a `.csproj`, a `.sln`, a `.slnx`, or a directory. A directory containing multiple C# projects is analyzed as a project set: each project keeps its own MSBuild compilation and the resulting diagnostics are aggregated and deduplicated.
 
 Choose the CI failure threshold:
 

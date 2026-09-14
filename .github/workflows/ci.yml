@@ -47,12 +47,23 @@ jobs:
       - name: Build checker
         run: dotnet build OopDesignChecker.sln -c Release --no-restore
 
-      - name: Strict OOP self-check
+      - name: Strict multi-project self-check
+        run: dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- src --fail-on attention
+
+      - name: Solution loading smoke test
+        run: dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- OopDesignChecker.sln --fail-on danger
+
+      - name: SLNX loading smoke test
         shell: bash
         run: |
-          dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- src/OopDesignChecker/OopDesignChecker.csproj --fail-on attention
-          dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- src/frontends/cui/OopDesignChecker.Cui.csproj --fail-on attention
-          dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- src/frontends/gui/OopDesignChecker.Gui.csproj --fail-on attention
+          cat > oop-design-checker-ci.slnx <<'EOF'
+          <Solution>
+            <Project Path="src/OopDesignChecker/OopDesignChecker.csproj" />
+            <Project Path="src/frontends/cui/OopDesignChecker.Cui.csproj" />
+          </Solution>
+          EOF
+          dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- oop-design-checker-ci.slnx --fail-on danger
+          rm oop-design-checker-ci.slnx
 
   code-analyzers:
     name: code-analyzers
