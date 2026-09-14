@@ -32,9 +32,9 @@ public static class CheckerService
             .ToArray();
 
         IProjectLoader loader = ProjectLoaderFactory.Create(configuration.IgnoredPaths);
-        var project = loader.Load(fullTargetPath);
+        var projects = loader.LoadProjects(fullTargetPath);
         var engine = new AnalysisEngine(rules);
-        var diagnostics = engine.Analyze(project);
+        var diagnostics = engine.Analyze(projects);
         var failureThreshold = failureThresholdOverride ?? configuration.FailureThreshold;
 
         return new CheckerRunResult(diagnostics, failureThreshold, loadedConfiguration.Path);
