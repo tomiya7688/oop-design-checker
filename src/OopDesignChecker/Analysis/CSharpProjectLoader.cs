@@ -92,7 +92,8 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             tree => compilation.GetSemanticModel(tree, ignoreAccessibility: true)
         );
 
-        var isApplication = compilation.Options.OutputKind
+        var isApplication =
+            compilation.Options.OutputKind
             is OutputKind.ConsoleApplication
                 or OutputKind.WindowsApplication
                 or OutputKind.WindowsRuntimeApplication;
@@ -215,10 +216,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         }
     }
 
-    private static void ValidateCompilation(
-        CSharpCompilation compilation,
-        List<string> workspaceFailures
-    )
+    private static void ValidateCompilation(CSharpCompilation compilation, List<string> workspaceFailures)
     {
         var errors = compilation
             .GetDiagnostics()
