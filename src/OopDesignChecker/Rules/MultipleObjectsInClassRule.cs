@@ -116,7 +116,9 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
         IReadOnlyDictionary<IMethodSymbol, MethodUsage> methodUsage
     )
     {
-        var result = new Dictionary<IMethodSymbol, HashSet<ISymbol>>(SymbolEqualityComparer.Default);
+        var result = new Dictionary<IMethodSymbol, HashSet<ISymbol>>(
+            SymbolEqualityComparer.Default
+        );
 
         foreach (var method in methodUsage.Keys)
         {
