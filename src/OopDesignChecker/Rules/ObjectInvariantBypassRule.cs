@@ -8,11 +8,7 @@ namespace OopDesignChecker.Rules;
 internal sealed class ObjectInvariantBypassRule : IAnalysisRule
 {
     public RuleDescriptor Descriptor { get; } =
-        new(
-            "OOP107",
-            "Object invariant can be bypassed",
-            DesignDiagnosticSeverity.Danger
-        );
+        new("OOP107", "Object invariant can be bypassed", DesignDiagnosticSeverity.Danger);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -21,20 +17,29 @@ internal sealed class ObjectInvariantBypassRule : IAnalysisRule
             var semanticModel = context.Project.GetSemanticModel(syntaxTree);
             var root = syntaxTree.GetRoot();
 
-            foreach (var classDeclaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
+            foreach (
+                var classDeclaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>()
+            )
             {
-                foreach (var propertyDeclaration in classDeclaration.Members.OfType<PropertyDeclarationSyntax>())
+                foreach (
+                    var propertyDeclaration in classDeclaration.Members.OfType<PropertyDeclarationSyntax>()
+                )
                 {
-                    if (semanticModel.GetDeclaredSymbol(propertyDeclaration) is not IPropertySymbol property
+                    if (
+                        semanticModel.GetDeclaredSymbol(propertyDeclaration)
+                            is not IPropertySymbol property
                         || property.SetMethod?.DeclaredAccessibility != Accessibility.Public
-                        || property.IsStatic)
+                        || property.IsStatic
+                    )
                     {
                         continue;
                     }
 
-                    var guardedMutation = classDeclaration.Members
-                        .OfType<MethodDeclarationSyntax>()
-                        .FirstOrDefault(method => HasGuardedAssignment(method, property, semanticModel));
+                    var guardedMutation = classDeclaration
+                        .Members.OfType<MethodDeclarationSyntax>()
+                        .FirstOrDefault(method =>
+                            HasGuardedAssignment(method, property, semanticModel)
+                        );
                     if (guardedMutation is null)
                     {
                         continue;
@@ -57,27 +62,40 @@ internal sealed class ObjectInvariantBypassRule : IAnalysisRule
         SemanticModel semanticModel
     )
     {
-        if (semanticModel.GetDeclaredSymbol(method) is not IMethodSymbol methodSymbol
-            || methodSymbol.IsStatic)
+        if (
+            semanticModel.GetDeclaredSymbol(method) is not IMethodSymbol methodSymbol
+            || methodSymbol.IsStatic
+        )
         {
             return false;
         }
 
         foreach (var assignment in method.DescendantNodes().OfType<AssignmentExpressionSyntax>())
         {
-            if (!SymbolEqualityComparer.Default.Equals(
+            if (
+                !SymbolEqualityComparer.Default.Equals(
                     semanticModel.GetSymbolInfo(assignment.Left).Symbol,
                     property
                 )
-                || semanticModel.GetSymbolInfo(assignment.Right).Symbol is not IParameterSymbol parameter)
+                || semanticModel.GetSymbolInfo(assignment.Right).Symbol
+                    is not IParameterSymbol parameter
+            )
             {
                 continue;
             }
 
-            if (method.DescendantNodes().OfType<IfStatementSyntax>().Any(ifStatement =>
-                ReferencesParameter(ifStatement.Condition, parameter, semanticModel)
-                && ifStatement.Statement.DescendantNodesAndSelf().OfType<ThrowStatementSyntax>().Any()
-            ))
+            if (
+                method
+                    .DescendantNodes()
+                    .OfType<IfStatementSyntax>()
+                    .Any(ifStatement =>
+                        ReferencesParameter(ifStatement.Condition, parameter, semanticModel)
+                        && ifStatement
+                            .Statement.DescendantNodesAndSelf()
+                            .OfType<ThrowStatementSyntax>()
+                            .Any()
+                    )
+            )
             {
                 return true;
             }
@@ -91,7 +109,8 @@ internal sealed class ObjectInvariantBypassRule : IAnalysisRule
         IParameterSymbol parameter,
         SemanticModel semanticModel
     ) =>
-        expression.DescendantNodesAndSelf()
+        expression
+            .DescendantNodesAndSelf()
             .OfType<IdentifierNameSyntax>()
             .Any(identifier =>
                 SymbolEqualityComparer.Default.Equals(

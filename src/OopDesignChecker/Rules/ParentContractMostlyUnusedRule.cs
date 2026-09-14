@@ -10,11 +10,7 @@ internal sealed class ParentContractMostlyUnusedRule : IAnalysisRule
     private const int MinimumNoOpOverrides = 2;
 
     public RuleDescriptor Descriptor { get; } =
-        new(
-            "OOP302",
-            "Parent contract mostly unused",
-            DesignDiagnosticSeverity.Warning
-        );
+        new("OOP302", "Parent contract mostly unused", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -25,14 +21,16 @@ internal sealed class ParentContractMostlyUnusedRule : IAnalysisRule
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration))
+                if (
+                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
+                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
+                )
                 {
                     continue;
                 }
 
-                var noOpOverrides = declaration.Members
-                    .OfType<MethodDeclarationSyntax>()
+                var noOpOverrides = declaration
+                    .Members.OfType<MethodDeclarationSyntax>()
                     .Where(method => IsNoOpOverride(method, semanticModel))
                     .ToArray();
                 if (noOpOverrides.Length < MinimumNoOpOverrides)
@@ -55,7 +53,10 @@ internal sealed class ParentContractMostlyUnusedRule : IAnalysisRule
         SemanticModel semanticModel
     )
     {
-        if (semanticModel.GetDeclaredSymbol(declaration) is not IMethodSymbol { IsOverride: true } method)
+        if (
+            semanticModel.GetDeclaredSymbol(declaration)
+            is not IMethodSymbol { IsOverride: true } method
+        )
         {
             return false;
         }
@@ -69,17 +70,18 @@ internal sealed class ParentContractMostlyUnusedRule : IAnalysisRule
         if (declaration.ExpressionBody?.Expression is LiteralExpressionSyntax literal)
         {
             return literal.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.NullLiteralExpression)
-                || literal.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.DefaultLiteralExpression);
+                || literal.IsKind(
+                    Microsoft.CodeAnalysis.CSharp.SyntaxKind.DefaultLiteralExpression
+                );
         }
 
-        return declaration.Body?.Statements is
-        [
-            ReturnStatementSyntax
-            {
-                Expression: LiteralExpressionSyntax returnLiteral,
-            },
-        ]
-            && (returnLiteral.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.NullLiteralExpression)
-                || returnLiteral.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.DefaultLiteralExpression));
+        return declaration.Body?.Statements
+                is [ReturnStatementSyntax { Expression: LiteralExpressionSyntax returnLiteral }]
+            && (
+                returnLiteral.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.NullLiteralExpression)
+                || returnLiteral.IsKind(
+                    Microsoft.CodeAnalysis.CSharp.SyntaxKind.DefaultLiteralExpression
+                )
+            );
     }
 }

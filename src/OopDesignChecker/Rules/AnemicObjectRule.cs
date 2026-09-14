@@ -12,11 +12,7 @@ internal sealed class AnemicObjectRule : IAnalysisRule
     private const int MinimumExternallyUsedMembers = 2;
 
     public RuleDescriptor Descriptor { get; } =
-        new(
-            "OOP402",
-            "Anemic object candidate",
-            DesignDiagnosticSeverity.Warning
-        );
+        new("OOP402", "Anemic object candidate", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -27,10 +23,12 @@ internal sealed class AnemicObjectRule : IAnalysisRule
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
+                if (
+                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
                     || IsExplicitDataCarrier(symbol)
                     || CountPublicStateProperties(declaration) < MinimumStateProperties
-                    || CountPublicBehaviorMethods(declaration, semanticModel) > 1)
+                    || CountPublicBehaviorMethods(declaration, semanticModel) > 1
+                )
                 {
                     continue;
                 }
@@ -52,8 +50,8 @@ internal sealed class AnemicObjectRule : IAnalysisRule
     }
 
     private static int CountPublicStateProperties(ClassDeclarationSyntax declaration) =>
-        declaration.Members
-            .OfType<PropertyDeclarationSyntax>()
+        declaration
+            .Members.OfType<PropertyDeclarationSyntax>()
             .Count(property =>
                 property.Modifiers.Any(SyntaxKind.PublicKeyword)
                 && property.AccessorList is not null
@@ -66,15 +64,16 @@ internal sealed class AnemicObjectRule : IAnalysisRule
         ClassDeclarationSyntax declaration,
         SemanticModel semanticModel
     ) =>
-        declaration.Members
-            .OfType<MethodDeclarationSyntax>()
+        declaration
+            .Members.OfType<MethodDeclarationSyntax>()
             .Count(method =>
-                semanticModel.GetDeclaredSymbol(method) is IMethodSymbol
-                {
-                    IsStatic: false,
-                    DeclaredAccessibility: Accessibility.Public,
-                    MethodKind: MethodKind.Ordinary,
-                }
+                semanticModel.GetDeclaredSymbol(method)
+                    is IMethodSymbol
+                    {
+                        IsStatic: false,
+                        DeclaredAccessibility: Accessibility.Public,
+                        MethodKind: MethodKind.Ordinary,
+                    }
             );
 
     private static IMethodSymbol? FindExternalBehavior(
@@ -85,27 +84,42 @@ internal sealed class AnemicObjectRule : IAnalysisRule
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
             var semanticModel = context.Project.GetSemanticModel(syntaxTree);
-            foreach (var method in syntaxTree.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>())
+            foreach (
+                var method in syntaxTree
+                    .GetRoot()
+                    .DescendantNodes()
+                    .OfType<MethodDeclarationSyntax>()
+            )
             {
-                if (semanticModel.GetDeclaredSymbol(method) is not IMethodSymbol methodSymbol
-                    || SymbolEqualityComparer.Default.Equals(methodSymbol.ContainingType, candidate))
+                if (
+                    semanticModel.GetDeclaredSymbol(method) is not IMethodSymbol methodSymbol
+                    || SymbolEqualityComparer.Default.Equals(methodSymbol.ContainingType, candidate)
+                )
                 {
                     continue;
                 }
 
                 foreach (var parameter in method.ParameterList.Parameters)
                 {
-                    if (semanticModel.GetDeclaredSymbol(parameter) is not IParameterSymbol parameterSymbol
-                        || !SymbolEqualityComparer.Default.Equals(parameterSymbol.Type, candidate))
+                    if (
+                        semanticModel.GetDeclaredSymbol(parameter)
+                            is not IParameterSymbol parameterSymbol
+                        || !SymbolEqualityComparer.Default.Equals(parameterSymbol.Type, candidate)
+                    )
                     {
                         continue;
                     }
 
-                    var members = method.DescendantNodes()
+                    var members = method
+                        .DescendantNodes()
                         .OfType<MemberAccessExpressionSyntax>()
-                        .Where(access => ReceiverIsParameter(access, parameterSymbol, semanticModel))
+                        .Where(access =>
+                            ReceiverIsParameter(access, parameterSymbol, semanticModel)
+                        )
                         .Select(access => semanticModel.GetSymbolInfo(access).Symbol)
-                        .Where(member => SymbolEqualityComparer.Default.Equals(member?.ContainingType, candidate))
+                        .Where(member =>
+                            SymbolEqualityComparer.Default.Equals(member?.ContainingType, candidate)
+                        )
                         .Select(member => member!.Name)
                         .Distinct(StringComparer.Ordinal)
                         .ToArray();

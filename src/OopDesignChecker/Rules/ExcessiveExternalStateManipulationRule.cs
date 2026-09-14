@@ -10,11 +10,7 @@ internal sealed class ExcessiveExternalStateManipulationRule : IAnalysisRule
     private const int MinimumDistinctMembers = 3;
 
     public RuleDescriptor Descriptor { get; } =
-        new(
-            "OOP108",
-            "Excessive external state manipulation",
-            DesignDiagnosticSeverity.Warning
-        );
+        new("OOP108", "Excessive external state manipulation", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -23,19 +19,25 @@ internal sealed class ExcessiveExternalStateManipulationRule : IAnalysisRule
             var semanticModel = context.Project.GetSemanticModel(syntaxTree);
             var root = syntaxTree.GetRoot();
 
-            foreach (var methodDeclaration in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
+            foreach (
+                var methodDeclaration in root.DescendantNodes().OfType<MethodDeclarationSyntax>()
+            )
             {
                 if (semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol method)
                 {
                     continue;
                 }
 
-                var manipulatedGroups = methodDeclaration.DescendantNodes()
+                var manipulatedGroups = methodDeclaration
+                    .DescendantNodes()
                     .OfType<AssignmentExpressionSyntax>()
                     .Select(assignment => ReadExternalWrite(assignment, method, semanticModel))
                     .Where(write => write is not null)
                     .Select(write => write!.Value)
-                    .GroupBy(write => (write.Receiver, write.TargetType), ExternalWriteKeyComparer.Instance);
+                    .GroupBy(
+                        write => (write.Receiver, write.TargetType),
+                        ExternalWriteKeyComparer.Instance
+                    );
 
                 foreach (var group in manipulatedGroups)
                 {
@@ -72,24 +74,27 @@ internal sealed class ExcessiveExternalStateManipulationRule : IAnalysisRule
 
         var member = semanticModel.GetSymbolInfo(memberAccess).Symbol;
         var targetType = member?.ContainingType;
-        if (targetType is null
+        if (
+            targetType is null
             || SymbolEqualityComparer.Default.Equals(targetType, method.ContainingType)
             || IsExplicitDataCarrier(targetType)
-            || !IsPublicInstanceState(member))
+            || !IsPublicInstanceState(member)
+        )
         {
             return null;
         }
 
-        return new ExternalWrite(
-            memberAccess.Expression.ToString(),
-            targetType,
-            member!.Name
-        );
+        return new ExternalWrite(memberAccess.Expression.ToString(), targetType, member!.Name);
     }
 
     private static bool IsPublicInstanceState(ISymbol? symbol) =>
-        symbol is IPropertySymbol { IsStatic: false, SetMethod.DeclaredAccessibility: Accessibility.Public }
-        or IFieldSymbol { IsStatic: false, DeclaredAccessibility: Accessibility.Public };
+        symbol
+            is IPropertySymbol
+                {
+                    IsStatic: false,
+                    SetMethod.DeclaredAccessibility: Accessibility.Public
+                }
+                or IFieldSymbol { IsStatic: false, DeclaredAccessibility: Accessibility.Public };
 
     private static bool IsExplicitDataCarrier(INamedTypeSymbol type)
     {
@@ -108,7 +113,8 @@ internal sealed class ExcessiveExternalStateManipulationRule : IAnalysisRule
         string MemberName
     );
 
-    private sealed class ExternalWriteKeyComparer : IEqualityComparer<(string Receiver, INamedTypeSymbol TargetType)>
+    private sealed class ExternalWriteKeyComparer
+        : IEqualityComparer<(string Receiver, INamedTypeSymbol TargetType)>
     {
         public static ExternalWriteKeyComparer Instance { get; } = new();
 

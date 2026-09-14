@@ -30,7 +30,8 @@ internal sealed class ExcessiveObjectNavigationRule : IAnalysisRule
                     continue;
                 }
 
-                var navigation = ReadNavigationChain(methodAccess.Expression, semanticModel).ToArray();
+                var navigation = ReadNavigationChain(methodAccess.Expression, semanticModel)
+                    .ToArray();
                 if (navigation.Length < MinimumNavigationDepth)
                 {
                     continue;
@@ -54,8 +55,11 @@ internal sealed class ExcessiveObjectNavigationRule : IAnalysisRule
         while (current is MemberAccessExpressionSyntax memberAccess)
         {
             var symbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
-            if (symbol is not IPropertySymbol { IsStatic: false }
-                and not IFieldSymbol { IsStatic: false })
+            if (
+                symbol
+                is not IPropertySymbol { IsStatic: false }
+                    and not IFieldSymbol { IsStatic: false }
+            )
             {
                 yield break;
             }

@@ -163,12 +163,7 @@ internal static class ExtendedRuleSmokeTests
             }
             """;
 
-        AssertSingle(
-            new AnemicObjectRule(),
-            source,
-            "OOP402",
-            DesignDiagnosticSeverity.Warning
-        );
+        AssertSingle(new AnemicObjectRule(), source, "OOP402", DesignDiagnosticSeverity.Warning);
     }
 
     private static void DeepObjectNavigationIsAttention()

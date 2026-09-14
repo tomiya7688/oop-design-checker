@@ -11,11 +11,7 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
     private const int MinimumMethodsPerCluster = 3;
 
     public RuleDescriptor Descriptor { get; } =
-        new(
-            "OOP401",
-            "Possible multiple objects in one class",
-            DesignDiagnosticSeverity.Warning
-        );
+        new("OOP401", "Possible multiple objects in one class", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -26,8 +22,10 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration))
+                if (
+                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
+                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
+                )
                 {
                     continue;
                 }
@@ -55,18 +53,23 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
         SemanticModel semanticModel
     )
     {
-        var result = new Dictionary<IMethodSymbol, HashSet<IFieldSymbol>>(SymbolEqualityComparer.Default);
+        var result = new Dictionary<IMethodSymbol, HashSet<IFieldSymbol>>(
+            SymbolEqualityComparer.Default
+        );
 
         foreach (var methodDeclaration in declaration.Members.OfType<MethodDeclarationSyntax>())
         {
-            if (semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol method
+            if (
+                semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol method
                 || method.IsStatic
-                || method.MethodKind != MethodKind.Ordinary)
+                || method.MethodKind != MethodKind.Ordinary
+            )
             {
                 continue;
             }
 
-            var fields = methodDeclaration.DescendantNodes()
+            var fields = methodDeclaration
+                .DescendantNodes()
                 .OfType<IdentifierNameSyntax>()
                 .Select(identifier => semanticModel.GetSymbolInfo(identifier).Symbol)
                 .OfType<IFieldSymbol>()
@@ -89,7 +92,9 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
         IReadOnlyDictionary<IMethodSymbol, HashSet<IFieldSymbol>> fieldUsage
     )
     {
-        var allFields = fieldUsage.Values.SelectMany(fields => fields).ToHashSet(SymbolEqualityComparer.Default);
+        var allFields = fieldUsage
+            .Values.SelectMany(fields => fields)
+            .ToHashSet(SymbolEqualityComparer.Default);
         var remaining = new HashSet<IFieldSymbol>(allFields, SymbolEqualityComparer.Default);
         var clusters = new List<FieldCluster>();
 
@@ -102,7 +107,10 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
                 .Select(pair => pair.Key)
                 .ToHashSet(SymbolEqualityComparer.Default);
 
-            if (fields.Count >= MinimumFieldsPerCluster && methods.Count >= MinimumMethodsPerCluster)
+            if (
+                fields.Count >= MinimumFieldsPerCluster
+                && methods.Count >= MinimumMethodsPerCluster
+            )
             {
                 clusters.Add(new FieldCluster(fields.Count, methods.Count));
             }

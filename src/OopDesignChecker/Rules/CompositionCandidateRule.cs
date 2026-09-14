@@ -25,19 +25,25 @@ internal sealed class CompositionCandidateRule : IAnalysisRule
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
+                if (
+                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
                     || symbol.BaseType is not { } baseType
                     || baseType.SpecialType == SpecialType.System_Object
                     || baseType.IsAbstract
                     || !baseType.Locations.Any(location => location.IsInSource)
-                    || declaration.Members.OfType<MethodDeclarationSyntax>().Any(method =>
-                        semanticModel.GetDeclaredSymbol(method) is IMethodSymbol { IsOverride: true }
-                    ))
+                    || declaration
+                        .Members.OfType<MethodDeclarationSyntax>()
+                        .Any(method =>
+                            semanticModel.GetDeclaredSymbol(method)
+                                is IMethodSymbol { IsOverride: true }
+                        )
+                )
                 {
                     continue;
                 }
 
-                var usedProtectedMembers = declaration.DescendantNodes()
+                var usedProtectedMembers = declaration
+                    .DescendantNodes()
                     .OfType<SimpleNameSyntax>()
                     .Select(name => semanticModel.GetSymbolInfo(name).Symbol)
                     .Where(member => IsProtectedBaseMember(member, baseType))
@@ -61,7 +67,9 @@ internal sealed class CompositionCandidateRule : IAnalysisRule
 
     private static bool IsProtectedBaseMember(ISymbol? member, INamedTypeSymbol baseType) =>
         member is not null
-        && member.DeclaredAccessibility is Accessibility.Protected or Accessibility.ProtectedOrInternal
+        && member.DeclaredAccessibility
+            is Accessibility.Protected
+                or Accessibility.ProtectedOrInternal
         && member.ContainingType is not null
         && SymbolUtilities.IsSameOrBaseType(member.ContainingType, baseType);
 }

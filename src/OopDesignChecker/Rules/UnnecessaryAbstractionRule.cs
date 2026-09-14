@@ -8,11 +8,7 @@ namespace OopDesignChecker.Rules;
 internal sealed class UnnecessaryAbstractionRule : IAnalysisRule
 {
     public RuleDescriptor Descriptor { get; } =
-        new(
-            "OOP003",
-            "Unnecessary abstraction candidate",
-            DesignDiagnosticSeverity.Attention
-        );
+        new("OOP003", "Unnecessary abstraction candidate", DesignDiagnosticSeverity.Attention);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -22,12 +18,20 @@ internal sealed class UnnecessaryAbstractionRule : IAnalysisRule
         foreach (var interfaceEntry in interfaces)
         {
             var implementations = classes
-                .Where(entry => entry.Symbol.AllInterfaces.Any(implemented =>
-                    SymbolEqualityComparer.Default.Equals(implemented, interfaceEntry.Symbol)
-                ))
+                .Where(entry =>
+                    entry.Symbol.AllInterfaces.Any(implemented =>
+                        SymbolEqualityComparer.Default.Equals(implemented, interfaceEntry.Symbol)
+                    )
+                )
                 .ToArray();
-            if (implementations.Length != 1
-                || HasTypedUseOutsideImplementation(context, interfaceEntry.Symbol, implementations[0].Symbol))
+            if (
+                implementations.Length != 1
+                || HasTypedUseOutsideImplementation(
+                    context,
+                    interfaceEntry.Symbol,
+                    implementations[0].Symbol
+                )
+            )
             {
                 continue;
             }
@@ -46,7 +50,12 @@ internal sealed class UnnecessaryAbstractionRule : IAnalysisRule
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
             var semanticModel = context.Project.GetSemanticModel(syntaxTree);
-            foreach (var declaration in syntaxTree.GetRoot().DescendantNodes().OfType<InterfaceDeclarationSyntax>())
+            foreach (
+                var declaration in syntaxTree
+                    .GetRoot()
+                    .DescendantNodes()
+                    .OfType<InterfaceDeclarationSyntax>()
+            )
             {
                 if (semanticModel.GetDeclaredSymbol(declaration) is INamedTypeSymbol symbol)
                 {
@@ -61,7 +70,12 @@ internal sealed class UnnecessaryAbstractionRule : IAnalysisRule
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
             var semanticModel = context.Project.GetSemanticModel(syntaxTree);
-            foreach (var declaration in syntaxTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
+            foreach (
+                var declaration in syntaxTree
+                    .GetRoot()
+                    .DescendantNodes()
+                    .OfType<ClassDeclarationSyntax>()
+            )
             {
                 if (semanticModel.GetDeclaredSymbol(declaration) is INamedTypeSymbol symbol)
                 {
@@ -82,10 +96,12 @@ internal sealed class UnnecessaryAbstractionRule : IAnalysisRule
             var semanticModel = context.Project.GetSemanticModel(syntaxTree);
             foreach (var name in syntaxTree.GetRoot().DescendantNodes().OfType<SimpleNameSyntax>())
             {
-                if (!SymbolEqualityComparer.Default.Equals(
+                if (
+                    !SymbolEqualityComparer.Default.Equals(
                         semanticModel.GetSymbolInfo(name).Symbol,
                         interfaceType
-                    ))
+                    )
+                )
                 {
                     continue;
                 }
@@ -95,7 +111,9 @@ internal sealed class UnnecessaryAbstractionRule : IAnalysisRule
                     continue;
                 }
 
-                var containingType = semanticModel.GetEnclosingSymbol(name.SpanStart)?.ContainingType;
+                var containingType = semanticModel
+                    .GetEnclosingSymbol(name.SpanStart)
+                    ?.ContainingType;
                 if (!SymbolEqualityComparer.Default.Equals(containingType, implementation))
                 {
                     return true;

@@ -12,11 +12,7 @@ internal sealed class GetterSetterOnlyObjectRule : IAnalysisRule
     private const int MaximumBehaviorMethods = 1;
 
     public RuleDescriptor Descriptor { get; } =
-        new(
-            "OOP405",
-            "Getter/setter-only object candidate",
-            DesignDiagnosticSeverity.Attention
-        );
+        new("OOP405", "Getter/setter-only object candidate", DesignDiagnosticSeverity.Attention);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -27,14 +23,16 @@ internal sealed class GetterSetterOnlyObjectRule : IAnalysisRule
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || IsExplicitDataCarrier(symbol))
+                if (
+                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
+                    || IsExplicitDataCarrier(symbol)
+                )
                 {
                     continue;
                 }
 
-                var stateProperties = declaration.Members
-                    .OfType<PropertyDeclarationSyntax>()
+                var stateProperties = declaration
+                    .Members.OfType<PropertyDeclarationSyntax>()
                     .Where(IsTrivialPublicStateProperty)
                     .ToArray();
                 if (stateProperties.Length < MinimumStateProperties)
@@ -42,15 +40,16 @@ internal sealed class GetterSetterOnlyObjectRule : IAnalysisRule
                     continue;
                 }
 
-                var behaviorCount = declaration.Members
-                    .OfType<MethodDeclarationSyntax>()
+                var behaviorCount = declaration
+                    .Members.OfType<MethodDeclarationSyntax>()
                     .Count(method =>
-                        semanticModel.GetDeclaredSymbol(method) is IMethodSymbol
-                        {
-                            IsStatic: false,
-                            DeclaredAccessibility: Accessibility.Public,
-                            MethodKind: MethodKind.Ordinary,
-                        }
+                        semanticModel.GetDeclaredSymbol(method)
+                            is IMethodSymbol
+                            {
+                                IsStatic: false,
+                                DeclaredAccessibility: Accessibility.Public,
+                                MethodKind: MethodKind.Ordinary,
+                            }
                     );
                 if (behaviorCount > MaximumBehaviorMethods)
                 {
@@ -69,8 +68,7 @@ internal sealed class GetterSetterOnlyObjectRule : IAnalysisRule
 
     private static bool IsTrivialPublicStateProperty(PropertyDeclarationSyntax property)
     {
-        if (!property.Modifiers.Any(SyntaxKind.PublicKeyword)
-            || property.AccessorList is null)
+        if (!property.Modifiers.Any(SyntaxKind.PublicKeyword) || property.AccessorList is null)
         {
             return false;
         }
