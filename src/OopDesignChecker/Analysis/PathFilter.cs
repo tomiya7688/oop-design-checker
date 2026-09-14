@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace OopDesignChecker.Analysis;
@@ -45,11 +46,44 @@ internal static class PathFilter
                 .Contains(normalizedPattern, StringComparer.OrdinalIgnoreCase);
         }
 
-        var regexPattern = "^" + Regex.Escape(normalizedPattern)
-            .Replace(@"\*\*", ".*")
-            .Replace(@"\*", "[^/]*")
-            .Replace(@"\?", "[^/]") + "$";
+        var regexPattern = BuildGlobRegex(normalizedPattern);
+        return Regex.IsMatch(
+            relativePath,
+            regexPattern,
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    }
 
-        return Regex.IsMatch(relativePath, regexPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static string BuildGlobRegex(string pattern)
+    {
+        var builder = new StringBuilder("^");
+
+        for (var index = 0; index < pattern.Length; index++)
+        {
+            var current = pattern[index];
+            if (current == '*' && index + 1 < pattern.Length && pattern[index + 1] == '*')
+            {
+                var followedBySlash = index + 2 < pattern.Length && pattern[index + 2] == '/';
+                builder.Append(followedBySlash ? "(?:.*/)?" : ".*");
+                index += followedBySlash ? 2 : 1;
+                continue;
+            }
+
+            if (current == '*')
+            {
+                builder.Append("[^/]*");
+                continue;
+            }
+
+            if (current == '?')
+            {
+                builder.Append("[^/]");
+                continue;
+            }
+
+            builder.Append(Regex.Escape(current.ToString()));
+        }
+
+        builder.Append('$');
+        return builder.ToString();
     }
 }
