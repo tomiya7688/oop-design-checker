@@ -30,9 +30,11 @@ internal sealed class ExcessiveObjectNavigationRule : IAnalysisRule
                     continue;
                 }
 
-                var navigation = ReadNavigationChain(methodAccess.Expression, semanticModel)
-                    .ToArray();
-                if (navigation.Length < MinimumNavigationDepth)
+                var navigationDepth = CountProjectObjectBoundaries(
+                    methodAccess.Expression,
+                    semanticModel
+                );
+                if (navigationDepth < MinimumNavigationDepth)
                 {
                     continue;
                 }
@@ -40,32 +42,91 @@ internal sealed class ExcessiveObjectNavigationRule : IAnalysisRule
                 yield return DiagnosticFactory.Create(
                     Descriptor,
                     invocation.GetLocation(),
-                    $"This call traverses {navigation.Length} instance state boundaries before invoking behavior. Repeated deep navigation couples the caller to another object's internal graph."
+                    $"This call traverses {navigationDepth} project object boundaries before invoking behavior. Repeated deep navigation couples the caller to another object's internal graph."
                 );
             }
         }
     }
 
-    private static IEnumerable<ISymbol> ReadNavigationChain(
+    private static int CountProjectObjectBoundaries(
         ExpressionSyntax expression,
         SemanticModel semanticModel
     )
     {
+        var boundaries = 0;
         var current = expression;
+
         while (current is MemberAccessExpressionSyntax memberAccess)
         {
             var symbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
+            var memberType = ReadInstanceMemberType(symbol);
+            var containingType = symbol?.ContainingType;
+
             if (
-                symbol
-                is not IPropertySymbol { IsStatic: false }
-                    and not IFieldSymbol { IsStatic: false }
+                containingType is not null
+                && memberType is not null
+                && (
+                    DataCarrierClassifier.IsExplicitDataCarrier(containingType)
+                    || DataCarrierClassifier.IsExplicitDataCarrier(memberType)
+                )
             )
             {
-                yield break;
+                return 0;
             }
 
-            yield return symbol;
+            if (
+                containingType is not null
+                && memberType is not null
+                && IsProjectObjectType(containingType)
+                && IsProjectObjectType(memberType)
+                && !RepresentsSameObjectAbstraction(containingType, memberType)
+            )
+            {
+                boundaries++;
+            }
+
             current = memberAccess.Expression;
         }
+
+        return boundaries;
+    }
+
+    private static INamedTypeSymbol? ReadInstanceMemberType(ISymbol? symbol) =>
+        symbol switch
+        {
+            IPropertySymbol { IsStatic: false, Type: INamedTypeSymbol type } => type,
+            IFieldSymbol { IsStatic: false, Type: INamedTypeSymbol type } => type,
+            _ => null,
+        };
+
+    private static bool IsProjectObjectType(INamedTypeSymbol type) =>
+        type.IsReferenceType
+        && type.SpecialType == SpecialType.None
+        && type.Locations.Any(location => location.IsInSource);
+
+    private static bool RepresentsSameObjectAbstraction(
+        INamedTypeSymbol containingType,
+        INamedTypeSymbol memberType
+    ) =>
+        SymbolEqualityComparer.Default.Equals(containingType, memberType)
+        || ImplementsOrDerivesFrom(containingType, memberType)
+        || ImplementsOrDerivesFrom(memberType, containingType);
+
+    private static bool ImplementsOrDerivesFrom(INamedTypeSymbol type, INamedTypeSymbol candidate)
+    {
+        if (type.AllInterfaces.Any(item => SymbolEqualityComparer.Default.Equals(item, candidate)))
+        {
+            return true;
+        }
+
+        for (var current = type.BaseType; current is not null; current = current.BaseType)
+        {
+            if (SymbolEqualityComparer.Default.Equals(current, candidate))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
