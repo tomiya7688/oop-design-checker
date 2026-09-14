@@ -83,9 +83,17 @@ internal static class Program
     private static void TypeBranchingIsDetected()
     {
         const string source = """
-            internal abstract class Animal;
-            internal sealed class Dog : Animal;
-            internal sealed class Cat : Animal;
+            internal abstract class Animal
+            {
+            }
+
+            internal sealed class Dog : Animal
+            {
+            }
+
+            internal sealed class Cat : Animal
+            {
+            }
 
             internal sealed class Handler
             {
@@ -128,11 +136,25 @@ internal static class Program
     private static void DeepInheritanceIsDetected()
     {
         const string source = """
-            internal class A;
-            internal class B : A;
-            internal class C : B;
-            internal class D : C;
-            internal sealed class E : D;
+            internal class A
+            {
+            }
+
+            internal class B : A
+            {
+            }
+
+            internal class C : B
+            {
+            }
+
+            internal class D : C
+            {
+            }
+
+            internal sealed class E : D
+            {
+            }
             """;
 
         var diagnostics = Run(new ExcessiveInheritanceDepthRule(), source);
