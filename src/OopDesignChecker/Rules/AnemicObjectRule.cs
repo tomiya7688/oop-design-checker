@@ -9,7 +9,7 @@ namespace OopDesignChecker.Rules;
 internal sealed class AnemicObjectRule : IAnalysisRule
 {
     private const int MinimumStateProperties = 3;
-    private const int MinimumExternallyUsedMembers = 2;
+    private const int MinimumExternallyUsedMembers = 3;
 
     public RuleDescriptor Descriptor { get; } =
         new("OOP402", "Anemic object candidate", DesignDiagnosticSeverity.Warning);
@@ -94,6 +94,7 @@ internal sealed class AnemicObjectRule : IAnalysisRule
                 if (
                     semanticModel.GetDeclaredSymbol(method) is not IMethodSymbol methodSymbol
                     || SymbolEqualityComparer.Default.Equals(methodSymbol.ContainingType, candidate)
+                    || IsProjectionInfrastructure(methodSymbol.ContainingType)
                 )
                 {
                     continue;
@@ -147,12 +148,43 @@ internal sealed class AnemicObjectRule : IAnalysisRule
     private static bool IsExplicitDataCarrier(INamedTypeSymbol type)
     {
         var name = type.Name;
-        return name.EndsWith("Dto", StringComparison.OrdinalIgnoreCase)
+        return HasDataCarrierMarker(type)
+            || name.EndsWith("Dto", StringComparison.OrdinalIgnoreCase)
             || name.EndsWith("Model", StringComparison.OrdinalIgnoreCase)
             || name.EndsWith("Request", StringComparison.OrdinalIgnoreCase)
             || name.EndsWith("Response", StringComparison.OrdinalIgnoreCase)
             || name.EndsWith("Options", StringComparison.OrdinalIgnoreCase)
             || name.EndsWith("Configuration", StringComparison.OrdinalIgnoreCase)
-            || name.EndsWith("Config", StringComparison.OrdinalIgnoreCase);
+            || name.EndsWith("Config", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Message", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Event", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Command", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Payload", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Record", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Row", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Document", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("ViewModel", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasDataCarrierMarker(INamedTypeSymbol type) =>
+        type.GetAttributes().Any(attribute =>
+            attribute.AttributeClass?.Name
+                is "SerializableAttribute"
+                    or "DataContractAttribute"
+                    or "JsonObjectAttribute"
+                    or "MessagePackObjectAttribute"
+                    or "ProtoContractAttribute"
+        );
+
+    private static bool IsProjectionInfrastructure(INamedTypeSymbol type)
+    {
+        var name = type.Name;
+        return name.EndsWith("Mapper", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Formatter", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Serializer", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Converter", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Projection", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Presenter", StringComparison.OrdinalIgnoreCase)
+            || name.EndsWith("Factory", StringComparison.OrdinalIgnoreCase);
     }
 }
