@@ -17,7 +17,8 @@ internal static class ProjectAbstractionClassifier
         || interfaceType.AllInterfaces.Any(parent => parent.GetMembers().Any(IsBehavioralMember));
 
     private static bool IsBehavioralMember(ISymbol member) =>
-        member is IMethodSymbol { MethodKind: MethodKind.Ordinary }
-            or IPropertySymbol
-            or IEventSymbol;
+        member
+            is IMethodSymbol { MethodKind: MethodKind.Ordinary }
+                or IPropertySymbol
+                or IEventSymbol;
 }
