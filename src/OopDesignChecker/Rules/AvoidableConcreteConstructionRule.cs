@@ -35,8 +35,7 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
                 }
 
                 var abstraction = ProjectAbstractionClassifier.FindMeaningfulAbstraction(
-                    concreteType,
-                    context
+                    concreteType
                 );
                 if (abstraction is null || !HasBehavior(concreteType))
                 {
@@ -57,7 +56,7 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
                 yield return DiagnosticFactory.Create(
                     Descriptor,
                     creation.NewKeyword.GetLocation(),
-                    $"{containingType.Name} directly constructs replaceable collaborator {concreteType.Name}, while project abstraction {abstraction.Name} is used as a replaceable contract. Prefer receiving the abstraction when the collaborator lifecycle is not owned here.",
+                    $"{containingType.Name} directly constructs replaceable collaborator {concreteType.Name}, while project abstraction {abstraction.Name} defines a behavioral contract. Prefer receiving the abstraction when the collaborator lifecycle is not owned here.",
                     containingType.ToDisplayString()
                 );
             }
