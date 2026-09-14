@@ -1,3 +1,4 @@
+using OopDesignChecker.Core;
 using OopDesignChecker.Rules;
 
 namespace OopDesignChecker.Tests;
