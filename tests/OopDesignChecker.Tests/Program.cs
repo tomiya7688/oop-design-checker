@@ -129,9 +129,9 @@ internal static class Program
             }
             catch (InvalidOperationException exception)
                 when (exception.Message.Contains(
-                    "could not be analyzed reliably",
-                    StringComparison.Ordinal
-                ))
+                        "could not be analyzed reliably",
+                        StringComparison.Ordinal
+                    ))
             {
                 return;
             }
