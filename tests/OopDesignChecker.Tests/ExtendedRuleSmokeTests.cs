@@ -19,6 +19,7 @@ internal static class ExtendedRuleSmokeTests
         UnrelatedDependencyClustersAreWarning();
         DeepObjectNavigationIsAttention();
         GetterSetterOnlyObjectIsAttention();
+        MessageDataCarrierIsAllowed();
     }
 
     private static void UnusedSingleImplementationAbstractionIsAttention()
@@ -203,6 +204,7 @@ internal static class ExtendedRuleSmokeTests
                 public int X { get; set; }
                 public int Y { get; set; }
                 public int Z { get; set; }
+                public int Version { get; set; }
             }
 
             internal sealed class SnapshotService
@@ -215,6 +217,7 @@ internal static class ExtendedRuleSmokeTests
             """;
 
         AssertNone(new AnemicObjectRule(), source, "OOP402");
+        AssertNone(new GetterSetterOnlyObjectRule(), source, "OOP405");
     }
 
     private static void MapperProjectionDoesNotMakeObjectAnemic()
@@ -332,6 +335,21 @@ internal static class ExtendedRuleSmokeTests
         );
     }
 
+    private static void MessageDataCarrierIsAllowed()
+    {
+        const string source = """
+            internal sealed class UserCreatedMessage
+            {
+                public string UserId { get; set; } = string.Empty;
+                public string Name { get; set; } = string.Empty;
+                public string Email { get; set; } = string.Empty;
+                public long Timestamp { get; set; }
+            }
+            """;
+
+        AssertNone(new GetterSetterOnlyObjectRule(), source, "OOP405");
+    }
+
     private static void AssertSingle(
         IAnalysisRule rule,
         string source,
@@ -356,7 +374,7 @@ internal static class ExtendedRuleSmokeTests
         }
     }
 
-    private static void AssertNone(AnemicObjectRule rule, string source, string ruleId)
+    private static void AssertNone(IAnalysisRule rule, string source, string ruleId)
     {
         var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
         if (diagnostics.Length == 0)
