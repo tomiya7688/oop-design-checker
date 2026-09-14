@@ -98,13 +98,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
                 or OutputKind.WindowsApplication
                 or OutputKind.WindowsRuntimeApplication;
 
-        return new SourceProject(
-            rootPath,
-            isApplication,
-            compilation,
-            semanticModels,
-            syntaxTrees
-        );
+        return new SourceProject(rootPath, isApplication, compilation, semanticModels, syntaxTrees);
     }
 
     private SourceProject LoadLooseSources(string targetPath)
