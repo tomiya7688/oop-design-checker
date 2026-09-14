@@ -33,8 +33,14 @@ internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
                     continue;
                 }
 
-                var usage = ReadDependencyUsage(declaration, dependencies, semanticModel);
-                var clusters = CountDependencyClusters(dependencies, usage);
+                var methodUsage = ReadMethodUsage(
+                    symbol,
+                    declaration,
+                    dependencies,
+                    semanticModel
+                );
+                var effectiveUsage = BuildEffectiveDependencyUsage(methodUsage);
+                var clusters = CountDependencyClusters(dependencies, effectiveUsage);
                 if (clusters < MinimumClusters)
                 {
                     continue;
@@ -61,28 +67,28 @@ internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
             )
             .ToArray();
 
-    private static Dictionary<IMethodSymbol, HashSet<IFieldSymbol>> ReadDependencyUsage(
+    private static Dictionary<IMethodSymbol, MethodUsage> ReadMethodUsage(
+        INamedTypeSymbol containingType,
         ClassDeclarationSyntax declaration,
         IReadOnlyCollection<IFieldSymbol> dependencies,
         SemanticModel semanticModel
     )
     {
         var dependencySet = new HashSet<IFieldSymbol>(dependencies, SymbolEqualityComparer.Default);
-        var result = new Dictionary<IMethodSymbol, HashSet<IFieldSymbol>>(
-            SymbolEqualityComparer.Default
-        );
+        var result = new Dictionary<IMethodSymbol, MethodUsage>(SymbolEqualityComparer.Default);
 
         foreach (var methodDeclaration in declaration.Members.OfType<MethodDeclarationSyntax>())
         {
             if (
                 semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol method
                 || method.IsStatic
+                || method.MethodKind != MethodKind.Ordinary
             )
             {
                 continue;
             }
 
-            var used = new HashSet<IFieldSymbol>(
+            var usedDependencies = new HashSet<IFieldSymbol>(
                 methodDeclaration
                     .DescendantNodes()
                     .OfType<IdentifierNameSyntax>()
@@ -91,9 +97,66 @@ internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
                     .Where(dependencySet.Contains),
                 SymbolEqualityComparer.Default
             );
-            if (used.Count > 0)
+
+            var calledMethods = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
+            foreach (
+                var invocation in methodDeclaration
+                    .DescendantNodes()
+                    .OfType<InvocationExpressionSyntax>()
+            )
             {
-                result[method] = used;
+                if (
+                    semanticModel.GetSymbolInfo(invocation).Symbol is IMethodSymbol calledMethod
+                    && !calledMethod.IsStatic
+                    && calledMethod.MethodKind == MethodKind.Ordinary
+                    && SymbolEqualityComparer.Default.Equals(
+                        calledMethod.ContainingType,
+                        containingType
+                    )
+                )
+                {
+                    calledMethods.Add(calledMethod);
+                }
+            }
+
+            result[method] = new MethodUsage(usedDependencies, calledMethods);
+        }
+
+        return result;
+    }
+
+    private static Dictionary<IMethodSymbol, HashSet<IFieldSymbol>> BuildEffectiveDependencyUsage(
+        IReadOnlyDictionary<IMethodSymbol, MethodUsage> methodUsage
+    )
+    {
+        var result = new Dictionary<IMethodSymbol, HashSet<IFieldSymbol>>(
+            SymbolEqualityComparer.Default
+        );
+
+        foreach (var method in methodUsage.Keys)
+        {
+            var dependencies = new HashSet<IFieldSymbol>(SymbolEqualityComparer.Default);
+            var visited = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
+            var queue = new Queue<IMethodSymbol>();
+            queue.Enqueue(method);
+
+            while (queue.TryDequeue(out var current))
+            {
+                if (!visited.Add(current) || !methodUsage.TryGetValue(current, out var usage))
+                {
+                    continue;
+                }
+
+                dependencies.UnionWith(usage.Dependencies);
+                foreach (var calledMethod in usage.CalledMethods)
+                {
+                    queue.Enqueue(calledMethod);
+                }
+            }
+
+            if (dependencies.Count > 0)
+            {
+                result[method] = dependencies;
             }
         }
 
@@ -119,16 +182,8 @@ internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
             while (queue.TryDequeue(out var current))
             {
                 cluster.Add(current);
-                foreach (var methodFields in usage.Values.Where(fields => fields.Contains(current)))
-                {
-                    foreach (var related in methodFields)
-                    {
-                        if (remaining.Remove(related))
-                        {
-                            queue.Enqueue(related);
-                        }
-                    }
-                }
+                ConnectByMethodUsage(current, usage, remaining, queue);
+                ConnectBySharedAbstraction(current, remaining, queue);
             }
 
             if (
@@ -142,4 +197,89 @@ internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
 
         return qualifyingClusters;
     }
+
+    private static void ConnectByMethodUsage(
+        IFieldSymbol current,
+        IReadOnlyDictionary<IMethodSymbol, HashSet<IFieldSymbol>> usage,
+        HashSet<IFieldSymbol> remaining,
+        Queue<IFieldSymbol> queue
+    )
+    {
+        foreach (var methodFields in usage.Values.Where(fields => fields.Contains(current)))
+        {
+            foreach (var related in methodFields)
+            {
+                if (remaining.Remove(related))
+                {
+                    queue.Enqueue(related);
+                }
+            }
+        }
+    }
+
+    private static void ConnectBySharedAbstraction(
+        IFieldSymbol current,
+        HashSet<IFieldSymbol> remaining,
+        Queue<IFieldSymbol> queue
+    )
+    {
+        var relatedFields = remaining
+            .Where(candidate => ShareMeaningfulProjectAbstraction(current.Type, candidate.Type))
+            .ToArray();
+
+        foreach (var related in relatedFields)
+        {
+            if (remaining.Remove(related))
+            {
+                queue.Enqueue(related);
+            }
+        }
+    }
+
+    private static bool ShareMeaningfulProjectAbstraction(ITypeSymbol left, ITypeSymbol right)
+    {
+        if (
+            left is not INamedTypeSymbol leftType
+            || right is not INamedTypeSymbol rightType
+        )
+        {
+            return false;
+        }
+
+        var leftHierarchy = ReadProjectTypeHierarchy(leftType);
+        return ReadProjectTypeHierarchy(rightType).Any(leftHierarchy.Contains);
+    }
+
+    private static HashSet<INamedTypeSymbol> ReadProjectTypeHierarchy(INamedTypeSymbol type)
+    {
+        var result = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+
+        for (
+            INamedTypeSymbol? current = type;
+            current is not null && current.SpecialType != SpecialType.System_Object;
+            current = current.BaseType
+        )
+        {
+            if (current.Locations.Any(location => location.IsInSource))
+            {
+                result.Add(current);
+            }
+        }
+
+        foreach (
+            var abstraction in type.AllInterfaces.Where(candidate =>
+                candidate.Locations.Any(location => location.IsInSource)
+            )
+        )
+        {
+            result.Add(abstraction);
+        }
+
+        return result;
+    }
+
+    private sealed record MethodUsage(
+        HashSet<IFieldSymbol> Dependencies,
+        HashSet<IMethodSymbol> CalledMethods
+    );
 }
