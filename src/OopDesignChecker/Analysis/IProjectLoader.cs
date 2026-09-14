@@ -2,5 +2,5 @@ namespace OopDesignChecker.Analysis;
 
 internal interface IProjectLoader
 {
-    SourceProject Load(string targetPath);
+    IReadOnlyList<SourceProject> LoadProjects(string targetPath);
 }
