@@ -143,11 +143,13 @@ internal sealed class TypeBranchPolymorphismRule : IAnalysisRule
         )
         {
             if (
-                types.Skip(1).All(type =>
-                    type.AllInterfaces.Any(implemented =>
-                        SymbolEqualityComparer.Default.Equals(implemented, interfaceType)
+                types
+                    .Skip(1)
+                    .All(type =>
+                        type.AllInterfaces.Any(implemented =>
+                            SymbolEqualityComparer.Default.Equals(implemented, interfaceType)
+                        )
                     )
-                )
             )
             {
                 return true;
