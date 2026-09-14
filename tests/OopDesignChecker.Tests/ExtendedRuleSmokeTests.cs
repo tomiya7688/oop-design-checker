@@ -17,6 +17,8 @@ internal static class ExtendedRuleSmokeTests
         SerializableDataCarrierIsAllowed();
         MapperProjectionDoesNotMakeObjectAnemic();
         UnrelatedDependencyClustersAreWarning();
+        HelperConnectedDependenciesAreAllowed();
+        SharedAbstractionDependenciesAreAllowed();
         DeepObjectNavigationIsAttention();
         GetterSetterOnlyObjectIsAttention();
         MessageDataCarrierIsAllowed();
@@ -273,6 +275,69 @@ internal static class ExtendedRuleSmokeTests
             "OOP403",
             DesignDiagnosticSeverity.Warning
         );
+    }
+
+    private static void HelperConnectedDependenciesAreAllowed()
+    {
+        const string source = """
+            internal sealed class A { public int Read() => 1; }
+            internal sealed class B { public int Read() => 1; }
+            internal sealed class C { public int Read() => 1; }
+            internal sealed class D { public int Read() => 1; }
+            internal sealed class E { public int Read() => 1; }
+            internal sealed class F { public int Read() => 1; }
+
+            internal sealed class Coordinator
+            {
+                private readonly A _a = new();
+                private readonly B _b = new();
+                private readonly C _c = new();
+                private readonly D _d = new();
+                private readonly E _e = new();
+                private readonly F _f = new();
+
+                public int Run() => First() + Second() + Third();
+
+                private int First() => _a.Read() + _b.Read();
+                private int Second() => _c.Read() + _d.Read();
+                private int Third() => _e.Read() + _f.Read();
+            }
+            """;
+
+        AssertNone(new ExcessiveUnrelatedDependenciesRule(), source, "OOP403");
+    }
+
+    private static void SharedAbstractionDependenciesAreAllowed()
+    {
+        const string source = """
+            internal interface IReader
+            {
+                int Read();
+            }
+
+            internal sealed class A : IReader { public int Read() => 1; }
+            internal sealed class B : IReader { public int Read() => 1; }
+            internal sealed class C : IReader { public int Read() => 1; }
+            internal sealed class D : IReader { public int Read() => 1; }
+            internal sealed class E : IReader { public int Read() => 1; }
+            internal sealed class F : IReader { public int Read() => 1; }
+
+            internal sealed class Coordinator
+            {
+                private readonly A _a = new();
+                private readonly B _b = new();
+                private readonly C _c = new();
+                private readonly D _d = new();
+                private readonly E _e = new();
+                private readonly F _f = new();
+
+                public int First() => _a.Read() + _b.Read();
+                public int Second() => _c.Read() + _d.Read();
+                public int Third() => _e.Read() + _f.Read();
+            }
+            """;
+
+        AssertNone(new ExcessiveUnrelatedDependenciesRule(), source, "OOP403");
     }
 
     private static void DeepObjectNavigationIsAttention()
