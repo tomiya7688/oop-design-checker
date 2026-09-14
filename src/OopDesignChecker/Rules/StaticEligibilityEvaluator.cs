@@ -39,7 +39,7 @@ internal static class StaticEligibilityEvaluator
 
         var instanceMethods = declaration.Members
             .OfType<MethodDeclarationSyntax>()
-            .Select(method => (Syntax: method, Symbol: semanticModel.GetDeclaredSymbol(method)))
+            .Select(method => (Syntax: method, Symbol: semanticModel.GetDeclaredSymbol(method) as IMethodSymbol))
             .Where(pair => pair.Symbol is { IsStatic: false })
             .ToArray();
 
