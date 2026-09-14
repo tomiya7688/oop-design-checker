@@ -11,11 +11,7 @@ internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
     private const int MinimumDependenciesPerCluster = 2;
 
     public RuleDescriptor Descriptor { get; } =
-        new(
-            "OOP403",
-            "Excessive unrelated dependencies",
-            DesignDiagnosticSeverity.Warning
-        );
+        new("OOP403", "Excessive unrelated dependencies", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -65,25 +61,30 @@ internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
             )
             .ToArray();
 
-    private static IReadOnlyDictionary<IMethodSymbol, HashSet<IFieldSymbol>> ReadDependencyUsage(
+    private static Dictionary<IMethodSymbol, HashSet<IFieldSymbol>> ReadDependencyUsage(
         ClassDeclarationSyntax declaration,
         IReadOnlyCollection<IFieldSymbol> dependencies,
         SemanticModel semanticModel
     )
     {
         var dependencySet = new HashSet<IFieldSymbol>(dependencies, SymbolEqualityComparer.Default);
-        var result = new Dictionary<IMethodSymbol, HashSet<IFieldSymbol>>(SymbolEqualityComparer.Default);
+        var result = new Dictionary<IMethodSymbol, HashSet<IFieldSymbol>>(
+            SymbolEqualityComparer.Default
+        );
 
         foreach (var methodDeclaration in declaration.Members.OfType<MethodDeclarationSyntax>())
         {
-            if (semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol method
-                || method.IsStatic)
+            if (
+                semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol method
+                || method.IsStatic
+            )
             {
                 continue;
             }
 
             var used = new HashSet<IFieldSymbol>(
-                methodDeclaration.DescendantNodes()
+                methodDeclaration
+                    .DescendantNodes()
                     .OfType<IdentifierNameSyntax>()
                     .Select(identifier => semanticModel.GetSymbolInfo(identifier).Symbol)
                     .OfType<IFieldSymbol>()
@@ -130,8 +131,10 @@ internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
                 }
             }
 
-            if (cluster.Count >= MinimumDependenciesPerCluster
-                && usage.Values.Any(fields => fields.Any(cluster.Contains)))
+            if (
+                cluster.Count >= MinimumDependenciesPerCluster
+                && usage.Values.Any(fields => fields.Any(cluster.Contains))
+            )
             {
                 qualifyingClusters++;
             }
