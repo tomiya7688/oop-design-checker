@@ -1,6 +1,6 @@
 namespace OopDesignChecker.Core;
 
-internal sealed record DesignDiagnostic(
+public sealed record DesignDiagnostic(
     RuleDescriptor Rule,
     DesignDiagnosticSeverity Severity,
     string Message,
