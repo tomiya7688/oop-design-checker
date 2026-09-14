@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker", "src\OopDesignChecker\OopDesignChecker.csproj", "{69AB7B1D-A2AD-4C0C-8E02-F5FC7A02B70F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker.Tests", "tests\OopDesignChecker.Tests\OopDesignChecker.Tests.csproj", "{EA166BF2-4281-4C27-BBC0-72DA3797EBF6}"
+EndProject
+Global
+    GlobalSection(SolutionConfigurationPlatforms) = preSolution
+        Debug|Any CPU = Debug|Any CPU
+        Release|Any CPU = Release|Any CPU
+    EndGlobalSection
+    GlobalSection(ProjectConfigurationPlatforms) = postSolution
+        {69AB7B1D-A2AD-4C0C-8E02-F5FC7A02B70F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {69AB7B1D-A2AD-4C0C-8E02-F5FC7A02B70F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {69AB7B1D-A2AD-4C0C-8E02-F5FC7A02B70F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {69AB7B1D-A2AD-4C0C-8E02-F5FC7A02B70F}.Release|Any CPU.Build.0 = Release|Any CPU
+        {EA166BF2-4281-4C27-BBC0-72DA3797EBF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {EA166BF2-4281-4C27-BBC0-72DA3797EBF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {EA166BF2-4281-4C27-BBC0-72DA3797EBF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {EA166BF2-4281-4C27-BBC0-72DA3797EBF6}.Release|Any CPU.Build.0 = Release|Any CPU
+    EndGlobalSection
+EndGlobal
