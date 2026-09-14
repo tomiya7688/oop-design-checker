@@ -265,8 +265,6 @@ internal static class CoreRuleSmokeTests
         }
 
         var found = string.Join(", ", diagnostics.Select(item => item.Rule.Id));
-        throw new InvalidOperationException(
-            $"Expected no {ruleId} diagnostic, found [{found}]."
-        );
+        throw new InvalidOperationException($"Expected no {ruleId} diagnostic, found [{found}].");
     }
 }
