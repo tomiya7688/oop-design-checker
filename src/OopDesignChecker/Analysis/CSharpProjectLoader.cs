@@ -43,13 +43,13 @@ internal sealed class CSharpProjectLoader : IProjectLoader
 
         var workspaceFailures = new List<string>();
         using var workspace = MSBuildWorkspace.Create();
-        workspace.WorkspaceFailed += (_, args) =>
+        var workspaceFailureRegistration = workspace.RegisterWorkspaceFailedHandler(args =>
         {
             if (args.Diagnostic.Kind == WorkspaceDiagnosticKind.Failure)
             {
                 workspaceFailures.Add(args.Diagnostic.Message);
             }
-        };
+        });
 
         var project = workspace.OpenProjectAsync(projectFile).GetAwaiter().GetResult();
         if (project.GetCompilationAsync().GetAwaiter().GetResult() is not CSharpCompilation compilation)
