@@ -18,6 +18,7 @@ internal static class RuleCatalog
             new ObjectInvariantBypassRule(),
             new ExcessiveExternalStateManipulationRule(),
             new OversizedMainOperationRule(),
+            new SuspiciousInheritanceRelationshipRule(),
             new ParentContractMostlyUnusedRule(),
             new ChildDisablesParentBehaviorRule(),
             new ExcessiveInheritanceDepthRule(),
@@ -26,6 +27,7 @@ internal static class RuleCatalog
             new CompositionCandidateRule(),
             new MultipleObjectsInClassRule(),
             new AnemicObjectRule(),
+            new ExcessiveUnrelatedDependenciesRule(),
             new ExcessiveObjectNavigationRule(),
             new GetterSetterOnlyObjectRule(),
         ];
