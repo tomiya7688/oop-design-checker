@@ -1,0 +1,174 @@
+using OopDesignChecker.Core;
+using OopDesignChecker.Rules;
+
+namespace OopDesignChecker.Tests;
+
+internal static class Program
+{
+    private static readonly IReadOnlyList<TestCase> TestCases =
+    [
+        new("OOP106 detects public mutable fields", EncapsulationLeakIsDetected),
+        new("OOP103 detects instance methods that do not use instance state", StaticMemberCandidateIsDetected),
+        new("OOP104 detects stateless classes", StaticClassCandidateIsDetected),
+        new("OOP002 detects repeated runtime type branching", TypeBranchingIsDetected),
+        new("OOP303 detects overrides that disable inherited behavior", DisabledParentBehaviorIsDetected),
+        new("OOP304 detects deep inheritance", DeepInheritanceIsDetected)
+    ];
+
+    private static int Main()
+    {
+        var failed = 0;
+
+        foreach (var testCase in TestCases)
+        {
+            try
+            {
+                testCase.Run();
+                Console.WriteLine($"PASS {testCase.Name}");
+            }
+            catch (Exception exception)
+            {
+                failed++;
+                Console.Error.WriteLine($"FAIL {testCase.Name}");
+                Console.Error.WriteLine(exception.Message);
+            }
+        }
+
+        Console.WriteLine($"{TestCases.Count - failed}/{TestCases.Count} tests passed.");
+        return failed == 0 ? 0 : 1;
+    }
+
+    private static void EncapsulationLeakIsDetected()
+    {
+        const string source = """
+            internal sealed class Sample
+            {
+                public int Value;
+            }
+            """;
+
+        var diagnostics = Run(new EncapsulationLeakRule(), source);
+        AssertSingleRule(diagnostics, "OOP106", DesignDiagnosticSeverity.Error);
+    }
+
+    private static void StaticMemberCandidateIsDetected()
+    {
+        const string source = """
+            internal sealed class Calculator
+            {
+                private int _offset;
+
+                public int Add(int left, int right) => left + right;
+                public int AddOffset(int value) => value + _offset;
+            }
+            """;
+
+        var diagnostics = Run(new StaticMemberCandidateRule(), source);
+        AssertRuleCount(diagnostics, "OOP103", 1);
+    }
+
+    private static void StaticClassCandidateIsDetected()
+    {
+        const string source = """
+            internal class Utility
+            {
+                public int Add(int left, int right) => left + right;
+            }
+            """;
+
+        var diagnostics = Run(new StaticClassCandidateRule(), source);
+        AssertRuleCount(diagnostics, "OOP104", 1);
+    }
+
+    private static void TypeBranchingIsDetected()
+    {
+        const string source = """
+            internal abstract class Animal;
+            internal sealed class Dog : Animal;
+            internal sealed class Cat : Animal;
+
+            internal sealed class Handler
+            {
+                public void Handle(Animal animal)
+                {
+                    if (animal is Dog)
+                    {
+                    }
+                    else if (animal is Cat)
+                    {
+                    }
+                }
+            }
+            """;
+
+        var diagnostics = Run(new TypeBranchPolymorphismRule(), source);
+        AssertRuleCount(diagnostics, "OOP002", 1);
+    }
+
+    private static void DisabledParentBehaviorIsDetected()
+    {
+        const string source = """
+            using System;
+
+            internal abstract class Base
+            {
+                public abstract void Run();
+            }
+
+            internal sealed class Child : Base
+            {
+                public override void Run() => throw new NotSupportedException();
+            }
+            """;
+
+        var diagnostics = Run(new ChildDisablesParentBehaviorRule(), source);
+        AssertSingleRule(diagnostics, "OOP303", DesignDiagnosticSeverity.Error);
+    }
+
+    private static void DeepInheritanceIsDetected()
+    {
+        const string source = """
+            internal class A;
+            internal class B : A;
+            internal class C : B;
+            internal class D : C;
+            internal sealed class E : D;
+            """;
+
+        var diagnostics = Run(new ExcessiveInheritanceDepthRule(), source);
+        AssertRuleCount(diagnostics, "OOP304", 1);
+    }
+
+    private static IReadOnlyList<DesignDiagnostic> Run(IAnalysisRule rule, string source) =>
+        rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+
+    private static void AssertSingleRule(
+        IReadOnlyList<DesignDiagnostic> diagnostics,
+        string ruleId,
+        DesignDiagnosticSeverity severity)
+    {
+        AssertRuleCount(diagnostics, ruleId, 1);
+
+        if (diagnostics[0].Severity != severity)
+        {
+            throw new InvalidOperationException(
+                $"Expected severity {severity}, but found {diagnostics[0].Severity}.");
+        }
+    }
+
+    private static void AssertRuleCount(
+        IReadOnlyList<DesignDiagnostic> diagnostics,
+        string ruleId,
+        int expectedCount)
+    {
+        var matching = diagnostics.Where(diagnostic => diagnostic.Rule.Id == ruleId).ToArray();
+        if (matching.Length != expectedCount)
+        {
+            var found = string.Join(", ", diagnostics.Select(diagnostic => diagnostic.Rule.Id));
+            throw new InvalidOperationException(
+                $"Expected {expectedCount} {ruleId} diagnostic(s), found {matching.Length}. All diagnostics: [{found}]");
+        }
+    }
+
+    private sealed record TestCase(string Name, Action Run);
+}
