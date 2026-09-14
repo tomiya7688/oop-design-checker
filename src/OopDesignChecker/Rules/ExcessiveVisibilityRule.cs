@@ -71,8 +71,11 @@ internal sealed class ExcessiveVisibilityRule : IAnalysisRule
                     continue;
                 }
 
-                var referencingType = semanticModel.GetEnclosingSymbol(name.SpanStart)?.ContainingType;
-                if (referencingType is null
+                var containingDeclaration = name.Ancestors()
+                    .OfType<TypeDeclarationSyntax>()
+                    .FirstOrDefault();
+                if (containingDeclaration is null
+                    || semanticModel.GetDeclaredSymbol(containingDeclaration) is not INamedTypeSymbol referencingType
                     || result.Any(existing => SymbolEqualityComparer.Default.Equals(existing, referencingType)))
                 {
                     continue;
