@@ -268,7 +268,7 @@ internal static class Program
         rule.Analyze(TestProjectFactory.Create(source)).ToArray();
 
     private static void AssertSingleRule(
-        IReadOnlyList<DesignDiagnostic> diagnostics,
+        DesignDiagnostic[] diagnostics,
         string ruleId,
         DesignDiagnosticSeverity severity
     )
@@ -284,7 +284,7 @@ internal static class Program
     }
 
     private static void AssertRuleCount(
-        IReadOnlyList<DesignDiagnostic> diagnostics,
+        DesignDiagnostic[] diagnostics,
         string ruleId,
         int expectedCount
     )
