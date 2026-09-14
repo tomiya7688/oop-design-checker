@@ -81,7 +81,9 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
 
             var calledMethods = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
             foreach (
-                var invocation in methodDeclaration.DescendantNodes().OfType<InvocationExpressionSyntax>()
+                var invocation in methodDeclaration
+                    .DescendantNodes()
+                    .OfType<InvocationExpressionSyntax>()
             )
             {
                 if (semanticModel.GetSymbolInfo(invocation).Symbol is not IMethodSymbol calledMethod)
