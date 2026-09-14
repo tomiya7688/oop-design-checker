@@ -27,10 +27,7 @@ internal sealed class MissingCommonAbstractionRule : IAnalysisRule
         )
         {
             var related = group.ToArray();
-            if (
-                related.Length < MinimumRelatedTypes
-                || !HasSharedUsageContext(context, related)
-            )
+            if (related.Length < MinimumRelatedTypes || !HasSharedUsageContext(context, related))
             {
                 continue;
             }
