@@ -25,7 +25,11 @@ internal static class SymbolUtilities
         var depth = 0;
         var current = symbol.BaseType;
 
-        while (current is not null && current.SpecialType != SpecialType.System_Object)
+        while (
+            current is not null
+            && current.SpecialType != SpecialType.System_Object
+            && current.Locations.Any(location => location.IsInSource)
+        )
         {
             depth++;
             current = current.BaseType;
