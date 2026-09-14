@@ -31,7 +31,7 @@ public static class CheckerService
             .Where(rule => !disabledRules.Contains(rule.Descriptor.Id))
             .ToArray();
 
-        var loader = new CSharpProjectLoader(configuration.IgnoredPaths);
+        IProjectLoader loader = ProjectLoaderFactory.Create(configuration.IgnoredPaths);
         var project = loader.Load(fullTargetPath);
         var engine = new AnalysisEngine(rules);
         var diagnostics = engine.Analyze(project);
