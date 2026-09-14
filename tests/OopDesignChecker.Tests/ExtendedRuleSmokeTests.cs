@@ -10,9 +10,11 @@ internal static class ExtendedRuleSmokeTests
         UnusedSingleImplementationAbstractionIsAttention();
         InvariantBypassIsDanger();
         ExternalStateManipulationIsWarning();
+        SuspiciousHiddenInheritanceIsWarning();
         ParentContractNoOpsAreWarning();
         ImplementationReuseInheritanceIsAttention();
         AnemicObjectWithExternalBehaviorIsWarning();
+        UnrelatedDependencyClustersAreWarning();
         DeepObjectNavigationIsAttention();
         GetterSetterOnlyObjectIsAttention();
     }
@@ -97,6 +99,30 @@ internal static class ExtendedRuleSmokeTests
         );
     }
 
+    private static void SuspiciousHiddenInheritanceIsWarning()
+    {
+        const string source = """
+            internal class Base
+            {
+                public void Start() { }
+                public int Read() => 1;
+            }
+
+            internal sealed class Child : Base
+            {
+                public new void Start() { }
+                public new int Read() => 2;
+            }
+            """;
+
+        AssertSingle(
+            new SuspiciousInheritanceRelationshipRule(),
+            source,
+            "OOP301",
+            DesignDiagnosticSeverity.Warning
+        );
+    }
+
     private static void ParentContractNoOpsAreWarning()
     {
         const string source = """
@@ -164,6 +190,39 @@ internal static class ExtendedRuleSmokeTests
             """;
 
         AssertSingle(new AnemicObjectRule(), source, "OOP402", DesignDiagnosticSeverity.Warning);
+    }
+
+    private static void UnrelatedDependencyClustersAreWarning()
+    {
+        const string source = """
+            internal sealed class A { public int Read() => 1; }
+            internal sealed class B { public int Read() => 1; }
+            internal sealed class C { public int Read() => 1; }
+            internal sealed class D { public int Read() => 1; }
+            internal sealed class E { public int Read() => 1; }
+            internal sealed class F { public int Read() => 1; }
+
+            internal sealed class Coordinator
+            {
+                private readonly A _a = new();
+                private readonly B _b = new();
+                private readonly C _c = new();
+                private readonly D _d = new();
+                private readonly E _e = new();
+                private readonly F _f = new();
+
+                public int First() => _a.Read() + _b.Read();
+                public int Second() => _c.Read() + _d.Read();
+                public int Third() => _e.Read() + _f.Read();
+            }
+            """;
+
+        AssertSingle(
+            new ExcessiveUnrelatedDependenciesRule(),
+            source,
+            "OOP403",
+            DesignDiagnosticSeverity.Warning
+        );
     }
 
     private static void DeepObjectNavigationIsAttention()
