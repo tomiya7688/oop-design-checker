@@ -5,9 +5,9 @@ using OopDesignChecker.Rules;
 
 namespace OopDesignChecker;
 
-public sealed class CheckerService
+public static class CheckerService
 {
-    public CheckerRunResult Analyze(
+    public static CheckerRunResult Analyze(
         string targetPath,
         string? configurationPath = null,
         DesignDiagnosticSeverity? failureThresholdOverride = null)
