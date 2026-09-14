@@ -76,7 +76,10 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
                     .OfType<IFieldSymbol>()
                     .Where(field =>
                         !field.IsStatic
-                        && SymbolEqualityComparer.Default.Equals(field.ContainingType, containingType)
+                        && SymbolEqualityComparer.Default.Equals(
+                            field.ContainingType,
+                            containingType
+                        )
                     ),
                 SymbolEqualityComparer.Default
             );
