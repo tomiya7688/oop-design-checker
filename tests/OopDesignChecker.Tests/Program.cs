@@ -128,10 +128,12 @@ internal static class Program
                 _ = new CSharpProjectLoader().Load(sourcePath);
             }
             catch (InvalidOperationException exception)
-                when (exception.Message.Contains(
+                when (
+                    exception.Message.Contains(
                         "could not be analyzed reliably",
                         StringComparison.Ordinal
-                    ))
+                    )
+                )
             {
                 return;
             }
