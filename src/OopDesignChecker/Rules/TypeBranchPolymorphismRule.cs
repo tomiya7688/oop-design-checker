@@ -37,9 +37,7 @@ internal sealed class TypeBranchPolymorphismRule : IAnalysisRule
 
                 var typeNames = string.Join(
                     ", ",
-                    suspiciousGroup
-                        .Select(test => test.Type.Name)
-                        .Distinct(StringComparer.Ordinal)
+                    suspiciousGroup.Select(test => test.Type.Name).Distinct(StringComparer.Ordinal)
                 );
                 yield return DiagnosticFactory.Create(
                     Descriptor,
