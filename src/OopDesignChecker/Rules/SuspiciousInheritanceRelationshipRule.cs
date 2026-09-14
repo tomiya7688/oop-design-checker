@@ -11,11 +11,7 @@ internal sealed class SuspiciousInheritanceRelationshipRule : IAnalysisRule
     private const int MinimumHiddenMembers = 2;
 
     public RuleDescriptor Descriptor { get; } =
-        new(
-            "OOP301",
-            "Suspicious inheritance relationship",
-            DesignDiagnosticSeverity.Warning
-        );
+        new("OOP301", "Suspicious inheritance relationship", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -26,14 +22,17 @@ internal sealed class SuspiciousInheritanceRelationshipRule : IAnalysisRule
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || symbol.BaseType is not { SpecialType: not SpecialType.System_Object } baseType)
+                if (
+                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
+                    || symbol.BaseType
+                        is not { SpecialType: not SpecialType.System_Object } baseType
+                )
                 {
                     continue;
                 }
 
-                var hiddenMembers = declaration.Members
-                    .Where(member => member.Modifiers.Any(SyntaxKind.NewKeyword))
+                var hiddenMembers = declaration
+                    .Members.Where(member => member.Modifiers.Any(SyntaxKind.NewKeyword))
                     .Select(member => semanticModel.GetDeclaredSymbol(member))
                     .Where(member => member is not null && HidesBaseMember(member, baseType))
                     .ToArray();
