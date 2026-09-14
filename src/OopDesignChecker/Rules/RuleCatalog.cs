@@ -18,5 +18,7 @@ internal static class RuleCatalog
             new ChildDisablesParentBehaviorRule(),
             new ExcessiveInheritanceDepthRule(),
             new ConcreteTypeDependencyRule(),
+            new AvoidableConcreteConstructionRule(),
+            new MultipleObjectsInClassRule(),
         ];
 }
