@@ -1,3 +1,4 @@
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using OopDesignChecker.Analysis;
 using OopDesignChecker.Core;
@@ -62,6 +63,15 @@ internal sealed class TypeBranchPolymorphismRule : IAnalysisRule
 
     private static bool TryReadTypeTest(ExpressionSyntax condition, out TypeTest test)
     {
+        if (condition is BinaryExpressionSyntax binaryExpression
+            && binaryExpression.IsKind(SyntaxKind.IsExpression))
+        {
+            test = new TypeTest(
+                binaryExpression.Left.ToString(),
+                binaryExpression.Right.ToString());
+            return true;
+        }
+
         if (condition is IsPatternExpressionSyntax isPattern)
         {
             var typeName = isPattern.Pattern switch
