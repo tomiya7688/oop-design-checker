@@ -21,8 +21,8 @@ internal sealed class MainWindow : Window
         MinHeight = 480;
 
         _targetPath.Text = Directory.GetCurrentDirectory();
-        _targetPath.Watermark = "Target project or C# file";
-        _configurationPath.Watermark = "Optional oop-design-checker.json path";
+        _targetPath.PlaceholderText = "Target project or C# file";
+        _configurationPath.PlaceholderText = "Optional oop-design-checker.json path";
         _analyzeButton.Content = "Analyze";
         _analyzeButton.Click += async (_, _) => await AnalyzeAsync();
         _status.Text = "Ready";
