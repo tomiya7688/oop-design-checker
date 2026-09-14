@@ -86,7 +86,9 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
                     .OfType<InvocationExpressionSyntax>()
             )
             {
-                if (semanticModel.GetSymbolInfo(invocation).Symbol is not IMethodSymbol calledMethod)
+                if (
+                    semanticModel.GetSymbolInfo(invocation).Symbol is not IMethodSymbol calledMethod
+                )
                 {
                     continue;
                 }
