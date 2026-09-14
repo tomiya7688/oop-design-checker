@@ -1,8 +1,8 @@
 namespace OopDesignChecker.Core;
 
-internal enum DesignDiagnosticSeverity
+public enum DesignDiagnosticSeverity
 {
-    Info,
-    Warning,
-    Error
+    Attention = 0,
+    Warning = 1,
+    Danger = 2,
 }

@@ -12,13 +12,11 @@ internal sealed class ChildDisablesParentBehaviorRule : IAnalysisRule
         "NotSupportedException",
         "System.NotSupportedException",
         "NotImplementedException",
-        "System.NotImplementedException"
+        "System.NotImplementedException",
     };
 
-    public RuleDescriptor Descriptor { get; } = new(
-        "OOP303",
-        "Child disables parent behavior",
-        DesignDiagnosticSeverity.Error);
+    public RuleDescriptor Descriptor { get; } =
+        new("OOP303", "Child disables parent behavior", DesignDiagnosticSeverity.Danger);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -29,7 +27,10 @@ internal sealed class ChildDisablesParentBehaviorRule : IAnalysisRule
 
             foreach (var method in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(method) is not IMethodSymbol { IsOverride: true } methodSymbol)
+                if (
+                    semanticModel.GetDeclaredSymbol(method)
+                    is not IMethodSymbol { IsOverride: true } methodSymbol
+                )
                 {
                     continue;
                 }
@@ -44,7 +45,8 @@ internal sealed class ChildDisablesParentBehaviorRule : IAnalysisRule
                     Descriptor,
                     method.Identifier.GetLocation(),
                     $"This override disables inherited behavior by always throwing {thrownType}.",
-                    methodSymbol.ToDisplayString());
+                    methodSymbol.ToDisplayString()
+                );
             }
         }
     }

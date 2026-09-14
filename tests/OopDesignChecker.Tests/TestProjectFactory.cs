@@ -13,28 +13,33 @@ internal static class TestProjectFactory
             "RuleTests",
             [syntaxTree],
             MetadataReferenceProvider.CreatePlatformReferences(),
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+        );
 
-        var errors = compilation.GetDiagnostics()
+        var errors = compilation
+            .GetDiagnostics()
             .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
             .ToArray();
 
         if (errors.Length > 0)
         {
             throw new InvalidOperationException(
-                "Test source did not compile:\n" + string.Join("\n", errors.Select(error => error.ToString())));
+                "Test source did not compile:\n"
+                    + string.Join("\n", errors.Select(error => error.ToString()))
+            );
         }
 
         var semanticModels = new Dictionary<SyntaxTree, SemanticModel>
         {
-            [syntaxTree] = compilation.GetSemanticModel(syntaxTree)
+            [syntaxTree] = compilation.GetSemanticModel(syntaxTree),
         };
 
         var project = new SourceProject(
             rootPath: ".",
             isApplication: true,
             compilation,
-            semanticModels);
+            semanticModels
+        );
 
         return new AnalysisContext(project);
     }

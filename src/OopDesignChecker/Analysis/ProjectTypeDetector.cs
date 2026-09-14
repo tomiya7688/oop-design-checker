@@ -6,7 +6,13 @@ internal static class ProjectTypeDetector
 {
     public static bool IsApplication(string rootPath)
     {
-        foreach (var projectFile in Directory.EnumerateFiles(rootPath, "*.csproj", SearchOption.AllDirectories))
+        foreach (
+            var projectFile in Directory.EnumerateFiles(
+                rootPath,
+                "*.csproj",
+                SearchOption.AllDirectories
+            )
+        )
         {
             if (PathFilter.ShouldIgnore(projectFile))
             {
@@ -19,8 +25,10 @@ internal static class ProjectTypeDetector
                 .FirstOrDefault(element => element.Name.LocalName == "OutputType")
                 ?.Value;
 
-            if (string.Equals(outputType, "Exe", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(outputType, "WinExe", StringComparison.OrdinalIgnoreCase))
+            if (
+                string.Equals(outputType, "Exe", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(outputType, "WinExe", StringComparison.OrdinalIgnoreCase)
+            )
             {
                 return true;
             }

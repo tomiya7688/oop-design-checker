@@ -11,7 +11,8 @@ internal sealed class SourceProject
         string rootPath,
         bool isApplication,
         CSharpCompilation compilation,
-        IReadOnlyDictionary<SyntaxTree, SemanticModel> semanticModels)
+        IReadOnlyDictionary<SyntaxTree, SemanticModel> semanticModels
+    )
     {
         RootPath = rootPath;
         IsApplication = isApplication;

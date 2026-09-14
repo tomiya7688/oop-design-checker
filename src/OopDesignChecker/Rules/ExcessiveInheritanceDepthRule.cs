@@ -9,10 +9,8 @@ internal sealed class ExcessiveInheritanceDepthRule : IAnalysisRule
 {
     private const int WarningDepth = 4;
 
-    public RuleDescriptor Descriptor { get; } = new(
-        "OOP304",
-        "Excessive inheritance depth",
-        DesignDiagnosticSeverity.Warning);
+    public RuleDescriptor Descriptor { get; } =
+        new("OOP304", "Excessive inheritance depth", DesignDiagnosticSeverity.Attention);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -23,8 +21,10 @@ internal sealed class ExcessiveInheritanceDepthRule : IAnalysisRule
 
             foreach (var declaration in root.DescendantNodes().OfType<TypeDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration))
+                if (
+                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
+                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
+                )
                 {
                     continue;
                 }
@@ -39,7 +39,8 @@ internal sealed class ExcessiveInheritanceDepthRule : IAnalysisRule
                     Descriptor,
                     declaration.Identifier.GetLocation(),
                     $"Inheritance depth is {depth}. Deep inheritance makes behavior harder to reason about.",
-                    symbol.ToDisplayString());
+                    symbol.ToDisplayString()
+                );
             }
         }
     }

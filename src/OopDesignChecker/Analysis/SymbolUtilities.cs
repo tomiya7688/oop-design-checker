@@ -5,7 +5,10 @@ namespace OopDesignChecker.Analysis;
 
 internal static class SymbolUtilities
 {
-    public static bool IsPrimaryDeclaration(INamedTypeSymbol symbol, TypeDeclarationSyntax declaration)
+    public static bool IsPrimaryDeclaration(
+        INamedTypeSymbol symbol,
+        TypeDeclarationSyntax declaration
+    )
     {
         var firstReference = symbol.DeclaringSyntaxReferences.FirstOrDefault();
         if (firstReference is null)
@@ -31,17 +34,72 @@ internal static class SymbolUtilities
         return depth;
     }
 
-    public static bool ImplementsInterfaceMember(IMethodSymbol method)
+    public static bool ImplementsInterfaceMember(
+        IMethodSymbol method,
+        ClassDeclarationSyntax declaration,
+        SemanticModel semanticModel
+    )
     {
         foreach (var interfaceType in method.ContainingType.AllInterfaces)
         {
-            foreach (var interfaceMember in interfaceType.GetMembers().OfType<IMethodSymbol>())
+            if (HasMatchingInterfaceMethod(method, interfaceType))
             {
-                var implementation = method.ContainingType.FindImplementationForInterfaceMember(interfaceMember);
-                if (SymbolEqualityComparer.Default.Equals(implementation, method))
-                {
-                    return true;
-                }
+                return true;
+            }
+        }
+
+        if (declaration.BaseList is null)
+        {
+            return false;
+        }
+
+        foreach (var baseType in declaration.BaseList.Types)
+        {
+            if (
+                semanticModel.GetTypeInfo(baseType.Type).Type is not INamedTypeSymbol type
+                || type.TypeKind != TypeKind.Interface
+            )
+            {
+                continue;
+            }
+
+            if (
+                HasMatchingInterfaceMethod(method, type)
+                || type.AllInterfaces.Any(interfaceType =>
+                    HasMatchingInterfaceMethod(method, interfaceType)
+                )
+            )
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasMatchingInterfaceMethod(
+        IMethodSymbol method,
+        INamedTypeSymbol interfaceType
+    )
+    {
+        foreach (
+            var interfaceMember in interfaceType.GetMembers(method.Name).OfType<IMethodSymbol>()
+        )
+        {
+            var implementation = method.ContainingType.FindImplementationForInterfaceMember(
+                interfaceMember
+            );
+            if (SymbolEqualityComparer.Default.Equals(implementation, method))
+            {
+                return true;
+            }
+
+            if (
+                interfaceMember.Arity == method.Arity
+                && interfaceMember.Parameters.Length == method.Parameters.Length
+            )
+            {
+                return true;
             }
         }
 

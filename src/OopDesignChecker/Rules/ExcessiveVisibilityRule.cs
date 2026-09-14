@@ -7,10 +7,8 @@ namespace OopDesignChecker.Rules;
 
 internal sealed class ExcessiveVisibilityRule : IAnalysisRule
 {
-    public RuleDescriptor Descriptor { get; } = new(
-        "OOP101",
-        "Excessive visibility",
-        DesignDiagnosticSeverity.Warning);
+    public RuleDescriptor Descriptor { get; } =
+        new("OOP101", "Excessive visibility", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -26,9 +24,11 @@ internal sealed class ExcessiveVisibilityRule : IAnalysisRule
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
+                if (
+                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
                     || symbol.DeclaredAccessibility != Accessibility.Public
-                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration))
+                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
+                )
                 {
                     continue;
                 }
@@ -37,8 +37,10 @@ internal sealed class ExcessiveVisibilityRule : IAnalysisRule
                     .Where(type => !SymbolEqualityComparer.Default.Equals(type, symbol))
                     .ToArray();
 
-                if (referencingTypes.Length == 0
-                    || referencingTypes.Any(type => !IsHierarchyRelated(symbol, type)))
+                if (
+                    referencingTypes.Length == 0
+                    || referencingTypes.Any(type => !IsHierarchyRelated(symbol, type))
+                )
                 {
                     continue;
                 }
@@ -47,14 +49,16 @@ internal sealed class ExcessiveVisibilityRule : IAnalysisRule
                     Descriptor,
                     declaration.Identifier.GetLocation(),
                     "This public class is referenced only inside its inheritance hierarchy. A narrower visibility is likely sufficient.",
-                    symbol.ToDisplayString());
+                    symbol.ToDisplayString()
+                );
             }
         }
     }
 
-    private static IReadOnlyList<INamedTypeSymbol> FindReferencingTypes(
+    private static List<INamedTypeSymbol> FindReferencingTypes(
         AnalysisContext context,
-        INamedTypeSymbol target)
+        INamedTypeSymbol target
+    )
     {
         var result = new List<INamedTypeSymbol>();
 
@@ -74,9 +78,14 @@ internal sealed class ExcessiveVisibilityRule : IAnalysisRule
                 var containingDeclaration = name.Ancestors()
                     .OfType<TypeDeclarationSyntax>()
                     .FirstOrDefault();
-                if (containingDeclaration is null
-                    || semanticModel.GetDeclaredSymbol(containingDeclaration) is not INamedTypeSymbol referencingType
-                    || result.Any(existing => SymbolEqualityComparer.Default.Equals(existing, referencingType)))
+                if (
+                    containingDeclaration is null
+                    || semanticModel.GetDeclaredSymbol(containingDeclaration)
+                        is not INamedTypeSymbol referencingType
+                    || result.Any(existing =>
+                        SymbolEqualityComparer.Default.Equals(existing, referencingType)
+                    )
+                )
                 {
                     continue;
                 }

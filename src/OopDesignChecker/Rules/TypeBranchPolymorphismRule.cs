@@ -7,10 +7,8 @@ namespace OopDesignChecker.Rules;
 
 internal sealed class TypeBranchPolymorphismRule : IAnalysisRule
 {
-    public RuleDescriptor Descriptor { get; } = new(
-        "OOP002",
-        "Polymorphism bypassed by type branching",
-        DesignDiagnosticSeverity.Warning);
+    public RuleDescriptor Descriptor { get; } =
+        new("OOP002", "Polymorphism bypassed by type branching", DesignDiagnosticSeverity.Warning);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
@@ -28,18 +26,25 @@ internal sealed class TypeBranchPolymorphismRule : IAnalysisRule
                 var tests = CollectTypeTests(ifStatement).ToArray();
                 var suspiciousGroup = tests
                     .GroupBy(test => test.Subject, StringComparer.Ordinal)
-                    .FirstOrDefault(group => group.Select(test => test.TypeName).Distinct(StringComparer.Ordinal).Count() >= 2);
+                    .FirstOrDefault(group =>
+                        group.Select(test => test.TypeName).Distinct(StringComparer.Ordinal).Count()
+                        >= 2
+                    );
 
                 if (suspiciousGroup is null)
                 {
                     continue;
                 }
 
-                var typeNames = string.Join(", ", suspiciousGroup.Select(test => test.TypeName).Distinct(StringComparer.Ordinal));
+                var typeNames = string.Join(
+                    ", ",
+                    suspiciousGroup.Select(test => test.TypeName).Distinct(StringComparer.Ordinal)
+                );
                 yield return DiagnosticFactory.Create(
                     Descriptor,
                     ifStatement.IfKeyword.GetLocation(),
-                    $"Repeated runtime type branching ({typeNames}) may be replaceable with polymorphic behavior.");
+                    $"Repeated runtime type branching ({typeNames}) may be replaceable with polymorphic behavior."
+                );
             }
         }
     }
@@ -63,12 +68,15 @@ internal sealed class TypeBranchPolymorphismRule : IAnalysisRule
 
     private static bool TryReadTypeTest(ExpressionSyntax condition, out TypeTest test)
     {
-        if (condition is BinaryExpressionSyntax binaryExpression
-            && binaryExpression.RawKind == (int)SyntaxKind.IsExpression)
+        if (
+            condition is BinaryExpressionSyntax binaryExpression
+            && binaryExpression.RawKind == (int)SyntaxKind.IsExpression
+        )
         {
             test = new TypeTest(
                 binaryExpression.Left.ToString(),
-                binaryExpression.Right.ToString());
+                binaryExpression.Right.ToString()
+            );
             return true;
         }
 
@@ -78,7 +86,7 @@ internal sealed class TypeBranchPolymorphismRule : IAnalysisRule
             {
                 TypePatternSyntax typePattern => typePattern.Type.ToString(),
                 DeclarationPatternSyntax declarationPattern => declarationPattern.Type.ToString(),
-                _ => null
+                _ => null,
             };
 
             if (typeName is not null)

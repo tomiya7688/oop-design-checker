@@ -9,7 +9,8 @@ internal static class StaticEligibilityEvaluator
     public static bool CanClassBeStatic(
         ClassDeclarationSyntax declaration,
         INamedTypeSymbol symbol,
-        SemanticModel semanticModel)
+        SemanticModel semanticModel
+    )
     {
         if (symbol.IsStatic || symbol.IsAbstract || symbol.Interfaces.Length > 0)
         {
@@ -21,25 +22,37 @@ internal static class StaticEligibilityEvaluator
             return false;
         }
 
-        if (symbol.InstanceConstructors.Any(constructor => !constructor.IsImplicitlyDeclared && constructor.Parameters.Length > 0))
+        if (
+            symbol.InstanceConstructors.Any(constructor =>
+                !constructor.IsImplicitlyDeclared && constructor.Parameters.Length > 0
+            )
+        )
         {
             return false;
         }
 
-        if (symbol.GetMembers().Any(member => member switch
-            {
-                IFieldSymbol { IsStatic: false } => true,
-                IPropertySymbol { IsStatic: false } => true,
-                IEventSymbol { IsStatic: false } => true,
-                _ => false
-            }))
+        if (
+            symbol
+                .GetMembers()
+                .Any(member =>
+                    member switch
+                    {
+                        IFieldSymbol { IsStatic: false } => true,
+                        IPropertySymbol { IsStatic: false } => true,
+                        IEventSymbol { IsStatic: false } => true,
+                        _ => false,
+                    }
+                )
+        )
         {
             return false;
         }
 
-        var instanceMethods = declaration.Members
-            .OfType<MethodDeclarationSyntax>()
-            .Select(method => (Syntax: method, Symbol: semanticModel.GetDeclaredSymbol(method) as IMethodSymbol))
+        var instanceMethods = declaration
+            .Members.OfType<MethodDeclarationSyntax>()
+            .Select(method =>
+                (Syntax: method, Symbol: semanticModel.GetDeclaredSymbol(method) as IMethodSymbol)
+            )
             .Where(pair => pair.Symbol is { IsStatic: false })
             .ToArray();
 
@@ -56,8 +69,14 @@ internal static class StaticEligibilityEvaluator
                 return false;
             }
 
-            if (pair.Syntax.ExplicitInterfaceSpecifier is not null
-                || InstanceUsageInspector.UsesInstanceState(pair.Syntax, methodSymbol, semanticModel))
+            if (
+                pair.Syntax.ExplicitInterfaceSpecifier is not null
+                || InstanceUsageInspector.UsesInstanceState(
+                    pair.Syntax,
+                    methodSymbol,
+                    semanticModel
+                )
+            )
             {
                 return false;
             }

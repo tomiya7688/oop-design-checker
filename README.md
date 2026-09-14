@@ -4,43 +4,108 @@ Static-analysis tool for checking whether an object-oriented project follows the
 
 The checker itself is implemented in C# and is intended to pass its own rules without suppressing violations by default.
 
+## Frontends
+
+The same analysis engine is exposed through sibling frontends:
+
+- `src/frontends/cui` - CI-friendly command-line frontend
+- `src/frontends/gui` - cross-platform Avalonia GUI frontend
+
+The legacy `src/OopDesignChecker` executable remains available for compatibility.
+
+## Diagnostic levels
+
+- `DANGER` - incompatible with the OOP rules this project treats as fundamental. This fails CI by default.
+- `WARN` - normally undesirable in OOP design, but not inherently fatal.
+- `ATTN` - stricter-design guidance where performance, flexibility, framework constraints, or other tradeoffs may justify the design.
+
+The checker itself is tested with `--fail-on attention` so its own source must satisfy all three levels.
+
 ## Current implementation
 
 The first implementation targets C# source through Roslyn.
 
 Implemented rules:
 
+- `OOP001` - several related concrete types expose the same public behavior but share no project abstraction
 - `OOP002` - polymorphism bypassed by repeated runtime type branching
 - `OOP101` - public application class is visible more widely than its actual inheritance-hierarchy usage requires
+- `OOP102` - application class is a conservative sealing candidate
 - `OOP103` - instance method can be static
 - `OOP104` - class with no meaningful instance state can be static
+- `OOP105` - static class owns mutable shared state
 - `OOP106` - encapsulation leaks such as public mutable fields, directly exposed mutable collections, and unnecessarily public setters
 - `OOP201` - oversized or overly complex operation
 - `OOP303` - override disables inherited behavior by always rejecting it
 - `OOP304` - excessive inheritance depth
+- `OOP305` - constructor depends on a concrete project type even though a project abstraction exists
 
 More rules in `specification/check-rules.md` are design targets and will be implemented incrementally.
 
-## Run
+## Quality gates
+
+GitHub Actions exposes separate checks so failures are easy to identify:
+
+- `normal-ci` - restore, build, and rule smoke tests on Windows, Linux, and macOS
+- `self-check` - runs the checker against its own `src` tree with `--fail-on attention`
+- `code-analyzers` - .NET SDK analyzers at `latest-recommended`, code style enabled, warnings treated as errors
+- `csharpier` - CSharpier 1.3.0 formatting check using the repository-local tool manifest
+
+## CUI
 
 ```bash
-dotnet run --project src/OopDesignChecker/OopDesignChecker.csproj -- <target-path>
+dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-path>
 ```
 
-Treat warnings as failures:
+Choose the CI failure threshold:
 
 ```bash
-dotnet run --project src/OopDesignChecker/OopDesignChecker.csproj -- <target-path> --warnings-as-errors
+dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-path> --fail-on danger
+dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-path> --fail-on warning
+dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-path> --fail-on attention
 ```
+
+`--warnings-as-errors` remains as a compatibility alias for `--fail-on warning`.
+
+## Configuration
+
+By default the checker looks for `oop-design-checker.json` in the target root. A different file can be selected with `--config <path>`.
+
+```json
+{
+  "ignoredPaths": [
+    "**/Generated/**",
+    "**/*.g.cs"
+  ],
+  "disabledRules": [
+    "OOP103"
+  ],
+  "failureThreshold": "danger"
+}
+```
+
+- `ignoredPaths` excludes matching files/directories from analysis.
+- `disabledRules` completely suppresses selected rule IDs for that run/project.
+- `failureThreshold` controls which diagnostic level makes the process return a failing exit code.
+
+See `oop-design-checker.example.json` for a copyable example.
+
+## GUI
+
+```bash
+dotnet run --project src/frontends/gui/OopDesignChecker.Gui.csproj
+```
+
+The GUI accepts a target path and an optional configuration path, then displays the same diagnostics produced by the CUI.
 
 ## Build
 
-The project targets .NET 10. Cross-platform CI builds and self-checks the checker on Windows, Linux, and macOS.
+The project targets .NET 10. Cross-platform CI builds the shared engine, CUI, and GUI on Windows, Linux, and macOS.
 
-Example single-file publish:
+Example single-file CUI publish:
 
 ```bash
-dotnet publish src/OopDesignChecker/OopDesignChecker.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish src/frontends/cui/OopDesignChecker.Cui.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
 Replace `win-x64` with another supported RID such as `linux-x64`, `linux-arm64`, `osx-x64`, or `osx-arm64`.
