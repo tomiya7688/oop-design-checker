@@ -18,7 +18,7 @@ internal sealed class ChildDisablesParentBehaviorRule : IAnalysisRule
     public RuleDescriptor Descriptor { get; } = new(
         "OOP303",
         "Child disables parent behavior",
-        DesignDiagnosticSeverity.Error);
+        DesignDiagnosticSeverity.Danger);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
