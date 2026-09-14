@@ -1,6 +1,9 @@
+using OopDesignChecker.Core;
+
 namespace OopDesignChecker.Application;
 
 internal sealed record CommandLineOptions(
     string TargetPath,
-    bool WarningsAsErrors,
+    string? ConfigurationPath,
+    DesignDiagnosticSeverity? FailureThreshold,
     bool Verbose);
