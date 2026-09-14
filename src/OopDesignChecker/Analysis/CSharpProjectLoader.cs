@@ -59,11 +59,15 @@ internal sealed class CSharpProjectLoader : IProjectLoader
 
         ValidateCompilation(compilation, workspaceFailures);
 
-        var syntaxTrees = compilation.SyntaxTrees
+        var syntaxTrees = project.Documents
+            .Select(document => document.GetSyntaxTreeAsync().GetAwaiter().GetResult())
+            .Where(tree => tree is not null)
+            .Cast<SyntaxTree>()
             .Where(tree => string.IsNullOrWhiteSpace(tree.FilePath) || !PathFilter.ShouldIgnore(tree.FilePath))
+            .Distinct()
             .ToArray();
         var semanticModels = syntaxTrees.ToDictionary(
-            tree => (SyntaxTree)tree,
+            tree => tree,
             tree => compilation.GetSemanticModel(tree, ignoreAccessibility: true));
 
         var rootPath = Path.GetDirectoryName(projectFile)
@@ -186,19 +190,16 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             .Take(20)
             .ToArray();
 
-        if (errors.Length == 0)
+        if (errors.Length == 0 && workspaceFailures.Count == 0)
         {
             return;
         }
 
         var details = errors.Select(error => error.ToString()).ToList();
-        if (workspaceFailures.Count > 0)
-        {
-            details.AddRange(workspaceFailures.Select(message => $"MSBuild: {message}"));
-        }
+        details.AddRange(workspaceFailures.Select(message => $"MSBuild: {message}"));
 
         throw new InvalidOperationException(
-            "Target project could not be analyzed reliably because its compilation contains errors:\n"
+            "Target project could not be analyzed reliably because its compilation or project loading contains errors:\n"
             + string.Join("\n", details));
     }
 
