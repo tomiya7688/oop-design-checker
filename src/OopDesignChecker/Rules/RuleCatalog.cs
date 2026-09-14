@@ -14,11 +14,17 @@ internal static class RuleCatalog
             new StaticClassCandidateRule(),
             new StatefulStaticDesignRule(),
             new EncapsulationLeakRule(),
+            new ObjectInvariantBypassRule(),
+            new ExcessiveExternalStateManipulationRule(),
             new OversizedMainOperationRule(),
+            new ParentContractMostlyUnusedRule(),
             new ChildDisablesParentBehaviorRule(),
             new ExcessiveInheritanceDepthRule(),
             new ConcreteTypeDependencyRule(),
             new AvoidableConcreteConstructionRule(),
+            new CompositionCandidateRule(),
             new MultipleObjectsInClassRule(),
+            new ExcessiveObjectNavigationRule(),
+            new GetterSetterOnlyObjectRule(),
         ];
 }
