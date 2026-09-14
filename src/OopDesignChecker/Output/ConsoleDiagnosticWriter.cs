@@ -20,18 +20,19 @@ internal sealed class ConsoleDiagnosticWriter : IDiagnosticWriter
             }
         }
 
-        var errorCount = diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Error);
+        var dangerCount = diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Danger);
         var warningCount = diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Warning);
-        var infoCount = diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Info);
+        var attentionCount = diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Attention);
 
-        Console.WriteLine($"Diagnostics: {errorCount} error(s), {warningCount} warning(s), {infoCount} info.");
+        Console.WriteLine(
+            $"Diagnostics: {dangerCount} danger, {warningCount} warning(s), {attentionCount} attention.");
     }
 
     private static string FormatSeverity(DesignDiagnosticSeverity severity) => severity switch
     {
-        DesignDiagnosticSeverity.Info => "INFO",
+        DesignDiagnosticSeverity.Attention => "ATTN",
         DesignDiagnosticSeverity.Warning => "WARN",
-        DesignDiagnosticSeverity.Error => "ERROR",
+        DesignDiagnosticSeverity.Danger => "DANGER",
         _ => throw new ArgumentOutOfRangeException(nameof(severity), severity, null)
     };
 }

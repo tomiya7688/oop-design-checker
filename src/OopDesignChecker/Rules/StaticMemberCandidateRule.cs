@@ -10,7 +10,7 @@ internal sealed class StaticMemberCandidateRule : IAnalysisRule
     public RuleDescriptor Descriptor { get; } = new(
         "OOP103",
         "Static member candidate",
-        DesignDiagnosticSeverity.Warning);
+        DesignDiagnosticSeverity.Attention);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {

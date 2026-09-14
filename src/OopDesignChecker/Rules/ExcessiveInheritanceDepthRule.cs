@@ -12,7 +12,7 @@ internal sealed class ExcessiveInheritanceDepthRule : IAnalysisRule
     public RuleDescriptor Descriptor { get; } = new(
         "OOP304",
         "Excessive inheritance depth",
-        DesignDiagnosticSeverity.Warning);
+        DesignDiagnosticSeverity.Attention);
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {

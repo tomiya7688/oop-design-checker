@@ -38,7 +38,8 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
                         Descriptor,
                         property.Identifier.GetLocation(),
                         "This property exposes mutable internal storage directly. Prefer a read-only view, copy, or behavior-oriented API.",
-                        propertySymbol.ToDisplayString());
+                        propertySymbol.ToDisplayString(),
+                        DesignDiagnosticSeverity.Danger);
                 }
 
                 if (HasUnnecessarilyPublicSetter(context, property, propertySymbol))
@@ -73,7 +74,7 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
 
             var severity = field.IsReadOnly
                 ? DesignDiagnosticSeverity.Warning
-                : DesignDiagnosticSeverity.Error;
+                : DesignDiagnosticSeverity.Danger;
             var message = field.IsReadOnly
                 ? "A public field exposes the object's representation. Prefer a property or behavior-oriented API."
                 : "A public mutable field allows callers to bypass encapsulation.";

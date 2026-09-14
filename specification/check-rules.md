@@ -18,7 +18,7 @@ Warn when an interface or abstract type has no meaningful shared concept and app
 
 ## OOP101 Excessive visibility
 
-Warn or error when a type/member is more visible than its actual usage requires.
+Warn when a type/member is more visible than its actual usage requires. Escalate only when the encapsulation break is structurally clear.
 
 Example: a type used only inside a parent/child hierarchy is declared public.
 
@@ -40,11 +40,11 @@ Warn when a static class accumulates mutable shared state and behaves as global 
 
 ## OOP106 Encapsulation leak
 
-Warn when mutable internal representation is exposed directly, for example through public mutable fields, unnecessary public setters, or mutable collections returned without protection.
+Warn when internal representation is exposed directly. Directly mutable public state and directly exposed mutable storage are Danger-level violations because callers can bypass the owning object. Less severe exposure, such as an unnecessarily public setter whose use is still controlled, may remain Warning.
 
 ## OOP107 Object invariant can be bypassed
 
-Warn when callers can place an object into an invalid state by directly mutating values that should be guarded by the object itself.
+Warn when callers can place an object into an invalid state by directly mutating values that should be guarded by the object itself. High-confidence direct invariant bypasses may be Danger.
 
 ## OOP108 Excessive external state manipulation
 
@@ -66,11 +66,11 @@ Warn when a child type inherits a broad parent contract but uses or supports onl
 
 ## OOP303 Child disables parent behavior
 
-Warn or error when a child implementation routinely rejects, disables, or throws for major parent operations.
+Danger when a child implementation structurally rejects or disables a parent operation it is expected to support, for example an override that always throws `NotSupportedException`.
 
 ## OOP304 Excessive inheritance depth
 
-Warn when the inheritance chain becomes deep enough to make behavior difficult to reason about. Thresholds should be configurable and should not be the only signal.
+Attention when the inheritance chain becomes deep enough to make behavior difficult to reason about. Thresholds should be configurable and should not be the only signal because deep inheritance can be intentional.
 
 ## OOP305 Concrete-type dependency despite abstraction
 
@@ -99,7 +99,7 @@ Useful signals:
 - little or no shared state
 - one cluster can be removed without changing the identity of another
 
-High-confidence cases may become errors; uncertain cases remain warnings.
+High-confidence cases may become Danger; uncertain cases remain Warning or Attention.
 
 ## OOP402 Anemic object candidate
 
@@ -123,7 +123,7 @@ Prefer semantic detection of repeated navigation across object boundaries.
 
 Warn when a class is overwhelmingly composed of trivial getters and setters while meaningful operations on its state are implemented elsewhere.
 
-This is a supporting signal for OOP402 rather than an automatic error. Explicit data-carrier types are exempt.
+This is a supporting signal for OOP402 rather than an automatic Danger. Explicit data-carrier types are exempt.
 
 ## Metric-assisted signals
 
@@ -148,8 +148,20 @@ In particular:
 - high complexity should strengthen OOP201 rather than becoming a generic OOP violation;
 - SOLID rules may be provided as optional or supporting analyses, but SOLID is not defined as identical to OOP in this project.
 
-## Severity idea
+## Severity model
 
-- INFO: suggestion or low-confidence improvement
-- WARN: probable design issue
-- ERROR: structurally clear violation that can be detected with high confidence
+- `DANGER`: a structurally clear violation of a rule this project considers fundamental to claiming OOP design. These fail CI by default.
+- `WARNING`: normally undesirable or suspicious OOP design, but not inherently fatal and sometimes justified by context.
+- `ATTENTION`: strict-design guidance where enforcing the rule can reduce flexibility, introduce a bottleneck, conflict with framework constraints, or otherwise carry meaningful tradeoffs.
+
+Severity expresses design impact, not detection confidence alone. A heuristic rule should remain conservative even if the underlying concept is important.
+
+## Suppression and CI configuration
+
+Projects may use `oop-design-checker.json` to:
+
+- exclude paths with `ignoredPaths`;
+- suppress selected rule IDs for a project/run with `disabledRules`;
+- choose the CI failure level with `failureThreshold`.
+
+Suppression is a project decision and does not change the rule's defined severity. The checker project itself should not suppress its own rule violations and should self-check at the `attention` threshold.
