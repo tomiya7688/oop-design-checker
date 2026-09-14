@@ -261,7 +261,9 @@ internal sealed class CSharpProjectLoader : IProjectLoader
     {
         var solutionFiles = Directory
             .EnumerateFiles(targetDirectory, "*.sln", SearchOption.TopDirectoryOnly)
-            .Concat(Directory.EnumerateFiles(targetDirectory, "*.slnx", SearchOption.TopDirectoryOnly))
+            .Concat(
+                Directory.EnumerateFiles(targetDirectory, "*.slnx", SearchOption.TopDirectoryOnly)
+            )
             .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToArray();
