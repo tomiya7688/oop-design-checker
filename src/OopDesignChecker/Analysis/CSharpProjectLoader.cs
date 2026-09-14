@@ -43,7 +43,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
 
         var workspaceFailures = new List<string>();
         using var workspace = MSBuildWorkspace.Create();
-        var workspaceFailureRegistration = workspace.RegisterWorkspaceFailedHandler(args =>
+        using var workspaceFailureRegistration = workspace.RegisterWorkspaceFailedHandler(args =>
         {
             if (args.Diagnostic.Kind == WorkspaceDiagnosticKind.Failure)
             {
