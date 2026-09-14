@@ -7,12 +7,36 @@ internal static class ExtendedRuleSmokeTests
 {
     public static void Run()
     {
+        UnusedSingleImplementationAbstractionIsAttention();
         InvariantBypassIsDanger();
         ExternalStateManipulationIsWarning();
         ParentContractNoOpsAreWarning();
         ImplementationReuseInheritanceIsAttention();
+        AnemicObjectWithExternalBehaviorIsWarning();
         DeepObjectNavigationIsAttention();
         GetterSetterOnlyObjectIsAttention();
+    }
+
+    private static void UnusedSingleImplementationAbstractionIsAttention()
+    {
+        const string source = """
+            internal interface IUnused
+            {
+                void Run();
+            }
+
+            internal sealed class OnlyImplementation : IUnused
+            {
+                public void Run() { }
+            }
+            """;
+
+        AssertSingle(
+            new UnnecessaryAbstractionRule(),
+            source,
+            "OOP003",
+            DesignDiagnosticSeverity.Attention
+        );
     }
 
     private static void InvariantBypassIsDanger()
@@ -117,6 +141,33 @@ internal static class ExtendedRuleSmokeTests
             source,
             "OOP307",
             DesignDiagnosticSeverity.Attention
+        );
+    }
+
+    private static void AnemicObjectWithExternalBehaviorIsWarning()
+    {
+        const string source = """
+            internal sealed class Position
+            {
+                public int X { get; set; }
+                public int Y { get; set; }
+                public int Z { get; set; }
+            }
+
+            internal sealed class PositionService
+            {
+                public int Magnitude(Position position)
+                {
+                    return position.X + position.Y + position.Z;
+                }
+            }
+            """;
+
+        AssertSingle(
+            new AnemicObjectRule(),
+            source,
+            "OOP402",
+            DesignDiagnosticSeverity.Warning
         );
     }
 
