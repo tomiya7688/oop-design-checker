@@ -68,16 +68,18 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
                 continue;
             }
 
-            var fields = methodDeclaration
-                .DescendantNodes()
-                .OfType<IdentifierNameSyntax>()
-                .Select(identifier => semanticModel.GetSymbolInfo(identifier).Symbol)
-                .OfType<IFieldSymbol>()
-                .Where(field =>
-                    !field.IsStatic
-                    && SymbolEqualityComparer.Default.Equals(field.ContainingType, containingType)
-                )
-                .ToHashSet(SymbolEqualityComparer.Default);
+            var fields = new HashSet<IFieldSymbol>(
+                methodDeclaration
+                    .DescendantNodes()
+                    .OfType<IdentifierNameSyntax>()
+                    .Select(identifier => semanticModel.GetSymbolInfo(identifier).Symbol)
+                    .OfType<IFieldSymbol>()
+                    .Where(field =>
+                        !field.IsStatic
+                        && SymbolEqualityComparer.Default.Equals(field.ContainingType, containingType)
+                    ),
+                SymbolEqualityComparer.Default
+            );
 
             if (fields.Count > 0)
             {
@@ -92,9 +94,10 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
         IReadOnlyDictionary<IMethodSymbol, HashSet<IFieldSymbol>> fieldUsage
     )
     {
-        var allFields = fieldUsage
-            .Values.SelectMany(fields => fields)
-            .ToHashSet(SymbolEqualityComparer.Default);
+        var allFields = new HashSet<IFieldSymbol>(
+            fieldUsage.Values.SelectMany(fields => fields),
+            SymbolEqualityComparer.Default
+        );
         var remaining = new HashSet<IFieldSymbol>(allFields, SymbolEqualityComparer.Default);
         var clusters = new List<FieldCluster>();
 
@@ -102,10 +105,10 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
         {
             var first = remaining.First();
             var fields = ExpandConnectedFields(first, fieldUsage, remaining);
-            var methods = fieldUsage
-                .Where(pair => pair.Value.Any(fields.Contains))
-                .Select(pair => pair.Key)
-                .ToHashSet(SymbolEqualityComparer.Default);
+            var methods = new HashSet<IMethodSymbol>(
+                fieldUsage.Where(pair => pair.Value.Any(fields.Contains)).Select(pair => pair.Key),
+                SymbolEqualityComparer.Default
+            );
 
             if (
                 fields.Count >= MinimumFieldsPerCluster
