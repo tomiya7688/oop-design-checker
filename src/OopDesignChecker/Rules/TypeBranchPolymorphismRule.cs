@@ -131,11 +131,7 @@ internal sealed class TypeBranchPolymorphismRule : IAnalysisRule
 
         foreach (var candidate in EnumerateSourceClassContracts(types[0]))
         {
-            if (
-                types.Skip(1).All(type =>
-                    SymbolUtilities.IsSameOrBaseType(candidate, type)
-                )
-            )
+            if (types.Skip(1).All(type => SymbolUtilities.IsSameOrBaseType(candidate, type)))
             {
                 return true;
             }
