@@ -1,0 +1,29 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-self-check:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore src/OopDesignChecker/OopDesignChecker.csproj
+
+      - name: Build
+        run: dotnet build src/OopDesignChecker/OopDesignChecker.csproj -c Release --no-restore
+
+      - name: Self-check
+        run: dotnet run --project src/OopDesignChecker/OopDesignChecker.csproj -c Release --no-build -- src/OopDesignChecker --warnings-as-errors
