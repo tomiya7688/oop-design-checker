@@ -15,10 +15,7 @@ public static class CheckerCommandLine
             return 2;
         }
 
-        var application = new CheckerApplication(
-            new CheckerService(),
-            new ConsoleDiagnosticWriter());
-
+        var application = new CheckerApplication(new ConsoleDiagnosticWriter());
         return application.Run(optionsResult.Options!);
     }
 }
