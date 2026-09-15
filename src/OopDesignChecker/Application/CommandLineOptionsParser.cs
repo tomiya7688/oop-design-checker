@@ -5,7 +5,7 @@ namespace OopDesignChecker.Application;
 internal static class CommandLineOptionsParser
 {
     public const string Usage =
-        "Usage: oop-design-checker [path] [--config file] [--fail-on danger|warning|attention] [--format text|json|sarif|github] [--output file] [--verbose]";
+        "Usage: oop-design-checker [path] [--config file] [--fail-on danger|warning|attention] [--format text|json|sarif|github] [--output file] [--verbose] [--version]";
 
     public static CommandLineParseResult Parse(IReadOnlyList<string> args)
     {
