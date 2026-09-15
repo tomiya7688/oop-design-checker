@@ -13,7 +13,8 @@ internal static class FrameworkContractClassifier
         && !IsSourceDefined(baseType);
 
     public static bool HasExternalFrameworkAttribute(ISymbol symbol) =>
-        symbol.GetAttributes()
+        symbol
+            .GetAttributes()
             .Any(attribute =>
                 attribute.AttributeClass is INamedTypeSymbol attributeType
                 && !IsSourceDefined(attributeType)
