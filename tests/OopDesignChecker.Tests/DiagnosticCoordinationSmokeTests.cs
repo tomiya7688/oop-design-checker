@@ -16,60 +16,50 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void InvariantBypassSuppressesEncapsulationLeakForSameSymbol()
     {
-        var diagnostics = DiagnosticCoordinator.Reduce(
-            [
-                Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Balance"),
-                Create("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
-            ]
-        );
+        var diagnostics = DiagnosticCoordinator.Reduce([
+            Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Balance"),
+            Create("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
+        ]);
 
         AssertRuleIds(diagnostics, "OOP107");
     }
 
     private static void AnemicObjectSuppressesGetterSetterOnlyForSameSymbol()
     {
-        var diagnostics = DiagnosticCoordinator.Reduce(
-            [
-                Create("OOP405", DesignDiagnosticSeverity.Attention, "Order"),
-                Create("OOP402", DesignDiagnosticSeverity.Warning, "Order"),
-            ]
-        );
+        var diagnostics = DiagnosticCoordinator.Reduce([
+            Create("OOP405", DesignDiagnosticSeverity.Attention, "Order"),
+            Create("OOP402", DesignDiagnosticSeverity.Warning, "Order"),
+        ]);
 
         AssertRuleIds(diagnostics, "OOP402");
     }
 
     private static void DifferentSymbolsRemainIndependent()
     {
-        var diagnostics = DiagnosticCoordinator.Reduce(
-            [
-                Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Name"),
-                Create("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
-            ]
-        );
+        var diagnostics = DiagnosticCoordinator.Reduce([
+            Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Name"),
+            Create("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
+        ]);
 
         AssertRuleIds(diagnostics, "OOP106", "OOP107");
     }
 
     private static void UnrelatedRulesRemainTogether()
     {
-        var diagnostics = DiagnosticCoordinator.Reduce(
-            [
-                Create("OOP401", DesignDiagnosticSeverity.Warning, "Coordinator"),
-                Create("OOP403", DesignDiagnosticSeverity.Warning, "Coordinator"),
-            ]
-        );
+        var diagnostics = DiagnosticCoordinator.Reduce([
+            Create("OOP401", DesignDiagnosticSeverity.Warning, "Coordinator"),
+            Create("OOP403", DesignDiagnosticSeverity.Warning, "Coordinator"),
+        ]);
 
         AssertRuleIds(diagnostics, "OOP401", "OOP403");
     }
 
     private static void DiagnosticsWithoutSymbolsAreNotSuppressed()
     {
-        var diagnostics = DiagnosticCoordinator.Reduce(
-            [
-                Create("OOP106", DesignDiagnosticSeverity.Warning, null),
-                Create("OOP107", DesignDiagnosticSeverity.Danger, null),
-            ]
-        );
+        var diagnostics = DiagnosticCoordinator.Reduce([
+            Create("OOP106", DesignDiagnosticSeverity.Warning, null),
+            Create("OOP107", DesignDiagnosticSeverity.Danger, null),
+        ]);
 
         AssertRuleIds(diagnostics, "OOP106", "OOP107");
     }
