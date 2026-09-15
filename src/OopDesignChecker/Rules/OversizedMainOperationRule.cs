@@ -123,7 +123,8 @@ internal sealed class OversizedMainOperationRule : IAnalysisRule
             )
             {
                 if (
-                    semanticModel.GetSymbolInfo(invocation).Symbol is not IMethodSymbol invokedMethod
+                    semanticModel.GetSymbolInfo(invocation).Symbol
+                        is not IMethodSymbol invokedMethod
                     || !SymbolEqualityComparer.Default.Equals(
                         invokedMethod.OriginalDefinition,
                         target.OriginalDefinition
