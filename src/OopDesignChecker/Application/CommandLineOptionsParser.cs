@@ -176,10 +176,7 @@ internal static class CommandLineOptionsParser
             return !string.IsNullOrWhiteSpace(value);
         }
 
-        private static bool TryParseSeverity(
-            string? value,
-            out DesignDiagnosticSeverity severity
-        )
+        private static bool TryParseSeverity(string? value, out DesignDiagnosticSeverity severity)
         {
             if (Enum.TryParse(value, ignoreCase: true, out severity))
             {
@@ -190,10 +187,7 @@ internal static class CommandLineOptionsParser
             return false;
         }
 
-        private static bool TryParseOutputFormat(
-            string? value,
-            out DiagnosticOutputFormat format
-        )
+        private static bool TryParseOutputFormat(string? value, out DiagnosticOutputFormat format)
         {
             if (Enum.TryParse(value, ignoreCase: true, out format))
             {
