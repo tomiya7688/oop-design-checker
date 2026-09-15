@@ -31,10 +31,28 @@ internal sealed class StatefulStaticDesignRule : IAnalysisRule
                 var mutableFields = symbol
                     .GetMembers()
                     .OfType<IFieldSymbol>()
-                    .Where(field => field.IsStatic && !field.IsConst && !field.IsReadOnly)
-                    .ToArray();
+                    .Where(field =>
+                        field.IsStatic
+                        && !field.IsConst
+                        && !field.IsImplicitlyDeclared
+                        && !IsThreadLocal(field)
+                        && (!field.IsReadOnly || MutableCollectionInspector.IsMutableCollection(field.Type))
+                    )
+                    .Cast<ISymbol>();
 
-                if (mutableFields.Length == 0)
+                var mutableProperties = symbol
+                    .GetMembers()
+                    .OfType<IPropertySymbol>()
+                    .Where(property =>
+                        property.IsStatic
+                        && !property.IsImplicitlyDeclared
+                        && (property.SetMethod is not null
+                            || MutableCollectionInspector.IsMutableCollection(property.Type))
+                    )
+                    .Cast<ISymbol>();
+
+                var mutableMembers = mutableFields.Concat(mutableProperties).ToArray();
+                if (mutableMembers.Length == 0)
                 {
                     continue;
                 }
@@ -42,10 +60,16 @@ internal sealed class StatefulStaticDesignRule : IAnalysisRule
                 yield return DiagnosticFactory.Create(
                     Descriptor,
                     declaration.Identifier.GetLocation(),
-                    $"This static class owns {mutableFields.Length} mutable shared field(s). Shared mutable state behaves like global state; prefer an object with an explicit lifetime.",
+                    $"This static class owns {mutableMembers.Length} mutable shared member(s). Shared mutable state behaves like global state; prefer an object with an explicit lifetime.",
                     symbol.ToDisplayString()
                 );
             }
         }
     }
+
+    private static bool IsThreadLocal(IFieldSymbol field) =>
+        field.GetAttributes()
+            .Any(attribute =>
+                attribute.AttributeClass?.ToDisplayString() == "System.ThreadStaticAttribute"
+            );
 }
