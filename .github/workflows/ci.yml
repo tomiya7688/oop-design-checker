@@ -50,6 +50,38 @@ jobs:
       - name: Strict multi-project self-check
         run: dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- src --fail-on attention
 
+      - name: Machine-readable output smoke test
+        shell: bash
+        run: |
+          dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- src --fail-on attention --format json --output oop-diagnostics.json
+          dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- src --fail-on attention --format sarif --output oop-diagnostics.sarif
+          python - <<'PY'
+          import json
+          with open('oop-diagnostics.json', encoding='utf-8-sig') as stream:
+              json_doc = json.load(stream)
+          assert json_doc['version'] == 1
+          with open('oop-diagnostics.sarif', encoding='utf-8-sig') as stream:
+              sarif_doc = json.load(stream)
+          assert sarif_doc['version'] == '2.1.0'
+          assert len(sarif_doc['runs']) == 1
+          PY
+
+      - name: GitHub annotation output smoke test
+        shell: bash
+        run: |
+          cat > oop-annotation-sample.cs <<'EOF'
+          internal sealed class Sample
+          {
+              private int _value;
+              public int Add(int left, int right) => left + right;
+              public int AddValue(int value) => value + _value;
+          }
+          EOF
+          output="$(dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- oop-annotation-sample.cs --fail-on danger --format github)"
+          printf '%s\n' "$output"
+          grep -q '^::notice ' <<< "$output"
+          rm oop-annotation-sample.cs
+
       - name: Solution loading smoke test
         run: dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- OopDesignChecker.sln --fail-on danger
 
