@@ -10,6 +10,7 @@ internal static class OutputFormatSmokeTests
     public static void Run()
     {
         CommandLineParsesFormatAndOutput();
+        RelativeConfigurationPathIsPreserved();
         GitHubFormatRejectsOutputFile();
         JsonOutputIsMachineReadable();
         SarifOutputIsMachineReadable();
@@ -34,6 +35,23 @@ internal static class OutputFormatSmokeTests
         )
         {
             throw new InvalidOperationException("Expected SARIF output CLI options to parse.");
+        }
+    }
+
+    private static void RelativeConfigurationPathIsPreserved()
+    {
+        var relativePath = Path.Combine("config", "checker.json");
+        var result = CommandLineOptionsParser.Parse(["sample.cs", "--config", relativePath]);
+
+        if (
+            !result.IsSuccess
+            || result.Options is null
+            || result.Options.ConfigurationPath != relativePath
+        )
+        {
+            throw new InvalidOperationException(
+                "Relative --config paths must reach the configuration loader without being converted to a CWD-based absolute path."
+            );
         }
     }
 
