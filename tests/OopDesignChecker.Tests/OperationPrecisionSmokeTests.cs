@@ -37,9 +37,11 @@ internal static class OperationPrecisionSmokeTests
     {
         var branches = string.Join(
             Environment.NewLine,
-            Enumerable.Range(0, 18).Select(index =>
-                $"if (value > {index}){Environment.NewLine}{{{Environment.NewLine}    value--;{Environment.NewLine}}}"
-            )
+            Enumerable
+                .Range(0, 18)
+                .Select(index =>
+                    $"if (value > {index}){Environment.NewLine}{{{Environment.NewLine}    value--;{Environment.NewLine}}}"
+                )
         );
         var source = $$"""
             internal sealed class Processor
