@@ -33,7 +33,9 @@ internal sealed class GitHubAnnotationDiagnosticWriter : IDiagnosticWriter
         };
 
     private static string EscapeProperty(string value) =>
-        EscapeMessage(value).Replace(":", "%3A", StringComparison.Ordinal).Replace(",", "%2C", StringComparison.Ordinal);
+        EscapeMessage(value)
+            .Replace(":", "%3A", StringComparison.Ordinal)
+            .Replace(",", "%2C", StringComparison.Ordinal);
 
     private static string EscapeMessage(string value) =>
         value
