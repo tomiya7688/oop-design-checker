@@ -72,7 +72,11 @@ internal sealed class SuspiciousInheritanceRelationshipRule : IAnalysisRule
             current = current.BaseType
         )
         {
-            if (current.GetMembers(member.Name).Any(candidate => HasMatchingShape(member, candidate)))
+            if (
+                current
+                    .GetMembers(member.Name)
+                    .Any(candidate => HasMatchingShape(member, candidate))
+            )
             {
                 return true;
             }
