@@ -65,7 +65,9 @@ internal sealed class CompositionCandidateRule : IAnalysisRule
     ) =>
         declaration
             .Members.OfType<MethodDeclarationSyntax>()
-            .Any(method => semanticModel.GetDeclaredSymbol(method) is IMethodSymbol { IsOverride: true });
+            .Any(method =>
+                semanticModel.GetDeclaredSymbol(method) is IMethodSymbol { IsOverride: true }
+            );
 
     private static ProtectedReuse? ReadProtectedReuse(
         MethodDeclarationSyntax declaration,
