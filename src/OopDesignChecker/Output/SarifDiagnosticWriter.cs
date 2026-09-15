@@ -67,7 +67,9 @@ internal sealed class SarifDiagnosticWriter : IDiagnosticWriter
                     {
                         artifactLocation = new
                         {
-                            uri = new Uri(Path.GetFullPath(diagnostic.Location.FilePath)).AbsoluteUri,
+                            uri = new Uri(
+                                Path.GetFullPath(diagnostic.Location.FilePath)
+                            ).AbsoluteUri,
                         },
                         region = new
                         {
