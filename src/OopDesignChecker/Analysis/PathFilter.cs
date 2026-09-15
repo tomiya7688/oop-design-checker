@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -5,7 +6,13 @@ namespace OopDesignChecker.Analysis;
 
 internal static class PathFilter
 {
-    private static readonly string[] IgnoredDirectoryNames = ["bin", "obj", ".git", ".vs"];
+    private static readonly FrozenSet<string> IgnoredDirectoryNames = new[]
+    {
+        "bin",
+        "obj",
+        ".git",
+        ".vs",
+    }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     public static bool ShouldIgnore(string path) => HasBuiltInIgnoredSegment(path);
 
@@ -27,9 +34,7 @@ internal static class PathFilter
     private static bool HasBuiltInIgnoredSegment(string path)
     {
         var segments = path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        return segments.Any(segment =>
-            IgnoredDirectoryNames.Contains(segment, StringComparer.OrdinalIgnoreCase)
-        );
+        return segments.Any(IgnoredDirectoryNames.Contains);
     }
 
     private static bool MatchesPattern(string relativePath, string pattern)

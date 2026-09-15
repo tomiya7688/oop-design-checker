@@ -18,6 +18,7 @@ internal static class CoreRuleSmokeTests
         InheritancePrecisionSmokeTests.Run();
         PolymorphismPrecisionSmokeTests.Run();
         EncapsulationPrecisionSmokeTests.Run();
+        StaticPrecisionSmokeTests.Run();
         ObjectNavigationRuleTests.Run();
         ExtendedRuleSmokeTests.Run();
     }
