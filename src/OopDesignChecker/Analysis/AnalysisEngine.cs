@@ -13,15 +13,21 @@ internal sealed class AnalysisEngine
 
     public IReadOnlyList<DesignDiagnostic> Analyze(SourceProject project) => Analyze([project]);
 
-    public IReadOnlyList<DesignDiagnostic> Analyze(IReadOnlyList<SourceProject> projects) =>
-        projects
+    public IReadOnlyList<DesignDiagnostic> Analyze(IReadOnlyList<SourceProject> projects)
+    {
+        var diagnostics = projects
             .SelectMany(AnalyzeProject)
             .DistinctBy(CreateDiagnosticIdentity)
+            .ToArray();
+
+        return DiagnosticCoordinator
+            .Reduce(diagnostics)
             .OrderBy(diagnostic => diagnostic.Location.FilePath, StringComparer.OrdinalIgnoreCase)
             .ThenBy(diagnostic => diagnostic.Location.Line)
             .ThenBy(diagnostic => diagnostic.Location.Column)
             .ThenBy(diagnostic => diagnostic.Rule.Id, StringComparer.Ordinal)
             .ToArray();
+    }
 
     private IEnumerable<DesignDiagnostic> AnalyzeProject(SourceProject project)
     {
