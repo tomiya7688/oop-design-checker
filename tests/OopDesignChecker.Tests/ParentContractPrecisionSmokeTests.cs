@@ -23,13 +23,13 @@ internal static class ParentContractPrecisionSmokeTests
                 private int _started;
 
                 public virtual void Start() => _started++;
-                public virtual object Read() => new object();
+                public virtual object? Read() => new object();
             }
 
             internal sealed class Child : Base
             {
                 public override void Start() { }
-                public override object Read() => null!;
+                public override object? Read() => null;
             }
             """;
 
