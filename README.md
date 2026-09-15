@@ -35,6 +35,7 @@ GitHub Actions exposes separate checks so failures are easy to identify:
 - `self-check` - runs the checker against its own `src` tree with `--fail-on attention`
 - `code-analyzers` - .NET SDK analyzers at `latest-recommended`, code style enabled, warnings treated as errors
 - `csharpier` - CSharpier 1.3.0 formatting check using the repository-local tool manifest
+- `release` - validates distributable CUI packages for Windows, Linux, and macOS when release-related files change
 
 ## CUI
 
@@ -53,6 +54,26 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-pa
 ```
 
 `--warnings-as-errors` remains as a compatibility alias for `--fail-on warning`.
+
+### Release packages
+
+Pushing a tag beginning with `v` creates a GitHub Release after all platform packages build successfully. Release archives contain the complete `dotnet publish` output, this README, and `oop-design-checker.example.json`.
+
+Published targets are:
+
+- `win-x64` and `win-arm64` as `.zip`
+- `linux-x64` and `linux-arm64` as `.tar.gz`
+- `osx-x64` and `osx-arm64` as `.tar.gz`
+
+The packages are self-contained, so the matching .NET runtime does not need to be installed just to start the CUI. Analysis of `.csproj`, `.sln`, and `.slnx` still depends on a discoverable compatible .NET SDK/MSBuild installation because those targets are loaded through MSBuild. Loose `.cs` analysis does not require project loading.
+
+For example, after extracting the matching package:
+
+```bash
+./oop-design-checker-cui <target-path> --fail-on danger
+```
+
+On Windows use `oop-design-checker-cui.exe`.
 
 ### CI output formats
 
@@ -115,13 +136,13 @@ The GUI accepts a target path and an optional configuration path, then displays 
 
 The project targets .NET 10. Cross-platform CI builds the shared engine, CUI, and GUI on Windows, Linux, and macOS.
 
-Example single-file CUI publish:
+Example CUI publish:
 
 ```bash
 dotnet publish src/frontends/cui/OopDesignChecker.Cui.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
-Replace `win-x64` with another supported RID such as `linux-x64`, `linux-arm64`, `osx-x64`, or `osx-arm64`.
+Replace `win-x64` with `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, or `osx-arm64` as needed. Keep the complete publish directory when distributing the checker so Roslyn/MSBuild support files are not accidentally omitted.
 
 ## Specification
 
