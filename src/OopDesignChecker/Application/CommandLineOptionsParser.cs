@@ -30,11 +30,7 @@ internal static class CommandLineOptionsParser
         private bool _verbose;
         private DiagnosticOutputFormat _outputFormat = DiagnosticOutputFormat.Text;
 
-        public bool TryConsume(
-            IReadOnlyList<string> args,
-            ref int index,
-            out string? errorMessage
-        )
+        public bool TryConsume(IReadOnlyList<string> args, ref int index, out string? errorMessage)
         {
             var argument = args[index];
             return argument switch
