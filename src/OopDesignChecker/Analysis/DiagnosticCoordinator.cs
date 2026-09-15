@@ -40,15 +40,8 @@ internal static class DiagnosticCoordinator
     private static RuleSymbolKey CreateRuleSymbolKey(DesignDiagnostic diagnostic) =>
         CreateRuleSymbolKey(diagnostic, diagnostic.Rule.Id);
 
-    private static RuleSymbolKey CreateRuleSymbolKey(
-        DesignDiagnostic diagnostic,
-        string ruleId
-    ) =>
-        new(
-            NormalizePath(diagnostic.Location.FilePath),
-            diagnostic.SymbolName!,
-            ruleId
-        );
+    private static RuleSymbolKey CreateRuleSymbolKey(DesignDiagnostic diagnostic, string ruleId) =>
+        new(NormalizePath(diagnostic.Location.FilePath), diagnostic.SymbolName!, ruleId);
 
     private static string NormalizePath(string path) => Path.GetFullPath(path).ToUpperInvariant();
 
