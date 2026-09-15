@@ -23,14 +23,7 @@ internal sealed class SarifDiagnosticWriter : IDiagnosticWriter
 
         var run = new
         {
-            tool = new
-            {
-                driver = new
-                {
-                    name = "oop-design-checker",
-                    rules,
-                },
-            },
+            tool = new { driver = new { name = "oop-design-checker", rules } },
             results = diagnostics.Select(ToResult).ToArray(),
         };
 
@@ -46,7 +39,9 @@ internal sealed class SarifDiagnosticWriter : IDiagnosticWriter
             WriteIndented = true,
         };
 
-        _target.Write(writer => writer.Write(JsonSerializer.Serialize(document, serializerOptions)));
+        _target.Write(writer =>
+            writer.Write(JsonSerializer.Serialize(document, serializerOptions))
+        );
     }
 
     private static object ToRule(DesignDiagnostic diagnostic) =>
