@@ -80,7 +80,9 @@ Supported formats:
 
 ## Configuration
 
-By default the checker looks for `oop-design-checker.json` in the target root. A different file can be selected with `--config <path>`.
+By default the checker searches for the nearest `oop-design-checker.json`, starting in the target directory and walking upward through parent directories. This allows a repository- or solution-root configuration to apply when MSBuild or CI invokes the checker against a nested `.csproj` without copying the configuration into each project or build-output directory. If multiple files exist, the nearest one to the target wins.
+
+A different file can be selected with `--config <path>`. Absolute paths are used directly. Relative paths preserve the existing current-working-directory lookup first, then fall back to the target directory so build systems that change their working directory can still use project-relative configuration paths. An explicitly requested configuration that cannot be found is an error rather than a silent fallback to defaults.
 
 ```json
 {
