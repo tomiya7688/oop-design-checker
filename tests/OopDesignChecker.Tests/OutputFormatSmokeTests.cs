@@ -66,8 +66,7 @@ internal static class OutputFormatSmokeTests
 
             if (
                 root.GetProperty("version").GetInt32() != 1
-                || root.GetProperty("diagnostics")[0].GetProperty("ruleId").GetString()
-                    != "OOP999"
+                || root.GetProperty("diagnostics")[0].GetProperty("ruleId").GetString() != "OOP999"
                 || root.GetProperty("summary").GetProperty("warning").GetInt32() != 1
             )
             {
