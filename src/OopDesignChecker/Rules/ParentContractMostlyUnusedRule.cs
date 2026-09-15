@@ -63,6 +63,7 @@ internal sealed class ParentContractMostlyUnusedRule : IAnalysisRule
         }
 
         return InheritanceContractClassifier.ClassifyParentOperation(method)
-            is ParentOperationContract.Required or ParentOperationContract.Supported;
+            is ParentOperationContract.Required
+                or ParentOperationContract.Supported;
     }
 }
