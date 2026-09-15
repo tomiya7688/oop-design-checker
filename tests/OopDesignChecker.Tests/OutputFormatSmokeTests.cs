@@ -18,9 +18,13 @@ internal static class OutputFormatSmokeTests
 
     private static void CommandLineParsesFormatAndOutput()
     {
-        var result = CommandLineOptionsParser.Parse(
-            ["sample.cs", "--format", "sarif", "--output", "results.sarif"]
-        );
+        var result = CommandLineOptionsParser.Parse([
+            "sample.cs",
+            "--format",
+            "sarif",
+            "--output",
+            "results.sarif",
+        ]);
 
         if (
             !result.IsSuccess
@@ -35,9 +39,13 @@ internal static class OutputFormatSmokeTests
 
     private static void GitHubFormatRejectsOutputFile()
     {
-        var result = CommandLineOptionsParser.Parse(
-            ["sample.cs", "--format", "github", "--output", "annotations.txt"]
-        );
+        var result = CommandLineOptionsParser.Parse([
+            "sample.cs",
+            "--format",
+            "github",
+            "--output",
+            "annotations.txt",
+        ]);
 
         if (result.IsSuccess)
         {
