@@ -93,10 +93,7 @@ internal static class CommandLineOptionsParser
                 || !TryParseSeverity(thresholdText, out var parsedThreshold)
             )
             {
-                return Fail(
-                    "--fail-on requires danger, warning, or attention.",
-                    out errorMessage
-                );
+                return Fail("--fail-on requires danger, warning, or attention.", out errorMessage);
             }
 
             _failureThreshold = parsedThreshold;
