@@ -24,8 +24,10 @@ internal sealed class SuspiciousInheritanceRelationshipRule : IAnalysisRule
             {
                 if (
                     semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
+                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
                     || symbol.BaseType
                         is not { SpecialType: not SpecialType.System_Object } baseType
+                    || !baseType.Locations.Any(location => location.IsInSource)
                 )
                 {
                     continue;
@@ -34,7 +36,8 @@ internal sealed class SuspiciousInheritanceRelationshipRule : IAnalysisRule
                 var hiddenMembers = declaration
                     .Members.Where(member => member.Modifiers.Any(SyntaxKind.NewKeyword))
                     .Select(member => semanticModel.GetDeclaredSymbol(member))
-                    .Where(member => member is not null && HidesBaseMember(member, baseType))
+                    .Where(member => member is not null && IsRelevantInstanceSurface(member))
+                    .Where(member => HidesMatchingProjectMember(member!, baseType))
                     .ToArray();
                 if (hiddenMembers.Length < MinimumHiddenMembers)
                 {
@@ -44,23 +47,80 @@ internal sealed class SuspiciousInheritanceRelationshipRule : IAnalysisRule
                 yield return DiagnosticFactory.Create(
                     Descriptor,
                     declaration.Identifier.GetLocation(),
-                    $"This child type hides {hiddenMembers.Length} inherited members from {baseType.Name}. Repeatedly replacing the visible parent surface suggests the inheritance relationship may not model a stable is-a relationship.",
+                    $"This child type replaces {hiddenMembers.Length} inherited instance members from the project-owned {baseType.Name} hierarchy. Repeatedly replacing the parent-visible surface suggests the inheritance relationship may not model a stable is-a relationship.",
                     symbol.ToDisplayString()
                 );
             }
         }
     }
 
-    private static bool HidesBaseMember(ISymbol member, INamedTypeSymbol baseType)
-    {
-        for (var current = baseType; current is not null; current = current.BaseType)
+    private static bool IsRelevantInstanceSurface(ISymbol member) =>
+        member switch
         {
-            if (current.GetMembers(member.Name).Length > 0)
+            IMethodSymbol method =>
+                !method.IsStatic && method.MethodKind == MethodKind.Ordinary,
+            IPropertySymbol property => !property.IsStatic,
+            IEventSymbol @event => !@event.IsStatic,
+            _ => false,
+        };
+
+    private static bool HidesMatchingProjectMember(ISymbol member, INamedTypeSymbol baseType)
+    {
+        for (
+            var current = baseType;
+            current is not null && current.Locations.Any(location => location.IsInSource);
+            current = current.BaseType
+        )
+        {
+            if (current.GetMembers(member.Name).Any(candidate => HasMatchingShape(member, candidate)))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static bool HasMatchingShape(ISymbol childMember, ISymbol baseMember) =>
+        (childMember, baseMember) switch
+        {
+            (IMethodSymbol child, IMethodSymbol parent) =>
+                !parent.IsStatic
+                && parent.MethodKind == MethodKind.Ordinary
+                && child.Arity == parent.Arity
+                && ParametersMatch(child.Parameters, parent.Parameters),
+            (IPropertySymbol child, IPropertySymbol parent) =>
+                !parent.IsStatic
+                && child.IsIndexer == parent.IsIndexer
+                && ParametersMatch(child.Parameters, parent.Parameters),
+            (IEventSymbol, IEventSymbol parent) => !parent.IsStatic,
+            _ => false,
+        };
+
+    private static bool ParametersMatch(
+        ImmutableArray<IParameterSymbol> childParameters,
+        ImmutableArray<IParameterSymbol> parentParameters
+    )
+    {
+        if (childParameters.Length != parentParameters.Length)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < childParameters.Length; index++)
+        {
+            if (
+                childParameters[index].RefKind != parentParameters[index].RefKind
+                || !SymbolEqualityComparer.Default.Equals(
+                    childParameters[index].Type,
+                    parentParameters[index].Type
+                )
+            )
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
