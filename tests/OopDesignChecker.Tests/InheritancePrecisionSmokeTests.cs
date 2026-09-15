@@ -10,6 +10,10 @@ internal static class InheritancePrecisionSmokeTests
         MarkerInterfaceDoesNotCreateConcreteDependencyWarning();
         MarkerInterfaceDoesNotCreateConstructionWarning();
         OwnedFactoryConstructionIsAllowed();
+        ProjectSurfaceReplacementIsSuspicious();
+        ExternalBaseSurfaceReplacementIsAllowed();
+        ImplementationReuseInheritanceIsAttention();
+        ConstructorOnlyProtectedUseIsAllowed();
         ValidSpecializationIsNotCompositionCandidate();
     }
 
@@ -82,6 +86,92 @@ internal static class InheritancePrecisionSmokeTests
         AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
     }
 
+    private static void ProjectSurfaceReplacementIsSuspicious()
+    {
+        const string source = """
+            internal class Device
+            {
+                public void Start() { }
+                public int Status => 0;
+            }
+
+            internal sealed class SpecializedDevice : Device
+            {
+                public new void Start() { }
+                public new int Status => 1;
+            }
+            """;
+
+        AssertSingle(
+            new SuspiciousInheritanceRelationshipRule(),
+            source,
+            "OOP301",
+            DesignDiagnosticSeverity.Warning
+        );
+    }
+
+    private static void ExternalBaseSurfaceReplacementIsAllowed()
+    {
+        const string source = """
+            internal sealed class CustomException : System.Exception
+            {
+                public new string Message => "custom";
+                public new string Source
+                {
+                    get => "custom";
+                    set { }
+                }
+            }
+            """;
+
+        AssertNone(new SuspiciousInheritanceRelationshipRule(), source, "OOP301");
+    }
+
+    private static void ImplementationReuseInheritanceIsAttention()
+    {
+        const string source = """
+            internal class CalculatorBase
+            {
+                protected int ReadLeft() => 1;
+                protected int ReadRight() => 2;
+            }
+
+            internal sealed class TotalCalculator : CalculatorBase
+            {
+                public int Calculate() => ReadLeft() + ReadRight();
+            }
+            """;
+
+        AssertSingle(
+            new CompositionCandidateRule(),
+            source,
+            "OOP307",
+            DesignDiagnosticSeverity.Attention
+        );
+    }
+
+    private static void ConstructorOnlyProtectedUseIsAllowed()
+    {
+        const string source = """
+            internal class ConfigurationBase
+            {
+                protected int Left;
+                protected int Right;
+            }
+
+            internal sealed class Configuration : ConfigurationBase
+            {
+                public Configuration(int left, int right)
+                {
+                    Left = left;
+                    Right = right;
+                }
+            }
+            """;
+
+        AssertNone(new CompositionCandidateRule(), source, "OOP307");
+    }
+
     private static void ValidSpecializationIsNotCompositionCandidate()
     {
         const string source = """
@@ -99,6 +189,32 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         AssertNone(new CompositionCandidateRule(), source, "OOP307");
+    }
+
+    private static void AssertSingle(
+        IAnalysisRule rule,
+        string source,
+        string ruleId,
+        DesignDiagnosticSeverity severity
+    )
+    {
+        var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+        if (
+            diagnostics.Length == 1
+            && diagnostics[0].Rule.Id == ruleId
+            && diagnostics[0].Severity == severity
+        )
+        {
+            return;
+        }
+
+        var found = string.Join(
+            ", ",
+            diagnostics.Select(item => $"{item.Rule.Id}:{item.Severity}")
+        );
+        throw new InvalidOperationException(
+            $"Expected one {ruleId}:{severity} diagnostic, found [{found}]."
+        );
     }
 
     private static void AssertNone(IAnalysisRule rule, string source, string ruleId)
