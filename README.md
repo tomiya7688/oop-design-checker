@@ -45,6 +45,14 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-pa
 
 `<target-path>` can be a loose `.cs` file, a `.csproj`, a `.sln`, a `.slnx`, or a directory. A directory containing multiple C# projects is analyzed as a project set: each project keeps its own MSBuild compilation and the resulting diagnostics are aggregated and deduplicated.
 
+Show the product version:
+
+```bash
+oop-design-checker-cui --version
+```
+
+The short alias is `-V`.
+
 Choose the CI failure threshold:
 
 ```bash
@@ -57,7 +65,9 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-pa
 
 ### Release packages
 
-Pushing a tag beginning with `v` creates a GitHub Release after all platform packages build successfully. Release archives contain the complete `dotnet publish` output, this README, and `oop-design-checker.example.json`.
+Pushing a matching version tag such as `v0.1.0` creates a GitHub Release after all platform packages build successfully. The product version is declared once in `Directory.Build.props`; a `v*` tag that does not match that declared version fails before release packaging is published.
+
+Release archives contain the complete `dotnet publish` output, this README, `CHANGELOG.md`, and `oop-design-checker.example.json`. Archive names include the product version, for example `oop-design-checker-0.1.0-linux-x64.tar.gz`. Every archive also has a `.sha256` file, and tagged releases include a combined `SHA256SUMS.txt` manifest.
 
 Published targets are:
 
@@ -74,6 +84,16 @@ For example, after extracting the matching package:
 ```
 
 On Windows use `oop-design-checker-cui.exe`.
+
+### Release process
+
+For a new release:
+
+1. Update `VersionPrefix` in `Directory.Build.props`.
+2. Add the release entry to `CHANGELOG.md`.
+3. Merge the change only after normal CI, strict self-check, analyzers, CSharpier, and the six-RID release packaging matrix are green.
+4. Push a tag exactly matching the declared version with a `v` prefix, for example `v0.1.0`.
+5. The release workflow validates the tag/version match, rebuilds all six packages, generates SHA-256 checksums, and creates the GitHub Release.
 
 ### CI output formats
 
@@ -144,7 +164,8 @@ dotnet publish src/frontends/cui/OopDesignChecker.Cui.csproj -c Release -r win-x
 
 Replace `win-x64` with `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, or `osx-arm64` as needed. Keep the complete publish directory when distributing the checker so Roslyn/MSBuild support files are not accidentally omitted.
 
-## Specification
+## Documentation
 
+- [Changelog](CHANGELOG.md)
 - [Design definition](specification/object-oriented-design.md)
 - [Check rules](specification/check-rules.md)

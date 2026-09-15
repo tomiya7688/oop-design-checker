@@ -11,6 +11,7 @@ internal static class OutputFormatSmokeTests
     {
         CommandLineParsesFormatAndOutput();
         RelativeConfigurationPathIsPreserved();
+        CommandLineReportsProductVersion();
         GitHubFormatRejectsOutputFile();
         JsonOutputIsMachineReadable();
         SarifOutputIsMachineReadable();
@@ -51,6 +52,34 @@ internal static class OutputFormatSmokeTests
         {
             throw new InvalidOperationException(
                 "Relative --config paths must reach the configuration loader without being converted to a CWD-based absolute path."
+            );
+        }
+    }
+
+    private static void CommandLineReportsProductVersion()
+    {
+        var originalOut = Console.Out;
+        using var captured = new StringWriter();
+        try
+        {
+            Console.SetOut(captured);
+            var exitCode = CheckerCommandLine.Run(["--version"]);
+            if (exitCode != 0)
+            {
+                throw new InvalidOperationException(
+                    $"Expected --version to succeed, exit code was {exitCode}."
+                );
+            }
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        if (!string.Equals(captured.ToString().Trim(), "0.1.0", StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                $"Expected product version 0.1.0, found '{captured.ToString().Trim()}'."
             );
         }
     }
