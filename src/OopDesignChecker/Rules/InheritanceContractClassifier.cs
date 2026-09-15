@@ -101,13 +101,14 @@ internal static class InheritanceContractClassifier
         }
 
         var typeName = creation.Type.ToString();
-        return typeName
-            is "NotSupportedException"
-                or "System.NotSupportedException"
-                or "global::System.NotSupportedException"
-                or "NotImplementedException"
-                or "System.NotImplementedException"
-                or "global::System.NotImplementedException"
+        return
+            typeName
+                is "NotSupportedException"
+                    or "System.NotSupportedException"
+                    or "global::System.NotSupportedException"
+                    or "NotImplementedException"
+                    or "System.NotImplementedException"
+                    or "global::System.NotImplementedException"
             ? typeName
             : null;
     }
