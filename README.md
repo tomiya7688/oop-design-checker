@@ -48,7 +48,7 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-pa
 Show the product version:
 
 ```bash
-ooop-design-checker-cui --version
+oop-design-checker-cui --version
 ```
 
 The short alias is `-V`.
