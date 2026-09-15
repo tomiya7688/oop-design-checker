@@ -37,25 +37,78 @@ internal static class CheckerConfigurationLoader
 
     private static string? ResolveConfigurationPath(string targetPath, string? explicitPath)
     {
+        var targetDirectory = GetTargetDirectory(targetPath);
         if (!string.IsNullOrWhiteSpace(explicitPath))
         {
-            var fullPath = Path.GetFullPath(explicitPath);
-            if (!File.Exists(fullPath))
-            {
-                throw new InvalidOperationException(
-                    $"Configuration file does not exist: {fullPath}"
-                );
-            }
+            return ResolveExplicitConfigurationPath(explicitPath, targetDirectory);
+        }
 
+        return FindNearestDefaultConfiguration(targetDirectory);
+    }
+
+    private static string ResolveExplicitConfigurationPath(
+        string explicitPath,
+        string targetDirectory
+    )
+    {
+        if (Path.IsPathRooted(explicitPath))
+        {
+            var fullPath = Path.GetFullPath(explicitPath);
+            EnsureConfigurationExists(fullPath);
             return fullPath;
         }
 
-        var root = File.Exists(targetPath)
-            ? Path.GetDirectoryName(Path.GetFullPath(targetPath)) ?? Directory.GetCurrentDirectory()
-            : Path.GetFullPath(targetPath);
-        var defaultPath = Path.Combine(root, DefaultFileName);
+        var currentDirectoryPath = Path.GetFullPath(explicitPath, Directory.GetCurrentDirectory());
+        if (File.Exists(currentDirectoryPath))
+        {
+            return currentDirectoryPath;
+        }
 
-        return File.Exists(defaultPath) ? defaultPath : null;
+        var targetRelativePath = Path.GetFullPath(explicitPath, targetDirectory);
+        if (File.Exists(targetRelativePath))
+        {
+            return targetRelativePath;
+        }
+
+        throw new InvalidOperationException(
+            $"Configuration file does not exist. Checked: {currentDirectoryPath}; {targetRelativePath}"
+        );
+    }
+
+    private static string? FindNearestDefaultConfiguration(string targetDirectory)
+    {
+        var directory = new DirectoryInfo(targetDirectory);
+        while (directory is not null)
+        {
+            var candidate = Path.Combine(directory.FullName, DefaultFileName);
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            directory = directory.Parent;
+        }
+
+        return null;
+    }
+
+    private static string GetTargetDirectory(string targetPath)
+    {
+        var fullTargetPath = Path.GetFullPath(targetPath);
+        if (Directory.Exists(fullTargetPath))
+        {
+            return fullTargetPath;
+        }
+
+        return Path.GetDirectoryName(fullTargetPath) ?? Directory.GetCurrentDirectory();
+    }
+
+    private static void EnsureConfigurationExists(string path)
+    {
+        if (!File.Exists(path))
+        {
+            throw new InvalidOperationException($"Configuration file does not exist: {path}");
+        }
     }
 
     private static JsonSerializerOptions CreateJsonOptions()
