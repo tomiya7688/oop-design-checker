@@ -29,11 +29,11 @@ internal sealed class ParentContractMostlyUnusedRule : IAnalysisRule
                     continue;
                 }
 
-                var noOpOverrides = declaration
+                var neutralizedOperations = declaration
                     .Members.OfType<MethodDeclarationSyntax>()
-                    .Where(method => IsNoOpOverride(method, semanticModel))
+                    .Where(method => NeutralizesParentContract(method, semanticModel))
                     .ToArray();
-                if (noOpOverrides.Length < MinimumNoOpOverrides)
+                if (neutralizedOperations.Length < MinimumNoOpOverrides)
                 {
                     continue;
                 }
@@ -41,14 +41,14 @@ internal sealed class ParentContractMostlyUnusedRule : IAnalysisRule
                 yield return DiagnosticFactory.Create(
                     Descriptor,
                     declaration.Identifier.GetLocation(),
-                    $"This child type neutralizes {noOpOverrides.Length} inherited operations with no-op/default implementations. The parent contract may be broader than this object can meaningfully support.",
+                    $"This child type neutralizes {neutralizedOperations.Length} required or supported inherited operations with no-op/default implementations. The parent contract may be broader than this object can meaningfully support.",
                     symbol.ToDisplayString()
                 );
             }
         }
     }
 
-    private static bool IsNoOpOverride(
+    private static bool NeutralizesParentContract(
         MethodDeclarationSyntax declaration,
         SemanticModel semanticModel
     )
@@ -56,32 +56,13 @@ internal sealed class ParentContractMostlyUnusedRule : IAnalysisRule
         if (
             semanticModel.GetDeclaredSymbol(declaration)
             is not IMethodSymbol { IsOverride: true } method
+            || !InheritanceContractClassifier.IsNoOpOrDefaultImplementation(declaration, method)
         )
         {
             return false;
         }
 
-        if (method.ReturnsVoid)
-        {
-            return declaration.Body is { Statements.Count: 0 }
-                || declaration.Body?.Statements is [ReturnStatementSyntax { Expression: null }];
-        }
-
-        if (declaration.ExpressionBody?.Expression is LiteralExpressionSyntax literal)
-        {
-            return literal.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.NullLiteralExpression)
-                || literal.IsKind(
-                    Microsoft.CodeAnalysis.CSharp.SyntaxKind.DefaultLiteralExpression
-                );
-        }
-
-        return declaration.Body?.Statements
-                is [ReturnStatementSyntax { Expression: LiteralExpressionSyntax returnLiteral }]
-            && (
-                returnLiteral.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.NullLiteralExpression)
-                || returnLiteral.IsKind(
-                    Microsoft.CodeAnalysis.CSharp.SyntaxKind.DefaultLiteralExpression
-                )
-            );
+        return InheritanceContractClassifier.ClassifyParentOperation(method)
+            is ParentOperationContract.Required or ParentOperationContract.Supported;
     }
 }
