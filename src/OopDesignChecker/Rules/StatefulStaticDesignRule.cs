@@ -36,7 +36,10 @@ internal sealed class StatefulStaticDesignRule : IAnalysisRule
                         && !field.IsConst
                         && !field.IsImplicitlyDeclared
                         && !IsThreadLocal(field)
-                        && (!field.IsReadOnly || MutableCollectionInspector.IsMutableCollection(field.Type))
+                        && (
+                            !field.IsReadOnly
+                            || MutableCollectionInspector.IsMutableCollection(field.Type)
+                        )
                     )
                     .Cast<ISymbol>();
 
@@ -46,8 +49,10 @@ internal sealed class StatefulStaticDesignRule : IAnalysisRule
                     .Where(property =>
                         property.IsStatic
                         && !property.IsImplicitlyDeclared
-                        && (property.SetMethod is not null
-                            || MutableCollectionInspector.IsMutableCollection(property.Type))
+                        && (
+                            property.SetMethod is not null
+                            || MutableCollectionInspector.IsMutableCollection(property.Type)
+                        )
                     )
                     .Cast<ISymbol>();
 
