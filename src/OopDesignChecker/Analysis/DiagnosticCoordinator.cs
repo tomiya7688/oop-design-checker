@@ -13,9 +13,7 @@ internal static class DiagnosticCoordinator
             .Select(CreateRuleSymbolKey)
             .ToHashSet();
 
-        return diagnostics
-            .Where(diagnostic => !IsSubsumed(diagnostic, diagnosticKeys))
-            .ToArray();
+        return diagnostics.Where(diagnostic => !IsSubsumed(diagnostic, diagnosticKeys)).ToArray();
     }
 
     private static bool IsSubsumed(
