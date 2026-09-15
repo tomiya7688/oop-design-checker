@@ -31,8 +31,9 @@ internal static class OperationMetricsCalculator
             semanticModel
         );
         var topLevelStatementCount =
-            method.Body?.Statements.Count(statement => statement is not LocalFunctionStatementSyntax)
-            ?? (method.ExpressionBody is null ? 0 : 1);
+            method.Body?.Statements.Count(statement =>
+                statement is not LocalFunctionStatementSyntax
+            ) ?? (method.ExpressionBody is null ? 0 : 1);
 
         return new OperationMetrics(
             lineCount,
