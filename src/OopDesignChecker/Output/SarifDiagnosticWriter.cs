@@ -5,12 +5,6 @@ namespace OopDesignChecker.Output;
 
 internal sealed class SarifDiagnosticWriter : IDiagnosticWriter
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-    };
-
     private readonly DiagnosticOutputTarget _target;
 
     public SarifDiagnosticWriter(string? outputPath = null)
@@ -46,8 +40,13 @@ internal sealed class SarifDiagnosticWriter : IDiagnosticWriter
             ["$schema"] = "https://json.schemastore.org/sarif-2.1.0.json",
             ["runs"] = new[] { run },
         };
+        var serializerOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+        };
 
-        _target.Write(writer => writer.Write(JsonSerializer.Serialize(document, SerializerOptions)));
+        _target.Write(writer => writer.Write(JsonSerializer.Serialize(document, serializerOptions)));
     }
 
     private static object ToRule(DesignDiagnostic diagnostic) =>
