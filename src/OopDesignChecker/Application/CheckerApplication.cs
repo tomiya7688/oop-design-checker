@@ -25,7 +25,12 @@ internal sealed class CheckerApplication
 
             if (options.Verbose && result.ConfigurationPath is not null)
             {
-                Console.WriteLine($"Config: {result.ConfigurationPath}");
+                var writer =
+                    options.OutputFormat == DiagnosticOutputFormat.Text
+                    && options.OutputPath is null
+                        ? Console.Out
+                        : Console.Error;
+                writer.WriteLine($"Config: {result.ConfigurationPath}");
             }
 
             return result.ShouldFail ? 1 : 0;

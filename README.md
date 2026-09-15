@@ -25,22 +25,7 @@ The checker itself is tested with `--fail-on attention` so its own source must s
 
 The first implementation targets C# through Roslyn and MSBuild. Real project compilations are preserved when analyzing `.csproj`, `.sln`, `.slnx`, or directories containing multiple C# projects; unrelated projects are never merged into one artificial compilation.
 
-Implemented rules:
-
-- `OOP001` - several related concrete types expose the same public behavior but share no project abstraction
-- `OOP002` - polymorphism bypassed by repeated runtime type branching
-- `OOP101` - public application class is visible more widely than its actual inheritance-hierarchy usage requires
-- `OOP102` - application class is a conservative sealing candidate
-- `OOP103` - instance method can be static
-- `OOP104` - class with no meaningful instance state can be static
-- `OOP105` - static class owns mutable shared state
-- `OOP106` - encapsulation leaks such as public mutable fields, directly exposed mutable collections, and unnecessarily public setters
-- `OOP201` - oversized or overly complex operation
-- `OOP303` - override disables inherited behavior by always rejecting it
-- `OOP304` - excessive inheritance depth
-- `OOP305` - constructor depends on a concrete project type even though a project abstraction exists
-
-More rules in `specification/check-rules.md` are design targets and will be implemented incrementally.
+Implemented rules are defined in `specification/check-rules.md` and include encapsulation, inheritance, polymorphism, visibility, static-state, operation complexity, object-integrity, dependency, and navigation checks.
 
 ## Quality gates
 
@@ -68,6 +53,30 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-pa
 ```
 
 `--warnings-as-errors` remains as a compatibility alias for `--fail-on warning`.
+
+### CI output formats
+
+The default `text` format stays concise and backward compatible. Machine-readable formats can be selected with `--format`:
+
+```bash
+# Stable JSON document
+dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --format json --output oop-diagnostics.json
+
+# SARIF 2.1.0 for code-scanning systems
+dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --format sarif --output oop-diagnostics.sarif
+
+# GitHub Actions workflow annotations
+dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --format github
+```
+
+Supported formats:
+
+- `text` - normal `ATTN` / `WARN` / `DANGER` lines plus summary
+- `json` - versioned diagnostic array and severity summary
+- `sarif` - SARIF 2.1.0 with rule metadata, severity level, source location, and symbol metadata
+- `github` - emits `::notice`, `::warning`, and `::error` workflow commands so findings appear as GitHub Actions annotations
+
+`--output <file>` can be used with `text`, `json`, and `sarif`. GitHub annotations intentionally always go to stdout. Output format never changes the process exit code: `--fail-on` continues to control CI failure independently.
 
 ## Configuration
 

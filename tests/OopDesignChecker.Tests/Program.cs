@@ -41,6 +41,7 @@ internal static class Program
         new("OOP303 disabled parent behavior is danger", DisabledParentBehaviorIsDetected),
         new("OOP304 deep inheritance is attention", DeepInheritanceIsDetected),
         new("core OOP rule sprint", CoreRuleSmokeTests.Run),
+        new("CI diagnostic output formats", OutputFormatSmokeTests.Run),
         new(
             "configuration disables selected rules",
             ConfigurationBehaviorTests.DisabledRulesAreSuppressed

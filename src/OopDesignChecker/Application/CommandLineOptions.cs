@@ -6,5 +6,7 @@ internal sealed record CommandLineOptions(
     string TargetPath,
     string? ConfigurationPath,
     DesignDiagnosticSeverity? FailureThreshold,
-    bool Verbose
+    bool Verbose,
+    DiagnosticOutputFormat OutputFormat,
+    string? OutputPath
 );

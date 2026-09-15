@@ -15,7 +15,12 @@ public static class CheckerCommandLine
             return 2;
         }
 
-        var application = new CheckerApplication(new ConsoleDiagnosticWriter());
-        return application.Run(optionsResult.Options!);
+        var options = optionsResult.Options!;
+        var diagnosticWriter = DiagnosticWriterFactory.Create(
+            options.OutputFormat,
+            options.OutputPath
+        );
+        var application = new CheckerApplication(diagnosticWriter);
+        return application.Run(options);
     }
 }

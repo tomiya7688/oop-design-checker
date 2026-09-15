@@ -4,12 +4,26 @@ namespace OopDesignChecker.Output;
 
 internal sealed class ConsoleDiagnosticWriter : IDiagnosticWriter
 {
-    public void Write(IReadOnlyList<DesignDiagnostic> diagnostics, bool verbose)
+    private readonly DiagnosticOutputTarget _target;
+
+    public ConsoleDiagnosticWriter(string? outputPath = null)
+    {
+        _target = new DiagnosticOutputTarget(outputPath);
+    }
+
+    public void Write(IReadOnlyList<DesignDiagnostic> diagnostics, bool verbose) =>
+        _target.Write(writer => WriteDiagnostics(writer, diagnostics, verbose));
+
+    private static void WriteDiagnostics(
+        TextWriter writer,
+        IReadOnlyList<DesignDiagnostic> diagnostics,
+        bool verbose
+    )
     {
         foreach (var diagnostic in diagnostics)
         {
             var symbol = diagnostic.SymbolName is null ? string.Empty : $" {diagnostic.SymbolName}";
-            Console.WriteLine(
+            writer.WriteLine(
                 $"{FormatSeverity(diagnostic.Severity)} {diagnostic.Rule.Id} "
                     + $"{diagnostic.Location.FilePath}:{diagnostic.Location.Line}:{diagnostic.Location.Column}{symbol}: "
                     + diagnostic.Message
@@ -17,7 +31,7 @@ internal sealed class ConsoleDiagnosticWriter : IDiagnosticWriter
 
             if (verbose)
             {
-                Console.WriteLine($"  {diagnostic.Rule.Title}");
+                writer.WriteLine($"  {diagnostic.Rule.Title}");
             }
         }
 
@@ -31,7 +45,7 @@ internal sealed class ConsoleDiagnosticWriter : IDiagnosticWriter
             item.Severity == DesignDiagnosticSeverity.Attention
         );
 
-        Console.WriteLine(
+        writer.WriteLine(
             $"Diagnostics: {dangerCount} danger, {warningCount} warning(s), {attentionCount} attention."
         );
     }
