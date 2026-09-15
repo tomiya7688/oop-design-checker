@@ -88,13 +88,11 @@ internal sealed class SuspiciousInheritanceRelationshipRule : IAnalysisRule
     private static bool HasMatchingShape(ISymbol childMember, ISymbol baseMember) =>
         (childMember, baseMember) switch
         {
-            (IMethodSymbol child, IMethodSymbol parent) =>
-                !parent.IsStatic
+            (IMethodSymbol child, IMethodSymbol parent) => !parent.IsStatic
                 && parent.MethodKind == MethodKind.Ordinary
                 && child.Arity == parent.Arity
                 && ParametersMatch(child.Parameters, parent.Parameters),
-            (IPropertySymbol child, IPropertySymbol parent) =>
-                !parent.IsStatic
+            (IPropertySymbol child, IPropertySymbol parent) => !parent.IsStatic
                 && child.IsIndexer == parent.IsIndexer
                 && ParametersMatch(child.Parameters, parent.Parameters),
             (IEventSymbol, IEventSymbol parent) => !parent.IsStatic,
