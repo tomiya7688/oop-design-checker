@@ -7,14 +7,6 @@ namespace OopDesignChecker.Rules;
 
 internal sealed class ChildDisablesParentBehaviorRule : IAnalysisRule
 {
-    private static readonly HashSet<string> RejectionExceptions = new(StringComparer.Ordinal)
-    {
-        "NotSupportedException",
-        "System.NotSupportedException",
-        "NotImplementedException",
-        "System.NotImplementedException",
-    };
-
     public RuleDescriptor Descriptor { get; } =
         new("OOP303", "Child disables parent behavior", DesignDiagnosticSeverity.Danger);
 
@@ -35,8 +27,8 @@ internal sealed class ChildDisablesParentBehaviorRule : IAnalysisRule
                     continue;
                 }
 
-                var thrownType = GetSoleRejectionException(method);
-                if (thrownType is null)
+                var thrownType = InheritanceContractClassifier.GetSoleRejectionException(method);
+                if (thrownType is null || !DisablesSupportedParentOperation(methodSymbol))
                 {
                     continue;
                 }
@@ -44,36 +36,16 @@ internal sealed class ChildDisablesParentBehaviorRule : IAnalysisRule
                 yield return DiagnosticFactory.Create(
                     Descriptor,
                     method.Identifier.GetLocation(),
-                    $"This override disables inherited behavior by always throwing {thrownType}.",
+                    $"This override disables required or supported inherited behavior by always throwing {thrownType}.",
                     methodSymbol.ToDisplayString()
                 );
             }
         }
     }
 
-    private static string? GetSoleRejectionException(MethodDeclarationSyntax method)
-    {
-        if (method.ExpressionBody?.Expression is ThrowExpressionSyntax throwExpression)
-        {
-            return GetExceptionName(throwExpression.Expression);
-        }
-
-        if (method.Body?.Statements is [ThrowStatementSyntax throwStatement])
-        {
-            return GetExceptionName(throwStatement.Expression);
-        }
-
-        return null;
-    }
-
-    private static string? GetExceptionName(ExpressionSyntax? expression)
-    {
-        if (expression is not ObjectCreationExpressionSyntax creation)
-        {
-            return null;
-        }
-
-        var typeName = creation.Type.ToString();
-        return RejectionExceptions.Contains(typeName) ? typeName : null;
-    }
+    private static bool DisablesSupportedParentOperation(IMethodSymbol method) =>
+        InheritanceContractClassifier.ClassifyParentOperation(method)
+            is ParentOperationContract.Required
+                or ParentOperationContract.Supported
+                or ParentOperationContract.OptionalNoOp;
 }

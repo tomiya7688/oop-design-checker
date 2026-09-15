@@ -15,6 +15,7 @@ internal static class InheritancePrecisionSmokeTests
         ImplementationReuseInheritanceIsAttention();
         ConstructorOnlyProtectedUseIsAllowed();
         ValidSpecializationIsNotCompositionCandidate();
+        ParentContractPrecisionSmokeTests.Run();
     }
 
     private static void MarkerInterfaceDoesNotCreateConcreteDependencyWarning()
