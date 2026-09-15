@@ -55,7 +55,7 @@ internal sealed class ParentContractMostlyUnusedRule : IAnalysisRule
     {
         if (
             semanticModel.GetDeclaredSymbol(declaration)
-            is not IMethodSymbol { IsOverride: true } method
+                is not IMethodSymbol { IsOverride: true } method
             || !InheritanceContractClassifier.IsNoOpOrDefaultImplementation(declaration, method)
         )
         {
