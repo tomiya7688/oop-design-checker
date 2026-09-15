@@ -133,7 +133,7 @@ internal static class ExtendedRuleSmokeTests
         const string source = """
             internal class Base
             {
-                public virtual void Start() { }
+                public virtual void Start() => System.GC.KeepAlive(this);
                 public virtual object? Read() => new object();
             }
 
