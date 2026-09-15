@@ -115,7 +115,12 @@ internal sealed class OversizedMainOperationRule : IAnalysisRule
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
             var semanticModel = context.Project.GetSemanticModel(syntaxTree);
-            foreach (var invocation in syntaxTree.GetRoot().DescendantNodes().OfType<InvocationExpressionSyntax>())
+            foreach (
+                var invocation in syntaxTree
+                    .GetRoot()
+                    .DescendantNodes()
+                    .OfType<InvocationExpressionSyntax>()
+            )
             {
                 if (
                     semanticModel.GetSymbolInfo(invocation).Symbol is not IMethodSymbol invokedMethod
@@ -128,7 +133,10 @@ internal sealed class OversizedMainOperationRule : IAnalysisRule
                     continue;
                 }
 
-                var callerDeclaration = invocation.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+                var callerDeclaration = invocation
+                    .Ancestors()
+                    .OfType<MethodDeclarationSyntax>()
+                    .FirstOrDefault();
                 if (
                     callerDeclaration is not null
                     && semanticModel.GetDeclaredSymbol(callerDeclaration) is IMethodSymbol caller
