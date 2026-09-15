@@ -29,7 +29,9 @@ internal sealed class JsonDiagnosticWriter : IDiagnosticWriter
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true,
         };
-        _target.Write(writer => writer.Write(JsonSerializer.Serialize(document, serializerOptions)));
+        _target.Write(writer =>
+            writer.Write(JsonSerializer.Serialize(document, serializerOptions))
+        );
     }
 
     private static JsonDiagnosticItem ToItem(DesignDiagnostic diagnostic) =>
