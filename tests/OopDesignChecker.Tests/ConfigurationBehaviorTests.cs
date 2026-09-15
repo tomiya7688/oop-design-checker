@@ -164,7 +164,9 @@ internal static class ConfigurationBehaviorTests
             AssertConfigurationPath(result.ConfigurationPath, nestedConfigurationPath);
             if (result.FailureThreshold != DesignDiagnosticSeverity.Attention)
             {
-                throw new InvalidOperationException("The nearest checker configuration did not win.");
+                throw new InvalidOperationException(
+                    "The nearest checker configuration did not win."
+                );
             }
         });
     }
