@@ -10,7 +10,7 @@ internal static class MethodComplexityCalculator
     {
         var complexity = 1;
 
-        foreach (var node in method.DescendantNodes())
+        foreach (var node in GetOperationNodes(method))
         {
             complexity += node switch
             {
@@ -21,6 +21,7 @@ internal static class MethodComplexityCalculator
                 DoStatementSyntax => 1,
                 CaseSwitchLabelSyntax => 1,
                 CasePatternSwitchLabelSyntax => 1,
+                SwitchExpressionArmSyntax => 1,
                 CatchClauseSyntax => 1,
                 ConditionalExpressionSyntax => 1,
                 BinaryExpressionSyntax binary when binary.IsKind(SyntaxKind.LogicalAndExpression) =>
@@ -33,4 +34,9 @@ internal static class MethodComplexityCalculator
 
         return complexity;
     }
+
+    internal static IEnumerable<SyntaxNode> GetOperationNodes(MethodDeclarationSyntax method) =>
+        method.DescendantNodes(descendIntoChildren: node =>
+            node is not AnonymousFunctionExpressionSyntax and not LocalFunctionStatementSyntax
+        );
 }
