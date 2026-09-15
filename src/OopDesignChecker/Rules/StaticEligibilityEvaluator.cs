@@ -12,7 +12,12 @@ internal static class StaticEligibilityEvaluator
         SemanticModel semanticModel
     )
     {
-        if (symbol.IsStatic || symbol.IsAbstract || symbol.Interfaces.Length > 0)
+        if (
+            symbol.IsStatic
+            || symbol.IsAbstract
+            || symbol.Interfaces.Length > 0
+            || FrameworkContractClassifier.HasExternalFrameworkAttribute(symbol)
+        )
         {
             return false;
         }
@@ -64,7 +69,12 @@ internal static class StaticEligibilityEvaluator
         foreach (var pair in instanceMethods)
         {
             var methodSymbol = pair.Symbol!;
-            if (methodSymbol.IsAbstract || methodSymbol.IsVirtual || methodSymbol.IsOverride)
+            if (
+                methodSymbol.IsAbstract
+                || methodSymbol.IsVirtual
+                || methodSymbol.IsOverride
+                || FrameworkContractClassifier.HasExternalFrameworkAttribute(methodSymbol)
+            )
             {
                 return false;
             }
