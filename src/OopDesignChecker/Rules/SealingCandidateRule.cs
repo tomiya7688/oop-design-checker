@@ -46,6 +46,7 @@ internal sealed class SealingCandidateRule : IAnalysisRule
                 || symbol.DeclaredAccessibility == Accessibility.Public
                 || inheritedTypes.Contains(symbol)
                 || HasInheritanceIntent(symbol)
+                || FrameworkContractClassifier.HasExternalTypeContract(symbol)
             )
             {
                 continue;
