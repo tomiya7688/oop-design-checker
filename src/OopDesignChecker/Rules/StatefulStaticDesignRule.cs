@@ -73,7 +73,8 @@ internal sealed class StatefulStaticDesignRule : IAnalysisRule
     }
 
     private static bool IsThreadLocal(IFieldSymbol field) =>
-        field.GetAttributes()
+        field
+            .GetAttributes()
             .Any(attribute =>
                 attribute.AttributeClass?.ToDisplayString() == "System.ThreadStaticAttribute"
             );
