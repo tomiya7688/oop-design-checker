@@ -91,9 +91,13 @@ internal static class ConfigurationBehaviorTests
                 );
             }
         });
+
+        ParentConfigurationIsDiscoveredForNestedTarget();
+        NearestConfigurationWins();
+        ExplicitRelativeConfigurationCanUseTargetDirectory();
     }
 
-    public static void ParentConfigurationIsDiscoveredForNestedTarget()
+    private static void ParentConfigurationIsDiscoveredForNestedTarget()
     {
         WithTemporaryProject(rootPath =>
         {
@@ -126,7 +130,7 @@ internal static class ConfigurationBehaviorTests
         });
     }
 
-    public static void NearestConfigurationWins()
+    private static void NearestConfigurationWins()
     {
         WithTemporaryProject(rootPath =>
         {
@@ -165,7 +169,7 @@ internal static class ConfigurationBehaviorTests
         });
     }
 
-    public static void ExplicitRelativeConfigurationCanUseTargetDirectory()
+    private static void ExplicitRelativeConfigurationCanUseTargetDirectory()
     {
         WithTemporaryProject(rootPath =>
         {
