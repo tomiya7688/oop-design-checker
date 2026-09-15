@@ -5,12 +5,6 @@ namespace OopDesignChecker.Output;
 
 internal sealed class JsonDiagnosticWriter : IDiagnosticWriter
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-    };
-
     private readonly DiagnosticOutputTarget _target;
 
     public JsonDiagnosticWriter(string? outputPath = null)
@@ -30,7 +24,12 @@ internal sealed class JsonDiagnosticWriter : IDiagnosticWriter
             )
         );
 
-        _target.Write(writer => writer.Write(JsonSerializer.Serialize(document, SerializerOptions)));
+        var serializerOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+        };
+        _target.Write(writer => writer.Write(JsonSerializer.Serialize(document, serializerOptions)));
     }
 
     private static JsonDiagnosticItem ToItem(DesignDiagnostic diagnostic) =>
