@@ -70,7 +70,9 @@ internal static class OutputFormatSmokeTests
                 || root.GetProperty("summary").GetProperty("warning").GetInt32() != 1
             )
             {
-                throw new InvalidOperationException("JSON diagnostic document had unexpected content.");
+                throw new InvalidOperationException(
+                    "JSON diagnostic document had unexpected content."
+                );
             }
         }
         finally
