@@ -59,7 +59,7 @@ internal static class CommandLineOptionsParser
             return CommandLineParseResult.Success(
                 new CommandLineOptions(
                     Path.GetFullPath(_targetPath),
-                    _configurationPath is null ? null : Path.GetFullPath(_configurationPath),
+                    _configurationPath,
                     _failureThreshold,
                     _verbose,
                     _outputFormat,
