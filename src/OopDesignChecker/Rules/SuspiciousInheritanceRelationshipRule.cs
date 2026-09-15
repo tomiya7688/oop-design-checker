@@ -58,8 +58,7 @@ internal sealed class SuspiciousInheritanceRelationshipRule : IAnalysisRule
     private static bool IsRelevantInstanceSurface(ISymbol member) =>
         member switch
         {
-            IMethodSymbol method =>
-                !method.IsStatic && method.MethodKind == MethodKind.Ordinary,
+            IMethodSymbol method => !method.IsStatic && method.MethodKind == MethodKind.Ordinary,
             IPropertySymbol property => !property.IsStatic,
             IEventSymbol @event => !@event.IsStatic,
             _ => false,
