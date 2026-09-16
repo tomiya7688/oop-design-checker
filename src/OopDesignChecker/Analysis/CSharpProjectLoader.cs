@@ -16,9 +16,9 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         _ignoredPaths = ignoredPaths ?? [];
     }
 
-    public SourceProject Load(string targetPath)
+    public SourceProject Load(string targetPath, CancellationToken cancellationToken = default)
     {
-        var projects = LoadProjects(targetPath);
+        var projects = LoadProjects(targetPath, cancellationToken);
         if (projects.Count != 1)
         {
             throw new InvalidOperationException(
@@ -29,18 +29,22 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         return projects[0];
     }
 
-    public IReadOnlyList<SourceProject> LoadProjects(string targetPath)
+    public IReadOnlyList<SourceProject> LoadProjects(
+        string targetPath,
+        CancellationToken cancellationToken = default
+    )
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var fullTargetPath = Path.GetFullPath(targetPath);
 
         if (File.Exists(fullTargetPath))
         {
             return Path.GetExtension(fullTargetPath).ToLowerInvariant() switch
             {
-                ".cs" => [LoadLooseSources(fullTargetPath)],
-                ".csproj" => [LoadMsBuildProject(fullTargetPath)],
-                ".sln" => LoadMsBuildSolution(fullTargetPath),
-                ".slnx" => LoadSlnxProjects(fullTargetPath),
+                ".cs" => [LoadLooseSources(fullTargetPath, cancellationToken)],
+                ".csproj" => [LoadMsBuildProject(fullTargetPath, cancellationToken)],
+                ".sln" => LoadMsBuildSolution(fullTargetPath, cancellationToken),
+                ".slnx" => LoadSlnxProjects(fullTargetPath, cancellationToken),
                 _ => throw new InvalidOperationException(
                     "Target file must be a C# source file (.cs), project file (.csproj), or solution file (.sln/.slnx)."
                 ),
@@ -52,20 +56,24 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             throw new InvalidOperationException($"Target does not exist: {fullTargetPath}");
         }
 
-        var solutionFile = ResolveSolutionFile(fullTargetPath);
+        var solutionFile = ResolveSolutionFile(fullTargetPath, cancellationToken);
         if (solutionFile is not null)
         {
-            return LoadProjects(solutionFile);
+            return LoadProjects(solutionFile, cancellationToken);
         }
 
-        var projectFiles = ResolveProjectFiles(fullTargetPath);
+        var projectFiles = ResolveProjectFiles(fullTargetPath, cancellationToken);
         return projectFiles.Length == 0
-            ? [LoadLooseSources(fullTargetPath)]
-            : LoadMsBuildProjects(projectFiles);
+            ? [LoadLooseSources(fullTargetPath, cancellationToken)]
+            : LoadMsBuildProjects(projectFiles, cancellationToken);
     }
 
-    private SourceProject[] LoadMsBuildSolution(string solutionFile)
+    private SourceProject[] LoadMsBuildSolution(
+        string solutionFile,
+        CancellationToken cancellationToken
+    )
     {
+        cancellationToken.ThrowIfCancellationRequested();
         EnsureMsBuildRegistered();
 
         var workspaceFailures = new List<string>();
@@ -75,7 +83,11 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             workspaceFailures
         );
 
-        var solution = workspace.OpenSolutionAsync(solutionFile).GetAwaiter().GetResult();
+        var solution = workspace
+            .OpenSolutionAsync(solutionFile, cancellationToken: cancellationToken)
+            .GetAwaiter()
+            .GetResult();
+        cancellationToken.ThrowIfCancellationRequested();
         ThrowIfWorkspaceFailures(solutionFile, workspaceFailures);
 
         var rootPath =
@@ -90,7 +102,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
                 || !PathFilter.ShouldIgnore(project.FilePath, rootPath, _ignoredPaths)
             )
             .OrderBy(project => project.FilePath, StringComparer.OrdinalIgnoreCase)
-            .Select(project => CreateSourceProject(project, workspaceFailures))
+            .Select(project => CreateSourceProject(project, workspaceFailures, cancellationToken))
             .ToArray();
 
         if (projects.Length == 0)
@@ -103,14 +115,19 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         return projects;
     }
 
-    private SourceProject[] LoadSlnxProjects(string solutionFile)
+    private SourceProject[] LoadSlnxProjects(
+        string solutionFile,
+        CancellationToken cancellationToken
+    )
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var rootPath =
             Path.GetDirectoryName(solutionFile)
             ?? throw new InvalidOperationException(
                 $"Could not determine solution directory for {solutionFile}."
             );
         var document = XDocument.Load(solutionFile, LoadOptions.None);
+        cancellationToken.ThrowIfCancellationRequested();
         var projectFiles = document
             .Descendants()
             .Where(element => element.Name.LocalName == "Project")
@@ -136,6 +153,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             );
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         var missingProjects = projectFiles.Where(path => !File.Exists(path)).ToArray();
         if (missingProjects.Length > 0)
         {
@@ -145,11 +163,15 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             );
         }
 
-        return LoadMsBuildProjects(projectFiles);
+        return LoadMsBuildProjects(projectFiles, cancellationToken);
     }
 
-    private SourceProject LoadMsBuildProject(string projectFile)
+    private SourceProject LoadMsBuildProject(
+        string projectFile,
+        CancellationToken cancellationToken
+    )
     {
+        cancellationToken.ThrowIfCancellationRequested();
         EnsureMsBuildRegistered();
 
         var workspaceFailures = new List<string>();
@@ -159,20 +181,31 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             workspaceFailures
         );
 
-        var project = workspace.OpenProjectAsync(projectFile).GetAwaiter().GetResult();
-        return CreateSourceProject(project, workspaceFailures);
+        var project = workspace
+            .OpenProjectAsync(projectFile, cancellationToken: cancellationToken)
+            .GetAwaiter()
+            .GetResult();
+        return CreateSourceProject(project, workspaceFailures, cancellationToken);
     }
 
-    private SourceProject[] LoadMsBuildProjects(IReadOnlyCollection<string> projectFiles) =>
+    private SourceProject[] LoadMsBuildProjects(
+        IReadOnlyCollection<string> projectFiles,
+        CancellationToken cancellationToken
+    ) =>
         projectFiles
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
-            .Select(LoadMsBuildProject)
+            .Select(path => LoadMsBuildProject(path, cancellationToken))
             .ToArray();
 
-    private SourceProject CreateSourceProject(Project project, List<string> workspaceFailures)
+    private SourceProject CreateSourceProject(
+        Project project,
+        List<string> workspaceFailures,
+        CancellationToken cancellationToken
+    )
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (
-            project.GetCompilationAsync().GetAwaiter().GetResult()
+            project.GetCompilationAsync(cancellationToken).GetAwaiter().GetResult()
             is not CSharpCompilation compilation
         )
         {
@@ -181,7 +214,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             );
         }
 
-        ValidateCompilation(compilation, workspaceFailures);
+        ValidateCompilation(compilation, workspaceFailures, cancellationToken);
 
         var projectFile =
             project.FilePath
@@ -194,7 +227,9 @@ internal sealed class CSharpProjectLoader : IProjectLoader
                 $"Could not determine project directory for {projectFile}."
             );
         var syntaxTrees = project
-            .Documents.Select(document => document.GetSyntaxTreeAsync().GetAwaiter().GetResult())
+            .Documents.Select(document =>
+                document.GetSyntaxTreeAsync(cancellationToken).GetAwaiter().GetResult()
+            )
             .Where(tree => tree is not null)
             .Cast<SyntaxTree>()
             .Where(tree =>
@@ -203,6 +238,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             )
             .Distinct()
             .ToArray();
+        cancellationToken.ThrowIfCancellationRequested();
         var semanticModels = syntaxTrees.ToDictionary(
             tree => tree,
             tree => compilation.GetSemanticModel(tree, ignoreAccessibility: true)
@@ -217,13 +253,17 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         return new SourceProject(rootPath, isApplication, compilation, semanticModels, syntaxTrees);
     }
 
-    private SourceProject LoadLooseSources(string targetPath)
+    private SourceProject LoadLooseSources(
+        string targetPath,
+        CancellationToken cancellationToken
+    )
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var rootPath = File.Exists(targetPath)
             ? Path.GetDirectoryName(targetPath) ?? Directory.GetCurrentDirectory()
             : targetPath;
 
-        var sourceFiles = DiscoverLooseSourceFiles(targetPath, rootPath).ToArray();
+        var sourceFiles = DiscoverLooseSourceFiles(targetPath, rootPath, cancellationToken).ToArray();
         if (sourceFiles.Length == 0)
         {
             throw new InvalidOperationException("No C# source files were found.");
@@ -231,7 +271,16 @@ internal sealed class CSharpProjectLoader : IProjectLoader
 
         var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
         var syntaxTrees = sourceFiles
-            .Select(path => CSharpSyntaxTree.ParseText(File.ReadAllText(path), parseOptions, path))
+            .Select(path =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return CSharpSyntaxTree.ParseText(
+                    File.ReadAllText(path),
+                    parseOptions,
+                    path,
+                    cancellationToken: cancellationToken
+                );
+            })
             .ToArray();
 
         var compilation = CSharpCompilation.Create(
@@ -241,7 +290,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
 
-        ValidateCompilation(compilation, []);
+        ValidateCompilation(compilation, [], cancellationToken);
 
         var semanticModels = syntaxTrees.ToDictionary(
             tree => (SyntaxTree)tree,
@@ -257,8 +306,12 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         );
     }
 
-    private string? ResolveSolutionFile(string targetDirectory)
+    private string? ResolveSolutionFile(
+        string targetDirectory,
+        CancellationToken cancellationToken
+    )
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var solutionFiles = Directory
             .EnumerateFiles(targetDirectory, "*.sln", SearchOption.TopDirectoryOnly)
             .Concat(
@@ -268,6 +321,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
+        cancellationToken.ThrowIfCancellationRequested();
         return solutionFiles.Length switch
         {
             0 => null,
@@ -278,8 +332,12 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         };
     }
 
-    private string[] ResolveProjectFiles(string targetDirectory)
+    private string[] ResolveProjectFiles(
+        string targetDirectory,
+        CancellationToken cancellationToken
+    )
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var directProjects = Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.TopDirectoryOnly)
             .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
@@ -291,6 +349,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             return directProjects;
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         return Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.AllDirectories)
             .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
@@ -299,8 +358,13 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             .ToArray();
     }
 
-    private IEnumerable<string> DiscoverLooseSourceFiles(string targetPath, string rootPath)
+    private IEnumerable<string> DiscoverLooseSourceFiles(
+        string targetPath,
+        string rootPath,
+        CancellationToken cancellationToken
+    )
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (File.Exists(targetPath))
         {
             if (
@@ -321,6 +385,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             var file in Directory.EnumerateFiles(targetPath, "*.cs", SearchOption.AllDirectories)
         )
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (!PathFilter.ShouldIgnore(file, rootPath, _ignoredPaths))
             {
                 yield return file;
@@ -363,11 +428,12 @@ internal sealed class CSharpProjectLoader : IProjectLoader
 
     private static void ValidateCompilation(
         CSharpCompilation compilation,
-        List<string> workspaceFailures
+        List<string> workspaceFailures,
+        CancellationToken cancellationToken
     )
     {
         var errors = compilation
-            .GetDiagnostics()
+            .GetDiagnostics(cancellationToken)
             .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
             .Take(20)
             .ToArray();
