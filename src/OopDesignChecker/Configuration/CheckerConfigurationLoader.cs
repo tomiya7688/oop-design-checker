@@ -24,6 +24,7 @@ internal static class CheckerConfigurationLoader
                 JsonSerializer.Deserialize<CheckerConfiguration>(json, JsonOptions)
                 ?? throw new InvalidOperationException("The checker configuration is empty.");
 
+            Validate(configuration, configurationPath);
             return new LoadedCheckerConfiguration(configuration, configurationPath);
         }
         catch (JsonException exception)
@@ -31,6 +32,16 @@ internal static class CheckerConfigurationLoader
             throw new InvalidOperationException(
                 $"Invalid checker configuration '{configurationPath}': {exception.Message}",
                 exception
+            );
+        }
+    }
+
+    private static void Validate(CheckerConfiguration configuration, string configurationPath)
+    {
+        if (configuration.RuleSettings.Oop304.WarningDepth < 1)
+        {
+            throw new InvalidOperationException(
+                $"Invalid checker configuration '{configurationPath}': ruleSettings.oop304.warningDepth must be at least 1."
             );
         }
     }
