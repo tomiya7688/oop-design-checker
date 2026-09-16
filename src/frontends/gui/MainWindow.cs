@@ -385,8 +385,7 @@ internal sealed class MainWindow : Window
             );
             _view.Status.Text = $"Exported diagnostics to {outputPath}.";
         }
-        catch (Exception exception)
-            when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             _view.Status.Text = exception.Message;
         }
