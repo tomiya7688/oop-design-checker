@@ -70,7 +70,11 @@ Danger when a child implementation structurally rejects or disables a parent ope
 
 ## OOP304 Excessive inheritance depth
 
-Attention when the inheritance chain becomes deep enough to make behavior difficult to reason about. Thresholds should be configurable and should not be the only signal because deep inheritance can be intentional.
+Attention when the project-owned class inheritance chain becomes deep enough to make behavior difficult to reason about. The default attention threshold is depth `4`, configurable through `ruleSettings.oop304.warningDepth` with a minimum value of `1`.
+
+Depth is counted across every project loaded in the same analysis, including project-reference boundaries. Framework, runtime, NuGet, and other external-library ancestry is not charged to the project; counting stops at the first base type whose assembly is outside the analyzed project set. Interfaces are not part of this class-inheritance depth.
+
+Deep inheritance remains a supporting signal rather than a definition of invalid OOP because deliberate framework or domain hierarchies can still justify it.
 
 ## OOP305 Concrete-type dependency despite abstraction
 
@@ -164,6 +168,7 @@ Projects may use `oop-design-checker.json` to:
 
 - exclude paths with `ignoredPaths`;
 - suppress selected rule IDs for a project/run with `disabledRules`;
-- choose the CI failure level with `failureThreshold`.
+- choose the CI failure level with `failureThreshold`;
+- tune supported rule-specific heuristics under `ruleSettings`, such as OOP304 inheritance depth.
 
-Suppression is a project decision and does not change the rule's defined severity. The checker project itself should not suppress its own rule violations and should self-check at the `attention` threshold.
+Suppression is a project decision and does not change the rule's defined severity. Rule-specific tuning changes heuristic sensitivity, not the severity definition. The checker project itself should not suppress its own rule violations and should self-check at the `attention` threshold.
