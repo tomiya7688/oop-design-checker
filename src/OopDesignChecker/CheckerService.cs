@@ -37,6 +37,9 @@ public static class CheckerService
         var diagnostics = engine.Analyze(projects);
         var failureThreshold = failureThresholdOverride ?? configuration.FailureThreshold;
 
-        return new CheckerRunResult(diagnostics, failureThreshold, loadedConfiguration.Path);
+        return new CheckerRunResult(diagnostics, failureThreshold, loadedConfiguration.Path)
+        {
+            Configuration = configuration,
+        };
     }
 }
