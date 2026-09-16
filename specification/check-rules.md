@@ -74,13 +74,15 @@ Attention when the inheritance chain becomes deep enough to make behavior diffic
 
 ## OOP305 Concrete-type dependency despite abstraction
 
-Warn when a shared abstraction exists but callers routinely downcast or depend on concrete child types to perform normal behavior.
+Warn when a shared abstraction exists but callers routinely downcast or depend on concrete child types to perform behavior already covered by that abstraction.
+
+The existence of an abstraction alone is not enough. If the consumer actually requires concrete-only behavior, properties, events, or another concrete-only contract, the concrete dependency can be intentional and should not be reported mechanically.
 
 ## OOP306 Avoidable concrete construction dependency
 
 Warn when a class repeatedly constructs concrete collaborators directly even though those collaborators represent replaceable behavior or already have a suitable abstraction.
 
-A `new` expression by itself is not a violation. Value objects, owned internal objects, immutable data, and objects whose lifecycle clearly belongs to the creator are valid direct constructions. This rule should focus on replaceable service-like dependencies and high-confidence cases.
+A `new` expression by itself is not a violation. Value objects, owned internal objects, immutable data, objects whose lifecycle clearly belongs to the creator, factory-owned return values, nested object-graph construction, and explicit composition-root/bootstrap wiring are valid direct constructions. This rule should focus on replaceable service-like dependencies and high-confidence cases.
 
 ## OOP307 Composition may be more appropriate than inheritance
 

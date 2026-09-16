@@ -8,8 +8,15 @@ internal static class InheritancePrecisionSmokeTests
     public static void Run()
     {
         MarkerInterfaceDoesNotCreateConcreteDependencyWarning();
+        AbstractionOnlyConsumerIsConcreteDependencyWarning();
+        ConcreteOnlyBehaviorJustifiesConcreteDependency();
         MarkerInterfaceDoesNotCreateConstructionWarning();
         OwnedFactoryConstructionIsAllowed();
+        NestedObjectGraphConstructionIsAllowed();
+        MainLocalWiringIsAllowed();
+        CompositionRootLocalWiringIsAllowed();
+        BusinessMethodLocalWiringIsWarning();
+        BusinessExpressionConstructionIsWarning();
         ProjectSurfaceReplacementIsSuspicious();
         ExternalBaseSurfaceReplacementIsAllowed();
         ImplementationReuseInheritanceIsAttention();
@@ -33,6 +40,71 @@ internal static class InheritancePrecisionSmokeTests
             internal sealed class Consumer
             {
                 public Consumer(TaggedService service) { }
+            }
+            """;
+
+        AssertNone(new ConcreteTypeDependencyRule(), source, "OOP305");
+    }
+
+    private static void AbstractionOnlyConsumerIsConcreteDependencyWarning()
+    {
+        const string source = """
+            internal interface IClock
+            {
+                int Read();
+            }
+
+            internal sealed class Clock : IClock
+            {
+                public int Read() => 0;
+                public void Calibrate() { }
+            }
+
+            internal sealed class Service
+            {
+                private readonly Clock _clock;
+
+                public Service(Clock clock)
+                {
+                    _clock = clock;
+                }
+
+                public int Run() => _clock.Read();
+            }
+            """;
+
+        AssertSingle(
+            new ConcreteTypeDependencyRule(),
+            source,
+            "OOP305",
+            DesignDiagnosticSeverity.Warning
+        );
+    }
+
+    private static void ConcreteOnlyBehaviorJustifiesConcreteDependency()
+    {
+        const string source = """
+            internal interface IClock
+            {
+                int Read();
+            }
+
+            internal sealed class Clock : IClock
+            {
+                public int Read() => 0;
+                public void Calibrate() { }
+            }
+
+            internal sealed class Service
+            {
+                private readonly Clock _clock;
+
+                public Service(Clock clock)
+                {
+                    _clock = clock;
+                }
+
+                public void CalibrateClock() => _clock.Calibrate();
             }
             """;
 
@@ -85,6 +157,158 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
+    }
+
+    private static void NestedObjectGraphConstructionIsAllowed()
+    {
+        const string source = """
+            internal interface IClock
+            {
+                int Read();
+            }
+
+            internal sealed class Clock : IClock
+            {
+                public int Read() => 0;
+            }
+
+            internal sealed class Service
+            {
+                public Service(IClock clock) { }
+            }
+
+            internal sealed class Bootstrap
+            {
+                private readonly Service _service = new Service(new Clock());
+            }
+            """;
+
+        AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
+    }
+
+    private static void MainLocalWiringIsAllowed()
+    {
+        const string source = """
+            internal interface IClock
+            {
+                int Read();
+            }
+
+            internal sealed class Clock : IClock
+            {
+                public int Read() => 0;
+            }
+
+            internal sealed class Service
+            {
+                public Service(IClock clock) { }
+            }
+
+            internal static class Program
+            {
+                public static void Main()
+                {
+                    var clock = new Clock();
+                    var service = new Service(clock);
+                }
+            }
+            """;
+
+        AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
+    }
+
+    private static void CompositionRootLocalWiringIsAllowed()
+    {
+        const string source = """
+            internal interface IClock
+            {
+                int Read();
+            }
+
+            internal sealed class Clock : IClock
+            {
+                public int Read() => 0;
+            }
+
+            internal sealed class Service
+            {
+                public Service(IClock clock) { }
+            }
+
+            internal sealed class AppCompositionRoot
+            {
+                public Service Build()
+                {
+                    var clock = new Clock();
+                    return new Service(clock);
+                }
+            }
+            """;
+
+        AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
+    }
+
+    private static void BusinessMethodLocalWiringIsWarning()
+    {
+        const string source = """
+            internal interface IClock
+            {
+                int Read();
+            }
+
+            internal sealed class Clock : IClock
+            {
+                public int Read() => 0;
+            }
+
+            internal sealed class Service
+            {
+                public Service(IClock clock) { }
+            }
+
+            internal sealed class Worker
+            {
+                public Service Build()
+                {
+                    var clock = new Clock();
+                    return new Service(clock);
+                }
+            }
+            """;
+
+        AssertSingle(
+            new AvoidableConcreteConstructionRule(),
+            source,
+            "OOP306",
+            DesignDiagnosticSeverity.Warning
+        );
+    }
+
+    private static void BusinessExpressionConstructionIsWarning()
+    {
+        const string source = """
+            internal interface IClock
+            {
+                int Read();
+            }
+
+            internal sealed class Clock : IClock
+            {
+                public int Read() => 0;
+            }
+
+            internal sealed class Worker
+            {
+                public int ReadNow() => new Clock().Read();
+            }
+            """;
+
+        AssertSingle(
+            new AvoidableConcreteConstructionRule(),
+            source,
+            "OOP306",
+            DesignDiagnosticSeverity.Warning
+        );
     }
 
     private static void ProjectSurfaceReplacementIsSuspicious()
