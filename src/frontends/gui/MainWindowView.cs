@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Layout;
+using Avalonia.Media;
 
 namespace OopDesignChecker.Gui;
 
@@ -75,6 +76,9 @@ internal sealed class MainWindowView : Grid
         Progress.IsIndeterminate = true;
         Progress.IsVisible = false;
         Status.Text = "Ready";
+        DetailMessage.TextWrapping = TextWrapping.Wrap;
+        DetailLocation.TextWrapping = TextWrapping.Wrap;
+        ConfigurationSummary.TextWrapping = TextWrapping.Wrap;
 
         ConfigureDiagnosticsGrid();
         ClearDetails();
@@ -91,7 +95,9 @@ internal sealed class MainWindowView : Grid
         DiagnosticsGrid.SelectionMode = DataGridSelectionMode.Single;
         DiagnosticsGrid.MinHeight = 260;
 
-        DiagnosticsGrid.Columns.Add(CreateTextColumn("Severity", nameof(DiagnosticRow.SeverityText)));
+        DiagnosticsGrid.Columns.Add(
+            CreateTextColumn("Severity", nameof(DiagnosticRow.SeverityText))
+        );
         DiagnosticsGrid.Columns.Add(CreateTextColumn("Rule", nameof(DiagnosticRow.RuleId)));
         DiagnosticsGrid.Columns.Add(CreateTextColumn("File", nameof(DiagnosticRow.FileName)));
         DiagnosticsGrid.Columns.Add(CreateTextColumn("Line", nameof(DiagnosticRow.Line)));
@@ -102,7 +108,9 @@ internal sealed class MainWindowView : Grid
     private Control BuildTargetSection()
     {
         var section = new Grid { ColumnSpacing = 8, RowSpacing = 8 };
-        section.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
+        section.ColumnDefinitions.Add(
+            new ColumnDefinition(new GridLength(1, GridUnitType.Star))
+        );
         section.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
         section.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
         section.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
@@ -125,7 +133,9 @@ internal sealed class MainWindowView : Grid
             Spacing = 12,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        panel.Children.Add(new TextBlock { Text = "Show:", VerticalAlignment = VerticalAlignment.Center });
+        panel.Children.Add(
+            new TextBlock { Text = "Show:", VerticalAlignment = VerticalAlignment.Center }
+        );
         panel.Children.Add(DangerFilter);
         panel.Children.Add(WarningFilter);
         panel.Children.Add(AttentionFilter);
@@ -147,8 +157,12 @@ internal sealed class MainWindowView : Grid
     private Control BuildDiagnosticsSection()
     {
         var grid = new Grid { ColumnSpacing = 12 };
-        grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(3, GridUnitType.Star)));
-        grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(2, GridUnitType.Star)));
+        grid.ColumnDefinitions.Add(
+            new ColumnDefinition(new GridLength(3, GridUnitType.Star))
+        );
+        grid.ColumnDefinitions.Add(
+            new ColumnDefinition(new GridLength(2, GridUnitType.Star))
+        );
 
         AddToGrid(grid, DiagnosticsGrid, 0, 0);
         AddToGrid(grid, BuildDetailPane(), 0, 1);
@@ -185,7 +199,9 @@ internal sealed class MainWindowView : Grid
     private Control BuildStatusSection()
     {
         var grid = new Grid { ColumnSpacing = 12 };
-        grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
+        grid.ColumnDefinitions.Add(
+            new ColumnDefinition(new GridLength(1, GridUnitType.Star))
+        );
         grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(180)));
         AddToGrid(grid, Status, 0, 0);
         AddToGrid(grid, Progress, 0, 1);
