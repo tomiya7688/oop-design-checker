@@ -1,10 +1,15 @@
+using OopDesignChecker.Configuration;
 using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
 internal static class RuleCatalog
 {
-    public static IReadOnlyList<IAnalysisRule> CreateDefault() =>
+    public static IReadOnlyList<IAnalysisRule> CreateDefault(CheckerConfiguration? configuration = null)
+    {
+        configuration ??= new CheckerConfiguration();
+
+        return
         [
             new MissingCommonAbstractionRule(),
             new TypeBranchPolymorphismRule(),
@@ -21,7 +26,7 @@ internal static class RuleCatalog
             new SuspiciousInheritanceRelationshipRule(),
             new ParentContractMostlyUnusedRule(),
             new ChildDisablesParentBehaviorRule(),
-            new ExcessiveInheritanceDepthRule(),
+            new ExcessiveInheritanceDepthRule(configuration.RuleSettings.Oop304.WarningDepth),
             new ConcreteTypeDependencyRule(),
             new AvoidableConcreteConstructionRule(),
             new CompositionCandidateRule(),
@@ -31,4 +36,5 @@ internal static class RuleCatalog
             new ExcessiveObjectNavigationRule(),
             new GetterSetterOnlyObjectRule(),
         ];
+    }
 }
