@@ -15,9 +15,27 @@ internal static class GuiPresentationSmokeTests
     {
         var rows = new[]
         {
-            CreateRow("OOP106", DesignDiagnosticSeverity.Danger, "danger.cs", "Mutable field", "DangerType"),
-            CreateRow("OOP305", DesignDiagnosticSeverity.Warning, "warning.cs", "Concrete dependency", "WarningType"),
-            CreateRow("OOP304", DesignDiagnosticSeverity.Attention, "attention.cs", "Deep inheritance", "AttentionType"),
+            CreateRow(
+                "OOP106",
+                DesignDiagnosticSeverity.Danger,
+                "danger.cs",
+                "Mutable field",
+                "DangerType"
+            ),
+            CreateRow(
+                "OOP305",
+                DesignDiagnosticSeverity.Warning,
+                "warning.cs",
+                "Concrete dependency",
+                "WarningType"
+            ),
+            CreateRow(
+                "OOP304",
+                DesignDiagnosticSeverity.Attention,
+                "attention.cs",
+                "Deep inheritance",
+                "AttentionType"
+            ),
         };
 
         var filtered = DiagnosticFilter.Apply(
@@ -40,8 +58,20 @@ internal static class GuiPresentationSmokeTests
     {
         var rows = new[]
         {
-            CreateRow("OOP106", DesignDiagnosticSeverity.Danger, "Player.cs", "Mutable field", "Player"),
-            CreateRow("OOP305", DesignDiagnosticSeverity.Warning, "ClockService.cs", "Concrete Clock dependency", "ClockService"),
+            CreateRow(
+                "OOP106",
+                DesignDiagnosticSeverity.Danger,
+                "Player.cs",
+                "Mutable field",
+                "Player"
+            ),
+            CreateRow(
+                "OOP305",
+                DesignDiagnosticSeverity.Warning,
+                "ClockService.cs",
+                "Concrete Clock dependency",
+                "ClockService"
+            ),
         };
         var options = new DiagnosticFilterOptions(true, true, true, "clock");
         var filtered = DiagnosticFilter.Apply(rows, options);
