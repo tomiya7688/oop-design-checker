@@ -16,6 +16,7 @@ internal static class CoreRuleSmokeTests
         PropertyStateClustersAreWarning();
         HelperConnectedStateIsNotFlagged();
         InheritancePrecisionSmokeTests.Run();
+        InheritanceDepthPrecisionSmokeTests.Run();
         PolymorphismPrecisionSmokeTests.Run();
         EncapsulationPrecisionSmokeTests.Run();
         StaticPrecisionSmokeTests.Run();
