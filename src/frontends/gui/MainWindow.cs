@@ -252,11 +252,12 @@ internal sealed class MainWindow : Window
         try
         {
             var configurationPath = ResolveConfigurationEditorPath();
-            var initialJson = configurationPath is not null && File.Exists(configurationPath)
-                ? await File.ReadAllTextAsync(configurationPath)
-                : CheckerConfigurationJson.Serialize(
-                    _lastResult?.Configuration ?? new CheckerConfiguration()
-                );
+            var initialJson =
+                configurationPath is not null && File.Exists(configurationPath)
+                    ? await File.ReadAllTextAsync(configurationPath)
+                    : CheckerConfigurationJson.Serialize(
+                        _lastResult?.Configuration ?? new CheckerConfiguration()
+                    );
 
             var editor = new ConfigurationEditorWindow(initialJson);
             var editedJson = await editor.ShowDialog<string?>(this);
