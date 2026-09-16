@@ -108,9 +108,7 @@ internal sealed class MainWindowView : Grid
     private Control BuildTargetSection()
     {
         var section = new Grid { ColumnSpacing = 8, RowSpacing = 8 };
-        section.ColumnDefinitions.Add(
-            new ColumnDefinition(new GridLength(1, GridUnitType.Star))
-        );
+        section.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
         section.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
         section.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
         section.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
@@ -157,12 +155,8 @@ internal sealed class MainWindowView : Grid
     private Control BuildDiagnosticsSection()
     {
         var grid = new Grid { ColumnSpacing = 12 };
-        grid.ColumnDefinitions.Add(
-            new ColumnDefinition(new GridLength(3, GridUnitType.Star))
-        );
-        grid.ColumnDefinitions.Add(
-            new ColumnDefinition(new GridLength(2, GridUnitType.Star))
-        );
+        grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(3, GridUnitType.Star)));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(2, GridUnitType.Star)));
 
         AddToGrid(grid, DiagnosticsGrid, 0, 0);
         AddToGrid(grid, BuildDetailPane(), 0, 1);
@@ -199,9 +193,7 @@ internal sealed class MainWindowView : Grid
     private Control BuildStatusSection()
     {
         var grid = new Grid { ColumnSpacing = 12 };
-        grid.ColumnDefinitions.Add(
-            new ColumnDefinition(new GridLength(1, GridUnitType.Star))
-        );
+        grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
         grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(180)));
         AddToGrid(grid, Status, 0, 0);
         AddToGrid(grid, Progress, 0, 1);
