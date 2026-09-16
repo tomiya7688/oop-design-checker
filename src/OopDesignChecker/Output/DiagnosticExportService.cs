@@ -1,3 +1,4 @@
+using OopDesignChecker.Application;
 using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Output;
@@ -19,12 +20,15 @@ public static class DiagnosticExportService
         ArgumentNullException.ThrowIfNull(diagnostics);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
 
-        IDiagnosticWriter writer = format switch
-        {
-            DiagnosticExportFormat.Json => new JsonDiagnosticWriter(outputPath),
-            DiagnosticExportFormat.Sarif => new SarifDiagnosticWriter(outputPath),
-            _ => throw new ArgumentOutOfRangeException(nameof(format), format, null),
-        };
+        var writer = DiagnosticWriterFactory.Create(ToOutputFormat(format), outputPath);
         writer.Write(diagnostics, verbose: false);
     }
+
+    private static DiagnosticOutputFormat ToOutputFormat(DiagnosticExportFormat format) =>
+        format switch
+        {
+            DiagnosticExportFormat.Json => DiagnosticOutputFormat.Json,
+            DiagnosticExportFormat.Sarif => DiagnosticOutputFormat.Sarif,
+            _ => throw new ArgumentOutOfRangeException(nameof(format), format, null),
+        };
 }
