@@ -280,10 +280,11 @@ internal static class InheritanceDepthPrecisionSmokeTests
             diagnostics.Length == 1
             && diagnostics[0].Rule.Id == "OOP304"
             && diagnostics[0].Severity == DesignDiagnosticSeverity.Attention
-            && diagnostics[0].Message.Contains(
-                $"Project-owned inheritance depth is {expectedDepth}",
-                StringComparison.Ordinal
-            )
+            && diagnostics[0]
+                .Message.Contains(
+                    $"Project-owned inheritance depth is {expectedDepth}",
+                    StringComparison.Ordinal
+                )
         )
         {
             return;
