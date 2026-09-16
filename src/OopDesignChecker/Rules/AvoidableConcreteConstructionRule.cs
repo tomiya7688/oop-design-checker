@@ -102,12 +102,41 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
     private static bool IsDirectReturn(ObjectCreationExpressionSyntax creation)
     {
         SyntaxNode expression = creation;
-        while (expression.Parent is ParenthesizedExpressionSyntax or CastExpressionSyntax)
-        {
-            expression = expression.Parent;
-        }
 
-        return expression.Parent is ReturnStatementSyntax or ArrowExpressionClauseSyntax;
+        while (true)
+        {
+            if (expression.Parent is ParenthesizedExpressionSyntax or CastExpressionSyntax)
+            {
+                expression = expression.Parent;
+                continue;
+            }
+
+            if (expression.Parent is SwitchExpressionArmSyntax arm)
+            {
+                expression = arm;
+                continue;
+            }
+
+            if (
+                expression is SwitchExpressionArmSyntax
+                && expression.Parent is SwitchExpressionSyntax switchExpression
+            )
+            {
+                expression = switchExpression;
+                continue;
+            }
+
+            if (
+                expression.Parent is ConditionalExpressionSyntax conditional
+                && (conditional.WhenTrue == expression || conditional.WhenFalse == expression)
+            )
+            {
+                expression = conditional;
+                continue;
+            }
+
+            return expression.Parent is ReturnStatementSyntax or ArrowExpressionClauseSyntax;
+        }
     }
 
     private static bool IsNestedObjectGraphConstruction(ObjectCreationExpressionSyntax creation)
@@ -128,10 +157,8 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
         }
 
         if (
-            expression.Parent is not EqualsValueClauseSyntax
-            {
-                Parent: VariableDeclaratorSyntax variable,
-            }
+            expression.Parent
+                is not EqualsValueClauseSyntax { Parent: VariableDeclaratorSyntax variable }
             || semanticModel.GetDeclaredSymbol(variable) is not ILocalSymbol local
             || semanticModel.GetEnclosingSymbol(creation.SpanStart) is not IMethodSymbol method
             || !IsCompositionContext(method)
@@ -180,10 +207,7 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
         }
 
         var containingTypeName = method.ContainingType?.Name;
-        if (
-            containingTypeName is null
-            || !IsCompositionTypeName(containingTypeName)
-        )
+        if (containingTypeName is null || !IsCompositionTypeName(containingTypeName))
         {
             return false;
         }
