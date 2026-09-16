@@ -112,7 +112,10 @@ internal static class InheritanceDepthPrecisionSmokeTests
     {
         WithTemporaryProject(rootPath =>
         {
-            File.WriteAllText(Path.Combine(rootPath, "Sample.cs"), "internal sealed class Sample { }");
+            File.WriteAllText(
+                Path.Combine(rootPath, "Sample.cs"),
+                "internal sealed class Sample { }"
+            );
             File.WriteAllText(
                 Path.Combine(rootPath, "oop-design-checker.json"),
                 """
