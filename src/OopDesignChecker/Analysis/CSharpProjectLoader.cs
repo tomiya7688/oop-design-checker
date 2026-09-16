@@ -253,10 +253,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         return new SourceProject(rootPath, isApplication, compilation, semanticModels, syntaxTrees);
     }
 
-    private SourceProject LoadLooseSources(
-        string targetPath,
-        CancellationToken cancellationToken
-    )
+    private SourceProject LoadLooseSources(string targetPath, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var rootPath = File.Exists(targetPath)
