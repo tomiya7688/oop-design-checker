@@ -272,10 +272,7 @@ internal sealed class MainWindow : Window
 
     private async void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (
-            e.Key == Key.F5
-            || (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control))
-        )
+        if (e.Key == Key.F5 || (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control)))
         {
             e.Handled = true;
             await AnalyzeAsync();
