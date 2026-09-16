@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using OopDesignChecker.Core;
 
@@ -32,7 +33,8 @@ internal sealed class MainWindow : Window
         _view.TargetFileButton.Click += async (_, _) => await PickTargetFileAsync();
         _view.TargetFolderButton.Click += async (_, _) => await PickTargetFolderAsync();
         _view.ConfigurationButton.Click += async (_, _) => await PickConfigurationAsync();
-        _view.ClearConfigurationButton.Click += (_, _) => _view.ConfigurationPath.Text = string.Empty;
+        _view.ClearConfigurationButton.Click += (_, _) =>
+            _view.ConfigurationPath.Text = string.Empty;
         _view.DangerFilter.Click += (_, _) => ApplyFilters();
         _view.WarningFilter.Click += (_, _) => ApplyFilters();
         _view.AttentionFilter.Click += (_, _) => ApplyFilters();
@@ -176,7 +178,11 @@ internal sealed class MainWindow : Window
     private async Task PickTargetFolderAsync()
     {
         var folders = await StorageProvider.OpenFolderPickerAsync(
-            new FolderPickerOpenOptions { Title = "Choose project directory", AllowMultiple = false }
+            new FolderPickerOpenOptions
+            {
+                Title = "Choose project directory",
+                AllowMultiple = false,
+            }
         );
         SetPathFromSelection(folders.FirstOrDefault(), _view.TargetPath);
     }
@@ -256,7 +262,8 @@ internal sealed class MainWindow : Window
             Process.Start(new ProcessStartInfo(row.FilePath) { UseShellExecute = true });
             _view.Status.Text = "Opened source file with the default application.";
         }
-        catch (Exception exception) when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
+        catch (Exception exception)
+            when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
             await CopyTextAsync(row.LocationText);
             _view.Status.Text = "Could not open source file; location copied instead.";
@@ -265,7 +272,10 @@ internal sealed class MainWindow : Window
 
     private async void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.F5 || (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control)))
+        if (
+            e.Key == Key.F5
+            || (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        )
         {
             e.Handled = true;
             await AnalyzeAsync();
