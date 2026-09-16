@@ -78,7 +78,8 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
                 if (
-                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol declaredType
+                    semanticModel.GetDeclaredSymbol(declaration)
+                        is not INamedTypeSymbol declaredType
                     || !SymbolEqualityComparer.Default.Equals(
                         declaredType,
                         parameter.ContainingSymbol.ContainingType
