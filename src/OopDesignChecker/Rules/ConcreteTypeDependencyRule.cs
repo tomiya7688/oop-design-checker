@@ -133,7 +133,9 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
             }
 
             var semanticModel = context.Project.GetSemanticModel(declaration.SyntaxTree);
-            foreach (var assignment in declaration.DescendantNodes().OfType<AssignmentExpressionSyntax>())
+            foreach (
+                var assignment in declaration.DescendantNodes().OfType<AssignmentExpressionSyntax>()
+            )
             {
                 var rightSymbol = semanticModel.GetSymbolInfo(assignment.Right).Symbol;
                 if (!SymbolEqualityComparer.Default.Equals(rightSymbol, parameter))
