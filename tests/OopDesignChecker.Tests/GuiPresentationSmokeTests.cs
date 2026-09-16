@@ -78,7 +78,9 @@ internal static class GuiPresentationSmokeTests
 
         if (filtered.Count != 1 || filtered[0].RuleId != "OOP305")
         {
-            throw new InvalidOperationException("GUI text filtering did not search diagnostic metadata.");
+            throw new InvalidOperationException(
+                "GUI text filtering did not search diagnostic metadata."
+            );
         }
     }
 
