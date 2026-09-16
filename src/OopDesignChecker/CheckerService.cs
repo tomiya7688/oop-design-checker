@@ -27,7 +27,7 @@ public static class CheckerService
 
         var disabledRules = configuration.DisabledRules.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var rules = RuleCatalog
-            .CreateDefault()
+            .CreateDefault(configuration)
             .Where(rule => !disabledRules.Contains(rule.Descriptor.Id))
             .ToArray();
 
