@@ -10,4 +10,16 @@ public sealed class CheckerConfiguration
 
     public DesignDiagnosticSeverity FailureThreshold { get; init; } =
         DesignDiagnosticSeverity.Danger;
+
+    public CheckerRuleSettings RuleSettings { get; init; } = new();
+}
+
+public sealed class CheckerRuleSettings
+{
+    public InheritanceDepthRuleSettings Oop304 { get; init; } = new();
+}
+
+public sealed class InheritanceDepthRuleSettings
+{
+    public int WarningDepth { get; init; } = 4;
 }

@@ -134,13 +134,19 @@ A different file can be selected with `--config <path>`. Absolute paths are used
   "disabledRules": [
     "OOP103"
   ],
-  "failureThreshold": "danger"
+  "failureThreshold": "danger",
+  "ruleSettings": {
+    "oop304": {
+      "warningDepth": 4
+    }
+  }
 }
 ```
 
 - `ignoredPaths` excludes matching files/directories from analysis.
 - `disabledRules` completely suppresses selected rule IDs for that run/project.
 - `failureThreshold` controls which diagnostic level makes the process return a failing exit code.
+- `ruleSettings.oop304.warningDepth` controls the project-owned class inheritance depth that triggers OOP304. The default is `4`; values must be at least `1`. Bases that belong to other projects loaded in the same analysis are counted, while external framework/library ancestry is not.
 
 See `oop-design-checker.example.json` for a copyable example.
 

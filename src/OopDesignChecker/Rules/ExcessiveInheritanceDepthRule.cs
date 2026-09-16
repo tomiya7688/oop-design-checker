@@ -7,7 +7,21 @@ namespace OopDesignChecker.Rules;
 
 internal sealed class ExcessiveInheritanceDepthRule : IAnalysisRule
 {
-    private const int WarningDepth = 4;
+    private readonly int _warningDepth;
+
+    public ExcessiveInheritanceDepthRule(int warningDepth = 4)
+    {
+        if (warningDepth < 1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(warningDepth),
+                warningDepth,
+                "Inheritance warning depth must be at least 1."
+            );
+        }
+
+        _warningDepth = warningDepth;
+    }
 
     public RuleDescriptor Descriptor { get; } =
         new("OOP304", "Excessive inheritance depth", DesignDiagnosticSeverity.Attention);
@@ -29,8 +43,8 @@ internal sealed class ExcessiveInheritanceDepthRule : IAnalysisRule
                     continue;
                 }
 
-                var depth = SymbolUtilities.GetInheritanceDepth(symbol);
-                if (depth < WarningDepth)
+                var depth = SymbolUtilities.GetInheritanceDepth(symbol, context.Projects);
+                if (depth < _warningDepth)
                 {
                     continue;
                 }
@@ -38,7 +52,7 @@ internal sealed class ExcessiveInheritanceDepthRule : IAnalysisRule
                 yield return DiagnosticFactory.Create(
                     Descriptor,
                     declaration.Identifier.GetLocation(),
-                    $"Inheritance depth is {depth}. Deep inheritance makes behavior harder to reason about.",
+                    $"Project-owned inheritance depth is {depth} (configured attention threshold: {_warningDepth}). Deep inheritance can make behavior harder to reason about.",
                     symbol.ToDisplayString()
                 );
             }

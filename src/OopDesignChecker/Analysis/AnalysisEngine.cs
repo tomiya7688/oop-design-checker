@@ -16,7 +16,7 @@ internal sealed class AnalysisEngine
     public IReadOnlyList<DesignDiagnostic> Analyze(IReadOnlyList<SourceProject> projects)
     {
         var diagnostics = projects
-            .SelectMany(AnalyzeProject)
+            .SelectMany(project => AnalyzeProject(project, projects))
             .DistinctBy(CreateDiagnosticIdentity)
             .ToArray();
 
@@ -29,9 +29,12 @@ internal sealed class AnalysisEngine
             .ToArray();
     }
 
-    private IEnumerable<DesignDiagnostic> AnalyzeProject(SourceProject project)
+    private IEnumerable<DesignDiagnostic> AnalyzeProject(
+        SourceProject project,
+        IReadOnlyList<SourceProject> projects
+    )
     {
-        var context = new AnalysisContext(project);
+        var context = new AnalysisContext(project, projects);
         return _rules.SelectMany(rule => rule.Analyze(context));
     }
 
