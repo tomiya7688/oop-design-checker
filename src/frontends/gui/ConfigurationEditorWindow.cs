@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using OopDesignChecker.Configuration;
@@ -23,8 +22,6 @@ internal sealed class ConfigurationEditorWindow : Window
         _editor.Text = initialJson;
         _editor.AcceptsReturn = true;
         _editor.TextWrapping = TextWrapping.NoWrap;
-        _editor.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
-        _editor.HorizontalScrollBarVisibility = ScrollBarVisibility.Auto;
 
         Content = BuildContent();
     }
