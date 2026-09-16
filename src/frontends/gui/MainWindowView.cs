@@ -105,7 +105,7 @@ internal sealed class MainWindowView : Grid
         DiagnosticsGrid.Columns.Add(CreateTextColumn("Message", nameof(DiagnosticRow.Message)));
     }
 
-    private Control BuildTargetSection()
+    private Grid BuildTargetSection()
     {
         var section = new Grid { ColumnSpacing = 8, RowSpacing = 8 };
         section.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
@@ -123,7 +123,7 @@ internal sealed class MainWindowView : Grid
         return section;
     }
 
-    private Control BuildFilterSection()
+    private StackPanel BuildFilterSection()
     {
         var panel = new StackPanel
         {
@@ -142,7 +142,7 @@ internal sealed class MainWindowView : Grid
         return panel;
     }
 
-    private Control BuildSummarySection()
+    private StackPanel BuildSummarySection()
     {
         var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16 };
         panel.Children.Add(DangerCount);
@@ -152,7 +152,7 @@ internal sealed class MainWindowView : Grid
         return panel;
     }
 
-    private Control BuildDiagnosticsSection()
+    private Grid BuildDiagnosticsSection()
     {
         var grid = new Grid { ColumnSpacing = 12 };
         grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(3, GridUnitType.Star)));
@@ -163,7 +163,7 @@ internal sealed class MainWindowView : Grid
         return grid;
     }
 
-    private Control BuildDetailPane()
+    private Border BuildDetailPane()
     {
         var panel = new StackPanel { Spacing = 8, Margin = new Thickness(8) };
         panel.Children.Add(new TextBlock { Text = "Diagnostic details", FontSize = 18 });
@@ -190,7 +190,7 @@ internal sealed class MainWindowView : Grid
         };
     }
 
-    private Control BuildStatusSection()
+    private Grid BuildStatusSection()
     {
         var grid = new Grid { ColumnSpacing = 12 };
         grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
