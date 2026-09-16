@@ -46,7 +46,8 @@ internal sealed class ConfigurationEditorWindow : Window
 
         var description = new TextBlock
         {
-            Text = "Edit oop-design-checker.json. Validation uses the same configuration model as the CUI.",
+            Text =
+                "Edit oop-design-checker.json. Validation uses the same configuration model as the CUI.",
             TextWrapping = TextWrapping.Wrap,
         };
         Add(root, description, 0);
