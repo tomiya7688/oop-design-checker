@@ -7,6 +7,28 @@ namespace OopDesignChecker.Rules;
 
 internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
 {
+    private static readonly string[] CompositionTypeSuffixes =
+    [
+        "CompositionRoot",
+        "Bootstrap",
+        "Bootstrapper",
+        "Startup",
+        "HostBuilder",
+        "AppHost",
+    ];
+
+    private static readonly string[] CompositionMethodPrefixes =
+    [
+        "Build",
+        "Compose",
+        "Configure",
+        "Create",
+        "Initialize",
+        "Register",
+        "Setup",
+        "Wire",
+    ];
+
     public RuleDescriptor Descriptor { get; } =
         new(
             "OOP306",
@@ -28,7 +50,7 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
                 if (
                     semanticModel.GetTypeInfo(creation).Type is not INamedTypeSymbol concreteType
                     || concreteType.TypeKind != TypeKind.Class
-                    || IsOwnedConstruction(creation)
+                    || IsOwnedConstruction(creation, semanticModel)
                 )
                 {
                     continue;
@@ -68,14 +90,117 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
             .OfType<IMethodSymbol>()
             .Any(method => method.MethodKind == MethodKind.Ordinary && !method.IsStatic);
 
-    private static bool IsOwnedConstruction(ObjectCreationExpressionSyntax creation) =>
-        creation
-            .Ancestors()
-            .Any(ancestor =>
-                ancestor
-                    is ReturnStatementSyntax
-                        or ArrowExpressionClauseSyntax
-                        or ObjectCreationExpressionSyntax
-                        or CollectionExpressionSyntax
-            );
+    private static bool IsOwnedConstruction(
+        ObjectCreationExpressionSyntax creation,
+        SemanticModel semanticModel
+    ) =>
+        IsDirectReturn(creation)
+        || IsNestedObjectGraphConstruction(creation)
+        || creation.Ancestors().OfType<CollectionExpressionSyntax>().Any()
+        || IsCompositionRootLocalWiring(creation, semanticModel);
+
+    private static bool IsDirectReturn(ObjectCreationExpressionSyntax creation)
+    {
+        SyntaxNode expression = creation;
+        while (expression.Parent is ParenthesizedExpressionSyntax or CastExpressionSyntax)
+        {
+            expression = expression.Parent;
+        }
+
+        return expression.Parent is ReturnStatementSyntax or ArrowExpressionClauseSyntax;
+    }
+
+    private static bool IsNestedObjectGraphConstruction(ObjectCreationExpressionSyntax creation)
+    {
+        var argument = creation.Ancestors().OfType<ArgumentSyntax>().FirstOrDefault();
+        return argument?.Ancestors().OfType<ObjectCreationExpressionSyntax>().Any() == true;
+    }
+
+    private static bool IsCompositionRootLocalWiring(
+        ObjectCreationExpressionSyntax creation,
+        SemanticModel semanticModel
+    )
+    {
+        SyntaxNode expression = creation;
+        while (expression.Parent is ParenthesizedExpressionSyntax or CastExpressionSyntax)
+        {
+            expression = expression.Parent;
+        }
+
+        if (
+            expression.Parent is not EqualsValueClauseSyntax
+            {
+                Parent: VariableDeclaratorSyntax variable,
+            }
+            || semanticModel.GetDeclaredSymbol(variable) is not ILocalSymbol local
+            || semanticModel.GetEnclosingSymbol(creation.SpanStart) is not IMethodSymbol method
+            || !IsCompositionContext(method)
+        )
+        {
+            return false;
+        }
+
+        var scope = variable.Ancestors().OfType<BaseMethodDeclarationSyntax>().FirstOrDefault();
+        if (scope is null)
+        {
+            return false;
+        }
+
+        var references = scope
+            .DescendantNodes()
+            .OfType<IdentifierNameSyntax>()
+            .Where(identifier =>
+                SymbolEqualityComparer.Default.Equals(
+                    semanticModel.GetSymbolInfo(identifier).Symbol,
+                    local
+                )
+            )
+            .ToArray();
+
+        return references.Length > 0 && references.All(IsDirectConstructorArgument);
+    }
+
+    private static bool IsDirectConstructorArgument(IdentifierNameSyntax reference)
+    {
+        SyntaxNode expression = reference;
+        while (expression.Parent is ParenthesizedExpressionSyntax or CastExpressionSyntax)
+        {
+            expression = expression.Parent;
+        }
+
+        return expression.Parent is ArgumentSyntax argument
+            && argument.Ancestors().OfType<ObjectCreationExpressionSyntax>().Any();
+    }
+
+    private static bool IsCompositionContext(IMethodSymbol method)
+    {
+        if (method.IsStatic && method.Name == "Main")
+        {
+            return true;
+        }
+
+        var containingTypeName = method.ContainingType?.Name;
+        if (
+            containingTypeName is null
+            || !IsCompositionTypeName(containingTypeName)
+        )
+        {
+            return false;
+        }
+
+        if (method.MethodKind == MethodKind.Constructor)
+        {
+            return true;
+        }
+
+        return CompositionMethodPrefixes.Any(prefix =>
+            method.Name.StartsWith(prefix, StringComparison.Ordinal)
+        );
+    }
+
+    private static bool IsCompositionTypeName(string typeName) =>
+        typeName == "Program"
+        || CompositionTypeSuffixes.Any(suffix =>
+            typeName.EndsWith(suffix, StringComparison.Ordinal)
+        );
 }
