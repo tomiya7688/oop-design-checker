@@ -13,6 +13,8 @@ internal static class InheritanceDepthPrecisionSmokeTests
         DefaultDepthFourIsAttention();
         DepthBelowDefaultIsAllowed();
         CustomDepthChangesTriggerPoint();
+        ConfiguredDepthIsAppliedByCheckerService();
+        InvalidConfiguredDepthIsRejected();
         ExternalAncestryIsNotCounted();
         CrossProjectInheritanceIsCounted();
         CrossProjectChainStopsAtExternalBase();
@@ -61,6 +63,89 @@ internal static class InheritanceDepthPrecisionSmokeTests
             TestProjectFactory.Create(source),
             expectedDepth: 3
         );
+    }
+
+    private static void ConfiguredDepthIsAppliedByCheckerService()
+    {
+        WithTemporaryProject(rootPath =>
+        {
+            File.WriteAllText(
+                Path.Combine(rootPath, "Sample.cs"),
+                """
+                internal class A { }
+                internal class B : A { }
+                internal class C : B { }
+                internal sealed class D : C { }
+                """
+            );
+            File.WriteAllText(
+                Path.Combine(rootPath, "oop-design-checker.json"),
+                """
+                {
+                  "ruleSettings": {
+                    "oop304": {
+                      "warningDepth": 3
+                    }
+                  }
+                }
+                """
+            );
+
+            var result = CheckerService.Analyze(rootPath);
+            var diagnostics = result.Diagnostics.Where(item => item.Rule.Id == "OOP304").ToArray();
+            if (
+                diagnostics.Length == 1
+                && diagnostics[0].Message.Contains(
+                    "configured attention threshold: 3",
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(
+                $"Expected configured OOP304 threshold 3 to produce one diagnostic, found {diagnostics.Length}."
+            );
+        });
+    }
+
+    private static void InvalidConfiguredDepthIsRejected()
+    {
+        WithTemporaryProject(rootPath =>
+        {
+            File.WriteAllText(Path.Combine(rootPath, "Sample.cs"), "internal sealed class Sample { }");
+            File.WriteAllText(
+                Path.Combine(rootPath, "oop-design-checker.json"),
+                """
+                {
+                  "ruleSettings": {
+                    "oop304": {
+                      "warningDepth": 0
+                    }
+                  }
+                }
+                """
+            );
+
+            try
+            {
+                _ = CheckerService.Analyze(rootPath);
+            }
+            catch (InvalidOperationException exception)
+                when (exception.Message.Contains(
+                    "ruleSettings.oop304.warningDepth must be at least 1",
+                    StringComparison.Ordinal
+                )
+                )
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(
+                "Invalid OOP304 warningDepth was not rejected with a clear configuration error."
+            );
+        });
     }
 
     private static void ExternalAncestryIsNotCounted()
@@ -159,6 +244,28 @@ internal static class InheritanceDepthPrecisionSmokeTests
             compilation,
             semanticModels
         );
+    }
+
+    private static void WithTemporaryProject(Action<string> action)
+    {
+        var rootPath = Path.Combine(
+            Path.GetTempPath(),
+            "oop-design-checker-tests",
+            Guid.NewGuid().ToString("N")
+        );
+        Directory.CreateDirectory(rootPath);
+
+        try
+        {
+            action(rootPath);
+        }
+        finally
+        {
+            if (Directory.Exists(rootPath))
+            {
+                Directory.Delete(rootPath, recursive: true);
+            }
+        }
     }
 
     private static void AssertSingle(
