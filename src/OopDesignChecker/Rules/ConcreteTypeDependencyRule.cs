@@ -231,7 +231,9 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
         {
             foreach (var contractMember in contractType.GetMembers())
             {
-                var implementation = concreteType.FindImplementationForInterfaceMember(contractMember);
+                var implementation = concreteType.FindImplementationForInterfaceMember(
+                    contractMember
+                );
                 if (
                     SymbolEqualityComparer.Default.Equals(implementation, accessedMember)
                     || SymbolEqualityComparer.Default.Equals(
