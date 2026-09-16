@@ -301,7 +301,10 @@ internal sealed class MainWindow : Window
             return Path.GetFullPath(configuredPath);
         }
 
-        var currentDirectoryPath = Path.GetFullPath(configuredPath, Directory.GetCurrentDirectory());
+        var currentDirectoryPath = Path.GetFullPath(
+            configuredPath,
+            Directory.GetCurrentDirectory()
+        );
         if (File.Exists(currentDirectoryPath))
         {
             return currentDirectoryPath;
