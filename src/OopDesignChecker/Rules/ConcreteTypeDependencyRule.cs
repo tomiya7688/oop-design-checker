@@ -209,7 +209,9 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
             var convertedType = semanticModel.GetTypeInfo(argument.Expression).ConvertedType;
             if (
                 convertedType is not null
-                && !context.Project.Compilation.ClassifyConversion(abstraction, convertedType).IsImplicit
+                && !context
+                    .Project.Compilation.ClassifyConversion(abstraction, convertedType)
+                    .IsImplicit
             )
             {
                 return true;
