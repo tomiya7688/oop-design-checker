@@ -1,13 +1,8 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace OopDesignChecker.Configuration;
 
 internal static class CheckerConfigurationLoader
 {
     public const string DefaultFileName = "oop-design-checker.json";
-
-    private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
 
     public static LoadedCheckerConfiguration Load(string targetPath, string? explicitPath)
     {
@@ -20,28 +15,14 @@ internal static class CheckerConfigurationLoader
         try
         {
             var json = File.ReadAllText(configurationPath);
-            var configuration =
-                JsonSerializer.Deserialize<CheckerConfiguration>(json, JsonOptions)
-                ?? throw new InvalidOperationException("The checker configuration is empty.");
-
-            Validate(configuration, configurationPath);
+            var configuration = CheckerConfigurationJson.Parse(json);
             return new LoadedCheckerConfiguration(configuration, configurationPath);
         }
-        catch (JsonException exception)
+        catch (InvalidOperationException exception)
         {
             throw new InvalidOperationException(
                 $"Invalid checker configuration '{configurationPath}': {exception.Message}",
                 exception
-            );
-        }
-    }
-
-    private static void Validate(CheckerConfiguration configuration, string configurationPath)
-    {
-        if (configuration.RuleSettings.Oop304.WarningDepth < 1)
-        {
-            throw new InvalidOperationException(
-                $"Invalid checker configuration '{configurationPath}': ruleSettings.oop304.warningDepth must be at least 1."
             );
         }
     }
@@ -120,18 +101,6 @@ internal static class CheckerConfigurationLoader
         {
             throw new InvalidOperationException($"Configuration file does not exist: {path}");
         }
-    }
-
-    private static JsonSerializerOptions CreateJsonOptions()
-    {
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            ReadCommentHandling = JsonCommentHandling.Skip,
-            AllowTrailingCommas = true,
-        };
-        options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
-        return options;
     }
 }
 
