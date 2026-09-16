@@ -6,5 +6,10 @@
   "disabledRules": [
     "OOP103"
   ],
-  "failureThreshold": "danger"
+  "failureThreshold": "danger",
+  "ruleSettings": {
+    "oop304": {
+      "warningDepth": 4
+    }
+  }
 }
