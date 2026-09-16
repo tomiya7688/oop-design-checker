@@ -10,7 +10,7 @@ namespace OopDesignChecker.Gui;
 internal sealed class MainWindow : Window
 {
     private readonly MainWindowView _view = new();
-    private IReadOnlyList<DiagnosticRow> _allRows = [];
+    private DiagnosticRow[] _allRows = [];
     private CheckerRunResult? _lastResult;
     private bool _analysisInProgress;
 
@@ -91,7 +91,7 @@ internal sealed class MainWindow : Window
         _allRows = result.Diagnostics.Select(DiagnosticRow.From).ToArray();
         ApplyFilters();
         UpdateSummary();
-        _view.Status.Text = $"Completed: {_allRows.Count} diagnostic(s).";
+        _view.Status.Text = $"Completed: {_allRows.Length} diagnostic(s).";
         _view.ConfigurationPath.Text = result.ConfigurationPath ?? _view.ConfigurationPath.Text;
     }
 
@@ -172,7 +172,7 @@ internal sealed class MainWindow : Window
                 ],
             }
         );
-        SetPathFromSelection(files.FirstOrDefault(), _view.TargetPath);
+        SetPathFromSelection(files.Count == 0 ? null : files[0], _view.TargetPath);
     }
 
     private async Task PickTargetFolderAsync()
@@ -184,7 +184,7 @@ internal sealed class MainWindow : Window
                 AllowMultiple = false,
             }
         );
-        SetPathFromSelection(folders.FirstOrDefault(), _view.TargetPath);
+        SetPathFromSelection(folders.Count == 0 ? null : folders[0], _view.TargetPath);
     }
 
     private async Task PickConfigurationAsync()
@@ -200,7 +200,7 @@ internal sealed class MainWindow : Window
                 ],
             }
         );
-        SetPathFromSelection(files.FirstOrDefault(), _view.ConfigurationPath);
+        SetPathFromSelection(files.Count == 0 ? null : files[0], _view.ConfigurationPath);
     }
 
     private static void SetPathFromSelection(IStorageItem? item, TextBox destination)
@@ -222,7 +222,7 @@ internal sealed class MainWindow : Window
 
     private async Task CopyAllAsync()
     {
-        if (_allRows.Count == 0)
+        if (_allRows.Length == 0)
         {
             return;
         }
