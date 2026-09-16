@@ -98,8 +98,8 @@ internal static class GuiWorkflowPhase2SmokeTests
 
             using var jsonDocument = JsonDocument.Parse(File.ReadAllText(jsonPath));
             using var sarifDocument = JsonDocument.Parse(File.ReadAllText(sarifPath));
-            var jsonRule = jsonDocument.RootElement
-                .GetProperty("diagnostics")[0]
+            var jsonRule = jsonDocument
+                .RootElement.GetProperty("diagnostics")[0]
                 .GetProperty("ruleId")
                 .GetString();
             var sarifVersion = sarifDocument.RootElement.GetProperty("version").GetString();
