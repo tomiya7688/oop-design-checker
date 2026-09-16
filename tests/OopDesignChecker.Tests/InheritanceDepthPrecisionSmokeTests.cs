@@ -95,10 +95,8 @@ internal static class InheritanceDepthPrecisionSmokeTests
             var diagnostics = result.Diagnostics.Where(item => item.Rule.Id == "OOP304").ToArray();
             if (
                 diagnostics.Length == 1
-                && diagnostics[0].Message.Contains(
-                    "configured attention threshold: 3",
-                    StringComparison.Ordinal
-                )
+                && diagnostics[0]
+                    .Message.Contains("configured attention threshold: 3", StringComparison.Ordinal)
             )
             {
                 return;
@@ -134,9 +132,9 @@ internal static class InheritanceDepthPrecisionSmokeTests
             }
             catch (InvalidOperationException exception)
                 when (exception.Message.Contains(
-                    "ruleSettings.oop304.warningDepth must be at least 1",
-                    StringComparison.Ordinal
-                )
+                        "ruleSettings.oop304.warningDepth must be at least 1",
+                        StringComparison.Ordinal
+                    )
                 )
             {
                 return;
