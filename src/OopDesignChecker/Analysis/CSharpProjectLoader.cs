@@ -260,7 +260,8 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             ? Path.GetDirectoryName(targetPath) ?? Directory.GetCurrentDirectory()
             : targetPath;
 
-        var sourceFiles = DiscoverLooseSourceFiles(targetPath, rootPath, cancellationToken).ToArray();
+        var sourceFiles = DiscoverLooseSourceFiles(targetPath, rootPath, cancellationToken)
+            .ToArray();
         if (sourceFiles.Length == 0)
         {
             throw new InvalidOperationException("No C# source files were found.");
