@@ -20,7 +20,13 @@ internal static class SymbolUtilities
             && firstReference.Span == declaration.Span;
     }
 
-    public static int GetInheritanceDepth(INamedTypeSymbol symbol)
+    public static int GetInheritanceDepth(INamedTypeSymbol symbol) =>
+        GetInheritanceDepth(symbol, []);
+
+    public static int GetInheritanceDepth(
+        INamedTypeSymbol symbol,
+        IReadOnlyList<SourceProject> projects
+    )
     {
         var depth = 0;
         var current = symbol.BaseType;
@@ -28,7 +34,7 @@ internal static class SymbolUtilities
         while (
             current is not null
             && current.SpecialType != SpecialType.System_Object
-            && current.Locations.Any(location => location.IsInSource)
+            && IsProjectOwnedType(current, projects)
         )
         {
             depth++;
@@ -36,6 +42,26 @@ internal static class SymbolUtilities
         }
 
         return depth;
+    }
+
+    private static bool IsProjectOwnedType(
+        INamedTypeSymbol type,
+        IReadOnlyList<SourceProject> projects
+    )
+    {
+        if (type.Locations.Any(location => location.IsInSource))
+        {
+            return true;
+        }
+
+        if (type.ContainingAssembly is null)
+        {
+            return false;
+        }
+
+        return projects.Any(project =>
+            project.Compilation.Assembly.Identity.Equals(type.ContainingAssembly.Identity)
+        );
     }
 
     public static bool ImplementsInterfaceMember(
