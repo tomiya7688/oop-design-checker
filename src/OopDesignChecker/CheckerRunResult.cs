@@ -1,3 +1,4 @@
+using OopDesignChecker.Configuration;
 using OopDesignChecker.Core;
 
 namespace OopDesignChecker;
@@ -8,6 +9,8 @@ public sealed record CheckerRunResult(
     string? ConfigurationPath
 )
 {
+    public CheckerConfiguration Configuration { get; init; } = new();
+
     public bool ShouldFail =>
         Diagnostics.Any(diagnostic => diagnostic.Severity >= FailureThreshold);
 }
