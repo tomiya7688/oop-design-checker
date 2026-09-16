@@ -8,32 +8,32 @@ namespace OopDesignChecker.Gui;
 
 internal sealed class MainWindowView : Grid
 {
-    public TextBox TargetPath { get; } = new();
-    public TextBox ConfigurationPath { get; } = new();
-    public Button TargetFileButton { get; } = new();
-    public Button TargetFolderButton { get; } = new();
-    public Button ConfigurationButton { get; } = new();
-    public Button ClearConfigurationButton { get; } = new();
-    public Button AnalyzeButton { get; } = new();
-    public ProgressBar Progress { get; } = new();
-    public TextBlock Status { get; } = new();
-    public TextBlock DangerCount { get; } = new();
-    public TextBlock WarningCount { get; } = new();
-    public TextBlock AttentionCount { get; } = new();
-    public CheckBox DangerFilter { get; } = new();
-    public CheckBox WarningFilter { get; } = new();
-    public CheckBox AttentionFilter { get; } = new();
-    public TextBox SearchFilter { get; } = new();
-    public DataGrid DiagnosticsGrid { get; } = new();
-    public TextBlock DetailSeverity { get; } = new();
-    public TextBlock DetailRule { get; } = new();
-    public TextBlock DetailSymbol { get; } = new();
-    public TextBlock DetailLocation { get; } = new();
-    public TextBlock DetailMessage { get; } = new();
-    public TextBlock ConfigurationSummary { get; } = new();
-    public Button CopySelectedButton { get; } = new();
-    public Button CopyAllButton { get; } = new();
-    public Button OpenSourceButton { get; } = new();
+    internal TextBox TargetPath { get; } = new();
+    internal TextBox ConfigurationPath { get; } = new();
+    internal Button TargetFileButton { get; } = new();
+    internal Button TargetFolderButton { get; } = new();
+    internal Button ConfigurationButton { get; } = new();
+    internal Button ClearConfigurationButton { get; } = new();
+    internal Button AnalyzeButton { get; } = new();
+    internal ProgressBar Progress { get; } = new();
+    internal TextBlock Status { get; } = new();
+    internal TextBlock DangerCount { get; } = new();
+    internal TextBlock WarningCount { get; } = new();
+    internal TextBlock AttentionCount { get; } = new();
+    internal CheckBox DangerFilter { get; } = new();
+    internal CheckBox WarningFilter { get; } = new();
+    internal CheckBox AttentionFilter { get; } = new();
+    internal TextBox SearchFilter { get; } = new();
+    internal DataGrid DiagnosticsGrid { get; } = new();
+    internal TextBlock DetailSeverity { get; } = new();
+    internal TextBlock DetailRule { get; } = new();
+    internal TextBlock DetailSymbol { get; } = new();
+    internal TextBlock DetailLocation { get; } = new();
+    internal TextBlock DetailMessage { get; } = new();
+    internal TextBlock ConfigurationSummary { get; } = new();
+    internal Button CopySelectedButton { get; } = new();
+    internal Button CopyAllButton { get; } = new();
+    internal Button OpenSourceButton { get; } = new();
 
     public MainWindowView()
     {
@@ -200,7 +200,7 @@ internal sealed class MainWindowView : Grid
         return grid;
     }
 
-    public void ClearDetails()
+    internal void ClearDetails()
     {
         DetailSeverity.Text = "Severity: -";
         DetailRule.Text = "Rule: -";
