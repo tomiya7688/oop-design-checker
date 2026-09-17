@@ -18,6 +18,8 @@ internal static class InheritanceDepthPrecisionSmokeTests
         ExternalAncestryIsNotCounted();
         CrossProjectInheritanceIsCounted();
         CrossProjectChainStopsAtExternalBase();
+        PartialClassProducesSingleDiagnosticAtPrimaryDeclaration();
+        PartialClassAcrossProjectBoundaryStopsAtExternalBase();
     }
 
     private static void DefaultDepthFourIsAttention()
@@ -206,20 +208,120 @@ internal static class InheritanceDepthPrecisionSmokeTests
         AssertNone(new ExcessiveInheritanceDepthRule(), context);
     }
 
+    private static void PartialClassProducesSingleDiagnosticAtPrimaryDeclaration()
+    {
+        var project = CreateProjectFromSources(
+            "PartialProject",
+            [
+                (
+                    "Hierarchy.cs",
+                    """
+                    internal class A { }
+                    internal class B : A { }
+                    internal class C : B { }
+                    internal class D : C { }
+                    """
+                ),
+                (
+                    "Partial.Primary.cs",
+                    """
+                    internal sealed partial class E : D { }
+                    """
+                ),
+                (
+                    "Partial.Secondary.cs",
+                    """
+                    internal sealed partial class E
+                    {
+                        public void Run() { }
+                    }
+                    """
+                ),
+            ]
+        );
+
+        AssertSingle(
+            new ExcessiveInheritanceDepthRule(),
+            new AnalysisContext(project),
+            expectedDepth: 4,
+            expectedFileName: "Partial.Primary.cs"
+        );
+    }
+
+    private static void PartialClassAcrossProjectBoundaryStopsAtExternalBase()
+    {
+        var baseProject = CreateProject(
+            "ExternalBoundaryBaseProject",
+            """
+            public class A : System.Exception { }
+            public class B : A { }
+            """
+        );
+        var derivedProject = CreateProjectFromSources(
+            "ExternalBoundaryDerivedProject",
+            [
+                (
+                    "DerivedHierarchy.cs",
+                    """
+                    public class C : B { }
+                    public class D : C { }
+                    """
+                ),
+                (
+                    "Derived.Primary.cs",
+                    """
+                    public sealed partial class E : D { }
+                    """
+                ),
+                (
+                    "Derived.Secondary.cs",
+                    """
+                    public sealed partial class E
+                    {
+                        public void Run() { }
+                    }
+                    """
+                ),
+            ],
+            baseProject.Compilation.ToMetadataReference()
+        );
+        var context = new AnalysisContext(derivedProject, [baseProject, derivedProject]);
+
+        AssertSingle(
+            new ExcessiveInheritanceDepthRule(),
+            context,
+            expectedDepth: 4,
+            expectedFileName: "Derived.Primary.cs"
+        );
+    }
+
     private static SourceProject CreateProject(
         string assemblyName,
         string source,
         params MetadataReference[] additionalReferences
+    ) =>
+        CreateProjectFromSources(
+            assemblyName,
+            [($"{assemblyName}.cs", source)],
+            additionalReferences
+        );
+
+    private static SourceProject CreateProjectFromSources(
+        string assemblyName,
+        IReadOnlyList<(string FilePath, string Source)> sources,
+        params MetadataReference[] additionalReferences
     )
     {
-        var syntaxTree = CSharpSyntaxTree.ParseText(source, path: $"{assemblyName}.cs");
+        var syntaxTrees = sources
+            .Select(source => CSharpSyntaxTree.ParseText(source.Source, path: source.FilePath))
+            .ToArray();
         var references = MetadataReferenceProvider
             .CreatePlatformReferences()
             .Concat(additionalReferences)
             .ToArray();
         var compilation = CSharpCompilation.Create(
             assemblyName,
-            [syntaxTree],
+            syntaxTrees,
             references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
@@ -235,10 +337,10 @@ internal static class InheritanceDepthPrecisionSmokeTests
             );
         }
 
-        var semanticModels = new Dictionary<SyntaxTree, SemanticModel>
-        {
-            [syntaxTree] = compilation.GetSemanticModel(syntaxTree),
-        };
+        var semanticModels = syntaxTrees.ToDictionary(
+            syntaxTree => syntaxTree,
+            syntaxTree => compilation.GetSemanticModel(syntaxTree)
+        );
         return new SourceProject(
             rootPath: assemblyName,
             isApplication: false,
@@ -272,7 +374,8 @@ internal static class InheritanceDepthPrecisionSmokeTests
     private static void AssertSingle(
         ExcessiveInheritanceDepthRule rule,
         AnalysisContext context,
-        int expectedDepth
+        int expectedDepth,
+        string? expectedFileName = null
     )
     {
         var diagnostics = rule.Analyze(context).ToArray();
@@ -285,6 +388,10 @@ internal static class InheritanceDepthPrecisionSmokeTests
                     $"Project-owned inheritance depth is {expectedDepth}",
                     StringComparison.Ordinal
                 )
+            && (
+                expectedFileName is null
+                || Path.GetFileName(diagnostics[0].Location.FilePath) == expectedFileName
+            )
         )
         {
             return;
@@ -293,11 +400,13 @@ internal static class InheritanceDepthPrecisionSmokeTests
         var found = string.Join(
             " | ",
             diagnostics.Select(diagnostic =>
-                $"{diagnostic.Rule.Id}:{diagnostic.Severity}:{diagnostic.Message}"
+                $"{diagnostic.Rule.Id}:{diagnostic.Severity}:{diagnostic.Location.FilePath}:{diagnostic.Message}"
             )
         );
         throw new InvalidOperationException(
-            $"Expected one OOP304 Attention at depth {expectedDepth}, found [{found}]."
+            $"Expected one OOP304 Attention at depth {expectedDepth}"
+                + (expectedFileName is null ? string.Empty : $" in {expectedFileName}")
+                + $", found [{found}]."
         );
     }
 
