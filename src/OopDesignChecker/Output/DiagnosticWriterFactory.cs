@@ -8,7 +8,7 @@ internal static class DiagnosticWriterFactory
     public static IDiagnosticWriter Create(
         DiagnosticOutputFormat format,
         string? outputPath,
-        UserInterfaceLanguage language
+        UserInterfaceLanguage language = UserInterfaceLanguage.Japanese
     ) =>
         format switch
         {
