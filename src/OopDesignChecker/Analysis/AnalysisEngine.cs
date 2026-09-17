@@ -63,7 +63,7 @@ internal sealed class AnalysisEngine
             diagnostic.Location.Line,
             diagnostic.Location.Column,
             diagnostic.Rule.Id,
-            diagnostic.Message
+            diagnostic.SymbolName
         );
 
     private readonly record struct DiagnosticIdentity(
@@ -71,6 +71,6 @@ internal sealed class AnalysisEngine
         int Line,
         int Column,
         string RuleId,
-        string Message
+        string? SymbolName
     );
 }
