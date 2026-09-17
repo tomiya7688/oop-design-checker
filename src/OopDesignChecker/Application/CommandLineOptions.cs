@@ -11,4 +11,23 @@ internal sealed record CommandLineOptions(
     DiagnosticOutputFormat OutputFormat,
     string? OutputPath,
     UserInterfaceLanguage Language
-);
+)
+{
+    public CommandLineOptions(
+        string targetPath,
+        string? configurationPath,
+        DesignDiagnosticSeverity? failureThreshold,
+        bool verbose,
+        DiagnosticOutputFormat outputFormat,
+        string? outputPath
+    )
+        : this(
+            targetPath,
+            configurationPath,
+            failureThreshold,
+            verbose,
+            outputFormat,
+            outputPath,
+            UserInterfaceLanguage.Japanese
+        ) { }
+}
