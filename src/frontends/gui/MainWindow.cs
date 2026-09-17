@@ -167,7 +167,9 @@ internal sealed class MainWindow : Window
     private void RebuildDiagnosticRows()
     {
         _allRows =
-            _lastResult?.Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _language)).ToArray()
+            _lastResult
+                ?.Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _language))
+                .ToArray()
             ?? [];
         ApplyFilters();
     }
