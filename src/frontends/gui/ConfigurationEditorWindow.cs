@@ -63,10 +63,7 @@ internal sealed class ConfigurationEditorWindow : Window
             Content = GuiText.Get(GuiTextKey.ValidateButton, _language),
         };
         var saveButton = new Button { Content = GuiText.Get(GuiTextKey.SaveButton, _language) };
-        var cancelButton = new Button
-        {
-            Content = GuiText.Get(GuiTextKey.CancelButton, _language),
-        };
+        var cancelButton = new Button { Content = GuiText.Get(GuiTextKey.CancelButton, _language) };
 
         validateButton.Click += (_, _) => ValidateEditor();
         saveButton.Click += (_, _) => SaveAndClose();
