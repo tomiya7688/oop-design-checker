@@ -88,7 +88,10 @@ internal static class CommandLineOptionsParser
             if (!TryReadValue(args, ref index, out _configurationPath))
             {
                 return Fail(
-                    Text("--configには設定ファイルpathが必要です。", "--config requires a file path."),
+                    Text(
+                        "--configには設定ファイルpathが必要です。",
+                        "--config requires a file path."
+                    ),
                     out errorMessage
                 );
             }
@@ -152,7 +155,10 @@ internal static class CommandLineOptionsParser
             if (!TryReadValue(args, ref index, out _outputPath))
             {
                 return Fail(
-                    Text("--outputには出力ファイルpathが必要です。", "--output requires a file path."),
+                    Text(
+                        "--outputには出力ファイルpathが必要です。",
+                        "--output requires a file path."
+                    ),
                     out errorMessage
                 );
             }
