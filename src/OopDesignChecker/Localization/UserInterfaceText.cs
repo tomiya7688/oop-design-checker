@@ -24,11 +24,8 @@ public static class UserInterfaceText
         }
     }
 
-    public static string Select(
-        UserInterfaceLanguage language,
-        string japanese,
-        string english
-    ) => language == UserInterfaceLanguage.Japanese ? japanese : english;
+    public static string Select(UserInterfaceLanguage language, string japanese, string english) =>
+        language == UserInterfaceLanguage.Japanese ? japanese : english;
 
     public static string SeverityName(
         DesignDiagnosticSeverity severity,
