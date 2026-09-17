@@ -44,7 +44,11 @@ public static class LocalizedText
         };
 
     public static string ConfigRequiresPath(UserInterfaceLanguage language) =>
-        Select(language, "--config には設定ファイルのpathが必要です。", "--config requires a file path.");
+        Select(
+            language,
+            "--config には設定ファイルのpathが必要です。",
+            "--config requires a file path."
+        );
 
     public static string FailOnRequiresSeverity(UserInterfaceLanguage language) =>
         Select(
@@ -61,10 +65,18 @@ public static class LocalizedText
         );
 
     public static string OutputRequiresPath(UserInterfaceLanguage language) =>
-        Select(language, "--output には出力ファイルのpathが必要です。", "--output requires a file path.");
+        Select(
+            language,
+            "--output には出力ファイルのpathが必要です。",
+            "--output requires a file path."
+        );
 
     public static string LanguageRequiresValue(UserInterfaceLanguage language) =>
-        Select(language, "--language には ja または en を指定してください。", "--language requires ja or en.");
+        Select(
+            language,
+            "--language には ja または en を指定してください。",
+            "--language requires ja or en."
+        );
 
     public static string GitHubOutputCannotUseFile(UserInterfaceLanguage language) =>
         Select(
@@ -77,7 +89,11 @@ public static class LocalizedText
         Select(language, $"不明なoptionです: {option}", $"Unknown option: {option}");
 
     public static string OnlyOneTarget(UserInterfaceLanguage language) =>
-        Select(language, "target pathは1つだけ指定できます。", "Only one target path can be specified.");
+        Select(
+            language,
+            "target pathは1つだけ指定できます。",
+            "Only one target path can be specified."
+        );
 
     public static string AnalysisFailed(UserInterfaceLanguage language, string message) =>
         Select(language, $"解析に失敗しました: {message}", $"Analysis failed: {message}");
