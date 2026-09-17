@@ -90,7 +90,10 @@ internal sealed class MainWindow : Window
         var targetPath = _view.TargetPath.Text?.Trim();
         if (string.IsNullOrWhiteSpace(targetPath))
         {
-            _view.Status.Text = Text("解析対象pathを指定してください。", "Target path is required.");
+            _view.Status.Text = Text(
+                "解析対象pathを指定してください。",
+                "Target path is required."
+            );
             return;
         }
 
@@ -353,38 +356,10 @@ internal sealed class MainWindow : Window
             return _lastResult?.ConfigurationPath;
         }
 
-        if (Path.IsPathRooted(configuredPath))
-        {
-            return Path.GetFullPath(configuredPath);
-        }
-
-        var currentDirectoryPath = Path.GetFullPath(
-            configuredPath,
-            Directory.GetCurrentDirectory()
+        return CheckerConfigurationPathResolver.ResolveExplicit(
+            NormalizeOptionalPath(_view.TargetPath.Text),
+            configuredPath
         );
-        if (File.Exists(currentDirectoryPath))
-        {
-            return currentDirectoryPath;
-        }
-
-        var targetPath = _view.TargetPath.Text?.Trim();
-        if (!string.IsNullOrWhiteSpace(targetPath))
-        {
-            var fullTargetPath = Path.GetFullPath(targetPath);
-            var targetDirectory = Directory.Exists(fullTargetPath)
-                ? fullTargetPath
-                : Path.GetDirectoryName(fullTargetPath);
-            if (targetDirectory is not null)
-            {
-                var targetRelativePath = Path.GetFullPath(configuredPath, targetDirectory);
-                if (File.Exists(targetRelativePath))
-                {
-                    return targetRelativePath;
-                }
-            }
-        }
-
-        return currentDirectoryPath;
     }
 
     private async Task<string?> PickConfigurationSavePathAsync()
