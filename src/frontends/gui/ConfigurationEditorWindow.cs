@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using OopDesignChecker.Configuration;
+using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Gui;
 
@@ -10,10 +11,15 @@ internal sealed class ConfigurationEditorWindow : Window
 {
     private readonly TextBox _editor = new();
     private readonly TextBlock _status = new();
+    private readonly UserInterfaceLanguage _language;
 
-    public ConfigurationEditorWindow(string initialJson)
+    public ConfigurationEditorWindow(
+        string initialJson,
+        UserInterfaceLanguage language = UserInterfaceLanguage.Japanese
+    )
     {
-        Title = "OOP Design Checker configuration";
+        _language = language;
+        Title = Text("OOP設計チェッカー設定", "OOP Design Checker configuration");
         Width = 760;
         Height = 620;
         MinWidth = 560;
@@ -43,8 +49,10 @@ internal sealed class ConfigurationEditorWindow : Window
 
         var description = new TextBlock
         {
-            Text =
-                "Edit oop-design-checker.json. Validation uses the same configuration model as the CUI.",
+            Text = Text(
+                "oop-design-checker.jsonを編集します。検証にはCUIと同じ設定modelを使用します。",
+                "Edit oop-design-checker.json. Validation uses the same configuration model as the CUI."
+            ),
             TextWrapping = TextWrapping.Wrap,
         };
         Add(root, description, 0);
@@ -56,9 +64,9 @@ internal sealed class ConfigurationEditorWindow : Window
 
     private StackPanel BuildActions()
     {
-        var validateButton = new Button { Content = "Validate" };
-        var saveButton = new Button { Content = "Save" };
-        var cancelButton = new Button { Content = "Cancel" };
+        var validateButton = new Button { Content = Text("検証", "Validate") };
+        var saveButton = new Button { Content = Text("保存", "Save") };
+        var cancelButton = new Button { Content = Text("キャンセル", "Cancel") };
 
         validateButton.Click += (_, _) => ValidateEditor();
         saveButton.Click += (_, _) => SaveAndClose();
@@ -78,11 +86,11 @@ internal sealed class ConfigurationEditorWindow : Window
         try
         {
             _ = CheckerConfigurationJson.Parse(_editor.Text ?? string.Empty);
-            _status.Text = "Configuration is valid.";
+            _status.Text = Text("設定は有効です。", "Configuration is valid.");
         }
         catch (InvalidOperationException exception)
         {
-            _status.Text = exception.Message;
+            _status.Text = Text($"設定エラー: {exception.Message}", exception.Message);
         }
     }
 
@@ -96,9 +104,12 @@ internal sealed class ConfigurationEditorWindow : Window
         }
         catch (InvalidOperationException exception)
         {
-            _status.Text = exception.Message;
+            _status.Text = Text($"設定エラー: {exception.Message}", exception.Message);
         }
     }
+
+    private string Text(string japanese, string english) =>
+        UserInterfaceText.Select(_language, japanese, english);
 
     private static void Add(Grid grid, Control control, int row)
     {
