@@ -405,10 +405,7 @@ internal sealed class MainWindow : Window
         var file = await StorageProvider.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = Text(
-                    $"診断を{description}で出力",
-                    $"Export diagnostics as {description}"
-                ),
+                Title = Text($"診断を{description}で出力", $"Export diagnostics as {description}"),
                 SuggestedFileName = $"oop-design-checker-results.{extension}",
                 DefaultExtension = extension,
                 FileTypeChoices =
