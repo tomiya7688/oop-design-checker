@@ -250,10 +250,7 @@ internal static class ConfigurationBehaviorTests
 
             try
             {
-                _ = CheckerConfigurationPathResolver.ResolveExplicit(
-                    targetDirectory,
-                    relativePath
-                );
+                _ = CheckerConfigurationPathResolver.ResolveExplicit(targetDirectory, relativePath);
             }
             catch (InvalidOperationException exception)
                 when (exception.Message.Contains(currentDirectoryPath, StringComparison.Ordinal)
