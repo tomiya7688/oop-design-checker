@@ -11,14 +11,24 @@ internal sealed class AnalysisEngine
         _rules = rules;
     }
 
-    public IReadOnlyList<DesignDiagnostic> Analyze(SourceProject project) => Analyze([project]);
+    public IReadOnlyList<DesignDiagnostic> Analyze(
+        SourceProject project,
+        CancellationToken cancellationToken = default
+    ) => Analyze([project], cancellationToken);
 
-    public IReadOnlyList<DesignDiagnostic> Analyze(IReadOnlyList<SourceProject> projects)
+    public IReadOnlyList<DesignDiagnostic> Analyze(
+        IReadOnlyList<SourceProject> projects,
+        CancellationToken cancellationToken = default
+    )
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         var diagnostics = projects
-            .SelectMany(project => AnalyzeProject(project, projects))
+            .SelectMany(project => AnalyzeProject(project, projects, cancellationToken))
             .DistinctBy(CreateDiagnosticIdentity)
             .ToArray();
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         return DiagnosticCoordinator
             .Reduce(diagnostics)
@@ -31,11 +41,20 @@ internal sealed class AnalysisEngine
 
     private IEnumerable<DesignDiagnostic> AnalyzeProject(
         SourceProject project,
-        IReadOnlyList<SourceProject> projects
+        IReadOnlyList<SourceProject> projects,
+        CancellationToken cancellationToken
     )
     {
-        var context = new AnalysisContext(project, projects);
-        return _rules.SelectMany(rule => rule.Analyze(context));
+        var context = new AnalysisContext(project, projects, cancellationToken);
+        foreach (var rule in _rules)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            foreach (var diagnostic in rule.Analyze(context))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                yield return diagnostic;
+            }
+        }
     }
 
     private static DiagnosticIdentity CreateDiagnosticIdentity(DesignDiagnostic diagnostic) =>

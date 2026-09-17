@@ -13,8 +13,10 @@ internal sealed class MainWindowView : Grid
     internal Button TargetFileButton { get; } = new();
     internal Button TargetFolderButton { get; } = new();
     internal Button ConfigurationButton { get; } = new();
+    internal Button EditConfigurationButton { get; } = new();
     internal Button ClearConfigurationButton { get; } = new();
     internal Button AnalyzeButton { get; } = new();
+    internal Button CancelButton { get; } = new();
     internal ProgressBar Progress { get; } = new();
     internal TextBlock Status { get; } = new();
     internal TextBlock DangerCount { get; } = new();
@@ -34,6 +36,8 @@ internal sealed class MainWindowView : Grid
     internal Button CopySelectedButton { get; } = new();
     internal Button CopyAllButton { get; } = new();
     internal Button OpenSourceButton { get; } = new();
+    internal Button ExportJsonButton { get; } = new();
+    internal Button ExportSarifButton { get; } = new();
 
     public MainWindowView()
     {
@@ -62,8 +66,11 @@ internal sealed class MainWindowView : Grid
         TargetFileButton.Content = "File...";
         TargetFolderButton.Content = "Folder...";
         ConfigurationButton.Content = "Config...";
+        EditConfigurationButton.Content = "Edit...";
         ClearConfigurationButton.Content = "Clear";
         AnalyzeButton.Content = "Analyze";
+        CancelButton.Content = "Cancel";
+        CancelButton.IsEnabled = false;
 
         DangerFilter.Content = "Danger";
         DangerFilter.IsChecked = true;
@@ -72,6 +79,12 @@ internal sealed class MainWindowView : Grid
         AttentionFilter.Content = "Attention";
         AttentionFilter.IsChecked = true;
         SearchFilter.PlaceholderText = "Filter by rule, file, symbol, or message";
+
+        CopySelectedButton.Content = "Copy selected";
+        CopyAllButton.Content = "Copy all";
+        OpenSourceButton.Content = "Open source";
+        ExportJsonButton.Content = "Export JSON...";
+        ExportSarifButton.Content = "Export SARIF...";
 
         Progress.IsIndeterminate = true;
         Progress.IsVisible = false;
@@ -111,6 +124,7 @@ internal sealed class MainWindowView : Grid
         section.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
         section.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
         section.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        section.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
         section.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         section.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
@@ -119,7 +133,8 @@ internal sealed class MainWindowView : Grid
         AddToGrid(section, TargetFolderButton, 0, 2);
         AddToGrid(section, ConfigurationPath, 1, 0);
         AddToGrid(section, ConfigurationButton, 1, 1);
-        AddToGrid(section, ClearConfigurationButton, 1, 2);
+        AddToGrid(section, EditConfigurationButton, 1, 2);
+        AddToGrid(section, ClearConfigurationButton, 1, 3);
         return section;
     }
 
@@ -139,6 +154,7 @@ internal sealed class MainWindowView : Grid
         panel.Children.Add(AttentionFilter);
         panel.Children.Add(SearchFilter);
         panel.Children.Add(AnalyzeButton);
+        panel.Children.Add(CancelButton);
         return panel;
     }
 
@@ -173,14 +189,20 @@ internal sealed class MainWindowView : Grid
         panel.Children.Add(DetailLocation);
         panel.Children.Add(DetailMessage);
 
-        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        CopySelectedButton.Content = "Copy selected";
-        CopyAllButton.Content = "Copy all";
-        OpenSourceButton.Content = "Open source";
-        actions.Children.Add(CopySelectedButton);
-        actions.Children.Add(CopyAllButton);
-        actions.Children.Add(OpenSourceButton);
-        panel.Children.Add(actions);
+        var diagnosticActions = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+        };
+        diagnosticActions.Children.Add(CopySelectedButton);
+        diagnosticActions.Children.Add(OpenSourceButton);
+        panel.Children.Add(diagnosticActions);
+
+        var resultActions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        resultActions.Children.Add(CopyAllButton);
+        resultActions.Children.Add(ExportJsonButton);
+        resultActions.Children.Add(ExportSarifButton);
+        panel.Children.Add(resultActions);
 
         return new Border
         {

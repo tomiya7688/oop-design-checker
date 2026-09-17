@@ -10,9 +10,12 @@ public static class CheckerService
     public static CheckerRunResult Analyze(
         string targetPath,
         string? configurationPath = null,
-        DesignDiagnosticSeverity? failureThresholdOverride = null
+        DesignDiagnosticSeverity? failureThresholdOverride = null,
+        CancellationToken cancellationToken = default
     )
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (!Directory.Exists(targetPath) && !File.Exists(targetPath))
         {
             throw new InvalidOperationException($"Target does not exist: {targetPath}");
@@ -24,6 +27,7 @@ public static class CheckerService
             configurationPath
         );
         var configuration = loadedConfiguration.Configuration;
+        cancellationToken.ThrowIfCancellationRequested();
 
         var disabledRules = configuration.DisabledRules.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var rules = RuleCatalog
@@ -32,9 +36,11 @@ public static class CheckerService
             .ToArray();
 
         IProjectLoader loader = ProjectLoaderFactory.Create(configuration.IgnoredPaths);
-        var projects = loader.LoadProjects(fullTargetPath);
+        var projects = loader.LoadProjects(fullTargetPath, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+
         var engine = new AnalysisEngine(rules);
-        var diagnostics = engine.Analyze(projects);
+        var diagnostics = engine.Analyze(projects, cancellationToken);
         var failureThreshold = failureThresholdOverride ?? configuration.FailureThreshold;
 
         return new CheckerRunResult(diagnostics, failureThreshold, loadedConfiguration.Path)

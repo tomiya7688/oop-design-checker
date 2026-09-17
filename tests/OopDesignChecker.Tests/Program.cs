@@ -43,6 +43,10 @@ internal static class Program
         new("core OOP rule sprint", CoreRuleSmokeTests.Run),
         new("CI diagnostic output formats", OutputFormatSmokeTests.Run),
         new(
+            "GUI configuration, export, and cancellation workflow",
+            GuiWorkflowPhase2SmokeTests.Run
+        ),
+        new(
             "configuration disables selected rules",
             ConfigurationBehaviorTests.DisabledRulesAreSuppressed
         ),
