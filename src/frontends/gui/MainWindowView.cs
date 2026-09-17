@@ -157,17 +157,11 @@ internal sealed class MainWindowView : Grid
         DiagnosticsGrid.Columns.Add(
             CreateTextColumn(string.Empty, nameof(DiagnosticRow.SeverityText))
         );
-        DiagnosticsGrid.Columns.Add(
-            CreateTextColumn(string.Empty, nameof(DiagnosticRow.RuleId))
-        );
-        DiagnosticsGrid.Columns.Add(
-            CreateTextColumn(string.Empty, nameof(DiagnosticRow.FileName))
-        );
+        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.RuleId)));
+        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.FileName)));
         DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.Line)));
         DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.Column)));
-        DiagnosticsGrid.Columns.Add(
-            CreateTextColumn(string.Empty, nameof(DiagnosticRow.Message))
-        );
+        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.Message)));
     }
 
     private Grid BuildTargetSection()
