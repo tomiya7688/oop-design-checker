@@ -1,3 +1,4 @@
+using OopDesignChecker.Configuration;
 using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Tests;
@@ -95,6 +96,8 @@ internal static class ConfigurationBehaviorTests
         ParentConfigurationIsDiscoveredForNestedTarget();
         NearestConfigurationWins();
         ExplicitRelativeConfigurationCanUseTargetDirectory();
+        ExplicitResolverPrefersCurrentDirectory();
+        MissingExplicitConfigurationListsCheckedLocations();
     }
 
     private static void ParentConfigurationIsDiscoveredForNestedTarget()
@@ -197,6 +200,70 @@ internal static class ConfigurationBehaviorTests
 
             var result = CheckerService.Analyze(sourcePath, Path.Combine("config", "checker.json"));
             AssertConfigurationPath(result.ConfigurationPath, configurationPath);
+        });
+    }
+
+    private static void ExplicitResolverPrefersCurrentDirectory()
+    {
+        WithTemporaryProject(rootPath =>
+        {
+            var originalDirectory = Directory.GetCurrentDirectory();
+            var currentDirectory = Path.Combine(rootPath, "cwd");
+            var targetDirectory = Path.Combine(rootPath, "target");
+            var relativePath = Path.Combine("config", "checker.json");
+            Directory.CreateDirectory(Path.Combine(currentDirectory, "config"));
+            Directory.CreateDirectory(Path.Combine(targetDirectory, "config"));
+
+            var currentConfigurationPath = Path.Combine(currentDirectory, relativePath);
+            var targetConfigurationPath = Path.Combine(targetDirectory, relativePath);
+            File.WriteAllText(currentConfigurationPath, "{}");
+            File.WriteAllText(targetConfigurationPath, "{}");
+
+            try
+            {
+                Directory.SetCurrentDirectory(currentDirectory);
+                var expectedPath = Path.GetFullPath(relativePath, Directory.GetCurrentDirectory());
+                var resolved = CheckerConfigurationPathResolver.ResolveExplicit(
+                    targetDirectory,
+                    relativePath
+                );
+                AssertConfigurationPath(resolved, expectedPath);
+            }
+            finally
+            {
+                Directory.SetCurrentDirectory(originalDirectory);
+            }
+        });
+    }
+
+    private static void MissingExplicitConfigurationListsCheckedLocations()
+    {
+        WithTemporaryProject(rootPath =>
+        {
+            var targetDirectory = Path.Combine(rootPath, "target");
+            Directory.CreateDirectory(targetDirectory);
+            const string relativePath = "missing-checker.json";
+            var currentDirectoryPath = Path.GetFullPath(
+                relativePath,
+                Directory.GetCurrentDirectory()
+            );
+            var targetRelativePath = Path.GetFullPath(relativePath, targetDirectory);
+
+            try
+            {
+                _ = CheckerConfigurationPathResolver.ResolveExplicit(targetDirectory, relativePath);
+            }
+            catch (InvalidOperationException exception)
+                when (exception.Message.Contains(currentDirectoryPath, StringComparison.Ordinal)
+                    && exception.Message.Contains(targetRelativePath, StringComparison.Ordinal)
+                )
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(
+                "Missing explicit configuration did not report both checked locations."
+            );
         });
     }
 
