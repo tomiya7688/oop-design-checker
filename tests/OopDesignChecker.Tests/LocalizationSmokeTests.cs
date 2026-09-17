@@ -1,4 +1,5 @@
 using OopDesignChecker.Application;
+using OopDesignChecker.Core;
 using OopDesignChecker.Localization;
 using OopDesignChecker.Output;
 
@@ -55,7 +56,13 @@ internal static class LocalizationSmokeTests
 
     private static void TextSummaryIsLocalized()
     {
-        var diagnostic = OutputFormatSmokeTests.CreateSampleDiagnosticForLocalization();
+        var diagnostic = new DesignDiagnostic(
+            new RuleDescriptor("OOP999", "Sample rule", DesignDiagnosticSeverity.Warning),
+            DesignDiagnosticSeverity.Warning,
+            "Sample diagnostic",
+            "Sample.Member",
+            new SourceLocation(Path.GetFullPath("sample.cs"), 3, 7)
+        );
         var japanese = CaptureWriter(UserInterfaceLanguage.Japanese, diagnostic);
         var english = CaptureWriter(UserInterfaceLanguage.English, diagnostic);
 
@@ -73,7 +80,7 @@ internal static class LocalizationSmokeTests
 
     private static string CaptureWriter(
         UserInterfaceLanguage language,
-        OopDesignChecker.Core.DesignDiagnostic diagnostic
+        DesignDiagnostic diagnostic
     )
     {
         var path = Path.Combine(Path.GetTempPath(), $"oop-localization-{Guid.NewGuid():N}.txt");
