@@ -1,4 +1,5 @@
 using OopDesignChecker.Core;
+using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Application;
 
@@ -8,5 +9,6 @@ internal sealed record CommandLineOptions(
     DesignDiagnosticSeverity? FailureThreshold,
     bool Verbose,
     DiagnosticOutputFormat OutputFormat,
-    string? OutputPath
+    string? OutputPath,
+    UserInterfaceLanguage Language
 );
