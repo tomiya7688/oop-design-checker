@@ -31,7 +31,9 @@ internal sealed class CheckerApplication
                     && options.OutputPath is null
                         ? Console.Out
                         : Console.Error;
-                writer.WriteLine(LocalizedText.LoadedConfig(options.Language, result.ConfigurationPath));
+                writer.WriteLine(
+                    LocalizedText.LoadedConfig(options.Language, result.ConfigurationPath)
+                );
             }
 
             return result.ShouldFail ? 1 : 0;
