@@ -222,11 +222,12 @@ internal static class ConfigurationBehaviorTests
             try
             {
                 Directory.SetCurrentDirectory(currentDirectory);
+                var expectedPath = Path.GetFullPath(relativePath, Directory.GetCurrentDirectory());
                 var resolved = CheckerConfigurationPathResolver.ResolveExplicit(
                     targetDirectory,
                     relativePath
                 );
-                AssertConfigurationPath(resolved, currentConfigurationPath);
+                AssertConfigurationPath(resolved, expectedPath);
             }
             finally
             {
