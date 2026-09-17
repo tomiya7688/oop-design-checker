@@ -5,6 +5,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using OopDesignChecker.Configuration;
 using OopDesignChecker.Core;
+using OopDesignChecker.Localization;
 using OopDesignChecker.Output;
 
 namespace OopDesignChecker.Gui;
@@ -16,10 +17,10 @@ internal sealed class MainWindow : Window
     private CheckerRunResult? _lastResult;
     private CancellationTokenSource? _analysisCancellation;
     private bool _analysisInProgress;
+    private UserInterfaceLanguage _language = UserInterfaceLanguage.Japanese;
 
     public MainWindow()
     {
-        Title = "OOP Design Checker";
         Width = 1280;
         Height = 820;
         MinWidth = 900;
@@ -27,7 +28,7 @@ internal sealed class MainWindow : Window
         Content = _view;
 
         WireEvents();
-        UpdateSummary();
+        ApplyLanguage();
     }
 
     private void WireEvents()
@@ -44,6 +45,7 @@ internal sealed class MainWindow : Window
         _view.WarningFilter.Click += (_, _) => ApplyFilters();
         _view.AttentionFilter.Click += (_, _) => ApplyFilters();
         _view.SearchFilter.TextChanged += (_, _) => ApplyFilters();
+        _view.LanguageSelector.SelectionChanged += (_, _) => ChangeLanguage();
         _view.DiagnosticsGrid.SelectionChanged += (_, _) => UpdateSelectedDiagnostic();
         _view.DiagnosticsGrid.DoubleTapped += async (_, _) => await OpenSelectedSourceAsync();
         _view.CopySelectedButton.Click += async (_, _) => await CopySelectedAsync();
@@ -56,6 +58,28 @@ internal sealed class MainWindow : Window
         KeyDown += OnKeyDown;
     }
 
+    private void ChangeLanguage()
+    {
+        _language =
+            _view.LanguageSelector.SelectedIndex == 1
+                ? UserInterfaceLanguage.English
+                : UserInterfaceLanguage.Japanese;
+        ApplyLanguage();
+        _view.Status.Text = Text(
+            "表示言語を日本語に変更しました。",
+            "Display language changed to English."
+        );
+    }
+
+    private void ApplyLanguage()
+    {
+        Title = Text("OOP設計チェッカー", "OOP Design Checker");
+        _view.ApplyLanguage(_language);
+        RebuildDiagnosticRows();
+        UpdateSummary();
+        UpdateSelectedDiagnostic();
+    }
+
     private async Task AnalyzeAsync()
     {
         if (_analysisInProgress)
@@ -66,7 +90,7 @@ internal sealed class MainWindow : Window
         var targetPath = _view.TargetPath.Text?.Trim();
         if (string.IsNullOrWhiteSpace(targetPath))
         {
-            _view.Status.Text = "Target path is required.";
+            _view.Status.Text = Text("解析対象pathを指定してください。", "Target path is required.");
             return;
         }
 
@@ -90,7 +114,7 @@ internal sealed class MainWindow : Window
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            _view.Status.Text = "Analysis cancelled.";
+            _view.Status.Text = Text("解析をキャンセルしました。", "Analysis cancelled.");
         }
         catch (Exception exception)
             when (exception
@@ -121,17 +145,28 @@ internal sealed class MainWindow : Window
 
         _analysisCancellation.Cancel();
         _view.CancelButton.IsEnabled = false;
-        _view.Status.Text = "Cancelling...";
+        _view.Status.Text = Text("キャンセル中...", "Cancelling...");
     }
 
     private void ShowResult(CheckerRunResult result)
     {
         _lastResult = result;
-        _allRows = result.Diagnostics.Select(DiagnosticRow.From).ToArray();
+        RebuildDiagnosticRows();
         ApplyFilters();
         UpdateSummary();
-        _view.Status.Text = $"Completed: {_allRows.Length} diagnostic(s).";
+        _view.Status.Text = Text(
+            $"完了: {_allRows.Length}件の診断。",
+            $"Completed: {_allRows.Length} diagnostic(s)."
+        );
         _view.ConfigurationPath.Text = result.ConfigurationPath ?? _view.ConfigurationPath.Text;
+    }
+
+    private void RebuildDiagnosticRows()
+    {
+        _allRows =
+            _lastResult?.Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _language)).ToArray()
+            ?? [];
+        ApplyFilters();
     }
 
     private void ShowError(string message)
@@ -140,9 +175,9 @@ internal sealed class MainWindow : Window
         _allRows = [];
         _view.DiagnosticsGrid.ItemsSource = Array.Empty<DiagnosticRow>();
         _view.DiagnosticsGrid.SelectedItem = null;
-        _view.ClearDetails();
+        _view.ClearDetails(_language);
         UpdateSummary();
-        _view.Status.Text = message;
+        _view.Status.Text = Text($"エラー: {message}", message);
     }
 
     private void ApplyFilters()
@@ -158,23 +193,33 @@ internal sealed class MainWindow : Window
 
     private void UpdateSummary()
     {
-        _view.DangerCount.Text = $"Danger: {Count(DesignDiagnosticSeverity.Danger)}";
-        _view.WarningCount.Text = $"Warning: {Count(DesignDiagnosticSeverity.Warning)}";
-        _view.AttentionCount.Text = $"Attention: {Count(DesignDiagnosticSeverity.Attention)}";
+        _view.DangerCount.Text = Text(
+            $"危険: {Count(DesignDiagnosticSeverity.Danger)}",
+            $"Danger: {Count(DesignDiagnosticSeverity.Danger)}"
+        );
+        _view.WarningCount.Text = Text(
+            $"警告: {Count(DesignDiagnosticSeverity.Warning)}",
+            $"Warning: {Count(DesignDiagnosticSeverity.Warning)}"
+        );
+        _view.AttentionCount.Text = Text(
+            $"注意: {Count(DesignDiagnosticSeverity.Attention)}",
+            $"Attention: {Count(DesignDiagnosticSeverity.Attention)}"
+        );
 
         if (_lastResult is null)
         {
-            _view.ConfigurationSummary.Text = "Config: not loaded";
+            _view.ConfigurationSummary.Text = Text("設定: 未読込", "Config: not loaded");
             return;
         }
 
         var configuration = _lastResult.Configuration;
         var configName = _lastResult.ConfigurationPath is null
-            ? "defaults"
+            ? Text("既定値", "defaults")
             : Path.GetFileName(_lastResult.ConfigurationPath);
-        _view.ConfigurationSummary.Text =
-            $"Config: {configName} | Fail: {_lastResult.FailureThreshold} | "
-            + $"Disabled: {configuration.DisabledRules.Count} | Ignored: {configuration.IgnoredPaths.Count}";
+        _view.ConfigurationSummary.Text = Text(
+            $"設定: {configName} | 失敗しきい値: {_lastResult.FailureThreshold} | 無効rule: {configuration.DisabledRules.Count} | 除外path: {configuration.IgnoredPaths.Count}",
+            $"Config: {configName} | Fail: {_lastResult.FailureThreshold} | Disabled: {configuration.DisabledRules.Count} | Ignored: {configuration.IgnoredPaths.Count}"
+        );
     }
 
     private int Count(DesignDiagnosticSeverity severity) =>
@@ -184,14 +229,20 @@ internal sealed class MainWindow : Window
     {
         if (_view.DiagnosticsGrid.SelectedItem is not DiagnosticRow row)
         {
-            _view.ClearDetails();
+            _view.ClearDetails(_language);
             return;
         }
 
-        _view.DetailSeverity.Text = $"Severity: {row.SeverityText}";
-        _view.DetailRule.Text = $"Rule: {row.RuleId}";
-        _view.DetailSymbol.Text = $"Symbol: {row.SymbolName ?? "-"}";
-        _view.DetailLocation.Text = $"Location: {row.LocationText}";
+        _view.DetailSeverity.Text = Text(
+            $"重大度: {row.SeverityText}",
+            $"Severity: {row.SeverityText}"
+        );
+        _view.DetailRule.Text = Text($"ルール: {row.RuleId}", $"Rule: {row.RuleId}");
+        _view.DetailSymbol.Text = Text(
+            $"シンボル: {row.SymbolName ?? "-"}",
+            $"Symbol: {row.SymbolName ?? "-"}"
+        );
+        _view.DetailLocation.Text = Text($"場所: {row.LocationText}", $"Location: {row.LocationText}");
         _view.DetailMessage.Text = row.Message;
     }
 
@@ -200,11 +251,11 @@ internal sealed class MainWindow : Window
         var files = await StorageProvider.OpenFilePickerAsync(
             new FilePickerOpenOptions
             {
-                Title = "Choose analysis target",
+                Title = Text("解析対象を選択", "Choose analysis target"),
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
-                    new FilePickerFileType("C# source/project/solution")
+                    new FilePickerFileType(Text("C# source/project/solution", "C# source/project/solution"))
                     {
                         Patterns = ["*.cs", "*.csproj", "*.sln", "*.slnx"],
                     },
@@ -219,7 +270,7 @@ internal sealed class MainWindow : Window
         var folders = await StorageProvider.OpenFolderPickerAsync(
             new FolderPickerOpenOptions
             {
-                Title = "Choose project directory",
+                Title = Text("project directoryを選択", "Choose project directory"),
                 AllowMultiple = false,
             }
         );
@@ -231,11 +282,14 @@ internal sealed class MainWindow : Window
         var files = await StorageProvider.OpenFilePickerAsync(
             new FilePickerOpenOptions
             {
-                Title = "Choose checker configuration",
+                Title = Text("チェッカー設定を選択", "Choose checker configuration"),
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
-                    new FilePickerFileType("JSON configuration") { Patterns = ["*.json"] },
+                    new FilePickerFileType(Text("JSON設定", "JSON configuration"))
+                    {
+                        Patterns = ["*.json"],
+                    },
                 ],
             }
         );
@@ -259,7 +313,7 @@ internal sealed class MainWindow : Window
                         _lastResult?.Configuration ?? new CheckerConfiguration()
                     );
 
-            var editor = new ConfigurationEditorWindow(initialJson);
+            var editor = new ConfigurationEditorWindow(initialJson, _language);
             var editedJson = await editor.ShowDialog<string?>(this);
             if (editedJson is null)
             {
@@ -275,7 +329,10 @@ internal sealed class MainWindow : Window
 
             await File.WriteAllTextAsync(configurationPath, editedJson);
             _view.ConfigurationPath.Text = configurationPath;
-            _view.Status.Text = "Configuration saved. Analyze again to apply changes.";
+            _view.Status.Text = Text(
+                "設定を保存しました。変更を適用するには再解析してください。",
+                "Configuration saved. Analyze again to apply changes."
+            );
         }
         catch (Exception exception)
             when (exception
@@ -284,7 +341,7 @@ internal sealed class MainWindow : Window
                         or InvalidOperationException
             )
         {
-            _view.Status.Text = exception.Message;
+            _view.Status.Text = Text($"エラー: {exception.Message}", exception.Message);
         }
     }
 
@@ -335,12 +392,15 @@ internal sealed class MainWindow : Window
         var file = await StorageProvider.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = "Save checker configuration",
+                Title = Text("チェッカー設定を保存", "Save checker configuration"),
                 SuggestedFileName = "oop-design-checker.json",
                 DefaultExtension = "json",
                 FileTypeChoices =
                 [
-                    new FilePickerFileType("JSON configuration") { Patterns = ["*.json"] },
+                    new FilePickerFileType(Text("JSON設定", "JSON configuration"))
+                    {
+                        Patterns = ["*.json"],
+                    },
                 ],
             }
         );
@@ -351,7 +411,10 @@ internal sealed class MainWindow : Window
     {
         if (_lastResult is null)
         {
-            _view.Status.Text = "Run an analysis before exporting diagnostics.";
+            _view.Status.Text = Text(
+                "診断を出力する前に解析を実行してください。",
+                "Run an analysis before exporting diagnostics."
+            );
             return;
         }
 
@@ -360,12 +423,17 @@ internal sealed class MainWindow : Window
         var file = await StorageProvider.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = $"Export diagnostics as {description}",
+                Title = Text(
+                    $"診断を{description}で出力",
+                    $"Export diagnostics as {description}"
+                ),
                 SuggestedFileName = $"oop-design-checker-results.{extension}",
                 DefaultExtension = extension,
                 FileTypeChoices =
                 [
-                    new FilePickerFileType($"{description} diagnostics")
+                    new FilePickerFileType(
+                        Text($"{description}診断", $"{description} diagnostics")
+                    )
                     {
                         Patterns = [$"*.{extension}"],
                     },
@@ -383,11 +451,14 @@ internal sealed class MainWindow : Window
             await Task.Run(() =>
                 DiagnosticExportService.Export(_lastResult.Diagnostics, outputPath, format)
             );
-            _view.Status.Text = $"Exported diagnostics to {outputPath}.";
+            _view.Status.Text = Text(
+                $"診断を {outputPath} へ出力しました。",
+                $"Exported diagnostics to {outputPath}."
+            );
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            _view.Status.Text = exception.Message;
+            _view.Status.Text = Text($"エラー: {exception.Message}", exception.Message);
         }
     }
 
@@ -423,12 +494,15 @@ internal sealed class MainWindow : Window
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard is null)
         {
-            _view.Status.Text = "Clipboard is unavailable on this platform.";
+            _view.Status.Text = Text(
+                "このplatformではclipboardを利用できません。",
+                "Clipboard is unavailable on this platform."
+            );
             return;
         }
 
         await clipboard.SetTextAsync(text);
-        _view.Status.Text = "Copied to clipboard.";
+        _view.Status.Text = Text("clipboardへコピーしました。", "Copied to clipboard.");
     }
 
     private async Task OpenSelectedSourceAsync()
@@ -441,20 +515,29 @@ internal sealed class MainWindow : Window
         if (!File.Exists(row.FilePath))
         {
             await CopyTextAsync(row.LocationText);
-            _view.Status.Text = "Source file was not found; location copied instead.";
+            _view.Status.Text = Text(
+                "source fileが見つからないため、場所をコピーしました。",
+                "Source file was not found; location copied instead."
+            );
             return;
         }
 
         try
         {
             Process.Start(new ProcessStartInfo(row.FilePath) { UseShellExecute = true });
-            _view.Status.Text = "Opened source file with the default application.";
+            _view.Status.Text = Text(
+                "既定のapplicationでsource fileを開きました。",
+                "Opened source file with the default application."
+            );
         }
         catch (Exception exception)
             when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
             await CopyTextAsync(row.LocationText);
-            _view.Status.Text = "Could not open source file; location copied instead.";
+            _view.Status.Text = Text(
+                "source fileを開けないため、場所をコピーしました。",
+                "Could not open source file; location copied instead."
+            );
         }
     }
 
@@ -497,11 +580,15 @@ internal sealed class MainWindow : Window
         _view.TargetFolderButton.IsEnabled = !isBusy;
         _view.ConfigurationButton.IsEnabled = !isBusy;
         _view.EditConfigurationButton.IsEnabled = !isBusy;
+        _view.LanguageSelector.IsEnabled = !isBusy;
         _view.ExportJsonButton.IsEnabled = !isBusy && _lastResult is not null;
         _view.ExportSarifButton.IsEnabled = !isBusy && _lastResult is not null;
         _view.Progress.IsVisible = isBusy;
-        _view.Status.Text = isBusy ? "Analyzing..." : _view.Status.Text;
+        _view.Status.Text = isBusy ? Text("解析中...", "Analyzing...") : _view.Status.Text;
     }
+
+    private string Text(string japanese, string english) =>
+        UserInterfaceText.Select(_language, japanese, english);
 
     private static string? NormalizeOptionalPath(string? path) =>
         string.IsNullOrWhiteSpace(path) ? null : path.Trim();
