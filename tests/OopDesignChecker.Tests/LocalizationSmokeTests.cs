@@ -73,7 +73,9 @@ internal static class LocalizationSmokeTests
             )
         )
         {
-            throw new InvalidOperationException("Human-readable diagnostics were not localized correctly.");
+            throw new InvalidOperationException(
+                "Human-readable diagnostics were not localized correctly."
+            );
         }
     }
 
