@@ -1,22 +1,24 @@
-# Changelog
+# 変更履歴
+
+> **この日本語版が正本です。** 英語互換版は [CHANGELOG.en.md](CHANGELOG.en.md) を参照してください。内容に差異がある場合は、この日本語版を優先します。
 
 ## 0.1.0 - 2026-09-16
 
-Initial public release of `oop-design-checker`.
+`oop-design-checker` の初回公開リリース。
 
-### Added
+### 追加
 
-- C# object-oriented design analysis based on Roslyn and MSBuild.
-- Explicit rule severities: Danger, Warning, and Attention.
-- Encapsulation, inheritance, polymorphism, visibility, static-state, operation-complexity, object-integrity, coupling, and object-navigation checks.
-- `.cs`, `.csproj`, `.sln`, `.slnx`, and multi-project directory analysis.
-- Shared analysis core with CUI and Avalonia GUI frontends.
-- JSON, SARIF 2.1.0, GitHub Actions annotation, and concise text output.
-- Configurable ignored paths, disabled rules, and CI failure thresholds.
-- Parent-directory configuration discovery for nested project/build invocation.
-- Windows, Linux, and macOS self-contained CUI release packages for x64 and arm64.
-- Strict self-analysis, .NET analyzers, CSharpier, and three-OS CI quality gates.
+- Roslyn / MSBuild を利用した C# オブジェクト指向設計解析。
+- Danger / Warning / Attention の明示的severityモデル。
+- カプセル化、継承、ポリモーフィズム、可視性、static state、operation complexity、object integrity、coupling、object navigationの検査。
+- `.cs`、`.csproj`、`.sln`、`.slnx`、複数project directoryの解析。
+- 共有解析coreとCUI / Avalonia GUI frontend。
+- JSON、SARIF 2.1.0、GitHub Actions annotation、簡潔なtext出力。
+- ignored path、disabled rule、CI failure thresholdの設定。
+- nested project/build invocation向けの親directory設定探索。
+- Windows / Linux / macOS の x64 / arm64 向け self-contained CUI release package。
+- strict self-analysis、.NET Analyzer、CSharpier、3 OS CI quality gate。
 
-### Fixed
+### 修正
 
-- Relative `--config` paths now preserve target-relative fallback instead of being forced to the process working directory by the CUI parser.
+- CUI parserが相対 `--config` をprocess current working directoryへ固定せず、target-relative fallbackを維持するよう修正。

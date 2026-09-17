@@ -1,4 +1,5 @@
 using OopDesignChecker.Core;
+using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Gui;
 
@@ -9,10 +10,11 @@ public sealed record DiagnosticRow(
     int Line,
     int Column,
     string Message,
-    string? SymbolName
+    string? SymbolName,
+    UserInterfaceLanguage Language
 )
 {
-    public string SeverityText => Severity.ToString().ToUpperInvariant();
+    public string SeverityText => UserInterfaceText.SeverityName(Severity, Language);
 
     public string FileName => Path.GetFileName(FilePath);
 
@@ -22,15 +24,19 @@ public sealed record DiagnosticRow(
         $"{SeverityText} {RuleId} {LocationText} {Message}"
         + (string.IsNullOrWhiteSpace(SymbolName) ? string.Empty : $" [{SymbolName}]");
 
-    public static DiagnosticRow From(DesignDiagnostic diagnostic) =>
+    public static DiagnosticRow From(
+        DesignDiagnostic diagnostic,
+        UserInterfaceLanguage language = UserInterfaceLanguage.Japanese
+    ) =>
         new(
             diagnostic.Severity,
             diagnostic.Rule.Id,
             diagnostic.Location.FilePath,
             diagnostic.Location.Line,
             diagnostic.Location.Column,
-            diagnostic.Message,
-            diagnostic.SymbolName
+            UserInterfaceText.DiagnosticMessage(diagnostic.Rule.Id, diagnostic.Message, language),
+            diagnostic.SymbolName,
+            language
         );
 }
 

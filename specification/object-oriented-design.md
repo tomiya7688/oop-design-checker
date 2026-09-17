@@ -1,65 +1,67 @@
-# Object-Oriented Design Definition (Draft)
+# オブジェクト指向設計定義
 
-This repository defines its own checkable interpretation of object-oriented design.
+> **この日本語版が正本です。** 英語互換版は [en/object-oriented-design.md](en/object-oriented-design.md) を参照してください。内容に差異がある場合は、この日本語版を優先します。
 
-The checker does not judge whether OOP itself is good or bad. It analyzes whether a project that claims to use object-oriented design follows the rules defined here.
+このリポジトリは、オブジェクト指向設計について独自の、機械的に検査可能な解釈を定義します。
 
-## Fundamental principles
+このチェッカーは、OOPそのものが良いか悪いかを評価しません。オブジェクト指向を採用するとするプロジェクトが、ここで定義したルールに従っているかを解析します。
 
-The primary checks are derived from the three basic OOP principles:
+## 根本原則
 
-- Encapsulation
-- Inheritance
-- Polymorphism
+主要な検査は、次の3つの基本原則から導きます。
 
-The checker may also use supporting structural rules when they are necessary to make those principles work in actual code.
+- カプセル化
+- 継承
+- ポリモーフィズム
 
-## Encapsulation
+実コードでこれらの原則を成立させるために必要な場合は、補助的な構造ルールも使用します。ただし、それらを新たな「OOPの根本原則」とは扱いません。
 
-- Internal mutable state should not be exposed more than necessary.
-- Visibility should be the minimum required by actual usage.
-- Public setters, fields, collections, and methods should exist only when external access is truly required.
-- An object should preserve its own valid state and invariants where practical.
-- External classes should not need to manipulate another object's internal representation directly.
+## カプセル化
 
-## Inheritance
+- 内部の可変状態は、必要以上に外部へ公開しない。
+- 可視性は、実際の利用に必要な最小範囲とする。
+- public setter、field、collection、methodは、外部アクセスが本当に必要な場合だけ公開する。
+- オブジェクトは、可能な範囲で自分自身の妥当な状態と不変条件を守る。
+- 外部クラスが、別オブジェクトの内部表現を直接操作しなければ成立しない設計を避ける。
 
-- Inheritance should represent a meaningful parent/child relationship, not merely code reuse.
-- A child should make meaningful use of the parent contract.
-- A child that disables or rejects major parts of the parent behavior is suspicious.
-- Inheritance depth and unnecessary extensibility should be detected.
-- Types that are not intended to be inherited should be candidates for sealed form where supported.
+## 継承
 
-## Polymorphism
+- 継承は、単なるコード再利用ではなく、意味のある親子関係を表す。
+- 子型は、親の契約を意味のある形で利用する。
+- 親の主要な振る舞いを子が無効化・拒否する設計は疑わしい。
+- 深すぎる継承と、不要な拡張可能性を検出対象とする。
+- 継承される意図がない型は、言語が対応する場合 `sealed` 候補とする。
 
-- Types that are clearly handled as the same conceptual kind should have an appropriate common abstraction.
-- Repeated type checks and large type-switch branches are candidates for polymorphic replacement.
-- Callers should not routinely bypass a shared abstraction by depending directly on concrete child types.
-- Interfaces, abstract classes, traits, protocols, or equivalent abstractions should only be introduced when they represent a real shared concept.
+## ポリモーフィズム
 
-## Object integrity and supporting structure
+- 明確に同じ概念種として扱われる複数型には、適切な共通抽象を持たせる。
+- runtime type checkや大きなtype switchの反復は、ポリモーフィズムへ置き換えられる可能性を検査する。
+- 共有抽象があるのに、callerが常に具象子型へ直接依存して抽象を迂回する設計を避ける。
+- interface、abstract class、trait、protocol等の抽象は、本当に共有概念を表す場合だけ導入する。
 
-- A class may have multiple behaviors. The checker does not enforce one class = one responsibility.
-- The checker should warn when multiple clearly independent objects appear to be packed into one class.
-- State and the behavior that conceptually owns that state should not be split apart without a clear reason.
-- Data-only objects with all meaningful behavior moved into an external service may be flagged as an anemic-object candidate, while DTOs and similar transport models must remain valid use cases.
-- Classes with no meaningful instance state should be candidates for static form where the language supports it, unless instance identity, polymorphism, DI, or extensibility gives the instance meaning.
-- Stateful static classes that become global mutable state should be warned about.
-- Very large primary operations should be decomposed into meaningful functions when their internal complexity indicates multiple processing phases.
-- Dependency relationships should remain explicit and reasonably bounded; an object should not know about unrelated subsystems without need.
+## オブジェクト整合性と補助構造
 
-## Checker implementation policy
+- 1つのクラスが複数の振る舞いを持つこと自体は許容する。`1 class = 1 responsibility` は強制しない。
+- 明確に独立した複数オブジェクトが1クラスへ詰め込まれている場合は警告候補とする。
+- 状態と、その状態を概念上所有する振る舞いは、明確な理由なく分離しない。
+- 有意味な振る舞いをすべて外部serviceへ移したstate-only objectは貧血オブジェクト候補になり得る。ただし DTO やtransport model等の明示的data carrierは正当な用途として扱う。
+- 有意味なinstance stateを持たないclassは、instance identity、polymorphism、DI、拡張性などに意味がなければ、言語が対応する場合static化候補とする。
+- global mutable stateになるstateful static設計は警告する。
+- 主処理が非常に大きく、内部複雑度が複数の処理段階を示す場合は、意味のある関数へ分解する。
+- 依存関係は明示的かつ妥当な範囲に保つ。オブジェクトが無関係なsubsystemを不要に知る設計を避ける。
 
-The checker itself is written in C# and must follow the object-oriented design rules defined by this project strictly.
+## チェッカー自身の実装方針
 
-The checker is treated as a primary self-test target. A rule that the checker reports against its own implementation should be regarded as a defect in either the implementation, the rule definition, or the analyzer accuracy and must be reviewed rather than ignored by default.
+チェッカー本体は C# で実装し、本プロジェクトが定義するオブジェクト指向設計ルールへ厳格に従います。
 
-The implementation should therefore prefer clear object boundaries, appropriate abstractions, minimal visibility, correct use of static/sealed modifiers, meaningful function decomposition, and explicit dependency relationships.
+チェッカー自身を主要な自己検査対象とします。自分自身に対してルール違反が出た場合、既定では無視・抑制せず、実装・ルール定義・解析精度のいずれかの欠陥として確認します。
 
-## Non-goals
+そのため実装では、明確なオブジェクト境界、意味のある抽象、最小限の可視性、適切なstatic/sealed、意味のある関数分解、明示的な依存関係を優先します。
 
-- Do not define SOLID as identical to OOP.
-- Do not reject classes only because they are large.
-- Do not force interfaces mechanically.
-- Do not enforce one class = one responsibility.
-- Do not treat every data-only type as invalid; DTO/value/serialization models are legitimate when their role is explicit.
+## 非目標
+
+- SOLID と OOP を同一概念として定義しない。
+- クラスが大きいという理由だけで無効としない。
+- interfaceを機械的に強制しない。
+- `1 class = 1 responsibility` を強制しない。
+- data-only typeを一律に無効としない。DTO、value、serialization model等は役割が明示されていれば正当な設計とする。

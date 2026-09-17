@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
+using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Gui;
 
@@ -17,6 +18,8 @@ internal sealed class MainWindowView : Grid
     internal Button ClearConfigurationButton { get; } = new();
     internal Button AnalyzeButton { get; } = new();
     internal Button CancelButton { get; } = new();
+    internal ComboBox LanguageSelector { get; } = new();
+    internal TextBlock LanguageLabel { get; } = new();
     internal ProgressBar Progress { get; } = new();
     internal TextBlock Status { get; } = new();
     internal TextBlock DangerCount { get; } = new();
@@ -57,44 +60,87 @@ internal sealed class MainWindowView : Grid
         AddSection(BuildStatusSection(), 4);
     }
 
+    internal void ApplyLanguage(UserInterfaceLanguage language)
+    {
+        TargetPath.PlaceholderText = Text(
+            language,
+            "project、solution、C# file、またはproject directory",
+            "Project, solution, C# file, or project directory"
+        );
+        ConfigurationPath.PlaceholderText = Text(
+            language,
+            "任意: oop-design-checker.json",
+            "Optional oop-design-checker.json"
+        );
+
+        TargetFileButton.Content = Text(language, "ファイル...", "File...");
+        TargetFolderButton.Content = Text(language, "フォルダー...", "Folder...");
+        ConfigurationButton.Content = Text(language, "設定...", "Config...");
+        EditConfigurationButton.Content = Text(language, "編集...", "Edit...");
+        ClearConfigurationButton.Content = Text(language, "クリア", "Clear");
+        AnalyzeButton.Content = Text(language, "解析", "Analyze");
+        CancelButton.Content = Text(language, "キャンセル", "Cancel");
+        LanguageLabel.Text = Text(language, "言語:", "Language:");
+
+        DangerFilter.Content = Text(language, "危険", "Danger");
+        WarningFilter.Content = Text(language, "警告", "Warning");
+        AttentionFilter.Content = Text(language, "注意", "Attention");
+        SearchFilter.PlaceholderText = Text(
+            language,
+            "rule、file、symbol、messageで絞り込み",
+            "Filter by rule, file, symbol, or message"
+        );
+
+        CopySelectedButton.Content = Text(language, "選択をコピー", "Copy selected");
+        CopyAllButton.Content = Text(language, "すべてコピー", "Copy all");
+        OpenSourceButton.Content = Text(language, "sourceを開く", "Open source");
+        ExportJsonButton.Content = Text(language, "JSON出力...", "Export JSON...");
+        ExportSarifButton.Content = Text(language, "SARIF出力...", "Export SARIF...");
+
+        DiagnosticsGrid.Columns[0].Header = Text(language, "重大度", "Severity");
+        DiagnosticsGrid.Columns[1].Header = Text(language, "ルール", "Rule");
+        DiagnosticsGrid.Columns[2].Header = Text(language, "ファイル", "File");
+        DiagnosticsGrid.Columns[3].Header = Text(language, "行", "Line");
+        DiagnosticsGrid.Columns[4].Header = Text(language, "列", "Column");
+        DiagnosticsGrid.Columns[5].Header = Text(language, "メッセージ", "Message");
+    }
+
+    internal void ClearDetails(UserInterfaceLanguage language)
+    {
+        DetailSeverity.Text = Text(language, "重大度: -", "Severity: -");
+        DetailRule.Text = Text(language, "ルール: -", "Rule: -");
+        DetailSymbol.Text = Text(language, "シンボル: -", "Symbol: -");
+        DetailLocation.Text = Text(language, "場所: -", "Location: -");
+        DetailMessage.Text = Text(
+            language,
+            "診断を選択すると詳細を表示します。",
+            "Select a diagnostic to see its full message."
+        );
+    }
+
     private void ConfigureControls()
     {
         TargetPath.Text = Directory.GetCurrentDirectory();
-        TargetPath.PlaceholderText = "Project, solution, C# file, or project directory";
-        ConfigurationPath.PlaceholderText = "Optional oop-design-checker.json";
-
-        TargetFileButton.Content = "File...";
-        TargetFolderButton.Content = "Folder...";
-        ConfigurationButton.Content = "Config...";
-        EditConfigurationButton.Content = "Edit...";
-        ClearConfigurationButton.Content = "Clear";
-        AnalyzeButton.Content = "Analyze";
-        CancelButton.Content = "Cancel";
         CancelButton.IsEnabled = false;
 
-        DangerFilter.Content = "Danger";
         DangerFilter.IsChecked = true;
-        WarningFilter.Content = "Warning";
         WarningFilter.IsChecked = true;
-        AttentionFilter.Content = "Attention";
         AttentionFilter.IsChecked = true;
-        SearchFilter.PlaceholderText = "Filter by rule, file, symbol, or message";
 
-        CopySelectedButton.Content = "Copy selected";
-        CopyAllButton.Content = "Copy all";
-        OpenSourceButton.Content = "Open source";
-        ExportJsonButton.Content = "Export JSON...";
-        ExportSarifButton.Content = "Export SARIF...";
+        LanguageSelector.ItemsSource = new[] { "日本語", "English" };
+        LanguageSelector.SelectedIndex = 0;
+        LanguageSelector.MinWidth = 100;
 
         Progress.IsIndeterminate = true;
         Progress.IsVisible = false;
-        Status.Text = "Ready";
         DetailMessage.TextWrapping = TextWrapping.Wrap;
         DetailLocation.TextWrapping = TextWrapping.Wrap;
         ConfigurationSummary.TextWrapping = TextWrapping.Wrap;
 
         ConfigureDiagnosticsGrid();
-        ClearDetails();
+        ApplyLanguage(UserInterfaceLanguage.Japanese);
+        Status.Text = "準備完了";
+        ClearDetails(UserInterfaceLanguage.Japanese);
     }
 
     private void ConfigureDiagnosticsGrid()
@@ -108,14 +154,12 @@ internal sealed class MainWindowView : Grid
         DiagnosticsGrid.SelectionMode = DataGridSelectionMode.Single;
         DiagnosticsGrid.MinHeight = 260;
 
-        DiagnosticsGrid.Columns.Add(
-            CreateTextColumn("Severity", nameof(DiagnosticRow.SeverityText))
-        );
-        DiagnosticsGrid.Columns.Add(CreateTextColumn("Rule", nameof(DiagnosticRow.RuleId)));
-        DiagnosticsGrid.Columns.Add(CreateTextColumn("File", nameof(DiagnosticRow.FileName)));
-        DiagnosticsGrid.Columns.Add(CreateTextColumn("Line", nameof(DiagnosticRow.Line)));
-        DiagnosticsGrid.Columns.Add(CreateTextColumn("Column", nameof(DiagnosticRow.Column)));
-        DiagnosticsGrid.Columns.Add(CreateTextColumn("Message", nameof(DiagnosticRow.Message)));
+        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.SeverityText)));
+        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.RuleId)));
+        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.FileName)));
+        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.Line)));
+        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.Column)));
+        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.Message)));
     }
 
     private Grid BuildTargetSection()
@@ -146,13 +190,12 @@ internal sealed class MainWindowView : Grid
             Spacing = 12,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        panel.Children.Add(
-            new TextBlock { Text = "Show:", VerticalAlignment = VerticalAlignment.Center }
-        );
         panel.Children.Add(DangerFilter);
         panel.Children.Add(WarningFilter);
         panel.Children.Add(AttentionFilter);
         panel.Children.Add(SearchFilter);
+        panel.Children.Add(LanguageLabel);
+        panel.Children.Add(LanguageSelector);
         panel.Children.Add(AnalyzeButton);
         panel.Children.Add(CancelButton);
         return panel;
@@ -182,7 +225,6 @@ internal sealed class MainWindowView : Grid
     private Border BuildDetailPane()
     {
         var panel = new StackPanel { Spacing = 8, Margin = new Thickness(8) };
-        panel.Children.Add(new TextBlock { Text = "Diagnostic details", FontSize = 18 });
         panel.Children.Add(DetailSeverity);
         panel.Children.Add(DetailRule);
         panel.Children.Add(DetailSymbol);
@@ -222,20 +264,17 @@ internal sealed class MainWindowView : Grid
         return grid;
     }
 
-    internal void ClearDetails()
-    {
-        DetailSeverity.Text = "Severity: -";
-        DetailRule.Text = "Rule: -";
-        DetailSymbol.Text = "Symbol: -";
-        DetailLocation.Text = "Location: -";
-        DetailMessage.Text = "Select a diagnostic to see its full message.";
-    }
-
     private void AddSection(Control control, int row)
     {
         Grid.SetRow(control, row);
         Children.Add(control);
     }
+
+    private static string Text(
+        UserInterfaceLanguage language,
+        string japanese,
+        string english
+    ) => UserInterfaceText.Select(language, japanese, english);
 
     private static DataGridTextColumn CreateTextColumn(string header, string propertyName) =>
         new() { Header = header, Binding = new Binding(propertyName) };

@@ -1,3 +1,4 @@
+using OopDesignChecker.Localization;
 using OopDesignChecker.Output;
 
 namespace OopDesignChecker.Application;
@@ -30,7 +31,13 @@ internal sealed class CheckerApplication
                     && options.OutputPath is null
                         ? Console.Out
                         : Console.Error;
-                writer.WriteLine($"Config: {result.ConfigurationPath}");
+                writer.WriteLine(
+                    UserInterfaceText.Select(
+                        options.Language,
+                        $"設定: {result.ConfigurationPath}",
+                        $"Config: {result.ConfigurationPath}"
+                    )
+                );
             }
 
             return result.ShouldFail ? 1 : 0;
@@ -42,7 +49,13 @@ internal sealed class CheckerApplication
                         or InvalidOperationException
             )
         {
-            Console.Error.WriteLine($"Analysis failed: {exception.Message}");
+            Console.Error.WriteLine(
+                UserInterfaceText.Select(
+                    options.Language,
+                    $"解析に失敗しました: {exception.Message}",
+                    $"Analysis failed: {exception.Message}"
+                )
+            );
             return 2;
         }
     }

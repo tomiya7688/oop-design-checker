@@ -1,20 +1,40 @@
 using OopDesignChecker.Core;
+using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Output;
 
 internal sealed class GitHubAnnotationDiagnosticWriter : IDiagnosticWriter
 {
+    private readonly UserInterfaceLanguage _language;
+
+    public GitHubAnnotationDiagnosticWriter(
+        UserInterfaceLanguage language = UserInterfaceLanguage.Japanese
+    )
+    {
+        _language = language;
+    }
+
     public void Write(IReadOnlyList<DesignDiagnostic> diagnostics, bool verbose)
     {
         foreach (var diagnostic in diagnostics)
         {
             var annotation = FormatAnnotationLevel(diagnostic.Severity);
             var file = EscapeProperty(diagnostic.Location.FilePath);
-            var title = EscapeProperty($"{diagnostic.Rule.Id} {diagnostic.Rule.Title}");
+            var localizedTitle = UserInterfaceText.RuleTitle(
+                diagnostic.Rule.Id,
+                diagnostic.Rule.Title,
+                _language
+            );
+            var title = EscapeProperty($"{diagnostic.Rule.Id} {localizedTitle}");
+            var localizedMessage = UserInterfaceText.DiagnosticMessage(
+                diagnostic.Rule.Id,
+                diagnostic.Message,
+                _language
+            );
             var message = EscapeMessage(
                 diagnostic.SymbolName is null
-                    ? diagnostic.Message
-                    : $"{diagnostic.SymbolName}: {diagnostic.Message}"
+                    ? localizedMessage
+                    : $"{diagnostic.SymbolName}: {localizedMessage}"
             );
 
             Console.WriteLine(

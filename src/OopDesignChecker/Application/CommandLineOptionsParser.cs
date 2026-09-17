@@ -1,11 +1,16 @@
 using OopDesignChecker.Core;
+using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Application;
 
 internal static class CommandLineOptionsParser
 {
-    public const string Usage =
-        "Usage: oop-design-checker [path] [--config file] [--fail-on danger|warning|attention] [--format text|json|sarif|github] [--output file] [--verbose] [--version]";
+    public static string Usage(UserInterfaceLanguage language) =>
+        UserInterfaceText.Select(
+            language,
+            "使い方: oop-design-checker [path] [--config file] [--fail-on danger|warning|attention] [--format text|json|sarif|github] [--output file] [--language ja|en] [--verbose] [--version]",
+            "Usage: oop-design-checker [path] [--config file] [--fail-on danger|warning|attention] [--format text|json|sarif|github] [--output file] [--language ja|en] [--verbose] [--version]"
+        );
 
     public static CommandLineParseResult Parse(IReadOnlyList<string> args)
     {
@@ -29,6 +34,7 @@ internal static class CommandLineOptionsParser
         private DesignDiagnosticSeverity? _failureThreshold;
         private bool _verbose;
         private DiagnosticOutputFormat _outputFormat = DiagnosticOutputFormat.Text;
+        private UserInterfaceLanguage _language = UserInterfaceText.DefaultLanguage;
 
         public bool TryConsume(IReadOnlyList<string> args, ref int index, out string? errorMessage)
         {
@@ -39,9 +45,10 @@ internal static class CommandLineOptionsParser
                 "--fail-on" => TrySetFailureThreshold(args, ref index, out errorMessage),
                 "--format" => TrySetOutputFormat(args, ref index, out errorMessage),
                 "--output" => TrySetOutputPath(args, ref index, out errorMessage),
+                "--language" => TrySetLanguage(args, ref index, out errorMessage),
                 "--warnings-as-errors" => SetWarningsAsErrors(out errorMessage),
                 "--verbose" => SetVerbose(out errorMessage),
-                "--help" or "-h" => Fail(Usage, out errorMessage),
+                "--help" or "-h" => Fail(Usage(_language), out errorMessage),
                 _ => TrySetTargetPath(argument, out errorMessage),
             };
         }
@@ -51,7 +58,10 @@ internal static class CommandLineOptionsParser
             if (_outputFormat == DiagnosticOutputFormat.GitHub && _outputPath is not null)
             {
                 return CommandLineParseResult.Failure(
-                    "--output cannot be used with --format github because workflow annotations must be written to stdout."
+                    Text(
+                        "--format github ではworkflow annotationをstdoutへ出す必要があるため、--outputは使用できません。",
+                        "--output cannot be used with --format github because workflow annotations must be written to stdout."
+                    )
                 );
             }
 
@@ -63,7 +73,8 @@ internal static class CommandLineOptionsParser
                     _failureThreshold,
                     _verbose,
                     _outputFormat,
-                    _outputPath is null ? null : Path.GetFullPath(_outputPath)
+                    _outputPath is null ? null : Path.GetFullPath(_outputPath),
+                    _language
                 )
             );
         }
@@ -76,7 +87,10 @@ internal static class CommandLineOptionsParser
         {
             if (!TryReadValue(args, ref index, out _configurationPath))
             {
-                return Fail("--config requires a file path.", out errorMessage);
+                return Fail(
+                    Text("--configには設定ファイルpathが必要です。", "--config requires a file path."),
+                    out errorMessage
+                );
             }
 
             return Succeed(out errorMessage);
@@ -93,7 +107,13 @@ internal static class CommandLineOptionsParser
                 || !TryParseSeverity(thresholdText, out var parsedThreshold)
             )
             {
-                return Fail("--fail-on requires danger, warning, or attention.", out errorMessage);
+                return Fail(
+                    Text(
+                        "--fail-onにはdanger、warning、attentionのいずれかを指定してください。",
+                        "--fail-on requires danger, warning, or attention."
+                    ),
+                    out errorMessage
+                );
             }
 
             _failureThreshold = parsedThreshold;
@@ -111,7 +131,13 @@ internal static class CommandLineOptionsParser
                 || !TryParseOutputFormat(formatText, out _outputFormat)
             )
             {
-                return Fail("--format requires text, json, sarif, or github.", out errorMessage);
+                return Fail(
+                    Text(
+                        "--formatにはtext、json、sarif、githubのいずれかを指定してください。",
+                        "--format requires text, json, sarif, or github."
+                    ),
+                    out errorMessage
+                );
             }
 
             return Succeed(out errorMessage);
@@ -125,7 +151,33 @@ internal static class CommandLineOptionsParser
         {
             if (!TryReadValue(args, ref index, out _outputPath))
             {
-                return Fail("--output requires a file path.", out errorMessage);
+                return Fail(
+                    Text("--outputには出力ファイルpathが必要です。", "--output requires a file path."),
+                    out errorMessage
+                );
+            }
+
+            return Succeed(out errorMessage);
+        }
+
+        private bool TrySetLanguage(
+            IReadOnlyList<string> args,
+            ref int index,
+            out string? errorMessage
+        )
+        {
+            if (
+                !TryReadValue(args, ref index, out var languageText)
+                || !UserInterfaceText.TryParseLanguage(languageText, out _language)
+            )
+            {
+                return Fail(
+                    Text(
+                        "--languageにはjaまたはenを指定してください。",
+                        "--language requires ja or en."
+                    ),
+                    out errorMessage
+                );
             }
 
             return Succeed(out errorMessage);
@@ -147,12 +199,21 @@ internal static class CommandLineOptionsParser
         {
             if (argument.StartsWith('-'))
             {
-                return Fail($"Unknown option: {argument}", out errorMessage);
+                return Fail(
+                    Text($"不明なoptionです: {argument}", $"Unknown option: {argument}"),
+                    out errorMessage
+                );
             }
 
             if (_targetPath is not null)
             {
-                return Fail("Only one target path can be specified.", out errorMessage);
+                return Fail(
+                    Text(
+                        "解析対象pathは1つだけ指定できます。",
+                        "Only one target path can be specified."
+                    ),
+                    out errorMessage
+                );
             }
 
             _targetPath = argument;
@@ -197,6 +258,9 @@ internal static class CommandLineOptionsParser
             format = default;
             return false;
         }
+
+        private string Text(string japanese, string english) =>
+            UserInterfaceText.Select(_language, japanese, english);
 
         private static bool Succeed(out string? errorMessage)
         {
