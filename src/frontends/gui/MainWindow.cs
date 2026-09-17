@@ -247,7 +247,10 @@ internal sealed class MainWindow : Window
             $"シンボル: {row.SymbolName ?? "-"}",
             $"Symbol: {row.SymbolName ?? "-"}"
         );
-        _view.DetailLocation.Text = Text($"場所: {row.LocationText}", $"Location: {row.LocationText}");
+        _view.DetailLocation.Text = Text(
+            $"場所: {row.LocationText}",
+            $"Location: {row.LocationText}"
+        );
         _view.DetailMessage.Text = row.Message;
     }
 
