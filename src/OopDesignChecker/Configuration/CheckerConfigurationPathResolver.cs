@@ -60,7 +60,10 @@ public static class CheckerConfigurationPathResolver
         var directory = new DirectoryInfo(targetDirectory);
         while (directory is not null)
         {
-            var candidate = Path.Combine(directory.FullName, CheckerConfigurationLoader.DefaultFileName);
+            var candidate = Path.Combine(
+                directory.FullName,
+                CheckerConfigurationLoader.DefaultFileName
+            );
             if (File.Exists(candidate))
             {
                 return candidate;
