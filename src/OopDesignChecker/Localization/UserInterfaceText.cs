@@ -100,8 +100,10 @@ public static class UserInterfaceText
             "OOP003" => "この抽象は共有概念や拡張点としての意味が弱く、不要な可能性があります。",
             "OOP101" => "実際の利用範囲に対して可視性が広すぎる可能性があります。",
             "OOP102" => "継承される意図が確認できないため、sealed化を検討できます。",
-            "OOP103" => "instance stateへ依存しないため、static memberとして表現できる可能性があります。",
-            "OOP104" => "有意味なinstance stateがないため、static classとして表現できる可能性があります。",
+            "OOP103" =>
+                "instance stateへ依存しないため、static memberとして表現できる可能性があります。",
+            "OOP104" =>
+                "有意味なinstance stateがないため、static classとして表現できる可能性があります。",
             "OOP105" => "static領域に可変共有状態があり、global mutable stateになっています。",
             "OOP106" => "内部表現が外部へ直接公開され、所有objectを迂回して変更できる可能性があります。",
             "OOP107" => "object自身が守るべき不変条件を外部から迂回できる可能性があります。",
@@ -114,11 +116,13 @@ public static class UserInterfaceText
             "OOP305" => "共有抽象で表現できる振る舞いに対して、具象型へ直接依存しています。",
             "OOP306" => "置換可能なcollaboratorを利用側が直接生成しており、具象生成依存を避けられる可能性があります。",
             "OOP307" => "この継承は、意味的なis-a関係よりcompositionで表現する方が適切な可能性があります。",
-            "OOP401" => "1つのclass内に、独立して存在できる複数のstate/behavior clusterがある可能性があります。",
+            "OOP401" =>
+                "1つのclass内に、独立して存在できる複数のstate/behavior clusterがある可能性があります。",
             "OOP402" => "stateを持つobjectから有意味なbehaviorが外部へ移りすぎている可能性があります。",
             "OOP403" => "objectが自身のidentityと関係の薄い複数のsubsystemへ依存している可能性があります。",
             "OOP404" => "別objectの内部graphを深く辿っており、内部構造へのcouplingが強くなっています。",
-            "OOP405" => "このobjectはgetter/setter中心で、有意味なstate operationが外部にある可能性があります。",
+            "OOP405" =>
+                "このobjectはgetter/setter中心で、有意味なstate operationが外部にある可能性があります。",
             _ => englishMessage,
         };
     }
