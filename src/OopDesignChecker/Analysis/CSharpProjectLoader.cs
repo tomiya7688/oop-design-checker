@@ -304,10 +304,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         );
     }
 
-    private string? ResolveSolutionFile(
-        string targetDirectory,
-        CancellationToken cancellationToken
-    )
+    private string? ResolveSolutionFile(string targetDirectory, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var solutionFiles = Directory
