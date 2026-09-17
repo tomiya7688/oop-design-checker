@@ -78,10 +78,7 @@ internal static class LocalizationSmokeTests
         }
     }
 
-    private static string CaptureWriter(
-        UserInterfaceLanguage language,
-        DesignDiagnostic diagnostic
-    )
+    private static string CaptureWriter(UserInterfaceLanguage language, DesignDiagnostic diagnostic)
     {
         var path = Path.Combine(Path.GetTempPath(), $"oop-localization-{Guid.NewGuid():N}.txt");
         try
