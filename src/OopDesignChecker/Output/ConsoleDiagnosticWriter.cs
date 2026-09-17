@@ -52,12 +52,7 @@ internal sealed class ConsoleDiagnosticWriter : IDiagnosticWriter
         );
 
         writer.WriteLine(
-            LocalizedText.DiagnosticsSummary(
-                _language,
-                dangerCount,
-                warningCount,
-                attentionCount
-            )
+            LocalizedText.DiagnosticsSummary(_language, dangerCount, warningCount, attentionCount)
         );
     }
 
