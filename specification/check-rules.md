@@ -1,174 +1,178 @@
-# Check Rules (Draft)
+# チェックルール（ドラフト）
 
-This file records candidate checks discussed during design.
+[English](check-rules.en.md)
 
-## OOP001 Missing common abstraction
+> この日本語版を正本とします。英語版との間に差異がある場合は、日本語版を優先します。
 
-Warn when multiple types are clearly handled as the same conceptual kind but no common abstraction exists.
+この文書は、設計議論で確定・検討したチェック内容を記録します。
 
-Signals may include similar public behavior, compatible signatures, repeated type branching, and common call sites.
+## OOP001 共通抽象の欠如
 
-## OOP002 Polymorphism bypassed by type branching
+複数の型が明確に同じ概念上の種類として扱われているにもかかわらず、適切な共通抽象が存在しない場合に警告します。
 
-Warn when callers repeatedly branch on concrete runtime types or type codes where behavior could reasonably be expressed through a shared abstraction.
+根拠には、類似したpublicな振る舞い、互換性のあるsignature、繰り返される型分岐、共通のcall siteなどを利用できます。
 
-## OOP003 Unnecessary abstraction
+## OOP002 型分岐による多態性の迂回
 
-Warn when an interface or abstract type has no meaningful shared concept and appears to exist only as ceremony. This must be conservative because single-implementation abstractions can still be intentional extension points.
+共有抽象で振る舞いを表現できる状況で、呼び出し側が具象runtime typeやtype codeによる分岐を繰り返している場合に警告します。
 
-## OOP101 Excessive visibility
+## OOP003 不要な抽象
 
-Warn when a type/member is more visible than its actual usage requires. Escalate only when the encapsulation break is structurally clear.
+interfaceやabstract typeが意味のある共通概念を表さず、儀礼的に存在しているだけと判断できる場合に注意します。単一実装の抽象でも意図的な拡張点になり得るため、判定は保守的に行います。
 
-Example: a type used only inside a parent/child hierarchy is declared public.
+## OOP101 過剰な可視性
 
-## OOP102 Sealing candidate
+型やmemberが、実際の利用に必要な範囲より広く公開されている場合に警告します。カプセル化の破壊が構造的に明確な場合にのみ強く扱います。
 
-Suggest sealing when a type is not externally extensible, has no known derived types, and is not intended for inheritance.
+例: 親子hierarchy内でしか使われない型がpublicになっている。
 
-## OOP103 Static member candidate
+## OOP102 sealed候補
 
-Suggest static for methods that do not depend on instance state.
+外部からの拡張を意図せず、既知の派生型もなく、継承用途が確認できない型をsealed相当の候補として注意します。
 
-## OOP104 Static class candidate
+## OOP103 static member候補
 
-Suggest static form for classes that have no meaningful instance state and no polymorphic/DI/identity reason to be instantiated.
+instance stateへ依存しないmethodをstatic候補として注意します。
 
-## OOP105 Stateful static design
+## OOP104 static class候補
 
-Warn when a static class accumulates mutable shared state and behaves as global state.
+意味のあるinstance stateを持たず、多態性・DI・identityなどinstanceである理由もないclassをstatic形態の候補として注意します。
 
-## OOP106 Encapsulation leak
+## OOP105 stateful static設計
 
-Warn when internal representation is exposed directly. Directly mutable public state and directly exposed mutable storage are Danger-level violations because callers can bypass the owning object. Less severe exposure, such as an unnecessarily public setter whose use is still controlled, may remain Warning.
+static classが可変な共有状態を蓄積し、global stateとして振る舞っている場合に警告します。
 
-## OOP107 Object invariant can be bypassed
+## OOP106 カプセル化漏れ
 
-Warn when callers can place an object into an invalid state by directly mutating values that should be guarded by the object itself. High-confidence direct invariant bypasses may be Danger.
+内部表現を直接外部へ公開している場合に警告します。直接変更可能なpublic stateや、内部の可変storageをそのまま公開する設計は、所有オブジェクトを迂回して変更できるためDangerとします。一方、不必要なpublic setterのように、より軽度の公開はWarningに留める場合があります。
 
-## OOP108 Excessive external state manipulation
+## OOP107 オブジェクト不変条件の迂回
 
-Warn when another class routinely reads and writes the internal state of an object instead of asking that object to perform the behavior itself.
+本来オブジェクト自身が保護すべき値を呼び出し側が直接変更でき、不正な状態へ遷移させられる場合に警告します。確度の高い直接的な不変条件迂回はDangerになり得ます。
 
-## OOP201 Oversized main operation
+## OOP108 過剰な外部状態操作
 
-Warn when an object's primary operation is excessively large or complex.
+別classが、対象オブジェクトへ振る舞いを依頼する代わりに、その内部状態を日常的に読み書きしている場合に警告します。
 
-Use more than line count: complexity, nesting, branching, local state, and distinct processing phases should contribute to confidence.
+## OOP201 巨大な主要操作
 
-## OOP301 Suspicious inheritance relationship
+オブジェクトの主要操作が過度に大きい、または複雑な場合に警告します。
 
-Warn when inheritance appears to be used mainly for code reuse rather than a meaningful parent/child relationship.
+行数だけで判断せず、complexity、nesting、branch、local state、明確に異なる処理phaseなどを根拠として組み合わせます。
 
-## OOP302 Parent contract mostly unused
+## OOP301 疑わしい継承関係
 
-Warn when a child type inherits a broad parent contract but uses or supports only a small part of it.
+意味のある親子関係ではなく、主にコード再利用のために継承していると判断できる場合に警告します。
 
-## OOP303 Child disables parent behavior
+## OOP302 親契約の大部分を未使用
 
-Danger when a child implementation structurally rejects or disables a parent operation it is expected to support, for example an override that always throws `NotSupportedException`.
+子型が広い親契約を継承しているにもかかわらず、その一部しか利用・対応していない場合に警告します。
 
-## OOP304 Excessive inheritance depth
+## OOP303 子が親の振る舞いを無効化
 
-Attention when the project-owned class inheritance chain becomes deep enough to make behavior difficult to reason about. The default attention threshold is depth `4`, configurable through `ruleSettings.oop304.warningDepth` with a minimum value of `1`.
+子の実装が、本来対応すべき親操作を構造的に拒否・無効化している場合はDangerとします。例として、overrideが常に`NotSupportedException`を投げる場合があります。
 
-Depth is counted across every project loaded in the same analysis, including project-reference boundaries. Framework, runtime, NuGet, and other external-library ancestry is not charged to the project; counting stops at the first base type whose assembly is outside the analyzed project set. Interfaces are not part of this class-inheritance depth.
+## OOP304 過剰な継承深度
 
-Deep inheritance remains a supporting signal rather than a definition of invalid OOP because deliberate framework or domain hierarchies can still justify it.
+プロジェクト自身が所有するclass継承chainが深くなり、振る舞いの理解が難しくなる場合にAttentionを出します。既定のしきい値は深度`4`で、`ruleSettings.oop304.warningDepth`から変更できます。最小値は`1`です。
 
-## OOP305 Concrete-type dependency despite abstraction
+深度は、同一解析で読み込まれた全projectを跨いで数えます。project referenceの境界も含みます。一方、framework、runtime、NuGetその他外部libraryの祖先はproject側の深度として数えず、解析対象project setに属さないbase typeへ到達した時点で打ち切ります。interfaceはclass継承深度へ含めません。
 
-Warn when a shared abstraction exists but callers routinely downcast or depend on concrete child types to perform behavior already covered by that abstraction.
+深い継承は、意図的なframework hierarchyやdomain hierarchyで正当化される場合もあるため、不正なOOPの定義ではなく補助的なsignalとして扱います。
 
-The existence of an abstraction alone is not enough. If the consumer actually requires concrete-only behavior, properties, events, or another concrete-only contract, the concrete dependency can be intentional and should not be reported mechanically.
+## OOP305 抽象があるにもかかわらず具象型へ依存
 
-## OOP306 Avoidable concrete construction dependency
+共有抽象が存在し、その抽象で表現できる振る舞いしか必要としていないにもかかわらず、呼び出し側が具象子型へ直接依存している場合に警告します。
 
-Warn when a class repeatedly constructs concrete collaborators directly even though those collaborators represent replaceable behavior or already have a suitable abstraction.
+抽象が存在するだけでは違反としません。consumerが具象型固有の振る舞い、property、event、または別の具象固有契約を実際に必要としている場合、その具象依存は意図的な可能性があり、機械的には報告しません。
 
-A `new` expression by itself is not a violation. Value objects, owned internal objects, immutable data, objects whose lifecycle clearly belongs to the creator, factory-owned return values, nested object-graph construction, and explicit composition-root/bootstrap wiring are valid direct constructions. This rule should focus on replaceable service-like dependencies and high-confidence cases.
+## OOP306 回避可能な具象生成依存
 
-## OOP307 Composition may be more appropriate than inheritance
+置換可能な振る舞いを持つcollaborator、または既に適切な抽象を持つcollaboratorをclass内部で直接生成し続けている場合に警告します。
 
-Warn conservatively when a child type uses inheritance mainly to obtain implementation while its semantic relationship to the parent is weak, especially when it overrides or hides a large part of the inherited behavior.
+`new`式そのものは違反ではありません。value object、所有する内部object、immutable data、creatorがlifecycleを明確に所有するobject、factoryがreturnする生成、nested object graph構築、明示的なcomposition root/bootstrap配線は正当な直接生成です。このルールは、置換可能なservice-like dependencyについて確度の高いケースに絞ります。
 
-## OOP401 Possible multiple objects in one class
+## OOP307 継承よりcompositionが適切な可能性
 
-Do not enforce one class = one responsibility.
+子型が主に親実装を利用するためだけに継承し、親との意味的関係が弱い場合に、composition候補として保守的に注意します。親の振る舞いの大部分をoverride/hideする場合などが強いsignalです。
 
-Warn when a class appears to contain multiple independent state/behavior clusters that could exist separately.
+## OOP401 1class内に複数objectが存在する可能性
 
-Useful signals:
-- field groups used by disjoint method groups
-- separate dependency clusters
-- separate lifecycle patterns
-- little or no shared state
-- one cluster can be removed without changing the identity of another
+「1class = 1責務」は強制しません。
 
-High-confidence cases may become Danger; uncertain cases remain Warning or Attention.
+1つのclass内部に、それぞれ独立して存在できる複数のstate/behavior clusterがあると判断できる場合に警告します。
 
-## OOP402 Anemic object candidate
+有用なsignal:
+- 異なるmethod群から使われる分離したfield群
+- 分離したdependency cluster
+- 異なるlifecycle pattern
+- 共有stateがほとんど、または全くない
+- 一方のclusterを取り除いても、もう一方のidentityが変わらない
 
-Warn when an object mainly stores state while nearly all meaningful behavior that owns that state lives in an external service.
+確度の高いケースは将来的に強められますが、不確かなケースはWarningまたはAttentionに留めます。
 
-DTOs, serialization models, database records, and other explicit data-carrier types must remain valid cases.
+## OOP402 貧血オブジェクト候補
 
-## OOP403 Excessive unrelated dependencies
+オブジェクト自身は主にstateを保持するだけで、そのstateを所有すべき意味のある振る舞いのほぼすべてが外部serviceに置かれている場合に警告します。
 
-Warn when an object directly knows about many unrelated subsystems or dependency groups with no clear relation to its identity.
+DTO、serialization model、database recordなど、役割が明示されたdata carrierは正当なケースとして扱います。
 
-## OOP404 Excessive navigation through object internals
+## OOP403 無関係な依存の過剰保持
 
-Warn when code repeatedly traverses deep object chains such as `a.B.C.D.DoSomething()` and therefore depends on the internal object graph of another object.
+オブジェクトが、自身のidentityと明確な関係を持たない多数のsubsystemまたはdependency groupを直接知っている場合に警告します。
 
-This is inspired by the Law of Demeter, but raw dot-counting must not be used as the only criterion. Fluent APIs, LINQ-style pipelines, builders, immutable value transformations, namespaces, and ordinary static qualification can legitimately contain long chains.
+## OOP404 オブジェクト内部構造の過剰navigation
 
-Prefer semantic detection of repeated navigation across object boundaries.
+`a.B.C.D.DoSomething()`のように深いobject chainを繰り返し辿り、他objectの内部graphへ強く依存している場合に注意します。
 
-## OOP405 Getter/setter-only object candidate
+Law of Demeterから着想を得ていますが、単純なdot数だけでは判定しません。fluent API、LINQ pipeline、builder、immutable value transformation、namespace、通常のstatic qualificationでは長いchainが正当な場合があります。
 
-Warn when a class is overwhelmingly composed of trivial getters and setters while meaningful operations on its state are implemented elsewhere.
+object境界を跨ぐnavigationを意味的に検出することを優先します。
 
-This is a supporting signal for OOP402 rather than an automatic Danger. Explicit data-carrier types are exempt.
+## OOP405 getter/setterだけのオブジェクト候補
 
-## Metric-assisted signals
+classの大部分が単純なgetter/setterで構成され、そのstateに対する意味のある操作が外部で実装されている場合に注意します。
 
-The checker may calculate traditional metrics such as:
+これはOOP402を補助するsignalであり、自動的なDangerではありません。明示的なdata carrierは除外します。
+
+## metricを使った補助signal
+
+チェッカーは次のような従来metricを利用できます。
 
 - LOC
-- method count
-- field count
+- method数
+- field数
 - cyclomatic complexity
-- maximum nesting depth
-- LCOM or similar cohesion metrics
-- coupling / dependency counts
-- inheritance depth
+- 最大nesting深度
+- LCOMまたは同種のcohesion metric
+- coupling / dependency数
+- 継承深度
 
-These metrics are evidence, not definitions of object-oriented correctness.
+これらのmetricは根拠であり、オブジェクト指向として正しいかどうかの定義ではありません。
 
-In particular:
+特に次を守ります。
 
-- a large class is not automatically invalid;
-- many methods do not automatically mean multiple responsibilities;
-- low cohesion should strengthen OOP401 only when independent object clusters can also be identified;
-- high complexity should strengthen OOP201 rather than becoming a generic OOP violation;
-- SOLID rules may be provided as optional or supporting analyses, but SOLID is not defined as identical to OOP in this project.
+- classが大きいだけで自動的に不正とはしない。
+- method数が多いだけで複数責務とは判断しない。
+- low cohesionは、独立したobject clusterも確認できる場合にのみOOP401の根拠を強める。
+- high complexityはOOP201の根拠を強めるものであり、一般的なOOP違反へ変換しない。
+- SOLID系ルールを将来option/supporting analysisとして追加することはできるが、このprojectではSOLIDをOOPと同一には定義しない。
 
-## Severity model
+## severity model
 
-- `DANGER`: a structurally clear violation of a rule this project considers fundamental to claiming OOP design. These fail CI by default.
-- `WARNING`: normally undesirable or suspicious OOP design, but not inherently fatal and sometimes justified by context.
-- `ATTENTION`: strict-design guidance where enforcing the rule can reduce flexibility, introduce a bottleneck, conflict with framework constraints, or otherwise carry meaningful tradeoffs.
+- `DANGER`: このprojectがOOPを名乗る上で基本的とするルールに対する、構造的に明確な違反。既定ではCIを失敗させます。
+- `WARNING`: OOP設計として通常は望ましくない、または疑わしいが、致命的とは限らず、contextによって正当化される場合があるもの。
+- `ATTENTION`: 厳格な設計では避ける候補だが、強制すると柔軟性低下、bottleneck、framework制約との衝突など意味のあるtrade-offが生じ得るもの。
 
-Severity expresses design impact, not detection confidence alone. A heuristic rule should remain conservative even if the underlying concept is important.
+severityは設計上の影響を表し、検出confidenceだけを表すものではありません。重要な概念であってもheuristic ruleは保守的に判定します。
 
-## Suppression and CI configuration
+## suppressionとCI設定
 
-Projects may use `oop-design-checker.json` to:
+projectは`oop-design-checker.json`で次を設定できます。
 
-- exclude paths with `ignoredPaths`;
-- suppress selected rule IDs for a project/run with `disabledRules`;
-- choose the CI failure level with `failureThreshold`;
-- tune supported rule-specific heuristics under `ruleSettings`, such as OOP304 inheritance depth.
+- `ignoredPaths`でpathを解析対象から除外する。
+- `disabledRules`で特定rule IDをそのproject/runでは出力しない。
+- `failureThreshold`でCIを失敗させるseverityを選ぶ。
+- `ruleSettings`で、OOP304の継承深度など対応するrule固有heuristicを調整する。
 
-Suppression is a project decision and does not change the rule's defined severity. Rule-specific tuning changes heuristic sensitivity, not the severity definition. The checker project itself should not suppress its own rule violations and should self-check at the `attention` threshold.
+suppressionはproject側の判断であり、rule自体のseverity定義は変えません。rule固有設定はheuristicの感度を変えるもので、severityの意味は変えません。チェッカー自身では原則として自己違反を抑制せず、`attention`しきい値でself-checkします。
