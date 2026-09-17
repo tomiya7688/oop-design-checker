@@ -254,7 +254,8 @@ internal static class ConfigurationBehaviorTests
             }
             catch (InvalidOperationException exception)
                 when (exception.Message.Contains(currentDirectoryPath, StringComparison.Ordinal)
-                    && exception.Message.Contains(targetRelativePath, StringComparison.Ordinal))
+                    && exception.Message.Contains(targetRelativePath, StringComparison.Ordinal)
+                )
             {
                 return;
             }
