@@ -272,11 +272,8 @@ internal sealed class MainWindowView : Grid
         Children.Add(control);
     }
 
-    private static string Text(
-        UserInterfaceLanguage language,
-        string japanese,
-        string english
-    ) => UserInterfaceText.Select(language, japanese, english);
+    private static string Text(UserInterfaceLanguage language, string japanese, string english) =>
+        UserInterfaceText.Select(language, japanese, english);
 
     private static DataGridTextColumn CreateTextColumn(string header, string propertyName) =>
         new() { Header = header, Binding = new Binding(propertyName) };
