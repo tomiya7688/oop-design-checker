@@ -263,7 +263,9 @@ internal sealed class MainWindow : Window
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
-                    new FilePickerFileType(Text("C# source/project/solution", "C# source/project/solution"))
+                    new FilePickerFileType(
+                        Text("C# source/project/solution", "C# source/project/solution")
+                    )
                     {
                         Patterns = ["*.cs", "*.csproj", "*.sln", "*.slnx"],
                     },
