@@ -99,7 +99,10 @@ internal static class LocalizationSmokeTests
 
         if (
             !japanese.Contains("継承階層が深すぎる", StringComparison.Ordinal)
-            || !japanese.Contains("プロジェクト内の継承階層が深くなっています", StringComparison.Ordinal)
+            || !japanese.Contains(
+                "プロジェクト内の継承階層が深くなっています",
+                StringComparison.Ordinal
+            )
             || !english.Contains("Excessive inheritance depth", StringComparison.Ordinal)
             || !english.Contains("Project-owned inheritance depth is 4.", StringComparison.Ordinal)
         )
