@@ -189,7 +189,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
     }
 
     private SourceProject[] LoadMsBuildProjects(
-        IReadOnlyCollection<string> projectFiles,
+        string[] projectFiles,
         CancellationToken cancellationToken
     )
     {
@@ -204,11 +204,21 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         );
 
         var projects = new List<SourceProject>(projectFiles.Count);
-        foreach (var projectFile in projectFiles.OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+        foreach (
+            var projectFile in projectFiles.OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+        )
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var project = workspace
-                .OpenProjectAsync(projectFile, cancellationToken: cancellationToken)
+            var normalizedProjectFile = Path.GetFullPath(projectFile);
+            var project = workspace.CurrentSolution.Projects.FirstOrDefault(candidate =>
+                string.Equals(
+                    candidate.FilePath,
+                    normalizedProjectFile,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            );
+            project ??= workspace
+                .OpenProjectAsync(normalizedProjectFile, cancellationToken: cancellationToken)
                 .GetAwaiter()
                 .GetResult();
             projects.Add(CreateSourceProject(project, workspaceFailures, cancellationToken));
