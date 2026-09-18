@@ -191,11 +191,31 @@ internal sealed class CSharpProjectLoader : IProjectLoader
     private SourceProject[] LoadMsBuildProjects(
         IReadOnlyCollection<string> projectFiles,
         CancellationToken cancellationToken
-    ) =>
-        projectFiles
-            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
-            .Select(path => LoadMsBuildProject(path, cancellationToken))
-            .ToArray();
+    )
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureMsBuildRegistered();
+
+        var workspaceFailures = new List<string>();
+        using var workspace = MSBuildWorkspace.Create();
+        using var workspaceFailureRegistration = RegisterWorkspaceFailureHandler(
+            workspace,
+            workspaceFailures
+        );
+
+        var projects = new List<SourceProject>(projectFiles.Count);
+        foreach (var projectFile in projectFiles.OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var project = workspace
+                .OpenProjectAsync(projectFile, cancellationToken: cancellationToken)
+                .GetAwaiter()
+                .GetResult();
+            projects.Add(CreateSourceProject(project, workspaceFailures, cancellationToken));
+        }
+
+        return projects.ToArray();
+    }
 
     private SourceProject CreateSourceProject(
         Project project,
