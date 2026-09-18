@@ -209,7 +209,8 @@ internal static class GuiText
         [GuiTextKey.CouldNotOpenCopied] = "Could not open source file; location copied instead.",
         [GuiTextKey.Analyzing] = "Analyzing...",
         [GuiTextKey.EditorTitle] = "OOP Design Checker configuration",
-        [GuiTextKey.EditorDescription] = "Edit oop-design-checker.json. Validation uses the same configuration model as the CUI.",
+        [GuiTextKey.EditorDescription] =
+            "Edit oop-design-checker.json. Validation uses the same configuration model as the CUI.",
         [GuiTextKey.ValidateButton] = "Validate",
         [GuiTextKey.SaveButton] = "Save",
         [GuiTextKey.ConfigurationValid] = "Configuration is valid.",
