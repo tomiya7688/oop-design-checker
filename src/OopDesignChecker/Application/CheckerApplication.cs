@@ -45,7 +45,9 @@ internal sealed class CheckerApplication
                         or InvalidOperationException
             )
         {
-            Console.Error.WriteLine(LocalizedText.AnalysisFailed(options.Language, exception.Message));
+            Console.Error.WriteLine(
+                LocalizedText.AnalysisFailed(options.Language, exception.Message)
+            );
             return 2;
         }
     }
