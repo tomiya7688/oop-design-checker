@@ -29,15 +29,16 @@ internal sealed class ConsoleDiagnosticWriter : IDiagnosticWriter
         foreach (var diagnostic in diagnostics)
         {
             var symbol = diagnostic.SymbolName is null ? string.Empty : $" {diagnostic.SymbolName}";
+            var message = DiagnosticTextLocalizer.Message(diagnostic, _language);
             writer.WriteLine(
                 $"{FormatSeverity(diagnostic.Severity)} {diagnostic.Rule.Id} "
                     + $"{diagnostic.Location.FilePath}:{diagnostic.Location.Line}:{diagnostic.Location.Column}{symbol}: "
-                    + diagnostic.Message
+                    + message
             );
 
             if (verbose)
             {
-                writer.WriteLine($"  {diagnostic.Rule.Title}");
+                writer.WriteLine($"  {DiagnosticTextLocalizer.Title(diagnostic, _language)}");
             }
         }
 
