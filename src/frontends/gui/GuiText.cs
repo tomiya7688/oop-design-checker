@@ -118,7 +118,8 @@ internal static class GuiText
         [GuiTextKey.Completed] = "完了: 診断 {0}件。",
         [GuiTextKey.ConfigNotLoaded] = "設定: 未読み込み",
         [GuiTextKey.ConfigDefaults] = "既定値",
-        [GuiTextKey.ConfigSummary] = "設定: {0} | 失敗しきい値: {1} | 無効rule: {2} | 除外path: {3}",
+        [GuiTextKey.ConfigSummary] =
+            "設定: {0} | 失敗しきい値: {1} | 無効rule: {2} | 除外path: {3}",
         [GuiTextKey.ChooseAnalysisTarget] = "解析targetを選択",
         [GuiTextKey.CSharpTargetType] = "C# source / project / solution",
         [GuiTextKey.ChooseProjectDirectory] = "project directoryを選択",
