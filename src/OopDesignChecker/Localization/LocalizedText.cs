@@ -128,11 +128,7 @@ public static class LocalizedText
             _ => throw new ArgumentOutOfRangeException(nameof(severity), severity, null),
         };
 
-    private static string Select(
-        UserInterfaceLanguage language,
-        string japanese,
-        string english
-    ) =>
+    private static string Select(UserInterfaceLanguage language, string japanese, string english) =>
         language switch
         {
             UserInterfaceLanguage.Japanese => japanese,
