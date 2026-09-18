@@ -67,11 +67,20 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-pa
 
 `--warnings-as-errors`は`--fail-on warning`の互換aliasとして残しています。
 
+表示言語の指定:
+
+```bash
+oop-design-checker-cui <target-path> --language ja
+oop-design-checker-cui <target-path> --language en
+```
+
+既定は`ja`です。CUIの`text`出力とGUIの人間向け表示では、rule title・診断message・summaryを選択言語で表示します。`OOP001`等のrule ID、CLI option名、JSON設定keyは変更しません。`json` / `sarif` / `github`出力はdownstream toolとの互換性を保つため、言語選択に影響されないcanonical textを維持します。
+
 ### Release package
 
 `v0.1.0`のように宣言versionと一致するtagをpushすると、全platform packageが成功した後にGitHub Releaseを作成します。製品versionは`Directory.Build.props`へ一元化しており、`v*` tagと宣言versionが一致しなければrelease packaging前に失敗します。
 
-release archiveには`dotnet publish`の完全な出力、日英両README、`CHANGELOG.md`、`oop-design-checker.example.json`を含めます。archive名にはversionを含め、例として`oop-design-checker-0.1.0-linux-x64.tar.gz`となります。各archiveには`.sha256`を付け、tagged releaseには統合`SHA256SUMS.txt`も含めます。
+release archiveには`dotnet publish`の完全な出力、日英両README、日英両CHANGELOG、`oop-design-checker.example.json`を含めます。archive名にはversionを含め、例として`oop-design-checker-0.1.0-linux-x64.tar.gz`となります。各archiveには`.sha256`を付け、tagged releaseには統合`SHA256SUMS.txt`も含めます。
 
 配布target:
 
@@ -177,7 +186,8 @@ dotnet publish src/frontends/cui/OopDesignChecker.Cui.csproj -c Release -r win-x
 ## ドキュメント
 
 - [English README](README.en.md)
-- [Changelog](CHANGELOG.md)
+- [Changelog（日本語・正本）](CHANGELOG.md)
+- [Changelog (English)](CHANGELOG.en.md)
 - [オブジェクト指向設計の定義](specification/object-oriented-design.md)
 - [チェックルール](specification/check-rules.md)
 - [Object-oriented design definition (English)](specification/object-oriented-design.en.md)
