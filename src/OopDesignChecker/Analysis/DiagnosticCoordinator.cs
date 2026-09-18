@@ -1,9 +1,19 @@
+using System.Collections.Frozen;
 using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Analysis;
 
 internal static class DiagnosticCoordinator
 {
+    // Dominance is intentionally explicit: a stronger diagnostic suppresses a weaker supporting
+    // signal only when both refer to the same symbol. Severity alone never implies dominance.
+    private static readonly FrozenDictionary<string, string> DominantRuleBySubsumedRule =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["OOP106"] = "OOP107",
+            ["OOP405"] = "OOP402",
+        }.ToFrozenDictionary(StringComparer.Ordinal);
+
     public static IReadOnlyList<DesignDiagnostic> Reduce(
         IReadOnlyList<DesignDiagnostic> diagnostics
     )
@@ -21,20 +31,15 @@ internal static class DiagnosticCoordinator
         IReadOnlySet<RuleSymbolKey> diagnosticKeys
     )
     {
-        if (diagnostic.SymbolName is null)
+        if (
+            diagnostic.SymbolName is null
+            || !DominantRuleBySubsumedRule.TryGetValue(diagnostic.Rule.Id, out var dominantRuleId)
+        )
         {
             return false;
         }
 
-        var dominantRuleId = diagnostic.Rule.Id switch
-        {
-            "OOP106" => "OOP107",
-            "OOP405" => "OOP402",
-            _ => null,
-        };
-
-        return dominantRuleId is not null
-            && diagnosticKeys.Contains(CreateRuleSymbolKey(diagnostic, dominantRuleId));
+        return diagnosticKeys.Contains(CreateRuleSymbolKey(diagnostic, dominantRuleId));
     }
 
     private static RuleSymbolKey CreateRuleSymbolKey(DesignDiagnostic diagnostic) =>
