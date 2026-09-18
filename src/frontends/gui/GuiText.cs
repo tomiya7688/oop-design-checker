@@ -138,7 +138,8 @@ internal static class GuiText
         [GuiTextKey.CouldNotOpenCopied] = "source fileを開けなかったため、場所をコピーしました。",
         [GuiTextKey.Analyzing] = "解析中...",
         [GuiTextKey.EditorTitle] = "OOP Design Checker 設定",
-        [GuiTextKey.EditorDescription] = "oop-design-checker.jsonを編集します。検証にはCUIと同じ設定modelを使用します。",
+        [GuiTextKey.EditorDescription] =
+            "oop-design-checker.jsonを編集します。検証にはCUIと同じ設定modelを使用します。",
         [GuiTextKey.ValidateButton] = "検証",
         [GuiTextKey.SaveButton] = "保存",
         [GuiTextKey.ConfigurationValid] = "設定は有効です。",
