@@ -37,10 +37,12 @@ internal static class DataCarrierClassifier
             return false;
         }
 
-        return !instanceMembers.OfType<IMethodSymbol>().Any(method =>
-            method.MethodKind == MethodKind.Ordinary
-            && method.DeclaredAccessibility == Accessibility.Public
-        );
+        return !instanceMembers
+            .OfType<IMethodSymbol>()
+            .Any(method =>
+                method.MethodKind == MethodKind.Ordinary
+                && method.DeclaredAccessibility == Accessibility.Public
+            );
     }
 
     private static bool HasDataCarrierMarker(INamedTypeSymbol type) =>
