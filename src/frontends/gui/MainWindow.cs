@@ -152,8 +152,8 @@ internal sealed class MainWindow : Window
     private void ShowResult(CheckerRunResult result)
     {
         _lastResult = result;
-        _allRows = result.Diagnostics
-            .Select(diagnostic => DiagnosticRow.From(diagnostic, _language))
+        _allRows = result
+            .Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _language))
             .ToArray();
         ApplyFilters();
         UpdateSummary();
