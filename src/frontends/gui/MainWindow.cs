@@ -403,11 +403,7 @@ internal sealed class MainWindow : Window
         var file = await StorageProvider.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = GuiText.Format(
-                    GuiTextKey.ExportDiagnosticsAs,
-                    _language,
-                    description
-                ),
+                Title = GuiText.Format(GuiTextKey.ExportDiagnosticsAs, _language, description),
                 SuggestedFileName = $"oop-design-checker-results.{extension}",
                 DefaultExtension = extension,
                 FileTypeChoices =
