@@ -11,6 +11,7 @@ internal static class DiagnosticCoordinationSmokeTests
     {
         InvariantBypassSuppressesEncapsulationLeakForSameSymbol();
         AnemicObjectSuppressesGetterSetterOnlyForSameSymbol();
+        DominanceDoesNotRunInReverse();
         DifferentSymbolsRemainIndependent();
         UnrelatedRulesRemainTogether();
         DiagnosticsWithoutSymbolsAreNotSuppressed();
@@ -36,6 +37,16 @@ internal static class DiagnosticCoordinationSmokeTests
         ]);
 
         AssertRuleIds(diagnostics, "OOP402");
+    }
+
+    private static void DominanceDoesNotRunInReverse()
+    {
+        var diagnostics = DiagnosticCoordinator.Reduce([
+            Create("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
+            Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Other"),
+        ]);
+
+        AssertRuleIds(diagnostics, "OOP106", "OOP107");
     }
 
     private static void DifferentSymbolsRemainIndependent()
