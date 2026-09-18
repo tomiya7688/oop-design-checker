@@ -459,23 +459,59 @@ internal sealed class MainWindow : Window
             return;
         }
 
-        if (!File.Exists(row.FilePath))
+        string sourcePath;
+        try
         {
-            await CopyTextAsync(row.LocationText);
+            sourcePath = Path.GetFullPath(row.FilePath);
+        }
+        catch (Exception exception)
+            when (exception is ArgumentException or NotSupportedException or IOException)
+        {
+            await CopySourceLocationFallbackAsync(row.LocationText);
+            _view.Status.Text = GuiText.Get(GuiTextKey.InvalidSourcePathCopied, _language);
+            return;
+        }
+
+        if (!File.Exists(sourcePath))
+        {
+            await CopySourceLocationFallbackAsync(row.LocationText);
             _view.Status.Text = GuiText.Get(GuiTextKey.SourceNotFoundCopied, _language);
             return;
         }
 
         try
         {
-            Process.Start(new ProcessStartInfo(row.FilePath) { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(sourcePath) { UseShellExecute = true });
             _view.Status.Text = GuiText.Get(GuiTextKey.OpenedSource, _language);
         }
         catch (Exception exception)
-            when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
+            when (
+                exception
+                    is InvalidOperationException
+                        or System.ComponentModel.Win32Exception
+                        or IOException
+                        or UnauthorizedAccessException
+            )
         {
-            await CopyTextAsync(row.LocationText);
+            await CopySourceLocationFallbackAsync(row.LocationText);
             _view.Status.Text = GuiText.Get(GuiTextKey.CouldNotOpenCopied, _language);
+        }
+    }
+
+    private async Task CopySourceLocationFallbackAsync(string locationText)
+    {
+        try
+        {
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            if (clipboard is not null)
+            {
+                await clipboard.SetTextAsync(locationText);
+            }
+        }
+        catch (Exception)
+        {
+            // Source opening is a best-effort UI action. Clipboard failure must not escape
+            // through the Avalonia event handler after the original open failure.
         }
     }
 
