@@ -380,9 +380,7 @@ internal sealed class MainWindow : Window
                 DefaultExtension = "json",
                 FileTypeChoices =
                 [
-                    new FilePickerFileType(
-                        GuiText.Get(GuiTextKey.JsonConfigurationType, _language)
-                    )
+                    new FilePickerFileType(GuiText.Get(GuiTextKey.JsonConfigurationType, _language))
                     {
                         Patterns = ["*.json"],
                     },
