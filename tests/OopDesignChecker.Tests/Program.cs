@@ -18,6 +18,10 @@ internal static class Program
             ProjectLoaderRejectsBrokenCompilation
         ),
         new(
+            "project loader keeps multi-project compilations separate",
+            ProjectLoaderKeepsMultiProjectCompilationsSeparate
+        ),
+        new(
             "OOP101 detects public classes confined to an inheritance hierarchy",
             ExcessiveVisibilityIsDetected
         ),
@@ -113,6 +117,52 @@ internal static class Program
             throw new InvalidOperationException(
                 "Generated bin/obj source leaked into rule traversal."
             );
+        }
+    }
+
+    private static void ProjectLoaderKeepsMultiProjectCompilationsSeparate()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var temporarySolution = Path.Combine(
+            repositoryRoot,
+            $"oop-checker-multi-project-{Guid.NewGuid():N}.slnx"
+        );
+
+        File.WriteAllText(
+            temporarySolution,
+            """
+            <Solution>
+              <Project Path="src/OopDesignChecker/OopDesignChecker.csproj" />
+              <Project Path="src/frontends/cui/OopDesignChecker.Cui.csproj" />
+            </Solution>
+            """
+        );
+
+        try
+        {
+            var projects = new CSharpProjectLoader().LoadProjects(temporarySolution);
+            if (projects.Count != 2)
+            {
+                throw new InvalidOperationException(
+                    $"Expected 2 separately loaded projects, found {projects.Count}."
+                );
+            }
+
+            var assemblyNames = projects
+                .Select(project => project.Compilation.AssemblyName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+            if (assemblyNames.Length != 2)
+            {
+                throw new InvalidOperationException(
+                    "Expected each project to retain its own compilation."
+                );
+            }
+        }
+        finally
+        {
+            File.Delete(temporarySolution);
         }
     }
 
