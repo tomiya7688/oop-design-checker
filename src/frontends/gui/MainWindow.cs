@@ -564,10 +564,9 @@ internal sealed class MainWindow : Window
             return;
         }
 
-        _view.Status.Text =
-            _lastResult is null
-                ? GuiText.Get(GuiTextKey.Ready, _language)
-                : GuiText.Format(GuiTextKey.Completed, _language, _allRows.Length);
+        _view.Status.Text = _lastResult is null
+            ? GuiText.Get(GuiTextKey.Ready, _language)
+            : GuiText.Format(GuiTextKey.Completed, _language, _allRows.Length);
     }
 
     private static string? NormalizeOptionalPath(string? path) =>
