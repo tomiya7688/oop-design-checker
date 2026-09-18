@@ -13,6 +13,8 @@ internal static class LocalizationSmokeTests
         EnglishCanBeSelected();
         InvalidLanguageIsRejected();
         TextSummaryIsLocalized();
+        DiagnosticTitleAndMessageAreLocalized();
+        MachineReadableDiagnosticsRemainCanonicalEnglish();
     }
 
     private static void JapaneseIsDefault()
@@ -78,12 +80,85 @@ internal static class LocalizationSmokeTests
         }
     }
 
-    private static string CaptureWriter(UserInterfaceLanguage language, DesignDiagnostic diagnostic)
+    private static void DiagnosticTitleAndMessageAreLocalized()
+    {
+        var diagnostic = new DesignDiagnostic(
+            new RuleDescriptor(
+                "OOP304",
+                "Excessive inheritance depth",
+                DesignDiagnosticSeverity.Attention
+            ),
+            DesignDiagnosticSeverity.Attention,
+            "Project-owned inheritance depth is 4.",
+            "Sample.DeepType",
+            new SourceLocation(Path.GetFullPath("deep.cs"), 12, 3)
+        );
+
+        var japanese = CaptureWriter(UserInterfaceLanguage.Japanese, diagnostic, verbose: true);
+        var english = CaptureWriter(UserInterfaceLanguage.English, diagnostic, verbose: true);
+
+        if (
+            !japanese.Contains("継承階層が深すぎる", StringComparison.Ordinal)
+            || !japanese.Contains("プロジェクト内の継承階層が深くなっています", StringComparison.Ordinal)
+            || !english.Contains("Excessive inheritance depth", StringComparison.Ordinal)
+            || !english.Contains("Project-owned inheritance depth is 4.", StringComparison.Ordinal)
+        )
+        {
+            throw new InvalidOperationException(
+                "Human-readable diagnostic title/message localization did not switch cleanly."
+            );
+        }
+    }
+
+    private static void MachineReadableDiagnosticsRemainCanonicalEnglish()
+    {
+        var diagnostic = new DesignDiagnostic(
+            new RuleDescriptor(
+                "OOP304",
+                "Excessive inheritance depth",
+                DesignDiagnosticSeverity.Attention
+            ),
+            DesignDiagnosticSeverity.Attention,
+            "Project-owned inheritance depth is 4.",
+            "Sample.DeepType",
+            new SourceLocation(Path.GetFullPath("deep.cs"), 12, 3)
+        );
+        var path = Path.Combine(Path.GetTempPath(), $"oop-localization-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            new JsonDiagnosticWriter(path).Write([diagnostic], verbose: true);
+            var json = File.ReadAllText(path);
+            if (
+                !json.Contains("Excessive inheritance depth", StringComparison.Ordinal)
+                || !json.Contains("Project-owned inheritance depth is 4.", StringComparison.Ordinal)
+                || json.Contains("継承階層が深すぎる", StringComparison.Ordinal)
+            )
+            {
+                throw new InvalidOperationException(
+                    "Machine-readable diagnostic text must remain canonical and language-stable."
+                );
+            }
+        }
+        finally
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+    }
+
+    private static string CaptureWriter(
+        UserInterfaceLanguage language,
+        DesignDiagnostic diagnostic,
+        bool verbose = false
+    )
     {
         var path = Path.Combine(Path.GetTempPath(), $"oop-localization-{Guid.NewGuid():N}.txt");
         try
         {
-            new ConsoleDiagnosticWriter(path, language).Write([diagnostic], verbose: false);
+            new ConsoleDiagnosticWriter(path, language).Write([diagnostic], verbose);
             return File.ReadAllText(path);
         }
         finally
