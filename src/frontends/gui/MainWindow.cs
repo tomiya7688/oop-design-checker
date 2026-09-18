@@ -70,8 +70,8 @@ internal sealed class MainWindow : Window
         _view.ApplyLanguage(_language);
         if (_lastResult is not null)
         {
-            _allRows = _lastResult.Diagnostics
-                .Select(diagnostic => DiagnosticRow.From(diagnostic, _language))
+            _allRows = _lastResult
+                .Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _language))
                 .ToArray();
             ApplyFilters();
         }
