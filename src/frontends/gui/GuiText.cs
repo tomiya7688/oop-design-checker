@@ -73,9 +73,11 @@ internal enum GuiTextKey
 
 internal static class GuiText
 {
-    private static readonly FrozenDictionary<GuiTextKey, string> Japanese =
-        new Dictionary<GuiTextKey, string>
-        {
+    private static readonly FrozenDictionary<GuiTextKey, string> Japanese = new Dictionary<
+        GuiTextKey,
+        string
+    >
+    {
             [GuiTextKey.WindowTitle] = "OOP Design Checker",
             [GuiTextKey.LanguageLabel] = "言語:",
             [GuiTextKey.TargetPlaceholder] = "project / solution / C# file / project directory",
@@ -141,9 +143,11 @@ internal static class GuiText
             [GuiTextKey.ConfigurationValid] = "設定は有効です。",
         }.ToFrozenDictionary();
 
-    private static readonly FrozenDictionary<GuiTextKey, string> English =
-        new Dictionary<GuiTextKey, string>
-        {
+    private static readonly FrozenDictionary<GuiTextKey, string> English = new Dictionary<
+        GuiTextKey,
+        string
+    >
+    {
             [GuiTextKey.WindowTitle] = "OOP Design Checker",
             [GuiTextKey.LanguageLabel] = "Language:",
             [GuiTextKey.TargetPlaceholder] = "Project, solution, C# file, or project directory",
