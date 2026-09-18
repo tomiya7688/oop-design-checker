@@ -15,6 +15,8 @@ internal static class ExtendedRuleSmokeTests
         ImplementationReuseInheritanceIsAttention();
         AnemicObjectWithExternalBehaviorIsWarning();
         SerializableDataCarrierIsAllowed();
+        DataContractCarrierIsAllowed();
+        NamingAloneDoesNotExemptDomainBehavior();
         MapperProjectionDoesNotMakeObjectAnemic();
         UnrelatedDependencyClustersAreWarning();
         HelperConnectedDependenciesAreAllowed();
@@ -220,6 +222,56 @@ internal static class ExtendedRuleSmokeTests
 
         AssertNone(new AnemicObjectRule(), source, "OOP402");
         AssertNone(new GetterSetterOnlyObjectRule(), source, "OOP405");
+    }
+
+    private static void DataContractCarrierIsAllowed()
+    {
+        const string source = """
+            [System.Runtime.Serialization.DataContract]
+            internal sealed class Snapshot
+            {
+                public int X { get; set; }
+                public int Y { get; set; }
+                public int Z { get; set; }
+                public int Version { get; set; }
+            }
+
+            internal sealed class SnapshotService
+            {
+                public int Sum(Snapshot snapshot)
+                {
+                    return snapshot.X + snapshot.Y + snapshot.Z;
+                }
+            }
+            """;
+
+        AssertNone(new AnemicObjectRule(), source, "OOP402");
+        AssertNone(new GetterSetterOnlyObjectRule(), source, "OOP405");
+    }
+
+    private static void NamingAloneDoesNotExemptDomainBehavior()
+    {
+        const string source = """
+            internal sealed class AccountModel
+            {
+                public int Balance { get; set; }
+                public int Limit { get; set; }
+                public int Pending { get; set; }
+                public int Version { get; set; }
+
+                public void Apply(int amount)
+                {
+                    Balance += amount;
+                }
+            }
+            """;
+
+        AssertSingle(
+            new GetterSetterOnlyObjectRule(),
+            source,
+            "OOP405",
+            DesignDiagnosticSeverity.Attention
+        );
     }
 
     private static void MapperProjectionDoesNotMakeObjectAnemic()

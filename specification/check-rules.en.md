@@ -117,6 +117,8 @@ Warn when an object mainly stores state while nearly all meaningful behavior tha
 
 DTOs, serialization models, database records, and other explicit data-carrier types must remain valid cases.
 
+Data-carrier exemptions use one shared classifier. Explicit serialization/data-contract attributes (for example `Serializable`, `DataContract`, and known XML/JSON/MessagePack/ProtoBuf markers) are strong positive signals. Naming such as `Dto`, `Request`, `Message`, or `Model` is only a supporting signal and is not sufficient by itself. When naming contributes to the exemption, the type must also be data-shaped: it exposes public state and has no ordinary public behavior methods. An ordinary domain object with public state is still eligible for OOP106/OOP107/OOP108/OOP402/OOP405 even when its name resembles a data carrier.
+
 ## OOP403 Excessive unrelated dependencies
 
 Warn when an object directly knows about many unrelated subsystems or dependency groups with no clear relation to its identity.
@@ -133,7 +135,7 @@ Prefer semantic detection of repeated navigation across object boundaries.
 
 Warn when a class is overwhelmingly composed of trivial getters and setters while meaningful operations on its state are implemented elsewhere.
 
-This is a supporting signal for OOP402 rather than an automatic Danger. Explicit data-carrier types are exempt.
+This is a supporting signal for OOP402 rather than an automatic Danger. Explicit data-carrier types are exempt through the same shared classifier used by OOP402.
 
 ## Metric-assisted signals
 
