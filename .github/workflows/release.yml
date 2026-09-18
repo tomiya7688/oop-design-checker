@@ -9,6 +9,7 @@ on:
       - '.github/workflows/release.yml'
       - 'Directory.Build.props'
       - 'CHANGELOG.md'
+      - 'CHANGELOG.en.md'
       - 'src/OopDesignChecker/**'
       - 'src/frontends/cui/**'
       - 'oop-design-checker.example.json'
@@ -101,6 +102,7 @@ jobs:
           cp README.md publish/${{ matrix.rid }}/README.md
           cp README.en.md publish/${{ matrix.rid }}/README.en.md
           cp CHANGELOG.md publish/${{ matrix.rid }}/CHANGELOG.md
+          cp CHANGELOG.en.md publish/${{ matrix.rid }}/CHANGELOG.en.md
           cp oop-design-checker.example.json publish/${{ matrix.rid }}/oop-design-checker.example.json
           cp -R specification publish/${{ matrix.rid }}/specification
 
