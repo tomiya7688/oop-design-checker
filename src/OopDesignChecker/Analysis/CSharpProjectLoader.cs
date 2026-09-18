@@ -203,7 +203,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             workspaceFailures
         );
 
-        var projects = new List<SourceProject>(projectFiles.Count);
+        var projects = new List<SourceProject>(projectFiles.Length);
         foreach (
             var projectFile in projectFiles.OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
         )
