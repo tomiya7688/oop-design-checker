@@ -67,11 +67,20 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-pa
 
 `--warnings-as-errors` remains as a compatibility alias for `--fail-on warning`.
 
+Choose the human-readable display language:
+
+```bash
+oop-design-checker-cui <target-path> --language ja
+oop-design-checker-cui <target-path> --language en
+```
+
+`ja` is the default. CUI `text` output and the GUI localize human-facing rule titles, diagnostic messages, and summaries. Rule IDs such as `OOP001`, CLI option names, and JSON configuration keys stay stable. `json`, `sarif`, and `github` output keep canonical language-stable diagnostic text for downstream compatibility.
+
 ### Release packages
 
 Pushing a matching version tag such as `v0.1.0` creates a GitHub Release after all platform packages build successfully. The product version is declared once in `Directory.Build.props`; a `v*` tag that does not match that declared version fails before release packaging is published.
 
-Release archives contain the complete `dotnet publish` output, both README files, `CHANGELOG.md`, and `oop-design-checker.example.json`. Archive names include the product version, for example `oop-design-checker-0.1.0-linux-x64.tar.gz`. Every archive also has a `.sha256` file, and tagged releases include a combined `SHA256SUMS.txt` manifest.
+Release archives contain the complete `dotnet publish` output, both README files, both CHANGELOG files, and `oop-design-checker.example.json`. Archive names include the product version, for example `oop-design-checker-0.1.0-linux-x64.tar.gz`. Every archive also has a `.sha256` file, and tagged releases include a combined `SHA256SUMS.txt` manifest.
 
 Published targets are:
 
@@ -177,6 +186,7 @@ Replace `win-x64` with `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, or `o
 ## Documentation
 
 - [Japanese README (normative)](README.md)
-- [Changelog](CHANGELOG.md)
+- [Japanese changelog (normative)](CHANGELOG.md)
+- [English changelog](CHANGELOG.en.md)
 - [Design definition](specification/object-oriented-design.en.md)
 - [Check rules](specification/check-rules.en.md)

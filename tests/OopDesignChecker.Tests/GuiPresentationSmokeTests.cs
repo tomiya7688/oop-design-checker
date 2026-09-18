@@ -1,5 +1,6 @@
 using OopDesignChecker.Core;
 using OopDesignChecker.Gui;
+using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Tests;
 
@@ -9,6 +10,7 @@ internal static class GuiPresentationSmokeTests
     {
         FiltersBySeverity();
         FiltersByRuleFileSymbolAndMessage();
+        DiagnosticRowsFollowSelectedLanguage();
     }
 
     private static void FiltersBySeverity()
@@ -80,6 +82,38 @@ internal static class GuiPresentationSmokeTests
         {
             throw new InvalidOperationException(
                 "GUI text filtering did not search diagnostic metadata."
+            );
+        }
+    }
+
+    private static void DiagnosticRowsFollowSelectedLanguage()
+    {
+        var diagnostic = new DesignDiagnostic(
+            new RuleDescriptor(
+                "OOP304",
+                "Excessive inheritance depth",
+                DesignDiagnosticSeverity.Attention
+            ),
+            DesignDiagnosticSeverity.Attention,
+            "Project-owned inheritance depth is 4.",
+            "Sample.DeepType",
+            new SourceLocation("deep.cs", 12, 3)
+        );
+
+        var japanese = DiagnosticRow.From(diagnostic, UserInterfaceLanguage.Japanese);
+        var english = DiagnosticRow.From(diagnostic, UserInterfaceLanguage.English);
+
+        if (
+            japanese.RuleTitle != "継承階層が深すぎる"
+            || !japanese.Message.Contains("プロジェクト内の継承階層", StringComparison.Ordinal)
+            || japanese.SeverityText != "注意"
+            || english.RuleTitle != "Excessive inheritance depth"
+            || english.Message != "Project-owned inheritance depth is 4."
+            || english.SeverityText != "Attention"
+        )
+        {
+            throw new InvalidOperationException(
+                "GUI diagnostic rows did not follow the selected UI language."
             );
         }
     }

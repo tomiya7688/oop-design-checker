@@ -68,6 +68,14 @@ internal sealed class MainWindow : Window
                 : UserInterfaceLanguage.Japanese;
         Title = GuiText.Get(GuiTextKey.WindowTitle, _language);
         _view.ApplyLanguage(_language);
+        if (_lastResult is not null)
+        {
+            _allRows = _lastResult
+                .Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _language))
+                .ToArray();
+            ApplyFilters();
+        }
+
         UpdateSummary();
         UpdateSelectedDiagnostic();
         UpdateLocalizedStatus();
@@ -144,7 +152,9 @@ internal sealed class MainWindow : Window
     private void ShowResult(CheckerRunResult result)
     {
         _lastResult = result;
-        _allRows = result.Diagnostics.Select(DiagnosticRow.From).ToArray();
+        _allRows = result
+            .Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _language))
+            .ToArray();
         ApplyFilters();
         UpdateSummary();
         _view.Status.Text = GuiText.Format(GuiTextKey.Completed, _language, _allRows.Length);
@@ -218,7 +228,11 @@ internal sealed class MainWindow : Window
             _language,
             LocalizedText.SeverityName(_language, row.Severity)
         );
-        _view.DetailRule.Text = GuiText.Format(GuiTextKey.RuleDetail, _language, row.RuleId);
+        _view.DetailRule.Text = GuiText.Format(
+            GuiTextKey.RuleDetail,
+            _language,
+            $"{row.RuleId} — {row.RuleTitle}"
+        );
         _view.DetailSymbol.Text = GuiText.Format(
             GuiTextKey.SymbolDetail,
             _language,
