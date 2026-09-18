@@ -117,6 +117,8 @@ static classが可変な共有状態を蓄積し、global stateとして振る�
 
 DTO、serialization model、database recordなど、役割が明示されたdata carrierは正当なケースとして扱います。
 
+data carrierの除外判定は共通classifierで行います。明示的なserialization/data-contract属性（例: `Serializable`、`DataContract`、XML/JSON/MessagePack/ProtoBuf系の既知marker）は強い肯定signalとして扱います。型名の`Dto`、`Request`、`Message`、`Model`などは補助signalに留め、名前だけでは除外しません。命名signalを使う場合は、publicなstateを持ち、publicな通常methodによる意味のある振る舞いを持たないdata-shaped typeであることも必要です。通常のdomain objectがpublic stateを公開している場合は、名前がそれらしいだけでOOP106/OOP107/OOP108/OOP402/OOP405等から除外しません。
+
 ## OOP403 無関係な依存の過剰保持
 
 オブジェクトが、自身のidentityと明確な関係を持たない多数のsubsystemまたはdependency groupを直接知っている場合に警告します。
@@ -133,7 +135,7 @@ object境界を跨ぐnavigationを意味的に検出することを優先しま�
 
 classの大部分が単純なgetter/setterで構成され、そのstateに対する意味のある操作が外部で実装されている場合に注意します。
 
-これはOOP402を補助するsignalであり、自動的なDangerではありません。明示的なdata carrierは除外します。
+これはOOP402を補助するsignalであり、自動的なDangerではありません。明示的なdata carrierはOOP402と同じ共通classifierで除外します。
 
 ## metricを使った補助signal
 
