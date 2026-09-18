@@ -1,20 +1,26 @@
 using OopDesignChecker.Core;
+using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Output;
 
 internal sealed class ConsoleDiagnosticWriter : IDiagnosticWriter
 {
     private readonly DiagnosticOutputTarget _target;
+    private readonly UserInterfaceLanguage _language;
 
-    public ConsoleDiagnosticWriter(string? outputPath = null)
+    public ConsoleDiagnosticWriter(
+        string? outputPath = null,
+        UserInterfaceLanguage language = UserInterfaceLanguage.Japanese
+    )
     {
         _target = new DiagnosticOutputTarget(outputPath);
+        _language = language;
     }
 
     public void Write(IReadOnlyList<DesignDiagnostic> diagnostics, bool verbose) =>
         _target.Write(writer => WriteDiagnostics(writer, diagnostics, verbose));
 
-    private static void WriteDiagnostics(
+    private void WriteDiagnostics(
         TextWriter writer,
         IReadOnlyList<DesignDiagnostic> diagnostics,
         bool verbose
@@ -46,7 +52,7 @@ internal sealed class ConsoleDiagnosticWriter : IDiagnosticWriter
         );
 
         writer.WriteLine(
-            $"Diagnostics: {dangerCount} danger, {warningCount} warning(s), {attentionCount} attention."
+            LocalizedText.DiagnosticsSummary(_language, dangerCount, warningCount, attentionCount)
         );
     }
 

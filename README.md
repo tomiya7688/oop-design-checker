@@ -1,41 +1,45 @@
 # oop-design-checker
 
-Static-analysis tool for checking whether an object-oriented project follows the object-oriented design rules defined by this repository.
+[English](README.en.md)
 
-The checker itself is implemented in C# and is intended to pass its own rules without suppressing violations by default.
+> この日本語版を正本とします。英語版との間に差異がある場合は、日本語版を優先します。
 
-## Frontends
+オブジェクト指向を採用するプロジェクトが、このリポジトリで定義したオブジェクト指向設計ルールに沿っているかを静的解析するチェッカーです。
 
-The same analysis engine is exposed through sibling frontends:
+チェッカー本体はC#で実装し、原則として自己違反を抑制せず、自分自身のルールを通過することを求めます。
 
-- `src/frontends/cui` - CI-friendly command-line frontend
+## フロントエンド
+
+同じ解析engineを、兄弟関係のfrontendから利用します。
+
+- `src/frontends/cui` - CI向けcommand-line frontend
 - `src/frontends/gui` - cross-platform Avalonia GUI frontend
 
-The legacy `src/OopDesignChecker` executable remains available for compatibility.
+互換性のため、従来の`src/OopDesignChecker` executableも残しています。
 
-## Diagnostic levels
+## 診断レベル
 
-- `DANGER` - incompatible with the OOP rules this project treats as fundamental. This fails CI by default.
-- `WARN` - normally undesirable in OOP design, but not inherently fatal.
-- `ATTN` - stricter-design guidance where performance, flexibility, framework constraints, or other tradeoffs may justify the design.
+- `DANGER` - このprojectが基本原則として扱うOOPルールと両立しない状態。既定でCIを失敗させます。
+- `WARN` - OOP設計として通常は望ましくないが、必ずしも致命的ではない状態。
+- `ATTN` - 厳格な設計上は注意すべきものの、performance・柔軟性・framework制約などのtrade-offで正当化され得る状態。
 
-The checker itself is tested with `--fail-on attention` so its own source must satisfy all three levels.
+チェッカー自身は`--fail-on attention`でself-checkするため、3段階すべてを満たす必要があります。
 
-## Current implementation
+## 現在の実装
 
-The first implementation targets C# through Roslyn and MSBuild. Real project compilations are preserved when analyzing `.csproj`, `.sln`, `.slnx`, or directories containing multiple C# projects; unrelated projects are never merged into one artificial compilation.
+最初の解析backendはC#を対象とし、RoslynとMSBuildを使用しています。`.csproj`、`.sln`、`.slnx`、複数のC# projectを含むdirectoryを解析する場合も、実際のproject compilationを保ちます。無関係なprojectを1つの仮想compilationへ混ぜることはしません。
 
-Implemented rules are defined in `specification/check-rules.md` and include encapsulation, inheritance, polymorphism, visibility, static-state, operation complexity, object-integrity, dependency, and navigation checks.
+実装済みruleは[チェックルール仕様](specification/check-rules.md)で定義しています。カプセル化、継承、多態性、可視性、static state、operation complexity、object integrity、dependency、navigationなどを扱います。
 
-## Quality gates
+## 品質ゲート
 
-GitHub Actions exposes separate checks so failures are easy to identify:
+GitHub Actionsでは、失敗原因を切り分けやすいよう独立したcheckを用意しています。
 
-- `normal-ci` - restore, build, and rule smoke tests on Windows, Linux, and macOS
-- `self-check` - runs the checker against its own `src` tree with `--fail-on attention`
-- `code-analyzers` - .NET SDK analyzers at `latest-recommended`, code style enabled, warnings treated as errors
-- `csharpier` - CSharpier 1.3.0 formatting check using the repository-local tool manifest
-- `release` - validates distributable CUI packages for Windows, Linux, and macOS when release-related files change
+- `normal-ci` - Windows / Linux / macOSでrestore、build、rule smoke test
+- `self-check` - checker自身の`src`を`--fail-on attention`で解析
+- `code-analyzers` - .NET SDK analyzerを`latest-recommended`で実行し、code style有効・warningをerror化
+- `csharpier` - repository-local tool manifestのCSharpier 1.3.0でformat check
+- `release` - release関連変更時にWindows / Linux / macOS向けCUI packageを検証
 
 ## CUI
 
@@ -43,17 +47,17 @@ GitHub Actions exposes separate checks so failures are easy to identify:
 dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-path>
 ```
 
-`<target-path>` can be a loose `.cs` file, a `.csproj`, a `.sln`, a `.slnx`, or a directory. A directory containing multiple C# projects is analyzed as a project set: each project keeps its own MSBuild compilation and the resulting diagnostics are aggregated and deduplicated.
+`<target-path>`には、単体`.cs`、`.csproj`、`.sln`、`.slnx`、directoryを指定できます。複数のC# projectを含むdirectoryでは、各projectのMSBuild compilationを独立して保持したままproject setとして解析し、診断だけを集約・重複除去します。
 
-Show the product version:
+製品versionの表示:
 
 ```bash
 oop-design-checker-cui --version
 ```
 
-The short alias is `-V`.
+短縮形は`-V`です。
 
-Choose the CI failure threshold:
+CI失敗しきい値の指定:
 
 ```bash
 dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-path> --fail-on danger
@@ -61,69 +65,69 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-pa
 dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-path> --fail-on attention
 ```
 
-`--warnings-as-errors` remains as a compatibility alias for `--fail-on warning`.
+`--warnings-as-errors`は`--fail-on warning`の互換aliasとして残しています。
 
-### Release packages
+### Release package
 
-Pushing a matching version tag such as `v0.1.0` creates a GitHub Release after all platform packages build successfully. The product version is declared once in `Directory.Build.props`; a `v*` tag that does not match that declared version fails before release packaging is published.
+`v0.1.0`のように宣言versionと一致するtagをpushすると、全platform packageが成功した後にGitHub Releaseを作成します。製品versionは`Directory.Build.props`へ一元化しており、`v*` tagと宣言versionが一致しなければrelease packaging前に失敗します。
 
-Release archives contain the complete `dotnet publish` output, this README, `CHANGELOG.md`, and `oop-design-checker.example.json`. Archive names include the product version, for example `oop-design-checker-0.1.0-linux-x64.tar.gz`. Every archive also has a `.sha256` file, and tagged releases include a combined `SHA256SUMS.txt` manifest.
+release archiveには`dotnet publish`の完全な出力、日英両README、`CHANGELOG.md`、`oop-design-checker.example.json`を含めます。archive名にはversionを含め、例として`oop-design-checker-0.1.0-linux-x64.tar.gz`となります。各archiveには`.sha256`を付け、tagged releaseには統合`SHA256SUMS.txt`も含めます。
 
-Published targets are:
+配布target:
 
-- `win-x64` and `win-arm64` as `.zip`
-- `linux-x64` and `linux-arm64` as `.tar.gz`
-- `osx-x64` and `osx-arm64` as `.tar.gz`
+- `win-x64` / `win-arm64`: `.zip`
+- `linux-x64` / `linux-arm64`: `.tar.gz`
+- `osx-x64` / `osx-arm64`: `.tar.gz`
 
-The packages are self-contained, so the matching .NET runtime does not need to be installed just to start the CUI. Analysis of `.csproj`, `.sln`, and `.slnx` still depends on a discoverable compatible .NET SDK/MSBuild installation because those targets are loaded through MSBuild. Loose `.cs` analysis does not require project loading.
+packageはself-containedなので、CUI起動だけなら対応する.NET runtimeの事前installは不要です。ただし`.csproj`、`.sln`、`.slnx`解析はMSBuild経由で読み込むため、互換性のある.NET SDK/MSBuildが検出可能である必要があります。単体`.cs`解析ではproject loadingは不要です。
 
-For example, after extracting the matching package:
+展開後の例:
 
 ```bash
 ./oop-design-checker-cui <target-path> --fail-on danger
 ```
 
-On Windows use `oop-design-checker-cui.exe`.
+Windowsでは`oop-design-checker-cui.exe`を使用します。
 
-### Release process
+### Release手順
 
-For a new release:
+新しいreleaseでは次を行います。
 
-1. Update `VersionPrefix` in `Directory.Build.props`.
-2. Add the release entry to `CHANGELOG.md`.
-3. Merge the change only after normal CI, strict self-check, analyzers, CSharpier, and the six-RID release packaging matrix are green.
-4. Push a tag exactly matching the declared version with a `v` prefix, for example `v0.1.0`.
-5. The release workflow validates the tag/version match, rebuilds all six packages, generates SHA-256 checksums, and creates the GitHub Release.
+1. `Directory.Build.props`の`VersionPrefix`を更新する。
+2. `CHANGELOG.md`へrelease entryを追加する。
+3. normal CI、strict self-check、analyzer、CSharpier、6 RID release packagingがすべて緑になってからmergeする。
+4. 宣言versionと完全一致する`v` prefix付きtagをpushする。例: `v0.1.0`。
+5. release workflowがtag/version一致を検証し、6 packageを再buildし、SHA-256を生成してGitHub Releaseを作成する。
 
-### CI output formats
+### CI出力形式
 
-The default `text` format stays concise and backward compatible. Machine-readable formats can be selected with `--format`:
+既定の`text`形式は短い人間向け表示として維持します。機械可読形式は`--format`で選択できます。
 
 ```bash
-# Stable JSON document
+# 安定したJSON document
 dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --format json --output oop-diagnostics.json
 
-# SARIF 2.1.0 for code-scanning systems
+# code scanning向けSARIF 2.1.0
 dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --format sarif --output oop-diagnostics.sarif
 
-# GitHub Actions workflow annotations
+# GitHub Actions annotation
 dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --format github
 ```
 
-Supported formats:
+対応形式:
 
-- `text` - normal `ATTN` / `WARN` / `DANGER` lines plus summary
-- `json` - versioned diagnostic array and severity summary
-- `sarif` - SARIF 2.1.0 with rule metadata, severity level, source location, and symbol metadata
-- `github` - emits `::notice`, `::warning`, and `::error` workflow commands so findings appear as GitHub Actions annotations
+- `text` - 通常の`ATTN` / `WARN` / `DANGER`行とsummary
+- `json` - version付きdiagnostic arrayとseverity summary
+- `sarif` - rule metadata、severity、source location、symbol metadataを含むSARIF 2.1.0
+- `github` - `::notice` / `::warning` / `::error` workflow commandを出力し、GitHub Actions annotationとして表示
 
-`--output <file>` can be used with `text`, `json`, and `sarif`. GitHub annotations intentionally always go to stdout. Output format never changes the process exit code: `--fail-on` continues to control CI failure independently.
+`--output <file>`は`text`、`json`、`sarif`で利用できます。GitHub annotationは意図的に常にstdoutへ出します。出力形式はprocess exit codeへ影響せず、CI失敗条件は`--fail-on`だけが決めます。
 
-## Configuration
+## 設定
 
-By default the checker searches for the nearest `oop-design-checker.json`, starting in the target directory and walking upward through parent directories. This allows a repository- or solution-root configuration to apply when MSBuild or CI invokes the checker against a nested `.csproj` without copying the configuration into each project or build-output directory. If multiple files exist, the nearest one to the target wins.
+既定では、target directoryから親directoryへ順に`oop-design-checker.json`を探索し、最も近い設定を使用します。これにより、MSBuildやCIがnested `.csproj`を直接解析する場合でも、repository/solution rootの設定を各projectやbuild outputへ複製せず適用できます。複数存在する場合はtargetに最も近いものが優先です。
 
-A different file can be selected with `--config <path>`. Absolute paths are used directly. Relative paths preserve the existing current-working-directory lookup first, then fall back to the target directory so build systems that change their working directory can still use project-relative configuration paths. An explicitly requested configuration that cannot be found is an error rather than a silent fallback to defaults.
+別fileは`--config <path>`で指定できます。absolute pathはそのまま使います。relative pathは互換性のためcurrent working directoryを先に確認し、その後target directory基準も確認します。build systemがworking directoryを変更してもproject-relative設定を使えます。明示指定した設定が見つからない場合は、黙ってdefaultへfallbackせずerrorにします。
 
 ```json
 {
@@ -143,12 +147,12 @@ A different file can be selected with `--config <path>`. Absolute paths are used
 }
 ```
 
-- `ignoredPaths` excludes matching files/directories from analysis.
-- `disabledRules` completely suppresses selected rule IDs for that run/project.
-- `failureThreshold` controls which diagnostic level makes the process return a failing exit code.
-- `ruleSettings.oop304.warningDepth` controls the project-owned class inheritance depth that triggers OOP304. The default is `4`; values must be at least `1`. Bases that belong to other projects loaded in the same analysis are counted, while external framework/library ancestry is not.
+- `ignoredPaths` - 一致するfile/directoryを解析対象から除外します。
+- `disabledRules` - 指定rule IDをそのrun/projectでは完全に抑制します。
+- `failureThreshold` - processが失敗終了するdiagnostic levelを指定します。
+- `ruleSettings.oop304.warningDepth` - OOP304を出すproject-owned class継承深度を指定します。既定は`4`、最小`1`です。同じ解析に読み込まれた別projectのbaseは数えますが、外部framework/libraryの祖先は数えません。
 
-See `oop-design-checker.example.json` for a copyable example.
+コピー可能な例は`oop-design-checker.example.json`を参照してください。
 
 ## GUI
 
@@ -156,22 +160,25 @@ See `oop-design-checker.example.json` for a copyable example.
 dotnet run --project src/frontends/gui/OopDesignChecker.Gui.csproj
 ```
 
-The GUI accepts a target path and an optional configuration path, then displays the same diagnostics produced by the CUI.
+GUIではtarget pathと任意のconfiguration pathを選択し、CUIと同じ解析結果を表示します。native file/folder picker、structured diagnostic table、filter、detail pane、config editor、cancel、JSON/SARIF exportを利用できます。
 
 ## Build
 
-The project targets .NET 10. Cross-platform CI builds the shared engine, CUI, and GUI on Windows, Linux, and macOS.
+projectは.NET 10をtargetとします。cross-platform CIでshared engine、CUI、GUIをWindows / Linux / macOS上でbuildします。
 
-Example CUI publish:
+CUI publish例:
 
 ```bash
 dotnet publish src/frontends/cui/OopDesignChecker.Cui.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
-Replace `win-x64` with `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, or `osx-arm64` as needed. Keep the complete publish directory when distributing the checker so Roslyn/MSBuild support files are not accidentally omitted.
+必要に応じて`win-x64`を`win-arm64`、`linux-x64`、`linux-arm64`、`osx-x64`、`osx-arm64`へ置き換えます。配布時はRoslyn/MSBuild support fileを欠落させないため、publish directory全体を保持してください。
 
-## Documentation
+## ドキュメント
 
+- [English README](README.en.md)
 - [Changelog](CHANGELOG.md)
-- [Design definition](specification/object-oriented-design.md)
-- [Check rules](specification/check-rules.md)
+- [オブジェクト指向設計の定義](specification/object-oriented-design.md)
+- [チェックルール](specification/check-rules.md)
+- [Object-oriented design definition (English)](specification/object-oriented-design.en.md)
+- [Check rules (English)](specification/check-rules.en.md)

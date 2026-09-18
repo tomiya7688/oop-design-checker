@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using OopDesignChecker.Configuration;
+using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Gui;
 
@@ -10,10 +11,12 @@ internal sealed class ConfigurationEditorWindow : Window
 {
     private readonly TextBox _editor = new();
     private readonly TextBlock _status = new();
+    private readonly UserInterfaceLanguage _language;
 
-    public ConfigurationEditorWindow(string initialJson)
+    public ConfigurationEditorWindow(string initialJson, UserInterfaceLanguage language)
     {
-        Title = "OOP Design Checker configuration";
+        _language = language;
+        Title = GuiText.Get(GuiTextKey.EditorTitle, language);
         Width = 760;
         Height = 620;
         MinWidth = 560;
@@ -43,8 +46,7 @@ internal sealed class ConfigurationEditorWindow : Window
 
         var description = new TextBlock
         {
-            Text =
-                "Edit oop-design-checker.json. Validation uses the same configuration model as the CUI.",
+            Text = GuiText.Get(GuiTextKey.EditorDescription, _language),
             TextWrapping = TextWrapping.Wrap,
         };
         Add(root, description, 0);
@@ -56,9 +58,12 @@ internal sealed class ConfigurationEditorWindow : Window
 
     private StackPanel BuildActions()
     {
-        var validateButton = new Button { Content = "Validate" };
-        var saveButton = new Button { Content = "Save" };
-        var cancelButton = new Button { Content = "Cancel" };
+        var validateButton = new Button
+        {
+            Content = GuiText.Get(GuiTextKey.ValidateButton, _language),
+        };
+        var saveButton = new Button { Content = GuiText.Get(GuiTextKey.SaveButton, _language) };
+        var cancelButton = new Button { Content = GuiText.Get(GuiTextKey.CancelButton, _language) };
 
         validateButton.Click += (_, _) => ValidateEditor();
         saveButton.Click += (_, _) => SaveAndClose();
@@ -78,7 +83,7 @@ internal sealed class ConfigurationEditorWindow : Window
         try
         {
             _ = CheckerConfigurationJson.Parse(_editor.Text ?? string.Empty);
-            _status.Text = "Configuration is valid.";
+            _status.Text = GuiText.Get(GuiTextKey.ConfigurationValid, _language);
         }
         catch (InvalidOperationException exception)
         {

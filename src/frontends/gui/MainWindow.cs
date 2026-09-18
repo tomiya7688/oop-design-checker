@@ -5,6 +5,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using OopDesignChecker.Configuration;
 using OopDesignChecker.Core;
+using OopDesignChecker.Localization;
 using OopDesignChecker.Output;
 
 namespace OopDesignChecker.Gui;
@@ -15,11 +16,12 @@ internal sealed class MainWindow : Window
     private DiagnosticRow[] _allRows = [];
     private CheckerRunResult? _lastResult;
     private CancellationTokenSource? _analysisCancellation;
+    private UserInterfaceLanguage _language = UserInterfaceLanguage.Japanese;
     private bool _analysisInProgress;
 
     public MainWindow()
     {
-        Title = "OOP Design Checker";
+        Title = GuiText.Get(GuiTextKey.WindowTitle, _language);
         Width = 1280;
         Height = 820;
         MinWidth = 900;
@@ -28,6 +30,7 @@ internal sealed class MainWindow : Window
 
         WireEvents();
         UpdateSummary();
+        _view.Status.Text = GuiText.Get(GuiTextKey.Ready, _language);
     }
 
     private void WireEvents()
@@ -44,6 +47,7 @@ internal sealed class MainWindow : Window
         _view.WarningFilter.Click += (_, _) => ApplyFilters();
         _view.AttentionFilter.Click += (_, _) => ApplyFilters();
         _view.SearchFilter.TextChanged += (_, _) => ApplyFilters();
+        _view.LanguageSelector.SelectionChanged += (_, _) => ChangeLanguage();
         _view.DiagnosticsGrid.SelectionChanged += (_, _) => UpdateSelectedDiagnostic();
         _view.DiagnosticsGrid.DoubleTapped += async (_, _) => await OpenSelectedSourceAsync();
         _view.CopySelectedButton.Click += async (_, _) => await CopySelectedAsync();
@@ -56,6 +60,19 @@ internal sealed class MainWindow : Window
         KeyDown += OnKeyDown;
     }
 
+    private void ChangeLanguage()
+    {
+        _language =
+            _view.LanguageSelector.SelectedIndex == 1
+                ? UserInterfaceLanguage.English
+                : UserInterfaceLanguage.Japanese;
+        Title = GuiText.Get(GuiTextKey.WindowTitle, _language);
+        _view.ApplyLanguage(_language);
+        UpdateSummary();
+        UpdateSelectedDiagnostic();
+        UpdateLocalizedStatus();
+    }
+
     private async Task AnalyzeAsync()
     {
         if (_analysisInProgress)
@@ -66,7 +83,7 @@ internal sealed class MainWindow : Window
         var targetPath = _view.TargetPath.Text?.Trim();
         if (string.IsNullOrWhiteSpace(targetPath))
         {
-            _view.Status.Text = "Target path is required.";
+            _view.Status.Text = GuiText.Get(GuiTextKey.TargetRequired, _language);
             return;
         }
 
@@ -90,7 +107,7 @@ internal sealed class MainWindow : Window
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            _view.Status.Text = "Analysis cancelled.";
+            _view.Status.Text = GuiText.Get(GuiTextKey.AnalysisCancelled, _language);
         }
         catch (Exception exception)
             when (exception
@@ -121,7 +138,7 @@ internal sealed class MainWindow : Window
 
         _analysisCancellation.Cancel();
         _view.CancelButton.IsEnabled = false;
-        _view.Status.Text = "Cancelling...";
+        _view.Status.Text = GuiText.Get(GuiTextKey.Cancelling, _language);
     }
 
     private void ShowResult(CheckerRunResult result)
@@ -130,7 +147,7 @@ internal sealed class MainWindow : Window
         _allRows = result.Diagnostics.Select(DiagnosticRow.From).ToArray();
         ApplyFilters();
         UpdateSummary();
-        _view.Status.Text = $"Completed: {_allRows.Length} diagnostic(s).";
+        _view.Status.Text = GuiText.Format(GuiTextKey.Completed, _language, _allRows.Length);
         _view.ConfigurationPath.Text = result.ConfigurationPath ?? _view.ConfigurationPath.Text;
     }
 
@@ -140,7 +157,7 @@ internal sealed class MainWindow : Window
         _allRows = [];
         _view.DiagnosticsGrid.ItemsSource = Array.Empty<DiagnosticRow>();
         _view.DiagnosticsGrid.SelectedItem = null;
-        _view.ClearDetails();
+        _view.ClearDetails(_language);
         UpdateSummary();
         _view.Status.Text = message;
     }
@@ -158,23 +175,31 @@ internal sealed class MainWindow : Window
 
     private void UpdateSummary()
     {
-        _view.DangerCount.Text = $"Danger: {Count(DesignDiagnosticSeverity.Danger)}";
-        _view.WarningCount.Text = $"Warning: {Count(DesignDiagnosticSeverity.Warning)}";
-        _view.AttentionCount.Text = $"Attention: {Count(DesignDiagnosticSeverity.Attention)}";
+        _view.DangerCount.Text =
+            $"{GuiText.Get(GuiTextKey.Danger, _language)}: {Count(DesignDiagnosticSeverity.Danger)}";
+        _view.WarningCount.Text =
+            $"{GuiText.Get(GuiTextKey.Warning, _language)}: {Count(DesignDiagnosticSeverity.Warning)}";
+        _view.AttentionCount.Text =
+            $"{GuiText.Get(GuiTextKey.Attention, _language)}: {Count(DesignDiagnosticSeverity.Attention)}";
 
         if (_lastResult is null)
         {
-            _view.ConfigurationSummary.Text = "Config: not loaded";
+            _view.ConfigurationSummary.Text = GuiText.Get(GuiTextKey.ConfigNotLoaded, _language);
             return;
         }
 
         var configuration = _lastResult.Configuration;
         var configName = _lastResult.ConfigurationPath is null
-            ? "defaults"
+            ? GuiText.Get(GuiTextKey.ConfigDefaults, _language)
             : Path.GetFileName(_lastResult.ConfigurationPath);
-        _view.ConfigurationSummary.Text =
-            $"Config: {configName} | Fail: {_lastResult.FailureThreshold} | "
-            + $"Disabled: {configuration.DisabledRules.Count} | Ignored: {configuration.IgnoredPaths.Count}";
+        _view.ConfigurationSummary.Text = GuiText.Format(
+            GuiTextKey.ConfigSummary,
+            _language,
+            configName,
+            LocalizedText.SeverityName(_language, _lastResult.FailureThreshold),
+            configuration.DisabledRules.Count,
+            configuration.IgnoredPaths.Count
+        );
     }
 
     private int Count(DesignDiagnosticSeverity severity) =>
@@ -184,14 +209,26 @@ internal sealed class MainWindow : Window
     {
         if (_view.DiagnosticsGrid.SelectedItem is not DiagnosticRow row)
         {
-            _view.ClearDetails();
+            _view.ClearDetails(_language);
             return;
         }
 
-        _view.DetailSeverity.Text = $"Severity: {row.SeverityText}";
-        _view.DetailRule.Text = $"Rule: {row.RuleId}";
-        _view.DetailSymbol.Text = $"Symbol: {row.SymbolName ?? "-"}";
-        _view.DetailLocation.Text = $"Location: {row.LocationText}";
+        _view.DetailSeverity.Text = GuiText.Format(
+            GuiTextKey.SeverityDetail,
+            _language,
+            LocalizedText.SeverityName(_language, row.Severity)
+        );
+        _view.DetailRule.Text = GuiText.Format(GuiTextKey.RuleDetail, _language, row.RuleId);
+        _view.DetailSymbol.Text = GuiText.Format(
+            GuiTextKey.SymbolDetail,
+            _language,
+            row.SymbolName ?? "-"
+        );
+        _view.DetailLocation.Text = GuiText.Format(
+            GuiTextKey.LocationDetail,
+            _language,
+            row.LocationText
+        );
         _view.DetailMessage.Text = row.Message;
     }
 
@@ -200,11 +237,11 @@ internal sealed class MainWindow : Window
         var files = await StorageProvider.OpenFilePickerAsync(
             new FilePickerOpenOptions
             {
-                Title = "Choose analysis target",
+                Title = GuiText.Get(GuiTextKey.ChooseAnalysisTarget, _language),
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
-                    new FilePickerFileType("C# source/project/solution")
+                    new FilePickerFileType(GuiText.Get(GuiTextKey.CSharpTargetType, _language))
                     {
                         Patterns = ["*.cs", "*.csproj", "*.sln", "*.slnx"],
                     },
@@ -219,7 +256,7 @@ internal sealed class MainWindow : Window
         var folders = await StorageProvider.OpenFolderPickerAsync(
             new FolderPickerOpenOptions
             {
-                Title = "Choose project directory",
+                Title = GuiText.Get(GuiTextKey.ChooseProjectDirectory, _language),
                 AllowMultiple = false,
             }
         );
@@ -231,11 +268,14 @@ internal sealed class MainWindow : Window
         var files = await StorageProvider.OpenFilePickerAsync(
             new FilePickerOpenOptions
             {
-                Title = "Choose checker configuration",
+                Title = GuiText.Get(GuiTextKey.ChooseCheckerConfiguration, _language),
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
-                    new FilePickerFileType("JSON configuration") { Patterns = ["*.json"] },
+                    new FilePickerFileType(GuiText.Get(GuiTextKey.JsonConfigurationType, _language))
+                    {
+                        Patterns = ["*.json"],
+                    },
                 ],
             }
         );
@@ -259,7 +299,7 @@ internal sealed class MainWindow : Window
                         _lastResult?.Configuration ?? new CheckerConfiguration()
                     );
 
-            var editor = new ConfigurationEditorWindow(initialJson);
+            var editor = new ConfigurationEditorWindow(initialJson, _language);
             var editedJson = await editor.ShowDialog<string?>(this);
             if (editedJson is null)
             {
@@ -275,7 +315,7 @@ internal sealed class MainWindow : Window
 
             await File.WriteAllTextAsync(configurationPath, editedJson);
             _view.ConfigurationPath.Text = configurationPath;
-            _view.Status.Text = "Configuration saved. Analyze again to apply changes.";
+            _view.Status.Text = GuiText.Get(GuiTextKey.ConfigurationSaved, _language);
         }
         catch (Exception exception)
             when (exception
@@ -307,12 +347,15 @@ internal sealed class MainWindow : Window
         var file = await StorageProvider.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = "Save checker configuration",
+                Title = GuiText.Get(GuiTextKey.SaveCheckerConfiguration, _language),
                 SuggestedFileName = "oop-design-checker.json",
                 DefaultExtension = "json",
                 FileTypeChoices =
                 [
-                    new FilePickerFileType("JSON configuration") { Patterns = ["*.json"] },
+                    new FilePickerFileType(GuiText.Get(GuiTextKey.JsonConfigurationType, _language))
+                    {
+                        Patterns = ["*.json"],
+                    },
                 ],
             }
         );
@@ -323,7 +366,7 @@ internal sealed class MainWindow : Window
     {
         if (_lastResult is null)
         {
-            _view.Status.Text = "Run an analysis before exporting diagnostics.";
+            _view.Status.Text = GuiText.Get(GuiTextKey.RunBeforeExport, _language);
             return;
         }
 
@@ -332,12 +375,14 @@ internal sealed class MainWindow : Window
         var file = await StorageProvider.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = $"Export diagnostics as {description}",
+                Title = GuiText.Format(GuiTextKey.ExportDiagnosticsAs, _language, description),
                 SuggestedFileName = $"oop-design-checker-results.{extension}",
                 DefaultExtension = extension,
                 FileTypeChoices =
                 [
-                    new FilePickerFileType($"{description} diagnostics")
+                    new FilePickerFileType(
+                        GuiText.Format(GuiTextKey.DiagnosticsFileType, _language, description)
+                    )
                     {
                         Patterns = [$"*.{extension}"],
                     },
@@ -355,7 +400,11 @@ internal sealed class MainWindow : Window
             await Task.Run(() =>
                 DiagnosticExportService.Export(_lastResult.Diagnostics, outputPath, format)
             );
-            _view.Status.Text = $"Exported diagnostics to {outputPath}.";
+            _view.Status.Text = GuiText.Format(
+                GuiTextKey.ExportedDiagnostics,
+                _language,
+                outputPath
+            );
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -395,12 +444,12 @@ internal sealed class MainWindow : Window
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard is null)
         {
-            _view.Status.Text = "Clipboard is unavailable on this platform.";
+            _view.Status.Text = GuiText.Get(GuiTextKey.ClipboardUnavailable, _language);
             return;
         }
 
         await clipboard.SetTextAsync(text);
-        _view.Status.Text = "Copied to clipboard.";
+        _view.Status.Text = GuiText.Get(GuiTextKey.CopiedToClipboard, _language);
     }
 
     private async Task OpenSelectedSourceAsync()
@@ -413,20 +462,20 @@ internal sealed class MainWindow : Window
         if (!File.Exists(row.FilePath))
         {
             await CopyTextAsync(row.LocationText);
-            _view.Status.Text = "Source file was not found; location copied instead.";
+            _view.Status.Text = GuiText.Get(GuiTextKey.SourceNotFoundCopied, _language);
             return;
         }
 
         try
         {
             Process.Start(new ProcessStartInfo(row.FilePath) { UseShellExecute = true });
-            _view.Status.Text = "Opened source file with the default application.";
+            _view.Status.Text = GuiText.Get(GuiTextKey.OpenedSource, _language);
         }
         catch (Exception exception)
             when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
             await CopyTextAsync(row.LocationText);
-            _view.Status.Text = "Could not open source file; location copied instead.";
+            _view.Status.Text = GuiText.Get(GuiTextKey.CouldNotOpenCopied, _language);
         }
     }
 
@@ -471,8 +520,25 @@ internal sealed class MainWindow : Window
         _view.EditConfigurationButton.IsEnabled = !isBusy;
         _view.ExportJsonButton.IsEnabled = !isBusy && _lastResult is not null;
         _view.ExportSarifButton.IsEnabled = !isBusy && _lastResult is not null;
+        _view.LanguageSelector.IsEnabled = !isBusy;
         _view.Progress.IsVisible = isBusy;
-        _view.Status.Text = isBusy ? "Analyzing..." : _view.Status.Text;
+        if (isBusy)
+        {
+            _view.Status.Text = GuiText.Get(GuiTextKey.Analyzing, _language);
+        }
+    }
+
+    private void UpdateLocalizedStatus()
+    {
+        if (_analysisInProgress)
+        {
+            _view.Status.Text = GuiText.Get(GuiTextKey.Analyzing, _language);
+            return;
+        }
+
+        _view.Status.Text = _lastResult is null
+            ? GuiText.Get(GuiTextKey.Ready, _language)
+            : GuiText.Format(GuiTextKey.Completed, _language, _allRows.Length);
     }
 
     private static string? NormalizeOptionalPath(string? path) =>
