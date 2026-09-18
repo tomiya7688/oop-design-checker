@@ -263,11 +263,6 @@ internal static class ExtendedRuleSmokeTests
                 {
                     Balance += amount;
                 }
-
-                public void ResetPending()
-                {
-                    Pending = 0;
-                }
             }
             """;
 
