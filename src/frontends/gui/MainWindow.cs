@@ -485,8 +485,7 @@ internal sealed class MainWindow : Window
             _view.Status.Text = GuiText.Get(GuiTextKey.OpenedSource, _language);
         }
         catch (Exception exception)
-            when (
-                exception
+            when (exception
                     is InvalidOperationException
                         or System.ComponentModel.Win32Exception
                         or IOException
