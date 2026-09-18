@@ -272,9 +272,7 @@ internal sealed class MainWindow : Window
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
-                    new FilePickerFileType(
-                        GuiText.Get(GuiTextKey.JsonConfigurationType, _language)
-                    )
+                    new FilePickerFileType(GuiText.Get(GuiTextKey.JsonConfigurationType, _language))
                     {
                         Patterns = ["*.json"],
                     },
