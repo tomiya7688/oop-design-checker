@@ -60,9 +60,9 @@ if (@($cleanJson.diagnostics).Count -ne 0) {
     throw "Expected clean fixture to have no diagnostics."
 }
 if (
-    $cleanJson.summary.danger -ne 0
-    -or $cleanJson.summary.warning -ne 0
-    -or $cleanJson.summary.attention -ne 0
+    $cleanJson.summary.danger -ne 0 -or
+    $cleanJson.summary.warning -ne 0 -or
+    $cleanJson.summary.attention -ne 0
 ) {
     throw "Expected clean fixture summary to contain only zero counts."
 }
