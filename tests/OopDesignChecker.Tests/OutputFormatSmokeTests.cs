@@ -13,6 +13,8 @@ internal static class OutputFormatSmokeTests
         RelativeConfigurationPathIsPreserved();
         CommandLineReportsProductVersion();
         GitHubFormatRejectsOutputFile();
+        NumericFailureThresholdIsRejected();
+        NumericOutputFormatIsRejected();
         JsonOutputIsMachineReadable();
         SarifOutputIsMachineReadable();
         GitHubAnnotationsEscapeSpecialCharacters();
@@ -99,6 +101,24 @@ internal static class OutputFormatSmokeTests
             throw new InvalidOperationException(
                 "GitHub annotation output should reject --output because annotations must use stdout."
             );
+        }
+    }
+
+    private static void NumericFailureThresholdIsRejected()
+    {
+        var result = CommandLineOptionsParser.Parse(["sample.cs", "--fail-on", "999"]);
+        if (result.IsSuccess)
+        {
+            throw new InvalidOperationException("Numeric --fail-on values must be rejected.");
+        }
+    }
+
+    private static void NumericOutputFormatIsRejected()
+    {
+        var result = CommandLineOptionsParser.Parse(["sample.cs", "--format", "999"]);
+        if (result.IsSuccess)
+        {
+            throw new InvalidOperationException("Numeric --format values must be rejected.");
         }
     }
 
