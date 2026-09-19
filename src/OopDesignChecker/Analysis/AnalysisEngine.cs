@@ -59,7 +59,7 @@ internal sealed class AnalysisEngine
 
     private static DiagnosticIdentity CreateDiagnosticIdentity(DesignDiagnostic diagnostic) =>
         new(
-            Path.GetFullPath(diagnostic.Location.FilePath),
+            DiagnosticPath.Normalize(diagnostic.Location.FilePath),
             diagnostic.Location.Line,
             diagnostic.Location.Column,
             diagnostic.Rule.Id,

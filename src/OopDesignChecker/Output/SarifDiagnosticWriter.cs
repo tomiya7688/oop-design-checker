@@ -1,4 +1,5 @@
 using System.Text.Json;
+using OopDesignChecker.Analysis;
 using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Output;
@@ -53,24 +54,19 @@ internal sealed class SarifDiagnosticWriter : IDiagnosticWriter
             defaultConfiguration = new { level = FormatLevel(diagnostic.Severity) },
         };
 
-    private static object ToResult(DesignDiagnostic diagnostic) =>
-        new
-        {
-            ruleId = diagnostic.Rule.Id,
-            level = FormatLevel(diagnostic.Severity),
-            message = new { text = diagnostic.Message },
-            locations = new[]
+    private static object ToResult(DesignDiagnostic diagnostic)
+    {
+        var locations = DiagnosticPath.TryCreateFileUri(
+            diagnostic.Location.FilePath,
+            out var fileUri
+        )
+            ? new object[]
             {
                 new
                 {
                     physicalLocation = new
                     {
-                        artifactLocation = new
-                        {
-                            uri = new Uri(
-                                Path.GetFullPath(diagnostic.Location.FilePath)
-                            ).AbsoluteUri,
-                        },
+                        artifactLocation = new { uri = fileUri },
                         region = new
                         {
                             startLine = diagnostic.Location.Line,
@@ -78,11 +74,20 @@ internal sealed class SarifDiagnosticWriter : IDiagnosticWriter
                         },
                     },
                 },
-            },
+            }
+            : [];
+
+        return new
+        {
+            ruleId = diagnostic.Rule.Id,
+            level = FormatLevel(diagnostic.Severity),
+            message = new { text = diagnostic.Message },
+            locations,
             properties = diagnostic.SymbolName is null
                 ? null
                 : new Dictionary<string, string> { ["symbol"] = diagnostic.SymbolName },
         };
+    }
 
     private static string FormatLevel(DesignDiagnosticSeverity severity) =>
         severity switch
