@@ -12,6 +12,8 @@ on:
       - 'CHANGELOG.en.md'
       - 'src/OopDesignChecker/**'
       - 'src/frontends/cui/**'
+      - 'src/frontends/gui/**'
+      - 'tests/**'
       - 'oop-design-checker.example.json'
       - 'README.md'
       - 'README.en.md'
