@@ -98,6 +98,7 @@ internal static class ConfigurationBehaviorTests
         ExplicitRelativeConfigurationCanUseTargetDirectory();
         ExplicitResolverPrefersCurrentDirectory();
         MissingExplicitConfigurationListsCheckedLocations();
+        MissingConfigurationUsesBuiltInDefaults();
     }
 
     private static void ParentConfigurationIsDiscoveredForNestedTarget()
@@ -232,6 +233,43 @@ internal static class ConfigurationBehaviorTests
             finally
             {
                 Directory.SetCurrentDirectory(originalDirectory);
+            }
+        });
+    }
+
+    private static void MissingConfigurationUsesBuiltInDefaults()
+    {
+        WithTemporaryProject(rootPath =>
+        {
+            var projectPath = Path.Combine(rootPath, "FolderTarget.csproj");
+            File.WriteAllText(
+                projectPath,
+                """
+                <Project Sdk="Microsoft.NET.Sdk">
+                  <PropertyGroup>
+                    <TargetFramework>net10.0</TargetFramework>
+                  </PropertyGroup>
+                </Project>
+                """
+            );
+            File.WriteAllText(
+                Path.Combine(rootPath, "Sample.cs"),
+                "internal sealed class Sample { private int _value; public int Value => _value; }"
+            );
+
+            var result = CheckerService.Analyze(rootPath);
+            if (result.ConfigurationPath is not null)
+            {
+                throw new InvalidOperationException(
+                    $"Expected built-in defaults with no configuration file, found '{result.ConfigurationPath}'."
+                );
+            }
+
+            if (result.FailureThreshold != DesignDiagnosticSeverity.Danger)
+            {
+                throw new InvalidOperationException(
+                    $"Expected default Danger threshold, found {result.FailureThreshold}."
+                );
             }
         });
     }
