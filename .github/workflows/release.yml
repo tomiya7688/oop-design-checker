@@ -116,6 +116,26 @@ jobs:
             throw "Roslyn BuildHost copy did not produce the expected file: $expectedBuildHost"
           }
 
+      - name: Include .NET reference assemblies
+        shell: pwsh
+        run: |
+          $referenceRoot = Join-Path $env:DOTNET_ROOT "packs/Microsoft.NETCore.App.Ref"
+          $referenceDirectory = Get-ChildItem $referenceRoot -Directory |
+            Sort-Object Name -Descending |
+            ForEach-Object { Join-Path $_.FullName "ref/net10.0" } |
+            Where-Object { Test-Path $_ } |
+            Select-Object -First 1
+          if ($null -eq $referenceDirectory) {
+            throw "Could not locate net10.0 reference assemblies under $referenceRoot."
+          }
+
+          $destination = Join-Path "publish/${{ matrix.rid }}" "ReferenceAssemblies"
+          New-Item -ItemType Directory -Force -Path $destination | Out-Null
+          Copy-Item (Join-Path $referenceDirectory "*.dll") $destination -Force
+          if (-not (Test-Path (Join-Path $destination "System.Runtime.dll"))) {
+            throw "Reference assembly copy did not include System.Runtime.dll."
+          }
+
       - name: Smoke test packaged CUI behavior
         if: matrix.rid == 'win-x64' || matrix.rid == 'linux-x64' || matrix.rid == 'osx-arm64'
         shell: pwsh
