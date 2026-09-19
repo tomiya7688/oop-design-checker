@@ -135,11 +135,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             .Where(path => !string.IsNullOrWhiteSpace(path))
             .Select(path => ResolveSlnxProjectPath(rootPath, path!))
             .Where(path =>
-                string.Equals(
-                    Path.GetExtension(path),
-                    ".csproj",
-                    PathSemantics.Comparison
-                )
+                string.Equals(Path.GetExtension(path), ".csproj", PathSemantics.Comparison)
             )
             .Where(path => !PathFilter.ShouldIgnore(path, rootPath, _ignoredPaths))
             .Distinct(PathSemantics.Comparer)
@@ -204,9 +200,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         );
 
         var projects = new List<SourceProject>(projectFiles.Length);
-        foreach (
-            var projectFile in projectFiles.OrderBy(path => path, PathSemantics.Comparer)
-        )
+        foreach (var projectFile in projectFiles.OrderBy(path => path, PathSemantics.Comparer))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var normalizedProjectFile = Path.GetFullPath(projectFile);
@@ -389,11 +383,8 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         if (File.Exists(targetPath))
         {
             if (
-                string.Equals(
-                    Path.GetExtension(targetPath),
-                    ".cs",
-                    PathSemantics.Comparison
-                ) && !PathFilter.ShouldIgnore(targetPath, rootPath, _ignoredPaths)
+                string.Equals(Path.GetExtension(targetPath), ".cs", PathSemantics.Comparison)
+                && !PathFilter.ShouldIgnore(targetPath, rootPath, _ignoredPaths)
             )
             {
                 yield return targetPath;

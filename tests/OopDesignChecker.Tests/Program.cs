@@ -266,14 +266,13 @@ internal static class Program
                 Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary
             )
         );
-        var semanticModels =
-            new Dictionary<
-                Microsoft.CodeAnalysis.SyntaxTree,
-                Microsoft.CodeAnalysis.SemanticModel
-            >
-            {
-                [syntaxTree] = compilation.GetSemanticModel(syntaxTree),
-            };
+        var semanticModels = new Dictionary<
+            Microsoft.CodeAnalysis.SyntaxTree,
+            Microsoft.CodeAnalysis.SemanticModel
+        >
+        {
+            [syntaxTree] = compilation.GetSemanticModel(syntaxTree),
+        };
 
         return new SourceProject(
             Path.GetDirectoryName(filePath)!,
