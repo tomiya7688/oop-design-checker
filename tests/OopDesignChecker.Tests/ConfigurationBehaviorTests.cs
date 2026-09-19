@@ -255,9 +255,7 @@ internal static class ConfigurationBehaviorTests
             return;
         }
 
-        throw new InvalidOperationException(
-            "Numeric failureThreshold values must be rejected."
-        );
+        throw new InvalidOperationException("Numeric failureThreshold values must be rejected.");
     }
 
     private static void MissingConfigurationUsesBuiltInDefaults()
