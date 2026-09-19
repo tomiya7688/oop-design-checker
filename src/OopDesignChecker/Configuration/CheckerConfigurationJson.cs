@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Configuration;
 
@@ -35,6 +36,11 @@ public static class CheckerConfigurationJson
     public static void Validate(CheckerConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
+
+        if (!Enum.IsDefined(configuration.FailureThreshold))
+        {
+            throw new InvalidOperationException("failureThreshold must be a defined severity.");
+        }
 
         if (configuration.IgnoredPaths is null)
         {
@@ -74,7 +80,9 @@ public static class CheckerConfigurationJson
             AllowTrailingCommas = true,
             WriteIndented = true,
         };
-        options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        options.Converters.Add(
+            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false)
+        );
         return options;
     }
 }
