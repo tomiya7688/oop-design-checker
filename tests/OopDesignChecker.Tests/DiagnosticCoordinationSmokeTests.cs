@@ -17,6 +17,7 @@ internal static class DiagnosticCoordinationSmokeTests
         DiagnosticsWithoutSymbolsAreNotSuppressed();
         MessageChangesDoNotCreateDuplicateDiagnostics();
         DifferentSymbolsAtSameLocationRemainDistinct();
+        UnknownPathsDoNotThrow();
     }
 
     private static void InvariantBypassSuppressesEncapsulationLeakForSameSymbol()
@@ -113,6 +114,24 @@ internal static class DiagnosticCoordinationSmokeTests
         );
     }
 
+    private static void UnknownPathsDoNotThrow()
+    {
+        var diagnostic = Create(
+            "OOP999",
+            DesignDiagnosticSeverity.Warning,
+            "Order",
+            filePath: "<unknown>"
+        );
+
+        var diagnostics = AnalyzeThroughEngine(diagnostic);
+        if (diagnostics.Count != 1 || diagnostics[0].Location.FilePath != "<unknown>")
+        {
+            throw new InvalidOperationException(
+                "Expected unknown diagnostic path to survive identity and coordination unchanged."
+            );
+        }
+    }
+
     private static IReadOnlyList<DesignDiagnostic> AnalyzeThroughEngine(
         params DesignDiagnostic[] diagnostics
     )
@@ -132,14 +151,15 @@ internal static class DiagnosticCoordinationSmokeTests
         string ruleId,
         DesignDiagnosticSeverity severity,
         string? symbolName,
-        string? message = null
+        string? message = null,
+        string filePath = "sample.cs"
     ) =>
         new(
             new RuleDescriptor(ruleId, ruleId, severity),
             severity,
             message ?? ruleId,
             symbolName,
-            new SourceLocation("sample.cs", 1, 1)
+            new SourceLocation(filePath, 1, 1)
         );
 
     private static void AssertRuleIds(
