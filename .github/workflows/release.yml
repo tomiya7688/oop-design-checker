@@ -96,6 +96,35 @@ jobs:
           -p:Version=${{ needs.version.outputs.product-version }}
           --output publish/${{ matrix.rid }}
 
+      - name: Smoke test packaged CUI against SDK project folder
+        if: endsWith(matrix.rid, '-x64')
+        shell: pwsh
+        run: |
+          $target = Join-Path $env:RUNNER_TEMP "oop-checker-release-folder-smoke"
+          New-Item -ItemType Directory -Force -Path $target | Out-Null
+          Set-Content -Path (Join-Path $target "FolderSmoke.csproj") -Value @"
+          <Project Sdk="Microsoft.NET.Sdk">
+            <PropertyGroup>
+              <TargetFramework>net10.0</TargetFramework>
+            </PropertyGroup>
+          </Project>
+          "@
+          Set-Content -Path (Join-Path $target "Sample.cs") -Value "internal sealed class Sample { private int _value; public int Value => _value; }"
+
+          if ($IsWindows) {
+            $checker = Join-Path "publish/${{ matrix.rid }}" "oop-design-checker-cui.exe"
+          } else {
+            $checker = Join-Path "publish/${{ matrix.rid }}" "oop-design-checker-cui"
+          }
+
+          $output = Join-Path $target "diagnostics.json"
+          & $checker $target --format json --output $output --fail-on danger
+          if ($LASTEXITCODE -ne 0) {
+            throw "Packaged checker failed to analyze an SDK project folder with exit code $LASTEXITCODE."
+          }
+          if (-not (Test-Path $output)) {
+            throw "Packaged checker did not produce the expected JSON output."
+          }
       - name: Add documentation and configuration example
         shell: bash
         run: |
