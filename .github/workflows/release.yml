@@ -96,8 +96,21 @@ jobs:
           -p:Version=${{ needs.version.outputs.product-version }}
           --output publish/${{ matrix.rid }}
 
+      - name: Include Roslyn MSBuild build host
+        shell: pwsh
+        run: |
+          $buildHost = Get-ChildItem (Join-Path $HOME ".nuget/packages") -Recurse -Filter "Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll" |
+            Where-Object { $_.FullName -match "[\\/]BuildHost-netcore[\\/]" } |
+            Select-Object -First 1
+          if ($null -eq $buildHost) {
+            throw "Could not locate Roslyn BuildHost-netcore in the NuGet package cache."
+          }
+
+          $destination = Join-Path "publish/${{ matrix.rid }}" "BuildHost-netcore"
+          Copy-Item $buildHost.Directory.FullName $destination -Recurse -Force
+
       - name: Smoke test packaged CUI against SDK project folder
-        if: endsWith(matrix.rid, '-x64')
+        if: matrix.rid == 'win-x64' || matrix.rid == 'linux-x64' || matrix.rid == 'osx-arm64'
         shell: pwsh
         run: |
           $target = Join-Path $env:RUNNER_TEMP "oop-checker-release-folder-smoke"
