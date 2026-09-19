@@ -22,6 +22,14 @@ internal static class Program
             ProjectLoaderKeepsMultiProjectCompilationsSeparate
         ),
         new(
+            "checker service analyzes SDK-style project folders",
+            CheckerServiceAnalyzesSdkProjectFolder
+        ),
+        new(
+            "project loader analyzes solution root folders",
+            ProjectLoaderAnalyzesSolutionRootFolder
+        ),
+        new(
             "OOP101 detects public classes confined to an inheritance hierarchy",
             ExcessiveVisibilityIsDetected
         ),
@@ -163,6 +171,51 @@ internal static class Program
         finally
         {
             File.Delete(temporarySolution);
+        }
+    }
+
+    private static void CheckerServiceAnalyzesSdkProjectFolder()
+    {
+        var temporaryDirectory = Path.Combine(
+            Path.GetTempPath(),
+            $"oop-checker-folder-project-{Guid.NewGuid():N}"
+        );
+        Directory.CreateDirectory(temporaryDirectory);
+
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(temporaryDirectory, "FolderTarget.csproj"),
+                """
+                <Project Sdk="Microsoft.NET.Sdk">
+                  <PropertyGroup>
+                    <TargetFramework>net10.0</TargetFramework>
+                  </PropertyGroup>
+                </Project>
+                """
+            );
+            File.WriteAllText(
+                Path.Combine(temporaryDirectory, "Sample.cs"),
+                "internal sealed class Sample { private int _value; public int Value => _value; }"
+            );
+
+            _ = CheckerService.Analyze(temporaryDirectory);
+        }
+        finally
+        {
+            Directory.Delete(temporaryDirectory, recursive: true);
+        }
+    }
+
+    private static void ProjectLoaderAnalyzesSolutionRootFolder()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var projects = new CSharpProjectLoader().LoadProjects(repositoryRoot);
+        if (projects.Count < 1)
+        {
+            throw new InvalidOperationException(
+                "Expected the solution root folder to load at least one C# project."
+            );
         }
     }
 
