@@ -99,6 +99,7 @@ internal static class ConfigurationBehaviorTests
         ExplicitResolverPrefersCurrentDirectory();
         MissingExplicitConfigurationListsCheckedLocations();
         MissingConfigurationUsesBuiltInDefaults();
+        NumericFailureThresholdIsRejected();
     }
 
     private static void ParentConfigurationIsDiscoveredForNestedTarget()
@@ -235,6 +236,28 @@ internal static class ConfigurationBehaviorTests
                 Directory.SetCurrentDirectory(originalDirectory);
             }
         });
+    }
+
+    private static void NumericFailureThresholdIsRejected()
+    {
+        try
+        {
+            _ = CheckerConfigurationJson.Parse(
+                """
+                {
+                  "failureThreshold": 999
+                }
+                """
+            );
+        }
+        catch (InvalidOperationException)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "Numeric failureThreshold values must be rejected."
+        );
     }
 
     private static void MissingConfigurationUsesBuiltInDefaults()
