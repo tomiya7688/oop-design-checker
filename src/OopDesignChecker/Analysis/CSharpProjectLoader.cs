@@ -211,11 +211,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             cancellationToken.ThrowIfCancellationRequested();
             var normalizedProjectFile = Path.GetFullPath(projectFile);
             var project = workspace.CurrentSolution.Projects.FirstOrDefault(candidate =>
-                string.Equals(
-                    candidate.FilePath,
-                    normalizedProjectFile,
-                    PathSemantics.Comparison
-                )
+                string.Equals(candidate.FilePath, normalizedProjectFile, PathSemantics.Comparison)
             );
             project ??= workspace
                 .OpenProjectAsync(normalizedProjectFile, cancellationToken: cancellationToken)
