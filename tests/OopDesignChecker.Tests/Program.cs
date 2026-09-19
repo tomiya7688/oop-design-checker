@@ -30,6 +30,10 @@ internal static class Program
             ProjectLoaderAnalyzesSolutionRootFolder
         ),
         new(
+            "diagnostic identity preserves platform path case semantics",
+            DiagnosticIdentityPreservesPlatformPathCase
+        ),
+        new(
             "OOP101 detects public classes confined to an inheritance hierarchy",
             ExcessiveVisibilityIsDetected
         ),
@@ -217,6 +221,66 @@ internal static class Program
                 "Expected the solution root folder to load at least one C# project."
             );
         }
+    }
+
+    private static void DiagnosticIdentityPreservesPlatformPathCase()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"oop-checker-case-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+
+        try
+        {
+            var upper = CreateProjectForPath(Path.Combine(root, "Foo.cs"));
+            var lower = CreateProjectForPath(Path.Combine(root, "foo.cs"));
+            var diagnostics = new AnalysisEngine([new EncapsulationLeakRule()])
+                .Analyze([upper, lower])
+                .Where(diagnostic => diagnostic.Rule.Id == "OOP106")
+                .ToArray();
+
+            var expected = OperatingSystem.IsWindows() ? 1 : 2;
+            if (diagnostics.Length != expected)
+            {
+                throw new InvalidOperationException(
+                    $"Expected {expected} case-distinct diagnostic(s), found {diagnostics.Length}."
+                );
+            }
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static SourceProject CreateProjectForPath(string filePath)
+    {
+        const string source = "internal sealed class Same { public int Value; }";
+        var syntaxTree = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(
+            source,
+            path: filePath
+        );
+        var compilation = Microsoft.CodeAnalysis.CSharp.CSharpCompilation.Create(
+            Path.GetFileNameWithoutExtension(filePath),
+            [syntaxTree],
+            MetadataReferenceProvider.CreatePlatformReferences(),
+            new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(
+                Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary
+            )
+        );
+        var semanticModels = new Dictionary<
+            Microsoft.CodeAnalysis.SyntaxTree,
+            Microsoft.CodeAnalysis.SemanticModel
+        >
+        {
+            [syntaxTree] = compilation.GetSemanticModel(syntaxTree),
+        };
+
+        return new SourceProject(
+            Path.GetDirectoryName(filePath)!,
+            isApplication: false,
+            compilation,
+            semanticModels,
+            [syntaxTree]
+        );
     }
 
     private static void ProjectLoaderRejectsBrokenCompilation()

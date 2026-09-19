@@ -25,7 +25,7 @@ internal sealed class AnalysisEngine
 
         var diagnostics = projects
             .SelectMany(project => AnalyzeProject(project, projects, cancellationToken))
-            .DistinctBy(CreateDiagnosticIdentity)
+            .DistinctBy(CreateDiagnosticIdentity, DiagnosticIdentityComparer.Instance)
             .ToArray();
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -59,7 +59,7 @@ internal sealed class AnalysisEngine
 
     private static DiagnosticIdentity CreateDiagnosticIdentity(DesignDiagnostic diagnostic) =>
         new(
-            Path.GetFullPath(diagnostic.Location.FilePath).ToUpperInvariant(),
+            Path.GetFullPath(diagnostic.Location.FilePath),
             diagnostic.Location.Line,
             diagnostic.Location.Column,
             diagnostic.Rule.Id,
@@ -73,4 +73,27 @@ internal sealed class AnalysisEngine
         string RuleId,
         string? SymbolName
     );
+
+    private sealed class DiagnosticIdentityComparer : IEqualityComparer<DiagnosticIdentity>
+    {
+        public static DiagnosticIdentityComparer Instance { get; } = new();
+
+        public bool Equals(DiagnosticIdentity left, DiagnosticIdentity right) =>
+            PathSemantics.Comparer.Equals(left.FilePath, right.FilePath)
+            && left.Line == right.Line
+            && left.Column == right.Column
+            && string.Equals(left.RuleId, right.RuleId, StringComparison.Ordinal)
+            && string.Equals(left.SymbolName, right.SymbolName, StringComparison.Ordinal);
+
+        public int GetHashCode(DiagnosticIdentity identity)
+        {
+            var hash = new HashCode();
+            hash.Add(identity.FilePath, PathSemantics.Comparer);
+            hash.Add(identity.Line);
+            hash.Add(identity.Column);
+            hash.Add(identity.RuleId, StringComparer.Ordinal);
+            hash.Add(identity.SymbolName, StringComparer.Ordinal);
+            return hash.ToHashCode();
+        }
+    }
 }

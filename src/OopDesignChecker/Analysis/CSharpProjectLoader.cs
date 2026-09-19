@@ -101,7 +101,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
                 string.IsNullOrWhiteSpace(project.FilePath)
                 || !PathFilter.ShouldIgnore(project.FilePath, rootPath, _ignoredPaths)
             )
-            .OrderBy(project => project.FilePath, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(project => project.FilePath, PathSemantics.Comparer)
             .Select(project => CreateSourceProject(project, workspaceFailures, cancellationToken))
             .ToArray();
 
@@ -135,15 +135,11 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             .Where(path => !string.IsNullOrWhiteSpace(path))
             .Select(path => ResolveSlnxProjectPath(rootPath, path!))
             .Where(path =>
-                string.Equals(
-                    Path.GetExtension(path),
-                    ".csproj",
-                    StringComparison.OrdinalIgnoreCase
-                )
+                string.Equals(Path.GetExtension(path), ".csproj", PathSemantics.Comparison)
             )
             .Where(path => !PathFilter.ShouldIgnore(path, rootPath, _ignoredPaths))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .Distinct(PathSemantics.Comparer)
+            .OrderBy(path => path, PathSemantics.Comparer)
             .ToArray();
 
         if (projectFiles.Length == 0)
@@ -204,18 +200,12 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         );
 
         var projects = new List<SourceProject>(projectFiles.Length);
-        foreach (
-            var projectFile in projectFiles.OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
-        )
+        foreach (var projectFile in projectFiles.OrderBy(path => path, PathSemantics.Comparer))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var normalizedProjectFile = Path.GetFullPath(projectFile);
             var project = workspace.CurrentSolution.Projects.FirstOrDefault(candidate =>
-                string.Equals(
-                    candidate.FilePath,
-                    normalizedProjectFile,
-                    StringComparison.OrdinalIgnoreCase
-                )
+                string.Equals(candidate.FilePath, normalizedProjectFile, PathSemantics.Comparison)
             );
             project ??= workspace
                 .OpenProjectAsync(normalizedProjectFile, cancellationToken: cancellationToken)
@@ -343,7 +333,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
                 Directory.EnumerateFiles(targetDirectory, "*.slnx", SearchOption.TopDirectoryOnly)
             )
             .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
-            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(path => path, PathSemantics.Comparer)
             .ToArray();
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -366,7 +356,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         var directProjects = Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.TopDirectoryOnly)
             .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
-            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(path => path, PathSemantics.Comparer)
             .ToArray();
 
         if (directProjects.Length > 0)
@@ -378,8 +368,8 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         return Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.AllDirectories)
             .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .Distinct(PathSemantics.Comparer)
+            .OrderBy(path => path, PathSemantics.Comparer)
             .ToArray();
     }
 
@@ -393,11 +383,8 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         if (File.Exists(targetPath))
         {
             if (
-                string.Equals(
-                    Path.GetExtension(targetPath),
-                    ".cs",
-                    StringComparison.OrdinalIgnoreCase
-                ) && !PathFilter.ShouldIgnore(targetPath, rootPath, _ignoredPaths)
+                string.Equals(Path.GetExtension(targetPath), ".cs", PathSemantics.Comparison)
+                && !PathFilter.ShouldIgnore(targetPath, rootPath, _ignoredPaths)
             )
             {
                 yield return targetPath;
