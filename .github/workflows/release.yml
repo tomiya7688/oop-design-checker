@@ -114,20 +114,12 @@ jobs:
             throw "Roslyn BuildHost copy did not produce the expected file: $expectedBuildHost"
           }
 
-      - name: Smoke test packaged CUI against SDK project folder
+      - name: Smoke test packaged CUI behavior
         if: matrix.rid == 'win-x64' || matrix.rid == 'linux-x64' || matrix.rid == 'osx-arm64'
         shell: pwsh
         run: |
-          $target = Join-Path $env:RUNNER_TEMP "oop-checker-release-folder-smoke"
+          $target = Join-Path $env:RUNNER_TEMP "oop-checker-release-smoke"
           New-Item -ItemType Directory -Force -Path $target | Out-Null
-          Set-Content -Path (Join-Path $target "FolderSmoke.csproj") -Value @"
-          <Project Sdk="Microsoft.NET.Sdk">
-            <PropertyGroup>
-              <TargetFramework>net10.0</TargetFramework>
-            </PropertyGroup>
-          </Project>
-          "@
-          Set-Content -Path (Join-Path $target "Sample.cs") -Value "internal sealed class Sample { private int _value; public int Value => _value; }"
 
           if ($IsWindows) {
             $checker = Join-Path "publish/${{ matrix.rid }}" "oop-design-checker-cui.exe"
@@ -135,14 +127,66 @@ jobs:
             $checker = Join-Path "publish/${{ matrix.rid }}" "oop-design-checker-cui"
           }
 
-          $output = Join-Path $target "diagnostics.json"
-          & $checker $target --format json --output $output --fail-on danger
+          $reportedVersion = (& $checker --version).Trim()
+          if ($LASTEXITCODE -ne 0 -or $reportedVersion -ne $env:PACKAGE_VERSION) {
+            throw "Packaged checker version mismatch. Expected $env:PACKAGE_VERSION, found '$reportedVersion'."
+          }
+
+          $cleanProject = Join-Path $target "clean"
+          New-Item -ItemType Directory -Force -Path $cleanProject | Out-Null
+          Set-Content -Path (Join-Path $cleanProject "Clean.csproj") -Value @"
+          <Project Sdk="Microsoft.NET.Sdk">
+            <PropertyGroup>
+              <TargetFramework>net10.0</TargetFramework>
+            </PropertyGroup>
+          </Project>
+          "@
+          Set-Content -Path (Join-Path $cleanProject "Sample.cs") -Value "internal sealed class Sample { private int _value; public int Value => _value; }"
+
+          $jsonOutput = Join-Path $target "diagnostics.json"
+          & $checker $cleanProject --format json --output $jsonOutput --fail-on danger
           if ($LASTEXITCODE -ne 0) {
-            throw "Packaged checker failed to analyze an SDK project folder with exit code $LASTEXITCODE."
+            throw "Packaged checker failed folder analysis without --config. Exit code: $LASTEXITCODE"
           }
-          if (-not (Test-Path $output)) {
-            throw "Packaged checker did not produce the expected JSON output."
+          $json = Get-Content $jsonOutput -Raw | ConvertFrom-Json
+          if ($null -eq $json.version -or $null -eq $json.diagnostics -or $null -eq $json.summary) {
+            throw "Packaged checker JSON output did not have the expected schema."
           }
+
+          $sarifOutput = Join-Path $target "diagnostics.sarif"
+          & $checker (Join-Path $cleanProject "Clean.csproj") --format sarif --output $sarifOutput --fail-on danger
+          if ($LASTEXITCODE -ne 0) {
+            throw "Packaged checker failed direct .csproj analysis. Exit code: $LASTEXITCODE"
+          }
+          $sarif = Get-Content $sarifOutput -Raw | ConvertFrom-Json
+          if ($sarif.version -ne "2.1.0" -or $null -eq $sarif.runs) {
+            throw "Packaged checker SARIF output did not have the expected schema."
+          }
+
+          $dangerProject = Join-Path $target "danger"
+          New-Item -ItemType Directory -Force -Path $dangerProject | Out-Null
+          Set-Content -Path (Join-Path $dangerProject "Danger.csproj") -Value @"
+          <Project Sdk="Microsoft.NET.Sdk">
+            <PropertyGroup>
+              <TargetFramework>net10.0</TargetFramework>
+            </PropertyGroup>
+          </Project>
+          "@
+          Set-Content -Path (Join-Path $dangerProject "Bad.cs") -Value "internal sealed class Bad { public int Value; }"
+
+          & $checker $dangerProject --format json --output (Join-Path $target "danger.json") --fail-on danger
+          if ($LASTEXITCODE -ne 1) {
+            throw "Expected danger diagnostics to return exit code 1, found $LASTEXITCODE."
+          }
+
+          & $checker (Join-Path $target "missing-target")
+          if ($LASTEXITCODE -ne 2) {
+            throw "Expected invalid target to return exit code 2, found $LASTEXITCODE."
+          }
+
+          # The final native command is expected to return 2. Prevent that expected
+          # result from becoming the PowerShell step's own exit status.
+          exit 0
       - name: Add documentation and configuration example
         shell: bash
         run: |
