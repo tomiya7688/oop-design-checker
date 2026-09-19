@@ -12,6 +12,8 @@ on:
       - 'CHANGELOG.en.md'
       - 'src/OopDesignChecker/**'
       - 'src/frontends/cui/**'
+      - 'src/frontends/gui/**'
+      - 'tests/**'
       - 'oop-design-checker.example.json'
       - 'README.md'
       - 'README.en.md'
@@ -114,79 +116,41 @@ jobs:
             throw "Roslyn BuildHost copy did not produce the expected file: $expectedBuildHost"
           }
 
+      - name: Include .NET reference assemblies
+        shell: pwsh
+        run: |
+          $referenceRoot = Join-Path $env:DOTNET_ROOT "packs/Microsoft.NETCore.App.Ref"
+          $referenceDirectory = Get-ChildItem $referenceRoot -Directory |
+            Sort-Object Name -Descending |
+            ForEach-Object { Join-Path $_.FullName "ref/net10.0" } |
+            Where-Object { Test-Path $_ } |
+            Select-Object -First 1
+          if ($null -eq $referenceDirectory) {
+            throw "Could not locate net10.0 reference assemblies under $referenceRoot."
+          }
+
+          $destination = Join-Path "publish/${{ matrix.rid }}" "ReferenceAssemblies"
+          New-Item -ItemType Directory -Force -Path $destination | Out-Null
+          Copy-Item (Join-Path $referenceDirectory "*.dll") $destination -Force
+          if (-not (Test-Path (Join-Path $destination "System.Runtime.dll"))) {
+            throw "Reference assembly copy did not include System.Runtime.dll."
+          }
+
       - name: Smoke test packaged CUI behavior
         if: matrix.rid == 'win-x64' || matrix.rid == 'linux-x64' || matrix.rid == 'osx-arm64'
         shell: pwsh
         run: |
-          $target = Join-Path $env:RUNNER_TEMP "oop-checker-release-smoke"
-          New-Item -ItemType Directory -Force -Path $target | Out-Null
-
           if ($IsWindows) {
             $checker = Join-Path "publish/${{ matrix.rid }}" "oop-design-checker-cui.exe"
           } else {
             $checker = Join-Path "publish/${{ matrix.rid }}" "oop-design-checker-cui"
           }
 
-          $reportedVersion = (& $checker --version).Trim()
-          if ($LASTEXITCODE -ne 0 -or $reportedVersion -ne $env:PACKAGE_VERSION) {
-            throw "Packaged checker version mismatch. Expected $env:PACKAGE_VERSION, found '$reportedVersion'."
-          }
+          ./tests/release/PackagedCuiE2e.ps1 `
+            -Checker $checker `
+            -Root (Join-Path $env:RUNNER_TEMP "oop-checker-release-smoke-publish") `
+            -ExpectedVersion $env:PACKAGE_VERSION
 
-          $cleanProject = Join-Path $target "clean"
-          New-Item -ItemType Directory -Force -Path $cleanProject | Out-Null
-          Set-Content -Path (Join-Path $cleanProject "Clean.csproj") -Value @"
-          <Project Sdk="Microsoft.NET.Sdk">
-            <PropertyGroup>
-              <TargetFramework>net10.0</TargetFramework>
-            </PropertyGroup>
-          </Project>
-          "@
-          Set-Content -Path (Join-Path $cleanProject "Sample.cs") -Value "internal sealed class Sample { private int _value; public int Value => _value; }"
-
-          $jsonOutput = Join-Path $target "diagnostics.json"
-          & $checker $cleanProject --format json --output $jsonOutput --fail-on danger
-          if ($LASTEXITCODE -ne 0) {
-            throw "Packaged checker failed folder analysis without --config. Exit code: $LASTEXITCODE"
-          }
-          $json = Get-Content $jsonOutput -Raw | ConvertFrom-Json
-          if ($null -eq $json.version -or $null -eq $json.diagnostics -or $null -eq $json.summary) {
-            throw "Packaged checker JSON output did not have the expected schema."
-          }
-
-          $sarifOutput = Join-Path $target "diagnostics.sarif"
-          & $checker (Join-Path $cleanProject "Clean.csproj") --format sarif --output $sarifOutput --fail-on danger
-          if ($LASTEXITCODE -ne 0) {
-            throw "Packaged checker failed direct .csproj analysis. Exit code: $LASTEXITCODE"
-          }
-          $sarif = Get-Content $sarifOutput -Raw | ConvertFrom-Json
-          if ($sarif.version -ne "2.1.0" -or $null -eq $sarif.runs) {
-            throw "Packaged checker SARIF output did not have the expected schema."
-          }
-
-          $dangerProject = Join-Path $target "danger"
-          New-Item -ItemType Directory -Force -Path $dangerProject | Out-Null
-          Set-Content -Path (Join-Path $dangerProject "Danger.csproj") -Value @"
-          <Project Sdk="Microsoft.NET.Sdk">
-            <PropertyGroup>
-              <TargetFramework>net10.0</TargetFramework>
-            </PropertyGroup>
-          </Project>
-          "@
-          Set-Content -Path (Join-Path $dangerProject "Bad.cs") -Value "internal sealed class Bad { public int Value; }"
-
-          & $checker $dangerProject --format json --output (Join-Path $target "danger.json") --fail-on danger
-          if ($LASTEXITCODE -ne 1) {
-            throw "Expected danger diagnostics to return exit code 1, found $LASTEXITCODE."
-          }
-
-          & $checker (Join-Path $target "missing-target")
-          if ($LASTEXITCODE -ne 2) {
-            throw "Expected invalid target to return exit code 2, found $LASTEXITCODE."
-          }
-
-          # The final native command is expected to return 2. Prevent that expected
-          # result from becoming the PowerShell step's own exit status.
-          exit 0
       - name: Add documentation and configuration example
         shell: bash
         run: |
@@ -212,6 +176,44 @@ jobs:
           mkdir -p dist
           tar -czf "dist/oop-design-checker-${PACKAGE_VERSION}-${{ matrix.rid }}.tar.gz" -C "publish/${{ matrix.rid }}" .
 
+      - name: Smoke test final release archive
+        if: matrix.rid == 'win-x64' || matrix.rid == 'linux-x64' || matrix.rid == 'osx-arm64'
+        shell: pwsh
+        run: |
+          $extractRoot = Join-Path $env:RUNNER_TEMP "oop-checker-release-archive"
+          Remove-Item $extractRoot -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $extractRoot | Out-Null
+
+          if ("${{ matrix.archive }}" -eq "zip") {
+            $archives = @(Get-ChildItem dist -Filter "*.zip")
+            if ($archives.Count -ne 1) {
+              throw "Expected one zip release archive, found $($archives.Count)."
+            }
+            $archive = $archives[0]
+            Expand-Archive -Path $archive.FullName -DestinationPath $extractRoot
+          } else {
+            $archives = @(Get-ChildItem dist -Filter "*.tar.gz")
+            if ($archives.Count -ne 1) {
+              throw "Expected one tar.gz release archive, found $($archives.Count)."
+            }
+            $archive = $archives[0]
+            tar -xzf $archive.FullName -C $extractRoot
+            if ($LASTEXITCODE -ne 0) {
+              throw "Could not extract release archive."
+            }
+          }
+
+          if ($IsWindows) {
+            $checker = Join-Path $extractRoot "oop-design-checker-cui.exe"
+          } else {
+            $checker = Join-Path $extractRoot "oop-design-checker-cui"
+          }
+
+          ./tests/release/PackagedCuiE2e.ps1 `
+            -Checker $checker `
+            -Root (Join-Path $env:RUNNER_TEMP "oop-checker-release-smoke-archive") `
+            -ExpectedVersion $env:PACKAGE_VERSION
+
       - name: Generate archive checksum
         shell: bash
         run: |
@@ -229,6 +231,23 @@ jobs:
               f'{digest}  {archive.name}\n', encoding='utf-8'
           )
           PY
+
+      - name: Verify archive checksum
+        shell: python
+        run: |
+          from hashlib import sha256
+          from pathlib import Path
+
+          archives = [path for path in Path("dist").iterdir() if path.suffix in {".zip", ".gz"}]
+          if len(archives) != 1:
+              raise SystemExit(f"Expected one release archive, found {len(archives)}")
+
+          archive = archives[0]
+          checksum_file = archive.with_name(f"{archive.name}.sha256")
+          expected = checksum_file.read_text(encoding="utf-8").split()[0]
+          actual = sha256(archive.read_bytes()).hexdigest()
+          if actual != expected:
+              raise SystemExit(f"Checksum mismatch for {archive.name}: {actual} != {expected}")
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v4

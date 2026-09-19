@@ -1,6 +1,7 @@
 using System.Text.Json;
 using OopDesignChecker.Configuration;
 using OopDesignChecker.Core;
+using OopDesignChecker.Gui;
 using OopDesignChecker.Output;
 
 namespace OopDesignChecker.Tests;
@@ -12,6 +13,7 @@ internal static class GuiWorkflowPhase2SmokeTests
         ConfigurationJsonRoundTripsAndValidates();
         DiagnosticExportServiceWritesJsonAndSarif();
         CheckerServiceHonorsPreCancelledToken();
+        ClipboardFailureIsContained();
     }
 
     private static void ConfigurationJsonRoundTripsAndValidates()
@@ -113,6 +115,23 @@ internal static class GuiWorkflowPhase2SmokeTests
         finally
         {
             Directory.Delete(temporaryDirectory, recursive: true);
+        }
+    }
+
+    private static void ClipboardFailureIsContained()
+    {
+        var copied = ClipboardOperation
+            .TrySetTextAsync(() =>
+                Task.FromException(new InvalidOperationException("clipboard failed"))
+            )
+            .GetAwaiter()
+            .GetResult();
+
+        if (copied)
+        {
+            throw new InvalidOperationException(
+                "ClipboardOperation reported success when the clipboard operation failed."
+            );
         }
     }
 
