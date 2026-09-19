@@ -114,16 +114,10 @@ internal static class DiagnosticCoordinationSmokeTests
         );
     }
 
-
     private static void UnknownDiagnosticPathsRemainStable()
     {
         var diagnostics = AnalyzeThroughEngine(
-            Create(
-                "OOP999",
-                DesignDiagnosticSeverity.Warning,
-                "Order",
-                filePath: "<unknown>"
-            )
+            Create("OOP999", DesignDiagnosticSeverity.Warning, "Order", filePath: "<unknown>")
         );
 
         var reduced = DiagnosticCoordinator.Reduce(diagnostics);

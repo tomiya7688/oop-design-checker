@@ -174,19 +174,18 @@ internal static class OutputFormatSmokeTests
         }
     }
 
-
     private static void SarifOutputToleratesUnknownPaths()
     {
         var path = CreateTemporaryPath("sarif");
         try
         {
-            new SarifDiagnosticWriter(path)
-                .Write([CreateDiagnostic(filePath: "<unknown>")], verbose: false);
+            new SarifDiagnosticWriter(path).Write(
+                [CreateDiagnostic(filePath: "<unknown>")],
+                verbose: false
+            );
 
             using var document = JsonDocument.Parse(File.ReadAllText(path));
-            var result = document
-                .RootElement.GetProperty("runs")[0]
-                .GetProperty("results")[0];
+            var result = document.RootElement.GetProperty("runs")[0].GetProperty("results")[0];
 
             if (result.GetProperty("ruleId").GetString() != "OOP999")
             {

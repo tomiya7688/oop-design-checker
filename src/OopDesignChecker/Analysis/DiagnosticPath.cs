@@ -30,7 +30,10 @@ internal static class DiagnosticPath
     public static bool TryCreateFileUri(string? path, out string uri)
     {
         uri = string.Empty;
-        if (string.IsNullOrWhiteSpace(path) || string.Equals(path, Unknown, StringComparison.Ordinal))
+        if (
+            string.IsNullOrWhiteSpace(path)
+            || string.Equals(path, Unknown, StringComparison.Ordinal)
+        )
         {
             return false;
         }
@@ -41,7 +44,12 @@ internal static class DiagnosticPath
             return true;
         }
         catch (Exception exception)
-            when (exception is ArgumentException or NotSupportedException or PathTooLongException or UriFormatException)
+            when (exception
+                    is ArgumentException
+                        or NotSupportedException
+                        or PathTooLongException
+                        or UriFormatException
+            )
         {
             return false;
         }
