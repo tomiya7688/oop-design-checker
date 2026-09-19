@@ -183,6 +183,10 @@ jobs:
           if ($LASTEXITCODE -ne 2) {
             throw "Expected invalid target to return exit code 2, found $LASTEXITCODE."
           }
+
+          # The final native command is expected to return 2. Prevent that expected
+          # result from becoming the PowerShell step's own exit status.
+          exit 0
       - name: Add documentation and configuration example
         shell: bash
         run: |
