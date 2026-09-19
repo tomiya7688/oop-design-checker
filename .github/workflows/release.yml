@@ -185,10 +185,18 @@ jobs:
           New-Item -ItemType Directory -Force -Path $extractRoot | Out-Null
 
           if ("${{ matrix.archive }}" -eq "zip") {
-            $archive = Get-ChildItem dist -Filter "*.zip" | Select-Object -Single
+            $archives = @(Get-ChildItem dist -Filter "*.zip")
+            if ($archives.Count -ne 1) {
+              throw "Expected one zip release archive, found $($archives.Count)."
+            }
+            $archive = $archives[0]
             Expand-Archive -Path $archive.FullName -DestinationPath $extractRoot
           } else {
-            $archive = Get-ChildItem dist -Filter "*.tar.gz" | Select-Object -Single
+            $archives = @(Get-ChildItem dist -Filter "*.tar.gz")
+            if ($archives.Count -ne 1) {
+              throw "Expected one tar.gz release archive, found $($archives.Count)."
+            }
+            $archive = $archives[0]
             tar -xzf $archive.FullName -C $extractRoot
             if ($LASTEXITCODE -ne 0) {
               throw "Could not extract release archive."
