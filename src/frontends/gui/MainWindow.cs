@@ -519,7 +519,9 @@ internal sealed class MainWindow : Window
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard is not null)
         {
-            _ = await ClipboardOperation.TrySetTextAsync(() => clipboard.SetTextAsync(locationText));
+            _ = await ClipboardOperation.TrySetTextAsync(() =>
+                clipboard.SetTextAsync(locationText)
+            );
         }
     }
 

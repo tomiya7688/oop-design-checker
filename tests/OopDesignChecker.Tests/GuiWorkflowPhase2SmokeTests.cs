@@ -1,8 +1,8 @@
 using System.Text.Json;
 using OopDesignChecker.Configuration;
 using OopDesignChecker.Core;
-using OopDesignChecker.Output;
 using OopDesignChecker.Gui;
+using OopDesignChecker.Output;
 
 namespace OopDesignChecker.Tests;
 
@@ -121,7 +121,9 @@ internal static class GuiWorkflowPhase2SmokeTests
     private static void ClipboardFailureIsContained()
     {
         var copied = ClipboardOperation
-            .TrySetTextAsync(() => Task.FromException(new InvalidOperationException("clipboard failed")))
+            .TrySetTextAsync(() =>
+                Task.FromException(new InvalidOperationException("clipboard failed"))
+            )
             .GetAwaiter()
             .GetResult();
 
