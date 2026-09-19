@@ -220,7 +220,11 @@ internal static class CommandLineOptionsParser
 
         private static bool TryParseSeverity(string? value, out DesignDiagnosticSeverity severity)
         {
-            if (Enum.TryParse(value, ignoreCase: true, out severity))
+            if (
+                Enum.TryParse(value, ignoreCase: true, out severity)
+                && Enum.IsDefined(severity)
+                && !int.TryParse(value, out _)
+            )
             {
                 return true;
             }
@@ -231,7 +235,11 @@ internal static class CommandLineOptionsParser
 
         private static bool TryParseOutputFormat(string? value, out DiagnosticOutputFormat format)
         {
-            if (Enum.TryParse(value, ignoreCase: true, out format))
+            if (
+                Enum.TryParse(value, ignoreCase: true, out format)
+                && Enum.IsDefined(format)
+                && !int.TryParse(value, out _)
+            )
             {
                 return true;
             }
