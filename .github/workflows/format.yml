@@ -1,7 +1,9 @@
 name: format
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - fix/77-case-sensitive-paths
 
 permissions:
   contents: write
