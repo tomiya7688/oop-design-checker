@@ -462,8 +462,11 @@ internal sealed class MainWindow : Window
             return;
         }
 
-        await clipboard.SetTextAsync(text);
-        _view.Status.Text = GuiText.Get(GuiTextKey.CopiedToClipboard, _language);
+        var copied = await ClipboardOperation.TrySetTextAsync(() => clipboard.SetTextAsync(text));
+        _view.Status.Text = GuiText.Get(
+            copied ? GuiTextKey.CopiedToClipboard : GuiTextKey.ClipboardCopyFailed,
+            _language
+        );
     }
 
     private async Task OpenSelectedSourceAsync()
@@ -513,18 +516,10 @@ internal sealed class MainWindow : Window
 
     private async Task CopySourceLocationFallbackAsync(string locationText)
     {
-        try
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is not null)
         {
-            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
-            if (clipboard is not null)
-            {
-                await clipboard.SetTextAsync(locationText);
-            }
-        }
-        catch (Exception)
-        {
-            // Source opening is a best-effort UI action. Clipboard failure must not escape
-            // through the Avalonia event handler after the original open failure.
+            _ = await ClipboardOperation.TrySetTextAsync(() => clipboard.SetTextAsync(locationText));
         }
     }
 
