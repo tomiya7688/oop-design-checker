@@ -17,6 +17,7 @@ internal static class OutputFormatSmokeTests
         NumericOutputFormatIsRejected();
         JsonOutputIsMachineReadable();
         SarifOutputIsMachineReadable();
+        SarifOutputToleratesUnknownPaths();
         GitHubAnnotationsEscapeSpecialCharacters();
     }
 
@@ -165,6 +166,40 @@ internal static class OutputFormatSmokeTests
             )
             {
                 throw new InvalidOperationException("SARIF document had unexpected content.");
+            }
+        }
+        finally
+        {
+            DeleteIfExists(path);
+        }
+    }
+
+
+    private static void SarifOutputToleratesUnknownPaths()
+    {
+        var path = CreateTemporaryPath("sarif");
+        try
+        {
+            new SarifDiagnosticWriter(path)
+                .Write([CreateDiagnostic(filePath: "<unknown>")], verbose: false);
+
+            using var document = JsonDocument.Parse(File.ReadAllText(path));
+            var result = document
+                .RootElement.GetProperty("runs")[0]
+                .GetProperty("results")[0];
+
+            if (result.GetProperty("ruleId").GetString() != "OOP999")
+            {
+                throw new InvalidOperationException(
+                    "SARIF output lost the diagnostic with an unknown source path."
+                );
+            }
+
+            if (result.GetProperty("locations").GetArrayLength() != 0)
+            {
+                throw new InvalidOperationException(
+                    "SARIF output must not invent a file URI for an unknown source path."
+                );
             }
         }
         finally
