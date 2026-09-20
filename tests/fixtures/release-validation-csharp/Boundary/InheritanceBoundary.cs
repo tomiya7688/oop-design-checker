@@ -11,7 +11,9 @@ internal sealed class ValidChild : ValidBase
 }
 
 internal class Shallow1 { }
+
 internal class Shallow2 : Shallow1 { }
+
 internal class Shallow3 : Shallow2 { }
 
 internal interface IService
@@ -22,6 +24,7 @@ internal interface IService
 internal sealed class SpecializedService : IService
 {
     public int Run() => 1;
+
     public int ConcreteOnly() => 2;
 }
 
@@ -39,13 +42,16 @@ internal readonly record struct Money(int Amount);
 internal sealed class MoneyOwner
 {
     private readonly Money _money = new(10);
+
     public int Read() => _money.Amount;
 }
 
 internal class ProcessorBase
 {
     protected int ReadLeft() => 1;
+
     protected int ReadRight() => 2;
+
     public virtual int Run() => 0;
 }
 

@@ -10,10 +10,15 @@ internal sealed class Combined
     private int _rightC;
 
     public void LeftOne() => _leftA = _leftB + 1;
+
     public void LeftTwo() => _leftB = _leftC + 1;
+
     public void LeftThree() => _leftC = _leftA + 1;
+
     public void RightOne() => _rightA = _rightB + 1;
+
     public void RightTwo() => _rightB = _rightC + 1;
+
     public void RightThree() => _rightC = _rightA + 1;
 }
 
@@ -29,12 +34,35 @@ internal sealed class PositionService
     public int Magnitude(Position position) => position.X + position.Y + position.Z;
 }
 
-internal sealed class DepA { public int Read() => 1; }
-internal sealed class DepB { public int Read() => 1; }
-internal sealed class DepC { public int Read() => 1; }
-internal sealed class DepD { public int Read() => 1; }
-internal sealed class DepE { public int Read() => 1; }
-internal sealed class DepF { public int Read() => 1; }
+internal sealed class DepA
+{
+    public int Read() => 1;
+}
+
+internal sealed class DepB
+{
+    public int Read() => 1;
+}
+
+internal sealed class DepC
+{
+    public int Read() => 1;
+}
+
+internal sealed class DepD
+{
+    public int Read() => 1;
+}
+
+internal sealed class DepE
+{
+    public int Read() => 1;
+}
+
+internal sealed class DepF
+{
+    public int Read() => 1;
+}
 
 internal sealed class Coordinator
 {
@@ -46,7 +74,9 @@ internal sealed class Coordinator
     private readonly DepF _f = new();
 
     public int First() => _a.Read() + _b.Read();
+
     public int Second() => _c.Read() + _d.Read();
+
     public int Third() => _e.Read() + _f.Read();
 }
 

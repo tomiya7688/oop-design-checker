@@ -16,10 +16,15 @@ internal sealed class CoherentObject
     }
 
     private void LeftOne() => _leftA = _leftB + 1;
+
     private void LeftTwo() => _leftB = _leftC + 1;
+
     private void LeftThree() => _leftC = _leftA + 1;
+
     private void RightOne() => _rightA = _rightB + 1;
+
     private void RightTwo() => _rightB = _rightC + 1;
+
     private void RightThree() => _rightC = _rightA + 1;
 }
 
@@ -35,12 +40,35 @@ internal sealed class PersonMapper
     public string Map(Person person) => $"{person.Name}:{person.Age}:{person.City}";
 }
 
-internal sealed class A { public int Read() => 1; }
-internal sealed class B { public int Read() => 1; }
-internal sealed class C { public int Read() => 1; }
-internal sealed class D { public int Read() => 1; }
-internal sealed class E { public int Read() => 1; }
-internal sealed class F { public int Read() => 1; }
+internal sealed class A
+{
+    public int Read() => 1;
+}
+
+internal sealed class B
+{
+    public int Read() => 1;
+}
+
+internal sealed class C
+{
+    public int Read() => 1;
+}
+
+internal sealed class D
+{
+    public int Read() => 1;
+}
+
+internal sealed class E
+{
+    public int Read() => 1;
+}
+
+internal sealed class F
+{
+    public int Read() => 1;
+}
 
 internal sealed class ConnectedCoordinator
 {
@@ -52,7 +80,10 @@ internal sealed class ConnectedCoordinator
     private readonly F _f = new();
 
     public int Run() => First() + Second() + Third();
+
     private int First() => _a.Read() + _b.Read();
+
     private int Second() => _c.Read() + _d.Read();
+
     private int Third() => _e.Read() + _f.Read();
 }

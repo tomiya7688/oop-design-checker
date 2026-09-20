@@ -3,25 +3,30 @@ namespace ReleaseValidation.Positive.Polymorphism;
 internal sealed class Dog
 {
     public void Move() { }
+
     public void Eat() { }
 }
 
 internal sealed class Cat
 {
     public void Move() { }
+
     public void Eat() { }
 }
 
 internal sealed class Bird
 {
     public void Move() { }
+
     public void Eat() { }
 }
 
 internal sealed class Zoo
 {
     public void Handle(Dog animal) { }
+
     public void Handle(Cat animal) { }
+
     public void Handle(Bird animal) { }
 }
 
