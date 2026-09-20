@@ -306,3 +306,4 @@ if ($LASTEXITCODE -ne 1) {
 }
 
 Write-Host "Release fixture exact validation passed with $($actual.Count) diagnostics."
+exit 0
