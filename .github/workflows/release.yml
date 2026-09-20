@@ -50,9 +50,59 @@ jobs:
 
           echo "value=${version}" >> "$GITHUB_OUTPUT"
 
+  release-fixture:
+    name: release-fixture-exact
+    needs: version
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish checker for fixture validation
+        run: >-
+          dotnet publish src/frontends/cui/OopDesignChecker.Cui.csproj
+          -c Release
+          --self-contained false
+          --output publish/release-fixture
+
+      - name: Include Roslyn MSBuild build host
+        shell: pwsh
+        run: |
+          $buildHost = Get-ChildItem (Join-Path $HOME ".nuget/packages") -Recurse -Filter "Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll" |
+            Where-Object { $_.FullName -match "[\\/]BuildHost-netcore[\\/]" } |
+            Select-Object -First 1
+          if ($null -eq $buildHost) {
+            throw "Could not locate Roslyn BuildHost-netcore in the NuGet package cache."
+          }
+
+          $destination = Join-Path "publish/release-fixture" "BuildHost-netcore"
+          New-Item -ItemType Directory -Force -Path $destination | Out-Null
+          Copy-Item (Join-Path $buildHost.Directory.FullName "*") $destination -Recurse -Force
+
+      - name: Validate release fixture exact expectations
+        shell: pwsh
+        run: |
+          ./tests/release/ReleaseFixtureExact.ps1 `
+            -Checker "publish/release-fixture/oop-design-checker-cui" `
+            -FixtureRoot "tests/fixtures/release-validation-csharp" `
+            -ArtifactRoot (Join-Path $env:RUNNER_TEMP "release-fixture-exact")
+
+      - name: Upload release fixture evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-fixture-exact
+          path: ${{ runner.temp }}/release-fixture-exact
+          if-no-files-found: warn
+          retention-days: 7
+
   package:
     name: package (${{ matrix.rid }})
-    needs: version
+    needs: [version, release-fixture]
     strategy:
       fail-fast: false
       matrix:

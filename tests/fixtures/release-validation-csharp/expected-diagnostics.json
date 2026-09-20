@@ -171,5 +171,535 @@
         "OOP404"
       ]
     }
+  ],
+  "exactDiagnostics": [
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/DataCarrierBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.DataCarrier.SnapshotService",
+      "line": 12,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP102",
+      "severity": "attention",
+      "file": "Boundary/InheritanceBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.Inheritance.Shallow3",
+      "line": 17,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP003",
+      "severity": "attention",
+      "file": "Boundary/InheritanceBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.Inheritance.IService",
+      "line": 19,
+      "column": 20
+    },
+    {
+      "ruleId": "OOP103",
+      "severity": "attention",
+      "file": "Boundary/InheritanceBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.Inheritance.SpecializedService.ConcreteOnly()",
+      "line": 28,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP103",
+      "severity": "attention",
+      "file": "Boundary/InheritanceBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.Inheritance.ProcessorBase.ReadLeft()",
+      "line": 51,
+      "column": 19
+    },
+    {
+      "ruleId": "OOP103",
+      "severity": "attention",
+      "file": "Boundary/InheritanceBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.Inheritance.ProcessorBase.ReadRight()",
+      "line": 53,
+      "column": 19
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/NavigationBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.Navigation.Handler",
+      "line": 8,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/ObjectDesignBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.ObjectDesign.PersonMapper",
+      "line": 38,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/ObjectDesignBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.ObjectDesign.A",
+      "line": 43,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/ObjectDesignBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.ObjectDesign.B",
+      "line": 48,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/ObjectDesignBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.ObjectDesign.C",
+      "line": 53,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/ObjectDesignBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.ObjectDesign.D",
+      "line": 58,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/ObjectDesignBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.ObjectDesign.E",
+      "line": 63,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/ObjectDesignBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.ObjectDesign.F",
+      "line": 68,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/OperationBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.Operation.SimpleProcessor",
+      "line": 3,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/PolymorphismBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.Polymorphism.CacheEntry",
+      "line": 3,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/PolymorphismBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.Polymorphism.Window",
+      "line": 10,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Boundary/PolymorphismBoundary.cs",
+      "symbol": "ReleaseValidation.Boundary.Polymorphism.Connection",
+      "line": 17,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP106",
+      "severity": "warning",
+      "file": "Positive/Encapsulation.cs",
+      "symbol": "ReleaseValidation.Positive.Encapsulation.LeakyBuffer.Items",
+      "line": 5,
+      "column": 31
+    },
+    {
+      "ruleId": "OOP107",
+      "severity": "danger",
+      "file": "Positive/Encapsulation.cs",
+      "symbol": "ReleaseValidation.Positive.Encapsulation.Account.Balance",
+      "line": 10,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP402",
+      "severity": "warning",
+      "file": "Positive/Encapsulation.cs",
+      "symbol": "ReleaseValidation.Positive.Encapsulation.Player",
+      "line": 23,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/Encapsulation.cs",
+      "symbol": "ReleaseValidation.Positive.Encapsulation.PlayerEditor",
+      "line": 30,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP108",
+      "severity": "warning",
+      "file": "Positive/Encapsulation.cs",
+      "symbol": "ReleaseValidation.Positive.Encapsulation.PlayerEditor.Reset(ReleaseValidation.Positive.Encapsulation.Player)",
+      "line": 32,
+      "column": 17
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/Inheritance.cs",
+      "symbol": "ReleaseValidation.Positive.Inheritance.HiddenBase",
+      "line": 3,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP301",
+      "severity": "warning",
+      "file": "Positive/Inheritance.cs",
+      "symbol": "ReleaseValidation.Positive.Inheritance.HiddenChild",
+      "line": 10,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP103",
+      "severity": "attention",
+      "file": "Positive/Inheritance.cs",
+      "symbol": "ReleaseValidation.Positive.Inheritance.HiddenChild.Start()",
+      "line": 12,
+      "column": 21
+    },
+    {
+      "ruleId": "OOP103",
+      "severity": "attention",
+      "file": "Positive/Inheritance.cs",
+      "symbol": "ReleaseValidation.Positive.Inheritance.HiddenChild.Read()",
+      "line": 14,
+      "column": 20
+    },
+    {
+      "ruleId": "OOP302",
+      "severity": "warning",
+      "file": "Positive/Inheritance.cs",
+      "symbol": "ReleaseValidation.Positive.Inheritance.WideChild",
+      "line": 24,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP303",
+      "severity": "danger",
+      "file": "Positive/Inheritance.cs",
+      "symbol": "ReleaseValidation.Positive.Inheritance.ContractBreaker.Execute()",
+      "line": 38,
+      "column": 26
+    },
+    {
+      "ruleId": "OOP102",
+      "severity": "attention",
+      "file": "Positive/Inheritance.cs",
+      "symbol": "ReleaseValidation.Positive.Inheritance.Depth5",
+      "line": 49,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP304",
+      "severity": "attention",
+      "file": "Positive/Inheritance.cs",
+      "symbol": "ReleaseValidation.Positive.Inheritance.Depth5",
+      "line": 49,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP305",
+      "severity": "warning",
+      "file": "Positive/Inheritance.cs",
+      "symbol": "ReleaseValidation.Positive.Inheritance.Clock clock",
+      "line": 65,
+      "column": 35
+    },
+    {
+      "ruleId": "OOP306",
+      "severity": "warning",
+      "file": "Positive/Inheritance.cs",
+      "symbol": "ReleaseValidation.Positive.Inheritance.ConstructingConsumer",
+      "line": 72,
+      "column": 38
+    },
+    {
+      "ruleId": "OOP307",
+      "severity": "attention",
+      "file": "Positive/Inheritance.cs",
+      "symbol": "ReleaseValidation.Positive.Inheritance.Calculator",
+      "line": 83,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP401",
+      "severity": "warning",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.Combined",
+      "line": 3,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP402",
+      "severity": "warning",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.Position",
+      "line": 25,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.PositionService",
+      "line": 32,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.DepA",
+      "line": 37,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.DepB",
+      "line": 42,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.DepC",
+      "line": 47,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.DepD",
+      "line": 52,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.DepE",
+      "line": 57,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.DepF",
+      "line": 62,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP403",
+      "severity": "warning",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.Coordinator",
+      "line": 67,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.Country",
+      "line": 83,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.OrderHandler",
+      "line": 103,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP404",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": null,
+      "line": 105,
+      "column": 40
+    },
+    {
+      "ruleId": "OOP405",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.AccountModel",
+      "line": 108,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP106",
+      "severity": "warning",
+      "file": "Positive/ObjectDesign.cs",
+      "symbol": "ReleaseValidation.Positive.ObjectDesign.AccountModel.Balance",
+      "line": 110,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/Operation.cs",
+      "symbol": "ReleaseValidation.Positive.Operation.LargeProcessor",
+      "line": 3,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP201",
+      "severity": "warning",
+      "file": "Positive/Operation.cs",
+      "symbol": "ReleaseValidation.Positive.Operation.LargeProcessor.Run()",
+      "line": 5,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP001",
+      "severity": "warning",
+      "file": "Positive/Polymorphism.cs",
+      "symbol": null,
+      "line": 3,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/Polymorphism.cs",
+      "symbol": "ReleaseValidation.Positive.Polymorphism.Dog",
+      "line": 3,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/Polymorphism.cs",
+      "symbol": "ReleaseValidation.Positive.Polymorphism.Cat",
+      "line": 10,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/Polymorphism.cs",
+      "symbol": "ReleaseValidation.Positive.Polymorphism.Bird",
+      "line": 17,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/Polymorphism.cs",
+      "symbol": "ReleaseValidation.Positive.Polymorphism.Zoo",
+      "line": 24,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/Polymorphism.cs",
+      "symbol": "ReleaseValidation.Positive.Polymorphism.RunnerCaller",
+      "line": 48,
+      "column": 23
+    },
+    {
+      "ruleId": "OOP002",
+      "severity": "warning",
+      "file": "Positive/Polymorphism.cs",
+      "symbol": null,
+      "line": 52,
+      "column": 9
+    },
+    {
+      "ruleId": "OOP002",
+      "severity": "warning",
+      "file": "Positive/Polymorphism.cs",
+      "symbol": null,
+      "line": 64,
+      "column": 9
+    },
+    {
+      "ruleId": "OOP003",
+      "severity": "attention",
+      "file": "Positive/Polymorphism.cs",
+      "symbol": "ReleaseValidation.Positive.Polymorphism.IUnused",
+      "line": 75,
+      "column": 20
+    },
+    {
+      "ruleId": "OOP101",
+      "severity": "warning",
+      "file": "Positive/VisibilityAndStatic.cs",
+      "symbol": "ReleaseValidation.Positive.VisibilityAndStatic.HierarchyBase",
+      "line": 3,
+      "column": 14
+    },
+    {
+      "ruleId": "OOP102",
+      "severity": "attention",
+      "file": "Positive/VisibilityAndStatic.cs",
+      "symbol": "ReleaseValidation.Positive.VisibilityAndStatic.SealMe",
+      "line": 13,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP103",
+      "severity": "attention",
+      "file": "Positive/VisibilityAndStatic.cs",
+      "symbol": "ReleaseValidation.Positive.VisibilityAndStatic.StaticMemberCandidate.Constant()",
+      "line": 26,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP102",
+      "severity": "attention",
+      "file": "Positive/VisibilityAndStatic.cs",
+      "symbol": "ReleaseValidation.Positive.VisibilityAndStatic.StaticClassCandidate",
+      "line": 29,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/VisibilityAndStatic.cs",
+      "symbol": "ReleaseValidation.Positive.VisibilityAndStatic.StaticClassCandidate",
+      "line": 29,
+      "column": 16
+    },
+    {
+      "ruleId": "OOP105",
+      "severity": "warning",
+      "file": "Positive/VisibilityAndStatic.cs",
+      "symbol": "ReleaseValidation.Positive.VisibilityAndStatic.GlobalState",
+      "line": 36,
+      "column": 23
+    }
   ]
 }
