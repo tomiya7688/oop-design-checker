@@ -211,12 +211,34 @@ Copy-Item $FixtureRoot $entryRoot -Recurse -Force
 $entryFixture = Join-Path $entryRoot (Split-Path $FixtureRoot -Leaf)
 $entryProject = Join-Path $entryFixture "ReleaseValidation.csproj"
 
+function Assert-EntrypointExact {
+    param(
+        [string] $Entrypoint,
+        [string] $Name
+    )
+
+    $path = Join-Path $ArtifactRoot ("entry-" + ($Name -replace '[^A-Za-z0-9._-]', '_') + ".json")
+    $exit = Invoke-CheckerJson -Target $Entrypoint -OutputPath $path
+    if ($exit -ne 1) {
+        throw "Entrypoint '$Entrypoint' expected exit code 1, found $exit."
+    }
+
+    $document = Get-Content $path -Raw | ConvertFrom-Json
+    $normalized = Normalize-JsonDiagnostics -Document $document -Root $entryFixture
+    Compare-ExactDiagnostics -Expected $expected -Actual $normalized -DiffPath (Join-Path $ArtifactRoot "entrypoint-diff.txt")
+}
+
+Assert-EntrypointExact -Entrypoint $entryFixture -Name "folder"
+Assert-EntrypointExact -Entrypoint $entryProject -Name "csproj"
+
 $slnxPath = Join-Path $entryFixture "ReleaseValidation.slnx"
 Set-Content -Path $slnxPath -Value @"
 <Solution>
   <Project Path="ReleaseValidation.csproj" />
 </Solution>
 "@
+Assert-EntrypointExact -Entrypoint $slnxPath -Name "slnx"
+Remove-Item $slnxPath -Force
 
 Push-Location $entryFixture
 try {
@@ -229,23 +251,7 @@ finally {
     Pop-Location
 }
 
-foreach ($entrypoint in @(
-    $entryFixture,
-    $entryProject,
-    $slnxPath,
-    (Join-Path $entryFixture "ReleaseValidation.sln")
-)) {
-    $name = [IO.Path]::GetFileName($entrypoint)
-    if ([string]::IsNullOrWhiteSpace($name)) { $name = "folder" }
-    $path = Join-Path $ArtifactRoot ("entry-" + ($name -replace '[^A-Za-z0-9._-]', '_') + ".json")
-    $exit = Invoke-CheckerJson -Target $entrypoint -OutputPath $path
-    if ($exit -ne 1) {
-        throw "Entrypoint '$entrypoint' expected exit code 1, found $exit."
-    }
-    $document = Get-Content $path -Raw | ConvertFrom-Json
-    $normalized = Normalize-JsonDiagnostics -Document $document -Root $entryFixture
-    Compare-ExactDiagnostics -Expected $expected -Actual $normalized -DiffPath (Join-Path $ArtifactRoot "entrypoint-diff.txt")
-}
+Assert-EntrypointExact -Entrypoint (Join-Path $entryFixture "ReleaseValidation.sln") -Name "sln"
 
 $configRoot = Join-Path $ArtifactRoot "config-cases"
 New-Item -ItemType Directory -Force -Path $configRoot | Out-Null
