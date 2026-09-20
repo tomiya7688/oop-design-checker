@@ -206,6 +206,7 @@ $textRuleIds = @(
 Assert-RuleCountsEqual -Expected $actual -Actual $textRuleIds -Context "text"
 
 $entryRoot = Join-Path $ArtifactRoot "entrypoints"
+New-Item -ItemType Directory -Force -Path $entryRoot | Out-Null
 Copy-Item $FixtureRoot $entryRoot -Recurse -Force
 $entryFixture = Join-Path $entryRoot (Split-Path $FixtureRoot -Leaf)
 $entryProject = Join-Path $entryFixture "ReleaseValidation.csproj"
@@ -247,6 +248,7 @@ foreach ($entrypoint in @(
 }
 
 $configRoot = Join-Path $ArtifactRoot "config-cases"
+New-Item -ItemType Directory -Force -Path $configRoot | Out-Null
 Copy-Item $FixtureRoot $configRoot -Recurse -Force
 $configFixture = Join-Path $configRoot (Split-Path $FixtureRoot -Leaf)
 
