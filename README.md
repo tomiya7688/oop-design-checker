@@ -39,7 +39,7 @@ GitHub Actionsでは、失敗原因を切り分けやすいよう独立したche
 - `self-check` - checker自身の`src`を`--fail-on attention`で解析
 - `code-analyzers` - .NET SDK analyzerを`latest-recommended`で実行し、code style有効・warningをerror化
 - `csharpier` - repository-local tool manifestのCSharpier 1.3.0でformat check
-- `release` - release関連変更時にWindows / Linux / macOS向けCUI packageを検証
+- `release` - release関連変更時にWindows / Linux / macOS向けCUI/GUI packageとrelease fixture exact gateを検証
 
 ## CUI
 
@@ -80,7 +80,7 @@ oop-design-checker-cui <target-path> --language en
 
 `v0.1.0`のように宣言versionと一致するtagをpushすると、全platform packageが成功した後にGitHub Releaseを作成します。製品versionは`Directory.Build.props`へ一元化しており、`v*` tagと宣言versionが一致しなければrelease packaging前に失敗します。
 
-release archiveには`dotnet publish`の完全な出力、日英両README、日英両CHANGELOG、`oop-design-checker.example.json`を含めます。archive名にはversionを含め、例として`oop-design-checker-0.1.0-linux-x64.tar.gz`となります。各archiveには`.sha256`を付け、tagged releaseには統合`SHA256SUMS.txt`も含めます。
+release archiveには`dotnet publish`の完全な出力、日英両README、日英両CHANGELOG、`oop-design-checker.example.json`、仕様書を含めます。CUIは`oop-design-checker-<version>-<rid>`、GUIは`oop-design-checker-gui-<version>-<rid>`として別archiveで配布します。各archiveには`.sha256`を付け、tagged releaseには統合`SHA256SUMS.txt`も含めます。
 
 配布target:
 
@@ -88,7 +88,7 @@ release archiveには`dotnet publish`の完全な出力、日英両README、日�
 - `linux-x64` / `linux-arm64`: `.tar.gz`
 - `osx-x64` / `osx-arm64`: `.tar.gz`
 
-packageはself-containedなので、CUI起動だけなら対応する.NET runtimeの事前installは不要です。ただし`.csproj`、`.sln`、`.slnx`解析はMSBuild経由で読み込むため、互換性のある.NET SDK/MSBuildが検出可能である必要があります。単体`.cs`解析ではproject loadingは不要です。
+CUI/GUI packageはself-containedなので、起動だけなら対応する.NET runtimeの事前installは不要です。GUIも同じ6 RIDを正式release対象とし、native runnerがあるRIDではarchive展開後まで起動smokeを行います。ARM64も配布対象ですが、ユーザー本人の実機manual確認は行わず、自動build/package/checksumをrelease gateとします。ただし`.csproj`、`.sln`、`.slnx`解析はMSBuild経由で読み込むため、互換性のある.NET SDK/MSBuildが検出可能である必要があります。単体`.cs`解析ではproject loadingは不要です。
 
 展開後の例:
 
