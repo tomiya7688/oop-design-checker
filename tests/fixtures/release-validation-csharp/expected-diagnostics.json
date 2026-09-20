@@ -1,0 +1,175 @@
+{
+  "version": 1,
+  "fixture": "release-validation-csharp",
+  "requiredDiagnostics": [
+    {
+      "ruleId": "OOP001",
+      "severity": "warning",
+      "file": "Positive/Polymorphism.cs"
+    },
+    {
+      "ruleId": "OOP002",
+      "severity": "warning",
+      "file": "Positive/Polymorphism.cs"
+    },
+    {
+      "ruleId": "OOP003",
+      "severity": "attention",
+      "file": "Positive/Polymorphism.cs"
+    },
+    {
+      "ruleId": "OOP101",
+      "severity": "warning",
+      "file": "Positive/VisibilityAndStatic.cs"
+    },
+    {
+      "ruleId": "OOP102",
+      "severity": "attention",
+      "file": "Positive/VisibilityAndStatic.cs"
+    },
+    {
+      "ruleId": "OOP103",
+      "severity": "attention",
+      "file": "Positive/VisibilityAndStatic.cs"
+    },
+    {
+      "ruleId": "OOP104",
+      "severity": "attention",
+      "file": "Positive/VisibilityAndStatic.cs"
+    },
+    {
+      "ruleId": "OOP105",
+      "severity": "warning",
+      "file": "Positive/VisibilityAndStatic.cs"
+    },
+    {
+      "ruleId": "OOP106",
+      "severity": "danger",
+      "file": "Positive/Encapsulation.cs"
+    },
+    {
+      "ruleId": "OOP107",
+      "severity": "danger",
+      "file": "Positive/Encapsulation.cs"
+    },
+    {
+      "ruleId": "OOP108",
+      "severity": "warning",
+      "file": "Positive/Encapsulation.cs"
+    },
+    {
+      "ruleId": "OOP201",
+      "severity": "warning",
+      "file": "Positive/Operation.cs"
+    },
+    {
+      "ruleId": "OOP301",
+      "severity": "warning",
+      "file": "Positive/Inheritance.cs"
+    },
+    {
+      "ruleId": "OOP302",
+      "severity": "warning",
+      "file": "Positive/Inheritance.cs"
+    },
+    {
+      "ruleId": "OOP303",
+      "severity": "danger",
+      "file": "Positive/Inheritance.cs"
+    },
+    {
+      "ruleId": "OOP304",
+      "severity": "attention",
+      "file": "Positive/Inheritance.cs"
+    },
+    {
+      "ruleId": "OOP305",
+      "severity": "warning",
+      "file": "Positive/Inheritance.cs"
+    },
+    {
+      "ruleId": "OOP306",
+      "severity": "warning",
+      "file": "Positive/Inheritance.cs"
+    },
+    {
+      "ruleId": "OOP307",
+      "severity": "attention",
+      "file": "Positive/Inheritance.cs"
+    },
+    {
+      "ruleId": "OOP401",
+      "severity": "warning",
+      "file": "Positive/ObjectDesign.cs"
+    },
+    {
+      "ruleId": "OOP402",
+      "severity": "warning",
+      "file": "Positive/ObjectDesign.cs"
+    },
+    {
+      "ruleId": "OOP403",
+      "severity": "warning",
+      "file": "Positive/ObjectDesign.cs"
+    },
+    {
+      "ruleId": "OOP404",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs"
+    },
+    {
+      "ruleId": "OOP405",
+      "severity": "attention",
+      "file": "Positive/ObjectDesign.cs"
+    }
+  ],
+  "boundaryExpectations": [
+    {
+      "scenario": "matching-shapes-without-shared-usage",
+      "file": "Boundary/PolymorphismBoundary.cs",
+      "mustNotContain": [
+        "OOP001"
+      ]
+    },
+    {
+      "scenario": "marker-and-public-extension-point",
+      "file": "Boundary/PolymorphismBoundary.cs",
+      "mustNotContain": [
+        "OOP003"
+      ]
+    },
+    {
+      "scenario": "explicit-serializable-data-carrier",
+      "file": "Boundary/DataCarrierBoundary.cs",
+      "mustNotContain": [
+        "OOP106",
+        "OOP107",
+        "OOP108",
+        "OOP402",
+        "OOP405"
+      ]
+    },
+    {
+      "scenario": "external-framework-contract",
+      "file": "Boundary/StaticBoundary.cs",
+      "mustNotContain": [
+        "OOP102",
+        "OOP103"
+      ]
+    },
+    {
+      "scenario": "thread-static-state",
+      "file": "Boundary/StaticBoundary.cs",
+      "mustNotContain": [
+        "OOP105"
+      ]
+    },
+    {
+      "scenario": "framework-value-navigation",
+      "file": "Boundary/NavigationBoundary.cs",
+      "mustNotContain": [
+        "OOP404"
+      ]
+    }
+  ]
+}
