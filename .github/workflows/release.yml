@@ -307,10 +307,207 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  gui-package:
+    name: gui-package (${{ matrix.rid }})
+    needs: [version, release-fixture]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            os: windows-latest
+            archive: zip
+          - rid: win-arm64
+            os: windows-latest
+            archive: zip
+          - rid: linux-x64
+            os: ubuntu-latest
+            archive: tar.gz
+          - rid: linux-arm64
+            os: ubuntu-latest
+            archive: tar.gz
+          - rid: osx-x64
+            os: macos-latest
+            archive: tar.gz
+          - rid: osx-arm64
+            os: macos-latest
+            archive: tar.gz
+    runs-on: ${{ matrix.os }}
+    env:
+      PACKAGE_VERSION: ${{ needs.version.outputs.product-version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish GUI
+        run: >-
+          dotnet publish src/frontends/gui/OopDesignChecker.Gui.csproj
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          -p:DebugType=None
+          -p:DebugSymbols=false
+          -p:Version=${{ needs.version.outputs.product-version }}
+          --output publish/gui/${{ matrix.rid }}
+
+      - name: Include Roslyn MSBuild build host
+        shell: pwsh
+        run: |
+          $buildHost = Get-ChildItem (Join-Path $HOME ".nuget/packages") -Recurse -Filter "Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll" |
+            Where-Object { $_.FullName -match "[\\/]BuildHost-netcore[\\/]" } |
+            Select-Object -First 1
+          if ($null -eq $buildHost) {
+            throw "Could not locate Roslyn BuildHost-netcore in the NuGet package cache."
+          }
+
+          $destination = Join-Path "publish/gui/${{ matrix.rid }}" "BuildHost-netcore"
+          New-Item -ItemType Directory -Force -Path $destination | Out-Null
+          Copy-Item (Join-Path $buildHost.Directory.FullName "*") $destination -Recurse -Force
+          if (-not (Test-Path (Join-Path $destination "Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll"))) {
+            throw "GUI package is missing the Roslyn MSBuild build host."
+          }
+
+      - name: Include .NET reference assemblies
+        shell: pwsh
+        run: |
+          $referenceRoot = Join-Path $env:DOTNET_ROOT "packs/Microsoft.NETCore.App.Ref"
+          $referenceDirectory = Get-ChildItem $referenceRoot -Directory |
+            Sort-Object Name -Descending |
+            ForEach-Object { Join-Path $_.FullName "ref/net10.0" } |
+            Where-Object { Test-Path $_ } |
+            Select-Object -First 1
+          if ($null -eq $referenceDirectory) {
+            throw "Could not locate net10.0 reference assemblies under $referenceRoot."
+          }
+
+          $destination = Join-Path "publish/gui/${{ matrix.rid }}" "ReferenceAssemblies"
+          New-Item -ItemType Directory -Force -Path $destination | Out-Null
+          Copy-Item (Join-Path $referenceDirectory "*.dll") $destination -Force
+          if (-not (Test-Path (Join-Path $destination "System.Runtime.dll"))) {
+            throw "GUI package is missing System.Runtime.dll reference assembly."
+          }
+
+      - name: Smoke test published GUI
+        if: matrix.rid == 'win-x64' || matrix.rid == 'linux-x64' || matrix.rid == 'osx-arm64'
+        shell: pwsh
+        run: |
+          if ($IsWindows) {
+            $gui = Join-Path "publish/gui/${{ matrix.rid }}" "oop-design-checker-gui.exe"
+          } else {
+            $gui = Join-Path "publish/gui/${{ matrix.rid }}" "oop-design-checker-gui"
+          }
+
+          ./tests/release/PackagedGuiSmoke.ps1 -Gui $gui -ExpectedVersion $env:PACKAGE_VERSION
+
+      - name: Add documentation and configuration example
+        shell: bash
+        run: |
+          cp README.md publish/gui/${{ matrix.rid }}/README.md
+          cp README.en.md publish/gui/${{ matrix.rid }}/README.en.md
+          cp CHANGELOG.md publish/gui/${{ matrix.rid }}/CHANGELOG.md
+          cp CHANGELOG.en.md publish/gui/${{ matrix.rid }}/CHANGELOG.en.md
+          cp oop-design-checker.example.json publish/gui/${{ matrix.rid }}/oop-design-checker.example.json
+          cp -R specification publish/gui/${{ matrix.rid }}/specification
+
+      - name: Package GUI Windows archive
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist-gui | Out-Null
+          $archive = "dist-gui/oop-design-checker-gui-$env:PACKAGE_VERSION-${{ matrix.rid }}.zip"
+          Compress-Archive -Path "publish/gui/${{ matrix.rid }}/*" -DestinationPath $archive
+
+      - name: Package GUI Unix archive
+        if: matrix.archive == 'tar.gz'
+        shell: bash
+        run: |
+          mkdir -p dist-gui
+          tar -czf "dist-gui/oop-design-checker-gui-${PACKAGE_VERSION}-${{ matrix.rid }}.tar.gz" -C "publish/gui/${{ matrix.rid }}" .
+
+      - name: Smoke test final GUI archive
+        if: matrix.rid == 'win-x64' || matrix.rid == 'linux-x64' || matrix.rid == 'osx-arm64'
+        shell: pwsh
+        run: |
+          $extractRoot = Join-Path $env:RUNNER_TEMP "oop-checker-gui-archive"
+          Remove-Item $extractRoot -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $extractRoot | Out-Null
+
+          if ("${{ matrix.archive }}" -eq "zip") {
+            $archive = @(Get-ChildItem dist-gui -Filter "*.zip")
+            if ($archive.Count -ne 1) {
+              throw "Expected one GUI zip archive, found $($archive.Count)."
+            }
+            Expand-Archive -Path $archive[0].FullName -DestinationPath $extractRoot
+          } else {
+            $archive = @(Get-ChildItem dist-gui -Filter "*.tar.gz")
+            if ($archive.Count -ne 1) {
+              throw "Expected one GUI tar.gz archive, found $($archive.Count)."
+            }
+            tar -xzf $archive[0].FullName -C $extractRoot
+            if ($LASTEXITCODE -ne 0) {
+              throw "Could not extract GUI release archive."
+            }
+          }
+
+          if ($IsWindows) {
+            $gui = Join-Path $extractRoot "oop-design-checker-gui.exe"
+          } else {
+            $gui = Join-Path $extractRoot "oop-design-checker-gui"
+          }
+
+          ./tests/release/PackagedGuiSmoke.ps1 -Gui $gui -ExpectedVersion $env:PACKAGE_VERSION
+
+      - name: Generate GUI archive checksum
+        shell: bash
+        run: |
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          archives = [path for path in Path('dist-gui').iterdir() if path.suffix in {'.zip', '.gz'}]
+          if len(archives) != 1:
+              raise SystemExit(f'Expected one GUI release archive, found {len(archives)}')
+
+          archive = archives[0]
+          digest = sha256(archive.read_bytes()).hexdigest()
+          archive.with_name(f'{archive.name}.sha256').write_text(
+              f'{digest}  {archive.name}\n', encoding='utf-8'
+          )
+          PY
+
+      - name: Verify GUI archive checksum
+        shell: python
+        run: |
+          from hashlib import sha256
+          from pathlib import Path
+
+          archives = [path for path in Path("dist-gui").iterdir() if path.suffix in {".zip", ".gz"}]
+          if len(archives) != 1:
+              raise SystemExit(f"Expected one GUI release archive, found {len(archives)}")
+
+          archive = archives[0]
+          checksum_file = archive.with_name(f"{archive.name}.sha256")
+          expected = checksum_file.read_text(encoding="utf-8").split()[0]
+          actual = sha256(archive.read_bytes()).hexdigest()
+          if actual != expected:
+              raise SystemExit(f"Checksum mismatch for {archive.name}: {actual} != {expected}")
+
+      - name: Upload GUI package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oop-design-checker-gui-${{ matrix.rid }}
+          path: dist-gui/*
+          if-no-files-found: error
+          retention-days: 7
+
   release:
     name: create-release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [version, package]
+    needs: [version, package, gui-package]
     runs-on: ubuntu-latest
     permissions:
       contents: write
