@@ -18,7 +18,9 @@ internal static class Program
     }
 
     private static string GetProductVersion() =>
-        typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        typeof(Program)
+            .Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion
         ?? typeof(Program).Assembly.GetName().Version?.ToString(3)
         ?? "unknown";
 
