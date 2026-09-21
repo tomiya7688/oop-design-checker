@@ -25,8 +25,8 @@ jobs:
           UPDATE_VISUAL_BASELINES: '1'
           UI_EVIDENCE_DIR: ${{ runner.temp }}/ui-evidence
         run: >-
-          dotnet test
-          tests/OopDesignChecker.Gui.HeadlessTests/OopDesignChecker.Gui.HeadlessTests.csproj
+          dotnet run
+          --project tests/OopDesignChecker.Gui.HeadlessTests/OopDesignChecker.Gui.HeadlessTests.csproj
           -c Release
 
       - name: Upload generated evidence
