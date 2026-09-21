@@ -3,6 +3,7 @@ using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using OopDesignChecker.Core;
 using OopDesignChecker.Localization;
@@ -289,7 +290,7 @@ public sealed class UiVisualRegressionTests
 
         var actualPath = Path.Combine(evidenceDirectory, "actual.png");
         var diffPath = Path.Combine(evidenceDirectory, "diff.png");
-        frame.Save(actualPath);
+        frame.Save(actualPath, PngBitmapEncoderOptions.Default);
 
         WriteUiState(window, scenario, language, evidenceDirectory);
 
