@@ -40,7 +40,7 @@ jobs:
       - name: Commit baselines
         shell: bash
         run: |
-          if git diff --quiet -- tests/OopDesignChecker.Gui.HeadlessTests/Baselines; then
+          if [[ -z "$(git status --porcelain -- tests/OopDesignChecker.Gui.HeadlessTests/Baselines)" ]]; then
             exit 0
           fi
           git config user.name "github-actions[bot]"
