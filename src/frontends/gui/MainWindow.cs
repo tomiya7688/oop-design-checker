@@ -45,8 +45,7 @@ internal sealed class MainWindow : Window
 
     internal void SetLanguageForTesting(UserInterfaceLanguage language)
     {
-        _view.LanguageSelector.SelectedIndex =
-            language == UserInterfaceLanguage.English ? 1 : 0;
+        _view.LanguageSelector.SelectedIndex = language == UserInterfaceLanguage.English ? 1 : 0;
         ChangeLanguage();
     }
 

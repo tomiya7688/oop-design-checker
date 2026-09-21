@@ -184,12 +184,16 @@ public sealed class UiVisualRegressionTests
     {
         var danger = diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Danger);
         var warning = diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Warning);
-        var attention = diagnostics.Count(
-            item => item.Severity == DesignDiagnosticSeverity.Attention
+        var attention = diagnostics.Count(item =>
+            item.Severity == DesignDiagnosticSeverity.Attention
         );
 
         Assert.EndsWith($": {danger}", window.TestView.DangerCount.Text, StringComparison.Ordinal);
-        Assert.EndsWith($": {warning}", window.TestView.WarningCount.Text, StringComparison.Ordinal);
+        Assert.EndsWith(
+            $": {warning}",
+            window.TestView.WarningCount.Text,
+            StringComparison.Ordinal
+        );
         Assert.EndsWith(
             $": {attention}",
             window.TestView.AttentionCount.Text,
@@ -356,12 +360,7 @@ public sealed class UiVisualRegressionTests
                     diff.SetPixel(
                         x,
                         y,
-                        new SKColor(
-                            actualPixel.Red,
-                            actualPixel.Green,
-                            actualPixel.Blue,
-                            64
-                        )
+                        new SKColor(actualPixel.Red, actualPixel.Green, actualPixel.Blue, 64)
                     );
                 }
             }
@@ -391,26 +390,23 @@ public sealed class UiVisualRegressionTests
             title = window.Title,
             visibleRowCount = window is MainWindow main ? VisibleRows(main).Length : (int?)null,
             status = window is MainWindow statusWindow ? statusWindow.TestView.Status.Text : null,
-            selectedRule =
-                window is MainWindow selectedWindow
-                && selectedWindow.TestView.DiagnosticsGrid.SelectedItem is DiagnosticRow row
-                    ? row.RuleId
-                    : null,
-            selectedFile =
-                window is MainWindow selectedFileWindow
-                && selectedFileWindow.TestView.DiagnosticsGrid.SelectedItem is DiagnosticRow fileRow
-                    ? fileRow.FileName
-                    : null,
-            summary =
-                window is MainWindow summaryWindow
-                    ? new
-                    {
-                        danger = summaryWindow.TestView.DangerCount.Text,
-                        warning = summaryWindow.TestView.WarningCount.Text,
-                        attention = summaryWindow.TestView.AttentionCount.Text,
-                        configuration = summaryWindow.TestView.ConfigurationSummary.Text,
-                    }
-                    : null,
+            selectedRule = window is MainWindow selectedWindow
+            && selectedWindow.TestView.DiagnosticsGrid.SelectedItem is DiagnosticRow row
+                ? row.RuleId
+                : null,
+            selectedFile = window is MainWindow selectedFileWindow
+            && selectedFileWindow.TestView.DiagnosticsGrid.SelectedItem is DiagnosticRow fileRow
+                ? fileRow.FileName
+                : null,
+            summary = window is MainWindow summaryWindow
+                ? new
+                {
+                    danger = summaryWindow.TestView.DangerCount.Text,
+                    warning = summaryWindow.TestView.WarningCount.Text,
+                    attention = summaryWindow.TestView.AttentionCount.Text,
+                    configuration = summaryWindow.TestView.ConfigurationSummary.Text,
+                }
+                : null,
         };
 
         File.WriteAllText(
@@ -431,12 +427,7 @@ public sealed class UiVisualRegressionTests
         Path.Combine(RepositoryRoot(), "tests", "fixtures", "release-validation-csharp");
 
     private static string BaselineRoot() =>
-        Path.Combine(
-            RepositoryRoot(),
-            "tests",
-            "OopDesignChecker.Gui.HeadlessTests",
-            "Baselines"
-        );
+        Path.Combine(RepositoryRoot(), "tests", "OopDesignChecker.Gui.HeadlessTests", "Baselines");
 
     private static string EvidenceRoot()
     {
@@ -448,7 +439,9 @@ public sealed class UiVisualRegressionTests
 
     private static string RepositoryRoot()
     {
-        foreach (var candidate in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
+        foreach (
+            var candidate in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+        )
         {
             var current = new DirectoryInfo(candidate);
             while (current is not null)
