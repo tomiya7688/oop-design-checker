@@ -1,0 +1,50 @@
+name: generate-headless-baselines
+
+on:
+  push:
+    branches:
+      - test/111-headless-visual-regression
+
+permissions:
+  contents: write
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Generate headless baselines
+        env:
+          UPDATE_VISUAL_BASELINES: '1'
+          UI_EVIDENCE_DIR: ${{ runner.temp }}/ui-evidence
+        run: >-
+          dotnet test
+          tests/OopDesignChecker.Gui.HeadlessTests/OopDesignChecker.Gui.HeadlessTests.csproj
+          -c Release
+
+      - name: Upload generated evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: headless-baseline-evidence
+          path: ${{ runner.temp }}/ui-evidence
+          if-no-files-found: warn
+
+      - name: Commit baselines
+        shell: bash
+        run: |
+          if git diff --quiet -- tests/OopDesignChecker.Gui.HeadlessTests/Baselines; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/OopDesignChecker.Gui.HeadlessTests/Baselines
+          git commit -m "Add headless GUI visual baselines"
+          git push
