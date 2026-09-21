@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsTestProject>true</IsTestProject>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
     <IsPackable>false</IsPackable>
     <AssemblyName>OopDesignChecker.Gui.HeadlessTests</AssemblyName>
     <RootNamespace>OopDesignChecker.Gui.HeadlessTests</RootNamespace>
