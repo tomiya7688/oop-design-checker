@@ -16,9 +16,10 @@ public sealed class UiVisualRegressionTests
 {
     private const double MaximumChangedPixelRatio = 0.005;
     private const byte PixelDeltaThreshold = 12;
+    private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void ReadyState_RendersJapaneseAtSupportedSizes()
+    public void ReadyStateRendersJapaneseAtSupportedSizes()
     {
         CaptureReadyState("ready-ja-small", 900, 600);
         CaptureReadyState("ready-ja-default", 1280, 820);
@@ -26,7 +27,7 @@ public sealed class UiVisualRegressionTests
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void EnglishState_RendersWithoutClipping()
+    public void EnglishStateRendersWithoutClipping()
     {
         var window = CreateWindow(1280, 820);
         try
@@ -43,7 +44,7 @@ public sealed class UiVisualRegressionTests
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void ReleaseFixture_RendersExpectedRowsFilterAndDetail()
+    public void ReleaseFixtureRendersExpectedRowsFilterAndDetail()
     {
         var fixtureRoot = FixtureRoot();
         var expectedCount = ReadExpectedDiagnosticCount(fixtureRoot);
@@ -100,7 +101,7 @@ public sealed class UiVisualRegressionTests
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void ErrorAndConfigurationEditorStates_Render()
+    public void ErrorAndConfigurationEditorStatesRender()
     {
         var window = CreateWindow(1280, 820);
         try
@@ -411,7 +412,7 @@ public sealed class UiVisualRegressionTests
 
         File.WriteAllText(
             Path.Combine(evidenceDirectory, "ui-state.json"),
-            JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true })
+            JsonSerializer.Serialize(state, IndentedJson)
         );
     }
 
