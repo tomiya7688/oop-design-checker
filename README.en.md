@@ -39,7 +39,7 @@ GitHub Actions exposes separate checks so failures are easy to identify:
 - `self-check` - runs the checker against its own `src` tree with `--fail-on attention`
 - `code-analyzers` - .NET SDK analyzers at `latest-recommended`, code style enabled, warnings treated as errors
 - `csharpier` - CSharpier 1.3.0 formatting check using the repository-local tool manifest
-- `release` - validates distributable CUI packages for Windows, Linux, and macOS when release-related files change
+- `release` - validates distributable CUI/GUI packages and the exact release fixture gate for Windows, Linux, and macOS when release-related files change
 
 ## CUI
 
@@ -80,7 +80,7 @@ oop-design-checker-cui <target-path> --language en
 
 Pushing a matching version tag such as `v0.1.0` creates a GitHub Release after all platform packages build successfully. The product version is declared once in `Directory.Build.props`; a `v*` tag that does not match that declared version fails before release packaging is published.
 
-Release archives contain the complete `dotnet publish` output, both README files, both CHANGELOG files, and `oop-design-checker.example.json`. Archive names include the product version, for example `oop-design-checker-0.1.0-linux-x64.tar.gz`. Every archive also has a `.sha256` file, and tagged releases include a combined `SHA256SUMS.txt` manifest.
+Release archives contain the complete `dotnet publish` output, both README files, both CHANGELOG files, `oop-design-checker.example.json`, and the specification. CUI archives use `oop-design-checker-<version>-<rid>` and GUI archives use `oop-design-checker-gui-<version>-<rid>`. Every archive also has a `.sha256` file, and tagged releases include a combined `SHA256SUMS.txt` manifest.
 
 Published targets are:
 
@@ -88,7 +88,7 @@ Published targets are:
 - `linux-x64` and `linux-arm64` as `.tar.gz`
 - `osx-x64` and `osx-arm64` as `.tar.gz`
 
-The packages are self-contained, so the matching .NET runtime does not need to be installed just to start the CUI. Analysis of `.csproj`, `.sln`, and `.slnx` still depends on a discoverable compatible .NET SDK/MSBuild installation because those targets are loaded through MSBuild. Loose `.cs` analysis does not require project loading.
+The CUI and GUI packages are self-contained, so the matching .NET runtime does not need to be installed just to start them. The GUI is released for the same six RIDs. Native runners perform startup smoke tests on the RIDs they can execute. ARM64 remains a release target, but it is not part of the user's manual hardware sign-off; automated build, packaging, and checksum validation remain required. Analysis of `.csproj`, `.sln`, and `.slnx` still depends on a discoverable compatible .NET SDK/MSBuild installation because those targets are loaded through MSBuild. Loose `.cs` analysis does not require project loading.
 
 For example, after extracting the matching package:
 
