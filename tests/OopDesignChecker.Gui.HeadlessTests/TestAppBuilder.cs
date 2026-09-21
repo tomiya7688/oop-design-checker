@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Headless;
 using OopDesignChecker.Gui;
 
-[assembly: Avalonia.Headless.XUnit.AvaloniaTestApplication(
+[assembly: Avalonia.Headless.AvaloniaTestApplication(
     typeof(OopDesignChecker.Gui.HeadlessTests.TestAppBuilder)
 )]
 
