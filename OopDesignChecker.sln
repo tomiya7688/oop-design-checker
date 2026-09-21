@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker.Gui", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker.Tests", "tests\OopDesignChecker.Tests\OopDesignChecker.Tests.csproj", "{EA166BF2-4281-4C27-BBC0-72DA3797EBF6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker.Gui.HeadlessTests", "tests\OopDesignChecker.Gui.HeadlessTests\OopDesignChecker.Gui.HeadlessTests.csproj", "{C472AD52-4D6C-49B1-A57A-C80748EC52B4}"
+EndProject
 Global
     GlobalSection(SolutionConfigurationPlatforms) = preSolution
         Debug|Any CPU = Debug|Any CPU
@@ -32,5 +34,9 @@ Global
         {EA166BF2-4281-4C27-BBC0-72DA3797EBF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
         {EA166BF2-4281-4C27-BBC0-72DA3797EBF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
         {EA166BF2-4281-4C27-BBC0-72DA3797EBF6}.Release|Any CPU.Build.0 = Release|Any CPU
+        {C472AD52-4D6C-49B1-A57A-C80748EC52B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {C472AD52-4D6C-49B1-A57A-C80748EC52B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {C472AD52-4D6C-49B1-A57A-C80748EC52B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {C472AD52-4D6C-49B1-A57A-C80748EC52B4}.Release|Any CPU.Build.0 = Release|Any CPU
     EndGlobalSection
 EndGlobal
