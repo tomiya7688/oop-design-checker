@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Threading;
+using OopDesignChecker.Core;
 using OopDesignChecker.Localization;
 using SkiaSharp;
 using Xunit;
@@ -177,13 +178,13 @@ public sealed class UiVisualRegressionTests
 
     private static void AssertSummaryMatches(
         MainWindow window,
-        IReadOnlyList<Core.DesignDiagnostic> diagnostics
+        IReadOnlyList<DesignDiagnostic> diagnostics
     )
     {
-        var danger = diagnostics.Count(item => item.Severity == Core.DesignDiagnosticSeverity.Danger);
-        var warning = diagnostics.Count(item => item.Severity == Core.DesignDiagnosticSeverity.Warning);
+        var danger = diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Danger);
+        var warning = diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Warning);
         var attention = diagnostics.Count(
-            item => item.Severity == Core.DesignDiagnosticSeverity.Attention
+            item => item.Severity == DesignDiagnosticSeverity.Attention
         );
 
         Assert.EndsWith($": {danger}", window.TestView.DangerCount.Text, StringComparison.Ordinal);
