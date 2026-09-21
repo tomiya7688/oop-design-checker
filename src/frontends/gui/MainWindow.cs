@@ -33,6 +33,23 @@ internal sealed class MainWindow : Window
         _view.Status.Text = GuiText.Get(GuiTextKey.Ready, _language);
     }
 
+    internal MainWindowView TestView => _view;
+
+    internal void PresentResultForTesting(CheckerRunResult result) => ShowResult(result);
+
+    internal void PresentErrorForTesting(string message) => ShowError(message);
+
+    internal void ApplyFiltersForTesting() => ApplyFilters();
+
+    internal void UpdateSelectedDiagnosticForTesting() => UpdateSelectedDiagnostic();
+
+    internal void SetLanguageForTesting(UserInterfaceLanguage language)
+    {
+        _view.LanguageSelector.SelectedIndex =
+            language == UserInterfaceLanguage.English ? 1 : 0;
+        ChangeLanguage();
+    }
+
     private void WireEvents()
     {
         _view.AnalyzeButton.Click += async (_, _) => await AnalyzeAsync();
