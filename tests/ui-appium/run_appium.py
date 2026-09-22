@@ -11,6 +11,8 @@ from appium.webdriver.common.appiumby import AppiumBy
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
+from macos_bundle import validate_bundle
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -47,10 +49,19 @@ def create_driver(args):
 
     from appium.options.mac import Mac2Options
 
+    bundle_id = validate_bundle(Path(app))
     options = Mac2Options()
     options.platform_name = "mac"
     options.automation_name = "Mac2"
     options.app_path = app
+    options.set_capability("appium:bundleId", bundle_id)
+    options.set_capability("appium:showServerLogs", True)
+    # XCTest launches via LaunchServices; explicitly retain SDK discovery settings.
+    # Do not forward the full CI environment (which may contain secrets).
+    options.set_capability(
+        "appium:environment",
+        {key: os.environ[key] for key in ("PATH", "DOTNET_ROOT") if key in os.environ},
+    )
     options.set_capability("appium:newCommandTimeout", 180)
     return webdriver.Remote(args.server, options=options)
 
@@ -156,7 +167,12 @@ def main():
         )
         return 0
     except Exception as exc:
-        actions.append({"action": "failure", "result": "fail", "error": repr(exc)})
+        actions.append({
+            "action": "failure",
+            "result": "fail",
+            "errorType": type(exc).__name__,
+            "error": str(exc),
+        })
         if driver is not None:
             try:
                 screenshot(driver, evidence / "failure.png")
