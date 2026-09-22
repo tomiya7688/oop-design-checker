@@ -10,9 +10,13 @@ on:
       - 'tests/ui-appium/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   native-ui:
     name: appium (${{ matrix.platform }})
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -40,6 +44,12 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Test macOS bundle contract
+        shell: bash
+        run: |
+          python -m unittest discover -s tests/ui-appium -p 'test_*.py' -v
+          python -m py_compile tests/ui-appium/run_appium.py
+
       - name: Publish GUI under test
         shell: pwsh
         run: |
@@ -50,6 +60,9 @@ jobs:
             -p:DebugType=None `
             -p:DebugSymbols=false `
             --output publish/ui-appium
+          if ($LASTEXITCODE -ne 0) {
+            throw "GUI publish failed with exit code $LASTEXITCODE."
+          }
 
           $buildHost = Get-ChildItem (Join-Path $HOME ".nuget/packages") -Recurse -Filter "Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll" |
             Where-Object { $_.FullName -match "[\\/]BuildHost-netcore[\\/]" } |
@@ -73,6 +86,17 @@ jobs:
           $referenceDestination = Join-Path "publish/ui-appium" "ReferenceAssemblies"
           New-Item -ItemType Directory -Force -Path $referenceDestination | Out-Null
           Copy-Item (Join-Path $referenceDirectory "*.dll") $referenceDestination -Force
+
+      - name: Prepare macOS application bundle for Mac2
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          version="$(publish/ui-appium/oop-design-checker-gui --version)"
+          python tests/ui-appium/macos_bundle.py \
+            --publish publish/ui-appium \
+            --bundle publish/OopDesignChecker.app \
+            --version "$version"
+          plutil -lint publish/OopDesignChecker.app/Contents/Info.plist
 
       - name: Install Appium and test client
         shell: bash
@@ -99,7 +123,7 @@ jobs:
           } else {
             $command = (Get-Command appium).Source
           }
-          $process = Start-Process -FilePath $command -ArgumentList @("--log", $log, "--log-level", "info") -PassThru
+          $process = Start-Process -FilePath $command -ArgumentList @("--address", "127.0.0.1", "--log", $log, "--log-level", "info") -PassThru
           "APPIUM_PID=$($process.Id)" | Out-File -FilePath $env:GITHUB_ENV -Append
           $deadline = (Get-Date).AddSeconds(30)
           do {
@@ -121,7 +145,7 @@ jobs:
           if ($IsWindows) {
             $gui = Join-Path "publish/ui-appium" "oop-design-checker-gui.exe"
           } else {
-            $gui = Join-Path "publish/ui-appium" "oop-design-checker-gui"
+            $gui = "publish/OopDesignChecker.app"
           }
 
           python tests/ui-appium/run_appium.py `
@@ -129,6 +153,24 @@ jobs:
             --app $gui `
             --fixture tests/fixtures/release-validation-csharp `
             --evidence (Join-Path $env:RUNNER_TEMP "ui-appium-evidence")
+
+      - name: Show Appium failure details
+        if: failure()
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP "appium.log"
+          if (Test-Path $log) {
+            Get-Content $log -Tail 200
+          }
+
+      - name: Stop Appium
+        if: always()
+        shell: pwsh
+        run: |
+          if ($env:APPIUM_PID) {
+            Stop-Process -Id ([int]$env:APPIUM_PID) -Force -ErrorAction SilentlyContinue
+          }
+          exit 0
 
       - name: Upload Appium evidence
         if: always()
