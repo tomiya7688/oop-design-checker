@@ -106,7 +106,6 @@ internal sealed class MainWindowView : Grid
         ClearDetails(language);
     }
 
-
     private void ConfigureAutomation()
     {
         var controls = new (StyledElement Element, string Id)[]
