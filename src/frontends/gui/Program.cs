@@ -20,10 +20,10 @@ internal static class Program
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(desktopArguments);
     }
 
-    private static string[] ApplyAutomationArguments(IReadOnlyList<string> args)
+    private static string[] ApplyAutomationArguments(string[] args)
     {
         var desktopArguments = new List<string>();
-        for (var index = 0; index < args.Count; index++)
+        for (var index = 0; index < args.Length; index++)
         {
             if (args[index] != AutomationExportDirectoryOption)
             {
@@ -31,7 +31,7 @@ internal static class Program
                 continue;
             }
 
-            if (index + 1 >= args.Count || string.IsNullOrWhiteSpace(args[index + 1]))
+            if (index + 1 >= args.Length || string.IsNullOrWhiteSpace(args[index + 1]))
             {
                 throw new InvalidOperationException(
                     $"{AutomationExportDirectoryOption} requires a directory path."
