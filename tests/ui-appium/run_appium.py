@@ -10,6 +10,7 @@ from pathlib import Path
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -79,9 +80,22 @@ def wait_until(driver, predicate, timeout=90):
     WebDriverWait(driver, timeout, poll_frequency=0.5).until(lambda _: predicate())
 
 
+def element_value(element):
+    text = element.text
+    if text:
+        return text
+    for attribute in ("value", "Name", "Value.Value"):
+        try:
+            value = element.get_attribute(attribute)
+        except WebDriverException:
+            continue
+        if value:
+            return value
+    return ""
+
+
 def text_of(driver, automation_id):
-    element = find(driver, automation_id)
-    return element.text or element.get_attribute("Name") or element.get_attribute("Value.Value") or ""
+    return element_value(find(driver, automation_id))
 
 
 def set_text(driver, automation_id, value):
@@ -118,9 +132,7 @@ def ui_state(driver, target=None, extra=None):
         "selectedRule": text_of(driver, "DetailRule"),
         "selectedFile": text_of(driver, "DetailLocation"),
         "status": text_of(driver, "Status"),
-        "search": find(driver, "SearchFilter").get_attribute("Value.Value")
-        or find(driver, "SearchFilter").text
-        or "",
+        "search": element_value(find(driver, "SearchFilter")),
     }
     if extra:
         state.update(extra)
