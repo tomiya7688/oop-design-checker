@@ -111,6 +111,28 @@ def summary_matches(driver, counts):
     )
 
 
+def configuration_editor(driver, platform):
+    try:
+        return find(driver, "ConfigurationEditor")
+    except Exception:
+        if platform == "windows":
+            candidates = driver.find_elements(
+                AppiumBy.XPATH,
+                "//Edit[@ClassName='TextBox']",
+            )
+        else:
+            candidates = driver.find_elements(
+                AppiumBy.XPATH,
+                "//XCUIElementTypeTextView",
+            )
+        if not candidates:
+            raise
+        return max(
+            candidates,
+            key=lambda element: element.rect["width"] * element.rect["height"],
+        )
+
+
 def select_rule(driver, platform, rule_id):
     replace_text(driver, "SearchFilter", rule_id)
     time.sleep(1)
@@ -304,13 +326,13 @@ def main():
                         continue
                     try:
                         driver.switch_to.window(handle)
-                        find(driver, "ConfigurationEditor")
+                        configuration_editor(driver, args.platform)
                         return True
                     except Exception:
                         continue
 
             try:
-                find(driver, "ConfigurationEditor")
+                configuration_editor(driver, args.platform)
                 return True
             except Exception:
                 if args.platform == "windows" and main_window is not None:
@@ -318,7 +340,9 @@ def main():
                 return False
 
         wait_until(driver, switch_to_configuration_editor, timeout=20)
-        replace_text(driver, "ConfigurationEditor", '{"disabledRules":["OOP105"]}')
+        editor = configuration_editor(driver, args.platform)
+        editor.clear()
+        editor.send_keys('{"disabledRules":["OOP105"]}')
         find(driver, "ValidateConfigurationButton").click()
         wait_until(
             driver,
