@@ -151,6 +151,29 @@ def select_rule(driver, platform, rule_id):
     wait_until(driver, lambda: rule_id in text_of(driver, "DetailRule"), timeout=20)
 
 
+def select_english(driver, platform):
+    language = find(driver, "LanguageSelector")
+    language.click()
+    if platform == "macos":
+        option = WebDriverWait(driver, 20, poll_frequency=0.25).until(
+            lambda _: driver.find_element(
+                AppiumBy.XPATH,
+                "//XCUIElementTypeMenuItem[@title='English' or @value='English']",
+            )
+        )
+        option.click()
+    else:
+        language.send_keys("English")
+        language.send_keys(Keys.ENTER)
+
+    wait_until(
+        driver,
+        lambda: "English" in element_value(find(driver, "LanguageSelector"))
+        and "Analyze" in text_of(driver, "AnalyzeButton"),
+        timeout=20,
+    )
+
+
 def make_cancel_project(root: Path):
     project = root / "cancel-project"
     project.mkdir(parents=True)
@@ -290,11 +313,7 @@ def main():
                 ui_state(driver, fixture, {"selectedRule": "OOP106"}),
             )
 
-            language = find(driver, "LanguageSelector")
-            language.click()
-            language.send_keys("English")
-            language.send_keys(Keys.ENTER)
-            wait_until(driver, lambda: "Language" in driver.page_source, timeout=20)
+            select_english(driver, args.platform)
             actions.append(
                 {"scenario": "language-resize", "action": "language", "value": "en", "result": "pass"}
             )
