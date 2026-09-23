@@ -166,13 +166,13 @@ def select_english(driver, platform):
     language = find(driver, "LanguageSelector")
     language.click()
     if platform == "macos":
-        option = WebDriverWait(driver, 20, poll_frequency=0.25).until(
-            lambda _: driver.find_element(
-                AppiumBy.XPATH,
-                "//XCUIElementTypeMenuItem[@title='English' or @value='English']",
-            )
+        driver.execute_script(
+            "macos: keys",
+            {
+                "elementId": language.id,
+                "keys": ["XCUIKeyboardKeyDownArrow", "XCUIKeyboardKeyReturn"],
+            },
         )
-        option.click()
     else:
         language.send_keys("English")
         language.send_keys(Keys.ENTER)
