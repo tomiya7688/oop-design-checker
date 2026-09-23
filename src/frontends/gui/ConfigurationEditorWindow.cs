@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -25,6 +26,8 @@ internal sealed class ConfigurationEditorWindow : Window
         _editor.Text = initialJson;
         _editor.AcceptsReturn = true;
         _editor.TextWrapping = TextWrapping.NoWrap;
+        AutomationProperties.SetAutomationId(_editor, "ConfigurationEditor");
+        AutomationProperties.SetAutomationId(_status, "ConfigurationEditorStatus");
 
         Content = BuildContent();
     }
@@ -64,6 +67,10 @@ internal sealed class ConfigurationEditorWindow : Window
         };
         var saveButton = new Button { Content = GuiText.Get(GuiTextKey.SaveButton, _language) };
         var cancelButton = new Button { Content = GuiText.Get(GuiTextKey.CancelButton, _language) };
+
+        AutomationProperties.SetAutomationId(validateButton, "ValidateConfigurationButton");
+        AutomationProperties.SetAutomationId(saveButton, "SaveConfigurationButton");
+        AutomationProperties.SetAutomationId(cancelButton, "CancelConfigurationButton");
 
         validateButton.Click += (_, _) => ValidateEditor();
         saveButton.Click += (_, _) => SaveAndClose();

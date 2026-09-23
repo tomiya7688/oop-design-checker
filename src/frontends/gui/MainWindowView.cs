@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Layout;
@@ -56,6 +57,7 @@ internal sealed class MainWindowView : Grid
         RowSpacing = 10;
 
         ConfigureControls();
+        ConfigureAutomation();
         AddSection(BuildTargetSection(), 0);
         AddSection(BuildFilterSection(), 1);
         AddSection(BuildSummarySection(), 2);
@@ -102,6 +104,49 @@ internal sealed class MainWindowView : Grid
         DiagnosticsGrid.Columns[5].Header = GuiText.Get(GuiTextKey.MessageColumn, language);
 
         ClearDetails(language);
+    }
+
+    private void ConfigureAutomation()
+    {
+        var controls = new (StyledElement Element, string Id)[]
+        {
+            (TargetPath, "TargetPath"),
+            (ConfigurationPath, "ConfigurationPath"),
+            (TargetFileButton, "TargetFileButton"),
+            (TargetFolderButton, "TargetFolderButton"),
+            (ConfigurationButton, "ConfigurationButton"),
+            (EditConfigurationButton, "EditConfigurationButton"),
+            (ClearConfigurationButton, "ClearConfigurationButton"),
+            (AnalyzeButton, "AnalyzeButton"),
+            (CancelButton, "CancelButton"),
+            (Progress, "AnalysisProgress"),
+            (Status, "Status"),
+            (DangerCount, "DangerCount"),
+            (WarningCount, "WarningCount"),
+            (AttentionCount, "AttentionCount"),
+            (DangerFilter, "DangerFilter"),
+            (WarningFilter, "WarningFilter"),
+            (AttentionFilter, "AttentionFilter"),
+            (SearchFilter, "SearchFilter"),
+            (LanguageSelector, "LanguageSelector"),
+            (DiagnosticsGrid, "DiagnosticsGrid"),
+            (DetailSeverity, "DetailSeverity"),
+            (DetailRule, "DetailRule"),
+            (DetailSymbol, "DetailSymbol"),
+            (DetailLocation, "DetailLocation"),
+            (DetailMessage, "DetailMessage"),
+            (ConfigurationSummary, "ConfigurationSummary"),
+            (CopySelectedButton, "CopySelectedButton"),
+            (CopyAllButton, "CopyAllButton"),
+            (OpenSourceButton, "OpenSourceButton"),
+            (ExportJsonButton, "ExportJsonButton"),
+            (ExportSarifButton, "ExportSarifButton"),
+        };
+
+        foreach (var (element, id) in controls)
+        {
+            AutomationProperties.SetAutomationId(element, id);
+        }
     }
 
     private void ConfigureControls()

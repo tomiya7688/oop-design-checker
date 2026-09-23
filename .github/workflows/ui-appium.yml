@@ -1,0 +1,184 @@
+name: ui-appium
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/ui-appium.yml'
+      - 'src/OopDesignChecker/**'
+      - 'src/frontends/gui/**'
+      - 'tests/fixtures/release-validation-csharp/**'
+      - 'tests/ui-appium/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-ui:
+    name: appium (${{ matrix.platform }})
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+            rid: win-x64
+          - platform: macos
+            os: macos-15
+            rid: osx-arm64
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Test macOS bundle contract
+        shell: bash
+        run: |
+          python -m unittest discover -s tests/ui-appium -p 'test_*.py' -v
+          python -m py_compile tests/ui-appium/run_appium.py
+
+      - name: Publish GUI under test
+        shell: pwsh
+        run: |
+          dotnet publish src/frontends/gui/OopDesignChecker.Gui.csproj `
+            -c Release `
+            -r ${{ matrix.rid }} `
+            --self-contained true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            --output publish/ui-appium
+          if ($LASTEXITCODE -ne 0) {
+            throw "GUI publish failed with exit code $LASTEXITCODE."
+          }
+
+          $buildHost = Get-ChildItem (Join-Path $HOME ".nuget/packages") -Recurse -Filter "Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll" |
+            Where-Object { $_.FullName -match "[\\/]BuildHost-netcore[\\/]" } |
+            Select-Object -First 1
+          if ($null -eq $buildHost) {
+            throw "Could not locate Roslyn BuildHost-netcore."
+          }
+          $buildHostDestination = Join-Path "publish/ui-appium" "BuildHost-netcore"
+          New-Item -ItemType Directory -Force -Path $buildHostDestination | Out-Null
+          Copy-Item (Join-Path $buildHost.Directory.FullName "*") $buildHostDestination -Recurse -Force
+
+          $referenceRoot = Join-Path $env:DOTNET_ROOT "packs/Microsoft.NETCore.App.Ref"
+          $referenceDirectory = Get-ChildItem $referenceRoot -Directory |
+            Sort-Object Name -Descending |
+            ForEach-Object { Join-Path $_.FullName "ref/net10.0" } |
+            Where-Object { Test-Path $_ } |
+            Select-Object -First 1
+          if ($null -eq $referenceDirectory) {
+            throw "Could not locate net10.0 reference assemblies."
+          }
+          $referenceDestination = Join-Path "publish/ui-appium" "ReferenceAssemblies"
+          New-Item -ItemType Directory -Force -Path $referenceDestination | Out-Null
+          Copy-Item (Join-Path $referenceDirectory "*.dll") $referenceDestination -Force
+
+      - name: Prepare macOS application bundle for Mac2
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          version="$(publish/ui-appium/oop-design-checker-gui --version)"
+          python tests/ui-appium/macos_bundle.py \
+            --publish publish/ui-appium \
+            --bundle publish/OopDesignChecker.app \
+            --version "$version"
+          plutil -lint publish/OopDesignChecker.app/Contents/Info.plist
+
+      - name: Install Appium and test client
+        shell: bash
+        run: |
+          npm install --global appium@3
+          python -m pip install --requirement tests/ui-appium/requirements.txt
+
+      - name: Install Windows Appium driver
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: appium driver install --source=npm appium-novawindows-driver
+
+      - name: Install macOS Appium driver
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: appium driver install mac2
+
+      - name: Start Appium
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP "appium.log"
+          if ($IsWindows) {
+            $command = (Get-Command appium.cmd).Source
+          } else {
+            $command = (Get-Command appium).Source
+          }
+          $process = Start-Process -FilePath $command -ArgumentList @("--address", "127.0.0.1", "--log", $log, "--log-level", "info") -PassThru
+          "APPIUM_PID=$($process.Id)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $deadline = (Get-Date).AddSeconds(30)
+          do {
+            Start-Sleep -Milliseconds 500
+            try {
+              $status = Invoke-RestMethod -Uri "http://127.0.0.1:4723/status" -TimeoutSec 2
+              if ($null -ne $status.value) {
+                exit 0
+              }
+            } catch {
+            }
+          } while ((Get-Date) -lt $deadline)
+          Get-Content $log -ErrorAction SilentlyContinue
+          throw "Appium server did not become ready."
+
+      - name: Run real-window GUI E2E
+        shell: pwsh
+        run: |
+          if ($IsWindows) {
+            $gui = Join-Path "publish/ui-appium" "oop-design-checker-gui.exe"
+          } else {
+            $gui = "publish/OopDesignChecker.app"
+          }
+
+          python tests/ui-appium/run_appium.py `
+            --platform ${{ matrix.platform }} `
+            --app $gui `
+            --fixture tests/fixtures/release-validation-csharp `
+            --evidence (Join-Path $env:RUNNER_TEMP "ui-appium-evidence")
+
+      - name: Show Appium failure details
+        if: failure()
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP "appium.log"
+          if (Test-Path $log) {
+            Get-Content $log -Tail 200
+          }
+
+      - name: Stop Appium
+        if: always()
+        shell: pwsh
+        run: |
+          if ($env:APPIUM_PID) {
+            Stop-Process -Id ([int]$env:APPIUM_PID) -Force -ErrorAction SilentlyContinue
+          }
+          exit 0
+
+      - name: Upload Appium evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-appium-${{ matrix.platform }}-evidence
+          path: |
+            ${{ runner.temp }}/ui-appium-evidence
+            ${{ runner.temp }}/appium.log
+          if-no-files-found: warn
+          retention-days: 7
