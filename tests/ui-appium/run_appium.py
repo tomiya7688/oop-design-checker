@@ -192,6 +192,16 @@ def main():
     evidence.mkdir(parents=True, exist_ok=True)
     automation_root.mkdir(parents=True, exist_ok=True)
 
+    configured_fixture = automation_root / "configured-fixture"
+    if configured_fixture.exists():
+        shutil.rmtree(configured_fixture)
+    shutil.copytree(fixture, configured_fixture)
+    configured_fixture_config = configured_fixture / "oop-design-checker.json"
+    configured_fixture_config.write_text(
+        '{"disabledRules":["OOP105"]}\n',
+        encoding="utf-8",
+    )
+
     diagnostics, expected_counts = load_expected(fixture)
     oop105_count = sum(item["ruleId"] == "OOP105" for item in diagnostics)
     expected_configured_counts = dict(expected_counts)
@@ -201,10 +211,6 @@ def main():
     driver = None
     source_backup = None
     source_path = None
-    fixture_config_path = fixture / "oop-design-checker.json"
-    fixture_config_original = (
-        fixture_config_path.read_bytes() if fixture_config_path.exists() else None
-    )
 
     def log(scenario, action, result="pass", **details):
         actions.setdefault(scenario, []).append(
@@ -243,9 +249,21 @@ def main():
 
         language = find(driver, "LanguageSelector")
         language.click()
-        language.send_keys("English")
-        language.send_keys(Keys.ENTER)
-        time.sleep(1)
+        try:
+            wait_until(
+                driver,
+                lambda: driver.find_element(AppiumBy.NAME, "English").is_displayed(),
+                timeout=10,
+            )
+            driver.find_element(AppiumBy.NAME, "English").click()
+        except Exception:
+            language.send_keys("English")
+            language.send_keys(Keys.ENTER)
+        wait_until(
+            driver,
+            lambda: "Analyze" in text_of(driver, "AnalyzeButton"),
+            timeout=20,
+        )
         log("filter-detail-language-resize", "language", value="en")
 
         if args.platform == "macos":
@@ -268,10 +286,6 @@ def main():
         )
 
         configuration = scenario_directory(evidence, "configuration")
-        fixture_config_path.write_text(
-            '{"disabledRules":["OOP105"]}\n',
-            encoding="utf-8",
-        )
         write_json(
             configuration / "expected.json",
             {
@@ -281,6 +295,7 @@ def main():
             },
         )
         screenshot(driver, configuration / "before.png")
+        set_text(driver, "TargetPath", str(configured_fixture))
         config_box = find(driver, "ConfigurationPath")
         config_box.click()
         config_box.clear()
@@ -294,17 +309,17 @@ def main():
         log(
             "configuration",
             "analyze-with-auto-discovered-config",
-            path=str(fixture_config_path),
+            path=str(configured_fixture_config),
             disabledRule="OOP105",
             summary=expected_configured_counts,
         )
         screenshot(driver, configuration / "after.png")
-        write_ui_state(driver, configuration, args, fixture, "en")
+        write_ui_state(driver, configuration, args, configured_fixture, "en")
 
-        fixture_config_path.unlink()
+        set_text(driver, "TargetPath", str(fixture))
         find(driver, "AnalyzeButton").click()
         wait_until(driver, lambda: summary_matches(driver, expected_counts))
-        log("configuration", "remove-config-and-restore-defaults", summary=expected_counts)
+        log("configuration", "restore-default-fixture", summary=expected_counts)
 
         export = scenario_directory(evidence, "export")
         export_root = Path(
@@ -425,10 +440,6 @@ def main():
     finally:
         if source_backup is not None and source_path is not None and source_backup.exists():
             source_backup.rename(source_path)
-        if fixture_config_original is None:
-            fixture_config_path.unlink(missing_ok=True)
-        else:
-            fixture_config_path.write_bytes(fixture_config_original)
         for scenario, scenario_actions in actions.items():
             directory = scenario_directory(evidence, scenario)
             write_json(directory / "action-log.json", scenario_actions)
