@@ -149,10 +149,15 @@ def main():
         time.sleep(1)
         actions.append({"action": "language", "value": "en", "result": "pass"})
 
-        driver.set_window_size(900, 600)
+        if args.platform == "macos":
+            driver.maximize_window()
+            resize_value = "maximize"
+        else:
+            driver.set_window_size(900, 600)
+            resize_value = "900x600"
         time.sleep(1)
         screenshot(driver, evidence / "resized.png")
-        actions.append({"action": "resize", "value": "900x600", "result": "pass"})
+        actions.append({"action": "resize", "value": resize_value, "result": "pass"})
 
         state = {
             "platform": args.platform,
