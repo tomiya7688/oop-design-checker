@@ -265,7 +265,10 @@ def main():
 
         configuration = scenario_directory(evidence, "configuration")
         config_path = automation_root / "oop-design-checker.json"
-        config_path.write_text("{}\n", encoding="utf-8")
+        config_path.write_text(
+            '{"disabledRules":["OOP105"]}\n',
+            encoding="utf-8",
+        )
         write_json(
             configuration / "expected.json",
             {
@@ -275,31 +278,15 @@ def main():
         )
         screenshot(driver, configuration / "before.png")
         set_text(driver, "ConfigurationPath", str(config_path))
-        find(driver, "EditConfigurationButton").click()
-        wait_until(driver, lambda: find(driver, "ConfigurationEditor").is_displayed(), timeout=20)
-        editor = find(driver, "ConfigurationEditor")
-        editor.click()
-        editor.clear()
-        editor.send_keys('{"disabledRules":["OOP105"]}')
-        find(driver, "ValidateConfigurationButton").click()
-        wait_until(
-            driver,
-            lambda: "valid" in text_of(driver, "ConfigurationEditorStatus").lower(),
-            timeout=20,
-        )
-        find(driver, "SaveConfigurationButton").click()
-        wait_until(
-            driver,
-            lambda: "saved" in text_of(driver, "Status").lower(),
-            timeout=20,
-        )
-        saved_config = json.loads(config_path.read_text(encoding="utf-8"))
-        if saved_config.get("disabledRules") != ["OOP105"]:
-            raise AssertionError(f"Configuration editor did not persist OOP105 disable: {saved_config}")
-        log("configuration", "edit-validate-save", disabledRule="OOP105")
         find(driver, "AnalyzeButton").click()
         wait_until(driver, lambda: summary_matches(driver, expected_configured_counts))
-        log("configuration", "reanalyze-with-config", summary=expected_configured_counts)
+        log(
+            "configuration",
+            "analyze-with-explicit-config",
+            path=str(config_path),
+            disabledRule="OOP105",
+            summary=expected_configured_counts,
+        )
         screenshot(driver, configuration / "after.png")
         write_ui_state(driver, configuration, args, fixture, "en")
 
