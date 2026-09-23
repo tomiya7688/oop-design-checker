@@ -177,6 +177,16 @@ def assert_exported_json(path: Path, expected_count):
         )
 
 
+def exported_document_is_ready(path: Path, validator, expected_count):
+    if not path.exists() or path.stat().st_size == 0:
+        return False
+    try:
+        validator(path, expected_count)
+        return True
+    except (AssertionError, json.JSONDecodeError, OSError):
+        return False
+
+
 def assert_exported_sarif(path: Path, expected_count):
     document = json.loads(path.read_text(encoding="utf-8-sig"))
     runs = document.get("runs", [])
@@ -386,13 +396,23 @@ def main():
             path.unlink(missing_ok=True)
 
         find(driver, "ExportJsonButton").click()
-        wait_until(driver, json_path.exists, timeout=20)
-        assert_exported_json(json_path, len(diagnostics))
+        wait_until(
+            driver,
+            lambda: exported_document_is_ready(
+                json_path, assert_exported_json, len(diagnostics)
+            ),
+            timeout=20,
+        )
         record("06-export", "export-json", path=str(json_path))
 
         find(driver, "ExportSarifButton").click()
-        wait_until(driver, sarif_path.exists, timeout=20)
-        assert_exported_sarif(sarif_path, len(diagnostics))
+        wait_until(
+            driver,
+            lambda: exported_document_is_ready(
+                sarif_path, assert_exported_sarif, len(diagnostics)
+            ),
+            timeout=20,
+        )
         record("06-export", "export-sarif", path=str(sarif_path))
 
         export_scenario = evidence / "06-export"
