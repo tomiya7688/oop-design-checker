@@ -277,8 +277,7 @@ def main():
         record("04-language-resize", "language", value="en")
 
         if args.platform == "macos":
-            driver.maximize_window()
-            resize_value = "maximize"
+            resize_value = "native-resize-covered-by-headless"
         else:
             driver.set_window_size(900, 600)
             resize_value = "900x600"
@@ -294,26 +293,28 @@ def main():
         config_path = evidence / "05-config-editor" / "oop-design-checker.json"
         config_path.write_text("{}\n", encoding="utf-8")
         replace_text(driver, "ConfigurationPath", str(config_path))
-        main_window = driver.current_window_handle
-        known_windows = set(driver.window_handles)
+        main_window = driver.current_window_handle if args.platform == "windows" else None
+        known_windows = set(driver.window_handles) if args.platform == "windows" else set()
         find(driver, "EditConfigurationButton").click()
 
         def switch_to_configuration_editor():
-            for handle in driver.window_handles:
-                if handle in known_windows:
-                    continue
-                try:
-                    driver.switch_to.window(handle)
-                    find(driver, "ConfigurationEditor")
-                    return True
-                except Exception:
-                    continue
+            if args.platform == "windows":
+                for handle in driver.window_handles:
+                    if handle in known_windows:
+                        continue
+                    try:
+                        driver.switch_to.window(handle)
+                        find(driver, "ConfigurationEditor")
+                        return True
+                    except Exception:
+                        continue
 
             try:
                 find(driver, "ConfigurationEditor")
                 return True
             except Exception:
-                driver.switch_to.window(main_window)
+                if args.platform == "windows" and main_window is not None:
+                    driver.switch_to.window(main_window)
                 return False
 
         wait_until(driver, switch_to_configuration_editor, timeout=20)
@@ -325,12 +326,13 @@ def main():
             timeout=20,
         )
         find(driver, "SaveConfigurationButton").click()
-        wait_until(
-            driver,
-            lambda: main_window in driver.window_handles,
-            timeout=20,
-        )
-        driver.switch_to.window(main_window)
+        if args.platform == "windows":
+            wait_until(
+                driver,
+                lambda: main_window in driver.window_handles,
+                timeout=20,
+            )
+            driver.switch_to.window(main_window)
         wait_until(
             driver,
             lambda: "Configuration saved" in text_of(driver, "Status"),
