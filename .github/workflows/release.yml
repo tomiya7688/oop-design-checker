@@ -461,6 +461,135 @@ jobs:
 
           ./tests/release/PackagedGuiSmoke.ps1 -Gui $gui -ExpectedVersion $env:PACKAGE_VERSION
 
+      - uses: actions/setup-node@v4
+        if: matrix.rid == 'win-x64' || matrix.rid == 'osx-arm64'
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@v5
+        if: matrix.rid == 'win-x64' || matrix.rid == 'osx-arm64'
+        with:
+          python-version: '3.13'
+
+      - name: Prepare packaged GUI for Appium
+        if: matrix.rid == 'win-x64' || matrix.rid == 'osx-arm64'
+        shell: pwsh
+        run: |
+          $extractRoot = Join-Path $env:RUNNER_TEMP "oop-checker-gui-archive"
+          $exportDirectory = Join-Path $env:RUNNER_TEMP "release-ui-appium-exports"
+          New-Item -ItemType Directory -Force -Path $exportDirectory | Out-Null
+          "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR=$exportDirectory" |
+            Out-File -FilePath $env:GITHUB_ENV -Append
+
+          if ($IsWindows) {
+            $app = Join-Path $extractRoot "oop-design-checker-gui.exe"
+            "RELEASE_UI_APPIUM_PLATFORM=windows" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            $gui = Join-Path $extractRoot "oop-design-checker-gui"
+            $version = (& $gui --version).Trim()
+            if ($LASTEXITCODE -ne 0) {
+              throw "Could not read GUI version before Mac2 bundle creation."
+            }
+            $app = Join-Path $env:RUNNER_TEMP "OopDesignChecker.Release.app"
+            Remove-Item $app -Recurse -Force -ErrorAction SilentlyContinue
+            python tests/ui-appium/macos_bundle.py `
+              --publish $extractRoot `
+              --bundle $app `
+              --version $version
+            if ($LASTEXITCODE -ne 0) {
+              throw "Could not create Mac2 bundle from final GUI archive."
+            }
+            "RELEASE_UI_APPIUM_PLATFORM=macos" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+
+          "RELEASE_UI_APPIUM_APP=$app" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Install packaged GUI Appium dependencies
+        if: matrix.rid == 'win-x64' || matrix.rid == 'osx-arm64'
+        shell: bash
+        run: |
+          npm install --global appium@3
+          python -m pip install --requirement tests/ui-appium/requirements.txt
+
+      - name: Install packaged GUI Windows Appium driver
+        if: matrix.rid == 'win-x64'
+        shell: bash
+        run: appium driver install --source=npm appium-novawindows-driver
+
+      - name: Install packaged GUI macOS Appium driver
+        if: matrix.rid == 'osx-arm64'
+        shell: bash
+        run: appium driver install mac2
+
+      - name: Start packaged GUI Appium server
+        if: matrix.rid == 'win-x64' || matrix.rid == 'osx-arm64'
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP "release-ui-appium.log"
+          if ($IsWindows) {
+            $command = (Get-Command appium.cmd).Source
+          } else {
+            $command = (Get-Command appium).Source
+          }
+          $process = Start-Process -FilePath $command -ArgumentList @("--address", "127.0.0.1", "--log", $log, "--log-level", "info") -PassThru
+          "RELEASE_UI_APPIUM_PID=$($process.Id)" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+          $deadline = (Get-Date).AddSeconds(30)
+          do {
+            Start-Sleep -Milliseconds 500
+            try {
+              $status = Invoke-RestMethod -Uri "http://127.0.0.1:4723/status" -TimeoutSec 2
+              if ($null -ne $status.value) {
+                exit 0
+              }
+            } catch {
+            }
+          } while ((Get-Date) -lt $deadline)
+
+          Get-Content $log -ErrorAction SilentlyContinue
+          throw "Packaged GUI Appium server did not become ready."
+
+      - name: Appium E2E final GUI archive
+        if: matrix.rid == 'win-x64' || matrix.rid == 'osx-arm64'
+        shell: pwsh
+        run: |
+          python tests/ui-appium/run_appium.py `
+            --platform $env:RELEASE_UI_APPIUM_PLATFORM `
+            --app $env:RELEASE_UI_APPIUM_APP `
+            --fixture tests/fixtures/release-validation-csharp `
+            --evidence (Join-Path $env:RUNNER_TEMP "release-ui-appium-evidence")
+          if ($LASTEXITCODE -ne 0) {
+            throw "Final GUI archive Appium E2E failed."
+          }
+
+      - name: Show packaged GUI Appium failure details
+        if: failure() && (matrix.rid == 'win-x64' || matrix.rid == 'osx-arm64')
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP "release-ui-appium.log"
+          if (Test-Path $log) {
+            Get-Content $log -Tail 200
+          }
+
+      - name: Stop packaged GUI Appium server
+        if: always() && (matrix.rid == 'win-x64' || matrix.rid == 'osx-arm64')
+        shell: pwsh
+        run: |
+          if ($env:RELEASE_UI_APPIUM_PID) {
+            Stop-Process -Id ([int]$env:RELEASE_UI_APPIUM_PID) -Force -ErrorAction SilentlyContinue
+          }
+          exit 0
+
+      - name: Upload packaged GUI Appium evidence
+        if: always() && (matrix.rid == 'win-x64' || matrix.rid == 'osx-arm64')
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-ui-appium-${{ matrix.rid }}-evidence
+          path: |
+            ${{ runner.temp }}/release-ui-appium-evidence
+            ${{ runner.temp }}/release-ui-appium.log
+          if-no-files-found: warn
+          retention-days: 7
       - name: Generate GUI archive checksum
         shell: bash
         run: |
