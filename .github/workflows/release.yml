@@ -504,10 +504,180 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  gui-appium:
+    name: gui-appium (${{ matrix.platform }})
+    needs: [version, gui-package]
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+            rid: win-x64
+            archive: zip
+          - platform: macos
+            os: macos-15
+            rid: osx-arm64
+            archive: tar.gz
+    runs-on: ${{ matrix.os }}
+    env:
+      OOP_DESIGN_CHECKER_UI_E2E_EXPORT_DIR: ${{ runner.temp }}/ui-appium-automation/exports
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Test Appium harness helpers
+        shell: bash
+        run: |
+          python -m unittest discover -s tests/ui-appium -p 'test_*.py' -v
+          python -m py_compile tests/ui-appium/run_appium.py
+
+      - name: Download packaged GUI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: oop-design-checker-gui-${{ matrix.rid }}
+          path: dist-gui
+
+      - name: Extract packaged GUI artifact
+        shell: pwsh
+        run: |
+          $extractRoot = Join-Path $env:RUNNER_TEMP "ui-appium-package"
+          Remove-Item $extractRoot -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $extractRoot | Out-Null
+
+          if ("${{ matrix.archive }}" -eq "zip") {
+            $archives = @(Get-ChildItem dist-gui -Filter "*.zip")
+            if ($archives.Count -ne 1) {
+              throw "Expected one GUI zip archive, found $($archives.Count)."
+            }
+            Expand-Archive -Path $archives[0].FullName -DestinationPath $extractRoot
+          } else {
+            $archives = @(Get-ChildItem dist-gui -Filter "*.tar.gz")
+            if ($archives.Count -ne 1) {
+              throw "Expected one GUI tar.gz archive, found $($archives.Count)."
+            }
+            tar -xzf $archives[0].FullName -C $extractRoot
+            if ($LASTEXITCODE -ne 0) {
+              throw "Could not extract GUI release archive."
+            }
+          }
+
+          "GUI_EXTRACT_ROOT=$extractRoot" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Prepare macOS application bundle for Mac2
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          version="$("$GUI_EXTRACT_ROOT/oop-design-checker-gui" --version)"
+          python tests/ui-appium/macos_bundle.py \
+            --publish "$GUI_EXTRACT_ROOT" \
+            --bundle "$RUNNER_TEMP/OopDesignChecker.app" \
+            --version "$version"
+          plutil -lint "$RUNNER_TEMP/OopDesignChecker.app/Contents/Info.plist"
+
+      - name: Install Appium and test client
+        shell: bash
+        run: |
+          npm install --global appium@3
+          python -m pip install --requirement tests/ui-appium/requirements.txt
+
+      - name: Install Windows Appium driver
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: appium driver install --source=npm appium-novawindows-driver
+
+      - name: Install macOS Appium driver
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: appium driver install mac2
+
+      - name: Start Appium
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP "appium-release.log"
+          if ($IsWindows) {
+            $command = (Get-Command appium.cmd).Source
+          } else {
+            $command = (Get-Command appium).Source
+          }
+          $process = Start-Process -FilePath $command -ArgumentList @("--address", "127.0.0.1", "--log", $log, "--log-level", "info") -PassThru
+          "APPIUM_PID=$($process.Id)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $deadline = (Get-Date).AddSeconds(30)
+          do {
+            Start-Sleep -Milliseconds 500
+            try {
+              $status = Invoke-RestMethod -Uri "http://127.0.0.1:4723/status" -TimeoutSec 2
+              if ($null -ne $status.value) {
+                exit 0
+              }
+            } catch {
+            }
+          } while ((Get-Date) -lt $deadline)
+          Get-Content $log -ErrorAction SilentlyContinue
+          throw "Appium server did not become ready."
+
+      - name: Run packaged GUI real-window E2E
+        shell: pwsh
+        run: |
+          if ($IsWindows) {
+            $gui = Join-Path $env:GUI_EXTRACT_ROOT "oop-design-checker-gui.exe"
+          } else {
+            $gui = Join-Path $env:RUNNER_TEMP "OopDesignChecker.app"
+          }
+
+          python tests/ui-appium/run_appium.py `
+            --platform ${{ matrix.platform }} `
+            --app $gui `
+            --fixture tests/fixtures/release-validation-csharp `
+            --evidence (Join-Path $env:RUNNER_TEMP "ui-appium-release-evidence") `
+            --automation-root (Join-Path $env:RUNNER_TEMP "ui-appium-automation")
+
+      - name: Show packaged Appium failure details
+        if: failure()
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP "appium-release.log"
+          if (Test-Path $log) {
+            Get-Content $log -Tail 200
+          }
+
+      - name: Stop Appium
+        if: always()
+        shell: pwsh
+        run: |
+          if ($env:APPIUM_PID) {
+            Stop-Process -Id ([int]$env:APPIUM_PID) -Force -ErrorAction SilentlyContinue
+          }
+          exit 0
+
+      - name: Upload packaged GUI Appium evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-appium-release-${{ matrix.platform }}-evidence
+          path: |
+            ${{ runner.temp }}/ui-appium-release-evidence
+            ${{ runner.temp }}/appium-release.log
+          if-no-files-found: warn
+          retention-days: 7
+
   release:
     name: create-release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [version, package, gui-package]
+    needs: [version, package, gui-package, gui-appium]
     runs-on: ubuntu-latest
     permissions:
       contents: write
