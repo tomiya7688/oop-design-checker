@@ -249,16 +249,30 @@ def main():
 
         language = find(driver, "LanguageSelector")
         language.click()
-        try:
+        if args.platform == "macos":
             wait_until(
                 driver,
-                lambda: driver.find_element(AppiumBy.NAME, "English").is_displayed(),
+                lambda: driver.find_element(
+                    AppiumBy.XPATH,
+                    "//XCUIElementTypeMenuItem[@title='English']",
+                ).is_displayed(),
                 timeout=10,
             )
-            driver.find_element(AppiumBy.NAME, "English").click()
-        except Exception:
-            language.send_keys("English")
-            language.send_keys(Keys.ENTER)
+            driver.find_element(
+                AppiumBy.XPATH,
+                "//XCUIElementTypeMenuItem[@title='English']",
+            ).click()
+        else:
+            try:
+                wait_until(
+                    driver,
+                    lambda: driver.find_element(AppiumBy.NAME, "English").is_displayed(),
+                    timeout=10,
+                )
+                driver.find_element(AppiumBy.NAME, "English").click()
+            except Exception:
+                language.send_keys("English")
+                language.send_keys(Keys.ENTER)
         wait_until(
             driver,
             lambda: "Analyze" in text_of(driver, "AnalyzeButton"),
