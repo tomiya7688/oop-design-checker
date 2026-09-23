@@ -1,0 +1,4 @@
+anthropic>=1,<2
+google-genai>=1,<2
+jsonschema>=4,<5
+openai>=2,<3

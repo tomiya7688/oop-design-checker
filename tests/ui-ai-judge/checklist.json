@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "checks": [
+    {
+      "id": "UI-001",
+      "description": "Fixture expected diagnostic count matches the GUI summary."
+    },
+    {
+      "id": "UI-002",
+      "description": "Displayed rule ID, severity, file, line, and symbol match evidence."
+    },
+    {
+      "id": "UI-003",
+      "description": "No required text or control is visibly missing."
+    },
+    {
+      "id": "UI-004",
+      "description": "No obvious overlap, clipping, or off-screen required control is present."
+    },
+    {
+      "id": "UI-005",
+      "description": "Primary actions remain usable after resize."
+    },
+    {
+      "id": "UI-006",
+      "description": "Japanese UI has no obvious untranslated, blank, or garbled required text."
+    },
+    {
+      "id": "UI-007",
+      "description": "English UI has no obvious untranslated, blank, or garbled required text."
+    },
+    {
+      "id": "UI-008",
+      "description": "Filter state and visible result count are consistent with evidence."
+    },
+    {
+      "id": "UI-009",
+      "description": "Detail pane matches the selected diagnostic."
+    },
+    {
+      "id": "UI-010",
+      "description": "Error state is visibly communicated."
+    },
+    {
+      "id": "UI-011",
+      "description": "Config, export, source-open, and cancel outcomes match the action log."
+    },
+    {
+      "id": "UI-012",
+      "description": "Before/after state transitions contain no unexplained missing UI state."
+    }
+  ]
+}
