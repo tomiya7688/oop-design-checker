@@ -138,7 +138,30 @@ def main():
             )
         else:
             oop106 = driver.find_element(AppiumBy.NAME, "OOP106")
-        oop106.click()
+        if args.platform == "macos":
+            selected = False
+            for xpath in (
+                "./ancestor::XCUIElementTypeRow[1]",
+                "./ancestor::XCUIElementTypeCell[1]",
+                "..",
+            ):
+                try:
+                    candidate = oop106.find_element(AppiumBy.XPATH, xpath)
+                    candidate.click()
+                    wait_until(
+                        driver,
+                        lambda: "OOP106" in text_of(driver, "DetailRule"),
+                        timeout=5,
+                    )
+                    selected = True
+                    break
+                except Exception:
+                    continue
+            if not selected:
+                oop106.click()
+        else:
+            oop106.click()
+
         wait_until(driver, lambda: "OOP106" in text_of(driver, "DetailRule"), timeout=20)
         actions.append({"action": "select-detail", "rule": "OOP106", "result": "pass"})
 
