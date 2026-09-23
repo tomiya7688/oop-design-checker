@@ -114,6 +114,14 @@ jobs:
         shell: bash
         run: appium driver install mac2
 
+      - name: Prepare UI automation paths
+        shell: pwsh
+        run: |
+          $exportDirectory = Join-Path $env:RUNNER_TEMP "ui-appium-exports"
+          New-Item -ItemType Directory -Force -Path $exportDirectory | Out-Null
+          "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR=$exportDirectory" |
+            Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Start Appium
         shell: pwsh
         run: |
