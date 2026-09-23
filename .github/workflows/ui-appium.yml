@@ -28,12 +28,15 @@ jobs:
             os: macos-15
             rid: osx-arm64
     runs-on: ${{ matrix.os }}
-    env:
-      OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS: '3000'
-      OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR: ${{ runner.temp }}/ui-appium-evidence/export
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure native UI automation environment
+        shell: pwsh
+        run: |
+          "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS=3000" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR=$(Join-Path $env:RUNNER_TEMP "ui-appium-evidence/export")" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - uses: actions/setup-dotnet@v4
         with:
