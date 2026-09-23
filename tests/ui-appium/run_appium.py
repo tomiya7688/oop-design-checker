@@ -253,7 +253,14 @@ def main():
                 AppiumBy.XPATH,
                 "//XCUIElementTypeMenuItem[@title='English']",
             )
-            english.click()
+            rect = english.rect
+            driver.execute_script(
+                "macos: click",
+                {
+                    "x": rect["x"] + rect["width"] / 2,
+                    "y": rect["y"] + rect["height"] / 2,
+                },
+            )
             wait_until(
                 driver,
                 lambda: find(driver, "LanguageSelector").get_attribute("value") == "English",
@@ -287,8 +294,29 @@ def main():
         config_path = evidence / "05-config-editor" / "oop-design-checker.json"
         config_path.write_text("{}\n", encoding="utf-8")
         replace_text(driver, "ConfigurationPath", str(config_path))
+        main_window = driver.current_window_handle
+        known_windows = set(driver.window_handles)
         find(driver, "EditConfigurationButton").click()
-        wait_until(driver, lambda: bool(find(driver, "ConfigurationEditor")), timeout=20)
+
+        def switch_to_configuration_editor():
+            for handle in driver.window_handles:
+                if handle in known_windows:
+                    continue
+                try:
+                    driver.switch_to.window(handle)
+                    find(driver, "ConfigurationEditor")
+                    return True
+                except Exception:
+                    continue
+
+            try:
+                find(driver, "ConfigurationEditor")
+                return True
+            except Exception:
+                driver.switch_to.window(main_window)
+                return False
+
+        wait_until(driver, switch_to_configuration_editor, timeout=20)
         replace_text(driver, "ConfigurationEditor", '{"disabledRules":["OOP105"]}')
         find(driver, "ValidateConfigurationButton").click()
         wait_until(
@@ -297,6 +325,12 @@ def main():
             timeout=20,
         )
         find(driver, "SaveConfigurationButton").click()
+        wait_until(
+            driver,
+            lambda: main_window in driver.window_handles,
+            timeout=20,
+        )
+        driver.switch_to.window(main_window)
         wait_until(
             driver,
             lambda: "Configuration saved" in text_of(driver, "Status"),
