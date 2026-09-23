@@ -402,24 +402,39 @@ internal sealed class MainWindow : Window
 
         var extension = format == DiagnosticExportFormat.Sarif ? "sarif" : "json";
         var description = format == DiagnosticExportFormat.Sarif ? "SARIF" : "JSON";
-        var file = await StorageProvider.SaveFilePickerAsync(
-            new FilePickerSaveOptions
-            {
-                Title = GuiText.Format(GuiTextKey.ExportDiagnosticsAs, _language, description),
-                SuggestedFileName = $"oop-design-checker-results.{extension}",
-                DefaultExtension = extension,
-                FileTypeChoices =
-                [
-                    new FilePickerFileType(
-                        GuiText.Format(GuiTextKey.DiagnosticsFileType, _language, description)
-                    )
-                    {
-                        Patterns = [$"*.{extension}"],
-                    },
-                ],
-            }
+        var automationDirectory = Environment.GetEnvironmentVariable(
+            "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR"
         );
-        var outputPath = file?.TryGetLocalPath();
+        string? outputPath;
+        if (string.IsNullOrWhiteSpace(automationDirectory))
+        {
+            var file = await StorageProvider.SaveFilePickerAsync(
+                new FilePickerSaveOptions
+                {
+                    Title = GuiText.Format(GuiTextKey.ExportDiagnosticsAs, _language, description),
+                    SuggestedFileName = $"oop-design-checker-results.{extension}",
+                    DefaultExtension = extension,
+                    FileTypeChoices =
+                    [
+                        new FilePickerFileType(
+                            GuiText.Format(GuiTextKey.DiagnosticsFileType, _language, description)
+                        )
+                        {
+                            Patterns = [$"*.{extension}"],
+                        },
+                    ],
+                }
+            );
+            outputPath = file?.TryGetLocalPath();
+        }
+        else
+        {
+            outputPath = Path.Combine(
+                automationDirectory,
+                $"oop-design-checker-results.{extension}"
+            );
+        }
+
         if (string.IsNullOrWhiteSpace(outputPath))
         {
             return;
