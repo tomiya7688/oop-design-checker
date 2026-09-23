@@ -1,0 +1,30 @@
+name: ui-ai-contract
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/ui-ai-contract.yml'
+      - 'tests/ui-ai-judge/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install contract dependency
+        run: python -m pip install 'jsonschema>=4,<5'
+
+      - name: Compile harness
+        run: python -m py_compile tests/ui-ai-judge/judge.py tests/ui-ai-judge/aggregate.py
+
+      - name: Test provider and consensus contracts
+        run: python -m unittest discover -s tests/ui-ai-judge -p 'test_*.py' -v
