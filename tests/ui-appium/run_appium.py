@@ -131,7 +131,13 @@ def main():
         time.sleep(1)
         actions.append({"action": "filter", "value": "OOP106", "result": "pass"})
 
-        oop106 = driver.find_element(AppiumBy.NAME, "OOP106")
+        if args.platform == "macos":
+            oop106 = driver.find_element(
+                AppiumBy.XPATH,
+                "//XCUIElementTypeStaticText[@value='OOP106']/ancestor::XCUIElementTypeCell[1]",
+            )
+        else:
+            oop106 = driver.find_element(AppiumBy.NAME, "OOP106")
         oop106.click()
         wait_until(driver, lambda: "OOP106" in text_of(driver, "DetailRule"), timeout=20)
         actions.append({"action": "select-detail", "rule": "OOP106", "result": "pass"})
