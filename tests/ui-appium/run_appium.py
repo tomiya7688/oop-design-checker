@@ -56,11 +56,15 @@ def create_driver(args):
     options.app_path = app
     options.set_capability("appium:bundleId", bundle_id)
     options.set_capability("appium:showServerLogs", True)
-    # XCTest launches via LaunchServices; explicitly retain SDK discovery settings.
-    # Do not forward the full CI environment (which may contain secrets).
+    allowed_environment = (
+        "PATH",
+        "DOTNET_ROOT",
+        "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR",
+        "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS",
+    )
     options.set_capability(
         "appium:environment",
-        {key: os.environ[key] for key in ("PATH", "DOTNET_ROOT") if key in os.environ},
+        {key: os.environ[key] for key in allowed_environment if key in os.environ},
     )
     options.set_capability("appium:newCommandTimeout", 180)
     return webdriver.Remote(args.server, options=options)
@@ -76,7 +80,19 @@ def wait_until(driver, predicate, timeout=90):
 
 def text_of(driver, automation_id):
     element = find(driver, automation_id)
-    return element.text or element.get_attribute("Name") or element.get_attribute("Value.Value") or ""
+    return (
+        element.text
+        or element.get_attribute("Name")
+        or element.get_attribute("Value.Value")
+        or ""
+    )
+
+
+def replace_text(driver, automation_id, value):
+    element = find(driver, automation_id)
+    element.clear()
+    element.send_keys(value)
+    return element
 
 
 def screenshot(driver, path: Path):
@@ -84,70 +100,163 @@ def screenshot(driver, path: Path):
     driver.save_screenshot(str(path))
 
 
+def summary_matches(driver, counts):
+    return all(
+        str(counts[key]) in text_of(driver, control_id)
+        for key, control_id in (
+            ("danger", "DangerCount"),
+            ("warning", "WarningCount"),
+            ("attention", "AttentionCount"),
+        )
+    )
+
+
+def select_rule(driver, platform, rule_id):
+    replace_text(driver, "SearchFilter", rule_id)
+    time.sleep(1)
+    if platform == "macos":
+        element = driver.find_element(
+            AppiumBy.XPATH,
+            f"//XCUIElementTypeStaticText[@value='{rule_id}']/ancestor::XCUIElementTypeCell[1]",
+        )
+    else:
+        element = driver.find_element(AppiumBy.NAME, rule_id)
+    element.click()
+    wait_until(driver, lambda: rule_id in text_of(driver, "DetailRule"), timeout=20)
+
+
+def write_scenario_state(driver, directory: Path, scenario, extra=None):
+    directory.mkdir(parents=True, exist_ok=True)
+    state = {
+        "scenario": scenario,
+        "window": driver.get_window_size(),
+        "summary": {
+            "danger": text_of(driver, "DangerCount"),
+            "warning": text_of(driver, "WarningCount"),
+            "attention": text_of(driver, "AttentionCount"),
+        },
+        "status": text_of(driver, "Status"),
+        "selectedRule": text_of(driver, "DetailRule"),
+        "selectedFile": text_of(driver, "DetailLocation"),
+    }
+    if extra:
+        state.update(extra)
+    (directory / "ui-state.json").write_text(
+        json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+
+
+def assert_exported_json(path: Path, expected_count):
+    document = json.loads(path.read_text(encoding="utf-8-sig"))
+    diagnostics = document.get("diagnostics", [])
+    if document.get("version") != 1 or len(diagnostics) != expected_count:
+        raise AssertionError(
+            f"JSON export mismatch: version={document.get('version')} count={len(diagnostics)}"
+        )
+
+
+def assert_exported_sarif(path: Path, expected_count):
+    document = json.loads(path.read_text(encoding="utf-8-sig"))
+    runs = document.get("runs", [])
+    results = runs[0].get("results", []) if len(runs) == 1 else []
+    if document.get("version") != "2.1.0" or len(results) != expected_count:
+        raise AssertionError(
+            f"SARIF export mismatch: version={document.get('version')} count={len(results)}"
+        )
+
+
 def main():
     args = parse_args()
     fixture = Path(args.fixture).resolve()
     evidence = Path(args.evidence).resolve()
     evidence.mkdir(parents=True, exist_ok=True)
+    export_dir = Path(
+        os.environ.get(
+            "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR",
+            str(evidence / "export"),
+        )
+    ).resolve()
+    export_dir.mkdir(parents=True, exist_ok=True)
 
     diagnostics, expected_counts = load_expected(fixture)
-    (evidence / "expected.json").write_text(
-        json.dumps({"count": len(diagnostics), "summary": expected_counts}, indent=2),
-        encoding="utf-8",
-    )
-
     actions = []
+    scenario_actions = {}
+
+    def record(scenario, action, result="pass", **details):
+        item = {"scenario": scenario, "action": action, "result": result, **details}
+        actions.append(item)
+        scenario_actions.setdefault(scenario, []).append(item)
+
+    def capture(driver, scenario, filename="after.png", extra=None):
+        directory = evidence / scenario
+        screenshot(driver, directory / filename)
+        write_scenario_state(driver, directory, scenario, extra)
+
+    for scenario, expected in {
+        "01-cancel": {"status": "Analysis cancelled."},
+        "02-fixture-analysis": {"count": len(diagnostics), "summary": expected_counts},
+        "03-filter-detail": {"ruleId": "OOP106"},
+        "04-language-resize": {"language": "en"},
+        "05-config-editor": {"disabledRules": ["OOP105"]},
+        "06-export": {"count": len(diagnostics), "formats": ["json", "sarif"]},
+        "07-source-open-fallback": {"ruleId": "OOP106"},
+        "08-error-state": {"diagnostics": 0},
+    }.items():
+        directory = evidence / scenario
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / "expected.json").write_text(
+            json.dumps(expected, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+
     driver = None
+    moved_source = None
     try:
         driver = create_driver(args)
-        actions.append({"action": "session-start", "result": "pass"})
-        screenshot(driver, evidence / "before.png")
+        record("02-fixture-analysis", "session-start", platform=args.platform)
+        screenshot(driver, evidence / "02-fixture-analysis" / "before.png")
 
-        target = find(driver, "TargetPath")
-        target.clear()
-        target.send_keys(str(fixture))
-        actions.append({"action": "set-target", "value": str(fixture), "result": "pass"})
+        replace_text(driver, "TargetPath", str(fixture))
+        record("02-fixture-analysis", "set-target", value=str(fixture))
 
         find(driver, "AnalyzeButton").click()
-        actions.append({"action": "analyze", "result": "started"})
+        record("01-cancel", "analyze", result="started")
+        wait_until(driver, lambda: find(driver, "CancelButton").is_enabled(), timeout=20)
+        find(driver, "CancelButton").click()
+        wait_until(
+            driver,
+            lambda: "cancelled" in text_of(driver, "Status").lower()
+            or "キャンセル" in text_of(driver, "Status"),
+            timeout=20,
+        )
+        record("01-cancel", "cancel")
+        capture(driver, "01-cancel")
+        wait_until(driver, lambda: find(driver, "AnalyzeButton").is_enabled(), timeout=20)
 
-        def summary_matches():
-            return all(
-                str(expected_counts[key]) in text_of(driver, control_id)
-                for key, control_id in (
-                    ("danger", "DangerCount"),
-                    ("warning", "WarningCount"),
-                    ("attention", "AttentionCount"),
-                )
-            )
+        find(driver, "AnalyzeButton").click()
+        record("02-fixture-analysis", "analyze", result="started")
+        wait_until(driver, lambda: summary_matches(driver, expected_counts), timeout=120)
+        record("02-fixture-analysis", "analyze", result="pass")
+        capture(
+            driver,
+            "02-fixture-analysis",
+            extra={"target": str(fixture), "platform": args.platform},
+        )
 
-        wait_until(driver, summary_matches)
-        actions[-1]["result"] = "pass"
-        screenshot(driver, evidence / "after.png")
-
-        search = find(driver, "SearchFilter")
-        search.clear()
-        search.send_keys("OOP106")
-        time.sleep(1)
-        actions.append({"action": "filter", "value": "OOP106", "result": "pass"})
-
-        if args.platform == "macos":
-            oop106 = driver.find_element(
-                AppiumBy.XPATH,
-                "//XCUIElementTypeStaticText[@value='OOP106']/ancestor::XCUIElementTypeCell[1]",
-            )
-        else:
-            oop106 = driver.find_element(AppiumBy.NAME, "OOP106")
-        oop106.click()
-        wait_until(driver, lambda: "OOP106" in text_of(driver, "DetailRule"), timeout=20)
-        actions.append({"action": "select-detail", "rule": "OOP106", "result": "pass"})
+        select_rule(driver, args.platform, "OOP106")
+        record("03-filter-detail", "filter-select", ruleId="OOP106")
+        capture(driver, "03-filter-detail")
 
         language = find(driver, "LanguageSelector")
         language.click()
         language.send_keys("English")
         language.send_keys(Keys.ENTER)
-        time.sleep(1)
-        actions.append({"action": "language", "value": "en", "result": "pass"})
+        wait_until(
+            driver,
+            lambda: "Rule:" in text_of(driver, "DetailRule")
+            or "OOP106" in text_of(driver, "DetailRule"),
+            timeout=20,
+        )
+        record("04-language-resize", "language", value="en")
 
         if args.platform == "macos":
             driver.maximize_window()
@@ -156,34 +265,123 @@ def main():
             driver.set_window_size(900, 600)
             resize_value = "900x600"
         time.sleep(1)
-        screenshot(driver, evidence / "resized.png")
-        actions.append({"action": "resize", "value": resize_value, "result": "pass"})
-
-        state = {
-            "platform": args.platform,
-            "window": driver.get_window_size(),
-            "target": str(fixture),
-            "summary": {
-                "danger": text_of(driver, "DangerCount"),
-                "warning": text_of(driver, "WarningCount"),
-                "attention": text_of(driver, "AttentionCount"),
-            },
-            "selectedRule": text_of(driver, "DetailRule"),
-            "status": text_of(driver, "Status"),
-            "search": "OOP106",
-            "language": "en",
-        }
-        (evidence / "ui-state.json").write_text(
-            json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8"
+        record("04-language-resize", "resize", value=resize_value)
+        capture(
+            driver,
+            "04-language-resize",
+            "resized.png",
+            {"language": "en", "resize": resize_value},
         )
+
+        config_path = evidence / "05-config-editor" / "oop-design-checker.json"
+        config_path.write_text("{}\n", encoding="utf-8")
+        replace_text(driver, "ConfigurationPath", str(config_path))
+        find(driver, "EditConfigurationButton").click()
+        wait_until(driver, lambda: bool(find(driver, "ConfigurationEditor")), timeout=20)
+        replace_text(driver, "ConfigurationEditor", '{"disabledRules":["OOP105"]}')
+        find(driver, "ValidateConfigurationButton").click()
+        wait_until(
+            driver,
+            lambda: "valid" in text_of(driver, "ConfigurationEditorStatus").lower(),
+            timeout=20,
+        )
+        find(driver, "SaveConfigurationButton").click()
+        wait_until(
+            driver,
+            lambda: "Configuration saved" in text_of(driver, "Status"),
+            timeout=20,
+        )
+        record("05-config-editor", "edit-validate-save", path=str(config_path))
+
+        find(driver, "AnalyzeButton").click()
+        configured_counts = dict(expected_counts)
+        configured_counts["warning"] -= 1
+        wait_until(driver, lambda: summary_matches(driver, configured_counts), timeout=120)
+        record("05-config-editor", "reanalyze", disabledRule="OOP105")
+        capture(
+            driver,
+            "05-config-editor",
+            extra={"configurationPath": str(config_path), "summary": configured_counts},
+        )
+
+        find(driver, "ClearConfigurationButton").click()
+        find(driver, "AnalyzeButton").click()
+        wait_until(driver, lambda: summary_matches(driver, expected_counts), timeout=120)
+        record("06-export", "reanalyze-defaults")
+
+        json_path = export_dir / "actual-diagnostics.json"
+        sarif_path = export_dir / "actual-diagnostics.sarif"
+        for path in (json_path, sarif_path):
+            path.unlink(missing_ok=True)
+
+        find(driver, "ExportJsonButton").click()
+        wait_until(driver, json_path.exists, timeout=20)
+        assert_exported_json(json_path, len(diagnostics))
+        record("06-export", "export-json", path=str(json_path))
+
+        find(driver, "ExportSarifButton").click()
+        wait_until(driver, sarif_path.exists, timeout=20)
+        assert_exported_sarif(sarif_path, len(diagnostics))
+        record("06-export", "export-sarif", path=str(sarif_path))
+
+        export_scenario = evidence / "06-export"
+        (export_scenario / "actual-diagnostics.json").write_bytes(json_path.read_bytes())
+        (export_scenario / "actual-diagnostics.sarif").write_bytes(sarif_path.read_bytes())
+        capture(driver, "06-export")
+
+        select_rule(driver, args.platform, "OOP106")
+        location_text = text_of(driver, "DetailLocation")
+        source_candidates = [
+            fixture / item["file"]
+            for item in diagnostics
+            if item["ruleId"] == "OOP106" and Path(item["file"]).name in location_text
+        ]
+        if not source_candidates:
+            raise AssertionError(f"Could not resolve selected OOP106 source from: {location_text}")
+        source_path = source_candidates[0]
+        backup_path = source_path.with_name(source_path.name + ".ui-appium-backup")
+        source_path.rename(backup_path)
+        moved_source = (source_path, backup_path)
+        try:
+            find(driver, "OpenSourceButton").click()
+            wait_until(
+                driver,
+                lambda: "not found" in text_of(driver, "Status").lower(),
+                timeout=20,
+            )
+            record("07-source-open-fallback", "open-missing-source", file=str(source_path))
+            capture(driver, "07-source-open-fallback")
+        finally:
+            if backup_path.exists():
+                backup_path.rename(source_path)
+            moved_source = None
+
+        missing_target = evidence / "08-error-state" / "missing-target"
+        replace_text(driver, "TargetPath", str(missing_target))
+        find(driver, "AnalyzeButton").click()
+        wait_until(driver, lambda: find(driver, "AnalyzeButton").is_enabled(), timeout=120)
+        wait_until(
+            driver,
+            lambda: summary_matches(
+                driver, {"danger": 0, "warning": 0, "attention": 0}
+            ),
+            timeout=20,
+        )
+        error_status = text_of(driver, "Status")
+        if not error_status.strip():
+            raise AssertionError("Error state did not expose a visible status message.")
+        record("08-error-state", "analyze-invalid-target", status=error_status)
+        capture(driver, "08-error-state", extra={"target": str(missing_target)})
+
         return 0
     except Exception as exc:
-        actions.append({
-            "action": "failure",
-            "result": "fail",
-            "errorType": type(exc).__name__,
-            "error": str(exc),
-        })
+        record(
+            "failure",
+            "exception",
+            result="fail",
+            errorType=type(exc).__name__,
+            error=str(exc),
+        )
         if driver is not None:
             try:
                 screenshot(driver, evidence / "failure.png")
@@ -193,9 +391,21 @@ def main():
         print(f"Appium UI E2E failed: {exc}", file=sys.stderr)
         return 1
     finally:
+        if moved_source is not None:
+            source_path, backup_path = moved_source
+            if backup_path.exists():
+                backup_path.rename(source_path)
+
         (evidence / "action-log.json").write_text(
             json.dumps(actions, indent=2, ensure_ascii=False), encoding="utf-8"
         )
+        for scenario, items in scenario_actions.items():
+            directory = evidence / scenario
+            directory.mkdir(parents=True, exist_ok=True)
+            (directory / "action-log.json").write_text(
+                json.dumps(items, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
+
         if driver is not None:
             try:
                 driver.quit()
