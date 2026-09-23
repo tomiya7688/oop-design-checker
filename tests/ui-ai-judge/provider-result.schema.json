@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Provider UI Judge Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "provider",
+    "model",
+    "status",
+    "result"
+  ],
+  "properties": {
+    "provider": {
+      "type": "string",
+      "enum": [
+        "openai",
+        "google",
+        "anthropic"
+      ]
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "error"
+      ]
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "result": {
+      "anyOf": [
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "title": "UI AI Judge Verdict",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scenario",
+            "verdict",
+            "checks",
+            "blockingIssues",
+            "summary"
+          ],
+          "properties": {
+            "scenario": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verdict": {
+              "type": "string",
+              "enum": [
+                "pass",
+                "fail",
+                "review"
+              ]
+            },
+            "checks": {
+              "type": "array",
+              "minItems": 12,
+              "maxItems": 12,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "verdict",
+                  "evidence"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^UI-0(0[1-9]|1[0-2])$"
+                  },
+                  "verdict": {
+                    "type": "string",
+                    "enum": [
+                      "pass",
+                      "fail",
+                      "review"
+                    ]
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "blockingIssues": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}
