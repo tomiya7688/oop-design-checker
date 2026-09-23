@@ -119,7 +119,6 @@ internal static class GuiWorkflowPhase2SmokeTests
         }
     }
 
-
     private static void UiAutomationSettingsAreOptIn()
     {
         const string delayVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS";

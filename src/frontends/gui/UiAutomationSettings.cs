@@ -4,8 +4,7 @@ namespace OopDesignChecker.Gui;
 
 internal static class UiAutomationSettings
 {
-    private const string ExportDirectoryVariable =
-        "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR";
+    private const string ExportDirectoryVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR";
     private const string AnalysisDelayVariable =
         "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS";
 
