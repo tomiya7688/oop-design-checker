@@ -201,6 +201,10 @@ def main():
     driver = None
     source_backup = None
     source_path = None
+    fixture_config_path = fixture / "oop-design-checker.json"
+    fixture_config_original = (
+        fixture_config_path.read_bytes() if fixture_config_path.exists() else None
+    )
 
     def log(scenario, action, result="pass", **details):
         actions.setdefault(scenario, []).append(
@@ -264,36 +268,43 @@ def main():
         )
 
         configuration = scenario_directory(evidence, "configuration")
-        config_path = automation_root / "oop-design-checker.json"
-        config_path.write_text(
+        fixture_config_path.write_text(
             '{"disabledRules":["OOP105"]}\n',
             encoding="utf-8",
         )
         write_json(
             configuration / "expected.json",
             {
+                "config": "oop-design-checker.json",
                 "disabledRule": "OOP105",
                 "summary": expected_configured_counts,
             },
         )
         screenshot(driver, configuration / "before.png")
-        set_text(driver, "ConfigurationPath", str(config_path))
+        config_box = find(driver, "ConfigurationPath")
+        config_box.click()
+        config_box.clear()
         find(driver, "AnalyzeButton").click()
         wait_until(driver, lambda: summary_matches(driver, expected_configured_counts))
+        wait_until(
+            driver,
+            lambda: "oop-design-checker.json" in text_of(driver, "ConfigurationSummary"),
+            timeout=20,
+        )
         log(
             "configuration",
-            "analyze-with-explicit-config",
-            path=str(config_path),
+            "analyze-with-auto-discovered-config",
+            path=str(fixture_config_path),
             disabledRule="OOP105",
             summary=expected_configured_counts,
         )
         screenshot(driver, configuration / "after.png")
         write_ui_state(driver, configuration, args, fixture, "en")
 
-        find(driver, "ClearConfigurationButton").click()
+        fixture_config_path.unlink()
         find(driver, "AnalyzeButton").click()
         wait_until(driver, lambda: summary_matches(driver, expected_counts))
-        log("configuration", "clear-config-and-restore-defaults", summary=expected_counts)
+        log("configuration", "remove-config-and-restore-defaults", summary=expected_counts)
 
         export = scenario_directory(evidence, "export")
         export_root = Path(
@@ -414,6 +425,10 @@ def main():
     finally:
         if source_backup is not None and source_path is not None and source_backup.exists():
             source_backup.rename(source_path)
+        if fixture_config_original is None:
+            fixture_config_path.unlink(missing_ok=True)
+        else:
+            fixture_config_path.write_bytes(fixture_config_original)
         for scenario, scenario_actions in actions.items():
             directory = scenario_directory(evidence, scenario)
             write_json(directory / "action-log.json", scenario_actions)
