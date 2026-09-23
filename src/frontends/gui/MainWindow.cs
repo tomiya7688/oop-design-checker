@@ -402,27 +402,31 @@ internal sealed class MainWindow : Window
 
         var extension = format == DiagnosticExportFormat.Sarif ? "sarif" : "json";
         var description = format == DiagnosticExportFormat.Sarif ? "SARIF" : "JSON";
-        var file = await StorageProvider.SaveFilePickerAsync(
-            new FilePickerSaveOptions
-            {
-                Title = GuiText.Format(GuiTextKey.ExportDiagnosticsAs, _language, description),
-                SuggestedFileName = $"oop-design-checker-results.{extension}",
-                DefaultExtension = extension,
-                FileTypeChoices =
-                [
-                    new FilePickerFileType(
-                        GuiText.Format(GuiTextKey.DiagnosticsFileType, _language, description)
-                    )
-                    {
-                        Patterns = [$"*.{extension}"],
-                    },
-                ],
-            }
-        );
-        var outputPath = file?.TryGetLocalPath();
-        if (string.IsNullOrWhiteSpace(outputPath))
+        var outputPath = GuiAutomationEnvironment.ExportPath(format);
+        if (outputPath is null)
         {
-            return;
+            var file = await StorageProvider.SaveFilePickerAsync(
+                new FilePickerSaveOptions
+                {
+                    Title = GuiText.Format(GuiTextKey.ExportDiagnosticsAs, _language, description),
+                    SuggestedFileName = $"oop-design-checker-results.{extension}",
+                    DefaultExtension = extension,
+                    FileTypeChoices =
+                    [
+                        new FilePickerFileType(
+                            GuiText.Format(GuiTextKey.DiagnosticsFileType, _language, description)
+                        )
+                        {
+                            Patterns = [$"*.{extension}"],
+                        },
+                    ],
+                }
+            );
+            outputPath = file?.TryGetLocalPath();
+            if (string.IsNullOrWhiteSpace(outputPath))
+            {
+                return;
+            }
         }
 
         try
