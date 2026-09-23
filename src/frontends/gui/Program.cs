@@ -5,6 +5,8 @@ namespace OopDesignChecker.Gui;
 
 internal static class Program
 {
+    private const string AutomationExportDirectoryOption = "--ui-automation-export-dir";
+
     [STAThread]
     public static void Main(string[] args)
     {
@@ -14,7 +16,35 @@ internal static class Program
             return;
         }
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        var desktopArguments = ApplyAutomationArguments(args);
+        BuildAvaloniaApp().StartWithClassicDesktopLifetime(desktopArguments);
+    }
+
+    private static string[] ApplyAutomationArguments(IReadOnlyList<string> args)
+    {
+        var desktopArguments = new List<string>();
+        for (var index = 0; index < args.Count; index++)
+        {
+            if (args[index] != AutomationExportDirectoryOption)
+            {
+                desktopArguments.Add(args[index]);
+                continue;
+            }
+
+            if (index + 1 >= args.Count || string.IsNullOrWhiteSpace(args[index + 1]))
+            {
+                throw new InvalidOperationException(
+                    $"{AutomationExportDirectoryOption} requires a directory path."
+                );
+            }
+
+            Environment.SetEnvironmentVariable(
+                "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR",
+                args[++index]
+            );
+        }
+
+        return [.. desktopArguments];
     }
 
     private static string GetProductVersion()
