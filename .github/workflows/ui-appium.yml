@@ -28,6 +28,9 @@ jobs:
             os: macos-15
             rid: osx-arm64
     runs-on: ${{ matrix.os }}
+    env:
+      OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS: '3000'
+      OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR: ${{ runner.temp }}/ui-appium-evidence/export
 
     steps:
       - uses: actions/checkout@v4
@@ -87,13 +90,50 @@ jobs:
           New-Item -ItemType Directory -Force -Path $referenceDestination | Out-Null
           Copy-Item (Join-Path $referenceDirectory "*.dll") $referenceDestination -Force
 
+      - name: Build and extract GUI release archive
+        shell: pwsh
+        run: |
+          Copy-Item README.md publish/ui-appium/README.md
+          Copy-Item README.en.md publish/ui-appium/README.en.md
+          Copy-Item CHANGELOG.md publish/ui-appium/CHANGELOG.md
+          Copy-Item CHANGELOG.en.md publish/ui-appium/CHANGELOG.en.md
+          Copy-Item oop-design-checker.example.json publish/ui-appium/oop-design-checker.example.json
+          Copy-Item specification publish/ui-appium/specification -Recurse
+
+          $archiveRoot = Join-Path $env:RUNNER_TEMP "ui-appium-release"
+          $extractRoot = Join-Path $env:RUNNER_TEMP "ui-appium-extracted"
+          Remove-Item $archiveRoot -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item $extractRoot -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $archiveRoot, $extractRoot | Out-Null
+
+          if ($IsWindows) {
+            $archive = Join-Path $archiveRoot "oop-design-checker-gui-ui-appium-win-x64.zip"
+            Compress-Archive -Path "publish/ui-appium/*" -DestinationPath $archive
+            Expand-Archive -Path $archive -DestinationPath $extractRoot
+          } else {
+            $archive = Join-Path $archiveRoot "oop-design-checker-gui-ui-appium-osx-arm64.tar.gz"
+            tar -czf $archive -C publish/ui-appium .
+            if ($LASTEXITCODE -ne 0) {
+              throw "Could not create macOS GUI release archive."
+            }
+            tar -xzf $archive -C $extractRoot
+            if ($LASTEXITCODE -ne 0) {
+              throw "Could not extract macOS GUI release archive."
+            }
+          }
+
+          $hash = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          $hash | Set-Content (Join-Path $archiveRoot "archive.sha256")
+          "UI_RELEASE_EXTRACT_ROOT=$extractRoot" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "UI_RELEASE_ARCHIVE=$archive" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Prepare macOS application bundle for Mac2
         if: matrix.platform == 'macos'
         shell: bash
         run: |
-          version="$(publish/ui-appium/oop-design-checker-gui --version)"
+          version="$("$UI_RELEASE_EXTRACT_ROOT/oop-design-checker-gui" --version)"
           python tests/ui-appium/macos_bundle.py \
-            --publish publish/ui-appium \
+            --publish "$UI_RELEASE_EXTRACT_ROOT" \
             --bundle publish/OopDesignChecker.app \
             --version "$version"
           plutil -lint publish/OopDesignChecker.app/Contents/Info.plist
@@ -142,8 +182,9 @@ jobs:
       - name: Run real-window GUI E2E
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Force -Path $env:OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR | Out-Null
           if ($IsWindows) {
-            $gui = Join-Path "publish/ui-appium" "oop-design-checker-gui.exe"
+            $gui = Join-Path $env:UI_RELEASE_EXTRACT_ROOT "oop-design-checker-gui.exe"
           } else {
             $gui = "publish/OopDesignChecker.app"
           }
@@ -179,6 +220,7 @@ jobs:
           name: ui-appium-${{ matrix.platform }}-evidence
           path: |
             ${{ runner.temp }}/ui-appium-evidence
+            ${{ runner.temp }}/ui-appium-release
             ${{ runner.temp }}/appium.log
           if-no-files-found: warn
           retention-days: 7
