@@ -47,6 +47,11 @@ def create_driver(args):
         options.platform_name = "Windows"
         options.automation_name = "NovaWindows"
         options.app = app
+        export_directory = os.environ["OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR"]
+        options.set_capability(
+            "appium:appArguments",
+            f'--ui-automation-export-dir "{export_directory}"',
+        )
         options.set_capability("appium:newCommandTimeout", 180)
         return webdriver.Remote(args.server, options=options)
 
@@ -59,10 +64,16 @@ def create_driver(args):
     options.app_path = app
     options.set_capability("appium:bundleId", bundle_id)
     options.set_capability("appium:showServerLogs", True)
+    options.set_capability(
+        "appium:arguments",
+        [
+            "--ui-automation-export-dir",
+            os.environ["OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR"],
+        ],
+    )
     allowed_environment = (
         "PATH",
         "DOTNET_ROOT",
-        "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR",
     )
     options.set_capability(
         "appium:environment",
