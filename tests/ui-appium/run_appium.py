@@ -248,12 +248,23 @@ def main():
 
         language = find(driver, "LanguageSelector")
         language.click()
-        language.send_keys("English")
-        language.send_keys(Keys.ENTER)
+        if args.platform == "macos":
+            english = driver.find_element(
+                AppiumBy.XPATH,
+                "//XCUIElementTypeMenuItem[@title='English']",
+            )
+            english.click()
+            wait_until(
+                driver,
+                lambda: find(driver, "LanguageSelector").get_attribute("value") == "English",
+                timeout=20,
+            )
+        else:
+            language.send_keys("English")
+            language.send_keys(Keys.ENTER)
         wait_until(
             driver,
-            lambda: "Rule:" in text_of(driver, "DetailRule")
-            or "OOP106" in text_of(driver, "DetailRule"),
+            lambda: "Rule:" in text_of(driver, "DetailRule"),
             timeout=20,
         )
         record("04-language-resize", "language", value="en")
