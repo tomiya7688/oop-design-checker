@@ -28,6 +28,8 @@ jobs:
             os: macos-15
             rid: osx-arm64
     runs-on: ${{ matrix.os }}
+    env:
+      OOP_DESIGN_CHECKER_UI_E2E_EXPORT_DIR: ${{ runner.temp }}/ui-appium-automation/exports
 
     steps:
       - uses: actions/checkout@v4
@@ -152,7 +154,8 @@ jobs:
             --platform ${{ matrix.platform }} `
             --app $gui `
             --fixture tests/fixtures/release-validation-csharp `
-            --evidence (Join-Path $env:RUNNER_TEMP "ui-appium-evidence")
+            --evidence (Join-Path $env:RUNNER_TEMP "ui-appium-evidence") `
+            --automation-root (Join-Path $env:RUNNER_TEMP "ui-appium-automation")
 
       - name: Show Appium failure details
         if: failure()
