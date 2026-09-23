@@ -28,9 +28,6 @@ jobs:
             os: macos-15
             rid: osx-arm64
     runs-on: ${{ matrix.os }}
-    env:
-      OOP_DESIGN_CHECKER_UI_E2E_EXPORT_DIR: ${{ runner.temp }}/ui-appium-automation/exports
-
     steps:
       - uses: actions/checkout@v4
 
@@ -99,6 +96,14 @@ jobs:
             --bundle publish/OopDesignChecker.app \
             --version "$version"
           plutil -lint publish/OopDesignChecker.app/Contents/Info.plist
+
+      - name: Prepare GUI automation workspace
+        shell: pwsh
+        run: |
+          $automationRoot = Join-Path $env:RUNNER_TEMP "ui-appium-automation"
+          $exportRoot = Join-Path $automationRoot "exports"
+          New-Item -ItemType Directory -Force -Path $exportRoot | Out-Null
+          "OOP_DESIGN_CHECKER_UI_E2E_EXPORT_DIR=$exportRoot" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Install Appium and test client
         shell: bash
