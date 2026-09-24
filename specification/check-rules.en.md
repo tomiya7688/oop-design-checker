@@ -1,10 +1,10 @@
-# Check Rules (Draft)
+# Check Rules
 
 [日本語（正本）](check-rules.md)
 
 > The Japanese specification is normative. If this English translation differs from the Japanese version, the Japanese version takes precedence.
 
-This file records candidate checks discussed during design.
+This file is the normative English companion for the check rules implemented and validated by OOP Design Checker 1.0.0.
 
 ## OOP001 Missing common abstraction
 
