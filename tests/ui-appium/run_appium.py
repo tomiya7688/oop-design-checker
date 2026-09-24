@@ -323,7 +323,10 @@ def main():
         )
 
         config_path = evidence / "05-config-editor" / "oop-design-checker.json"
-        config_path.write_text("{}\n", encoding="utf-8")
+        config_path.write_text(
+            '{"disabledRules":["OOP105"]}\n',
+            encoding="utf-8",
+        )
         replace_text(driver, "ConfigurationPath", str(config_path))
         main_window = driver.current_window_handle if args.platform == "windows" else None
         known_windows = set(driver.window_handles) if args.platform == "windows" else set()
@@ -351,8 +354,8 @@ def main():
 
         wait_until(driver, switch_to_configuration_editor, timeout=20)
         editor = configuration_editor(driver, args.platform)
-        editor.clear()
-        editor.send_keys('{"disabledRules":["OOP105"]}')
+        editor.send_keys(Keys.END)
+        editor.send_keys(Keys.ENTER)
         find(driver, "ValidateConfigurationButton").click()
         wait_until(
             driver,
