@@ -1,0 +1,20 @@
+name: temp-dispatch-ui-ai
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/temp-dispatch-ui-ai.yml'
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch UI AI panel against successful Appium evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run ui-ai-panel.yml             --repo "${GITHUB_REPOSITORY}"             --ref main             -f evidence_run_id=35983076227             -f evidence_artifact=ui-appium-windows-evidence             -f scenario=02-fixture-analysis
