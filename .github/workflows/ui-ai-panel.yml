@@ -1,0 +1,129 @@
+name: ui-ai-panel
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/ui-ai-panel.yml'
+      - 'tests/ui-ai-judge/**'
+  workflow_dispatch:
+    inputs:
+      evidence_run_id:
+        description: 'Workflow run ID that produced the UI evidence artifact'
+        required: true
+        type: string
+      evidence_artifact:
+        description: 'Artifact name, e.g. ui-appium-windows-evidence'
+        required: true
+        type: string
+      scenario:
+        description: 'Scenario directory to judge, e.g. 02-fixture-analysis'
+        required: true
+        default: '02-fixture-analysis'
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  contracts:
+    name: ui-ai-contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install schema test dependency
+        run: python -m pip install 'jsonschema>=4,<5'
+
+      - name: Test schemas, provider failure handling, and consensus policy
+        run: |
+          python -m unittest discover -s tests/ui-ai-judge -p 'test_*.py' -v
+          python -m py_compile tests/ui-ai-judge/judge.py tests/ui-ai-judge/aggregate.py
+
+  provider:
+    name: ui-ai (${{ matrix.provider }})
+    if: github.event_name == 'workflow_dispatch'
+    needs: contracts
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [openai, google, anthropic]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install AI judge clients
+        run: python -m pip install --requirement tests/ui-ai-judge/requirements.txt
+
+      - name: Download UI evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.evidence_artifact }}
+          path: ui-evidence
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.evidence_run_id }}
+
+      - name: Run independent provider judge
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          scenario="ui-evidence/${{ inputs.scenario }}"
+          if [[ ! -d "$scenario" ]]; then
+            echo "Scenario evidence was not found: $scenario" >&2
+            find ui-evidence -maxdepth 3 -type f -print
+            exit 1
+          fi
+          python tests/ui-ai-judge/judge.py \
+            --provider "${{ matrix.provider }}" \
+            --scenario-dir "$scenario" \
+            --output "provider-results/${{ matrix.provider }}.json"
+
+      - name: Upload provider verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-ai-result-${{ matrix.provider }}
+          path: provider-results/${{ matrix.provider }}.json
+          if-no-files-found: error
+          retention-days: 14
+
+  aggregate:
+    name: ui-ai-aggregate
+    if: github.event_name == 'workflow_dispatch' && always()
+    needs: [contracts, provider]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download provider verdicts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ui-ai-result-*
+          path: provider-results
+          merge-multiple: true
+
+      - name: Aggregate provider verdicts
+        run: |
+          python tests/ui-ai-judge/aggregate.py \
+            --results provider-results \
+            --scenario "${{ inputs.scenario }}" \
+            --output ui-ai-aggregate.json
+
+      - name: Upload aggregate verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-ai-aggregate
+          path: ui-ai-aggregate.json
+          if-no-files-found: error
+          retention-days: 14
