@@ -1,0 +1,203 @@
+name: release-candidate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/release-candidate.yml'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/ui-appium.yml'
+      - '.github/workflows/ui-ai-panel.yml'
+      - 'tests/release/BuildUiReleaseEvidence.py'
+      - 'tests/release/ValidateReleaseCandidatePrerequisites.py'
+      - 'tests/release/test_build_ui_release_evidence.py'
+      - 'tests/release/test_release_candidate_prerequisites.py'
+      - 'tests/ui-ai-judge/**'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  contracts:
+    name: release-candidate-contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Test candidate evidence and prerequisite contracts
+        run: |
+          python tests/release/test_build_ui_release_evidence.py -v
+          python tests/release/test_release_candidate_prerequisites.py -v
+          python -m py_compile             tests/release/BuildUiReleaseEvidence.py             tests/release/ValidateReleaseCandidatePrerequisites.py
+
+  candidate:
+    name: candidate-identity-and-prerequisites
+    if: github.event_name == 'workflow_dispatch'
+    needs: contracts
+    runs-on: ubuntu-latest
+    outputs:
+      candidate-sha: ${{ steps.identity.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fix candidate SHA
+        id: identity
+        shell: bash
+        run: |
+          actual="$(git rev-parse HEAD)"
+          if [[ "$actual" != "$GITHUB_SHA" ]]; then
+            echo "Checked out SHA $actual does not match workflow candidate SHA $GITHUB_SHA." >&2
+            exit 1
+          fi
+          echo "sha=$actual" >> "$GITHUB_OUTPUT"
+          echo "Release candidate SHA: $actual" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Validate 1.0.0 release prerequisites
+        run: >-
+          python tests/release/ValidateReleaseCandidatePrerequisites.py
+          --root .
+          --output candidate-prerequisites.json
+
+      - name: Upload prerequisite evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-prerequisites
+          path: candidate-prerequisites.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  ci:
+    name: automatic-ci
+    if: github.event_name == 'workflow_dispatch'
+    needs: candidate
+    uses: ./.github/workflows/ci.yml
+
+  packages:
+    name: release-packages-and-exact-fixture
+    if: github.event_name == 'workflow_dispatch'
+    needs: ci
+    uses: ./.github/workflows/release.yml
+
+  native-ui:
+    name: native-ui-e2e
+    if: github.event_name == 'workflow_dispatch'
+    needs: packages
+    uses: ./.github/workflows/ui-appium.yml
+
+  ui-evidence:
+    name: normalize-ui-evidence
+    if: github.event_name == 'workflow_dispatch'
+    needs: [ci, packages, native-ui]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Windows Appium evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-appium-windows-evidence
+          path: candidate-input/windows
+
+      - name: Download macOS Appium evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-appium-macos-evidence
+          path: candidate-input/macos
+
+      - name: Download Headless visual evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-headless-evidence
+          path: candidate-input/headless
+
+      - name: Build common AI evidence bundle
+        run: >-
+          python tests/release/BuildUiReleaseEvidence.py
+          --windows candidate-input/windows
+          --macos candidate-input/macos
+          --headless candidate-input/headless
+          --output candidate-ui-evidence
+          --candidate-sha "${{ github.sha }}"
+
+      - name: Upload common AI evidence bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-release-candidate-evidence
+          path: candidate-ui-evidence
+          if-no-files-found: error
+          retention-days: 30
+
+  ai-ui:
+    name: three-provider-ai-ui-gate
+    if: github.event_name == 'workflow_dispatch'
+    needs: ui-evidence
+    uses: ./.github/workflows/ui-ai-panel.yml
+    with:
+      evidence_run_id: ${{ github.run_id }}
+      evidence_artifact: ui-release-candidate-evidence
+      scenario: release-candidate
+    secrets: inherit
+
+  automatic-gate:
+    name: automatic-release-gate-pass
+    if: github.event_name == 'workflow_dispatch'
+    needs: [candidate, ci, packages, native-ui, ui-evidence, ai-ui]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write release candidate manifest
+        shell: bash
+        env:
+          CANDIDATE_SHA: ${{ needs.candidate.outputs.candidate-sha }}
+        run: |
+          version="$(sed -n 's:.*<VersionPrefix>\(.*\)</VersionPrefix>.*:\1:p' Directory.Build.props | head -n 1)"
+          cat > release-candidate-manifest.json <<JSON
+          {
+            "version": 1,
+            "productVersion": "$version",
+            "candidateSha": "$CANDIDATE_SHA",
+            "workflowRunId": "${GITHUB_RUN_ID}",
+            "automaticGate": "pass",
+            "manualSignoffIssue": 105,
+            "manualSignoffRequired": true,
+            "arm64ManualVerificationRequired": false,
+            "tagMustPointToCandidateSha": true,
+            "evidenceArtifacts": [
+              "release-candidate-prerequisites",
+              "release-fixture-exact",
+              "ui-headless-evidence",
+              "ui-appium-windows-evidence",
+              "ui-appium-macos-evidence",
+              "ui-release-candidate-evidence",
+              "ui-ai-aggregate"
+            ]
+          }
+          JSON
+
+          {
+            echo "## Release candidate automatic gate: PASS"
+            echo
+            echo "- Candidate SHA: `$CANDIDATE_SHA`"
+            echo "- Product version: `$version`"
+            echo "- Workflow run: `${GITHUB_RUN_ID}`"
+            echo "- Next gate: #105 user manual GUI sign-off"
+            echo "- Manual sign-off must use artifacts from this run."
+            echo "- The release tag must point to exactly `$CANDIDATE_SHA`."
+            echo "- ARM64 remains release/package validated but is excluded from manual hardware sign-off."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload candidate manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-manifest
+          path: release-candidate-manifest.json
+          if-no-files-found: error
+          retention-days: 30
