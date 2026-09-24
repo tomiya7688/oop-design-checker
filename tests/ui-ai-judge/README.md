@@ -36,3 +36,13 @@ A waiver can only resolve REVIEW_REQUIRED and must record `scenario`, `reason`, 
 ## Deterministic tests
 
 `test_aggregate.py` and `test_judge.py` do not call external providers. They test the schema, outage policy, disagreement handling, and waiver rules. Real provider calls are performed only by the UI AI workflow with GitHub Actions secrets.
+
+
+## Workflow
+
+`.github/workflows/ui-ai-panel.yml` has two modes:
+
+- pull request: runs only deterministic contract tests; no provider API is called
+- manual/release-candidate: provide the trusted UI evidence workflow run ID, artifact name, and scenario ID; the workflow downloads that evidence, calls all three providers independently, then aggregates their results
+
+The provider jobs always persist a result envelope. Missing secrets or API failures become `status: error`, not a passing verdict. The aggregate job then applies the outage/disagreement policy above.
