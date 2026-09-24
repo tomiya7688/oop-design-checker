@@ -1,12 +1,29 @@
-# オブジェクト指向設計の定義
+# オブジェクト指向設計の定義 — 1.0.0 正式仕様
 
 [English](object-oriented-design.en.md)
 
 > この日本語版を正本とします。英語版との間に差異がある場合は、日本語版を優先します。
 
-この文書は **OOP Design Checker 1.0.0 のオブジェクト指向設計に関する正本仕様**です。このリポジトリでは、オブジェクト指向設計について、静的解析で確認可能な独自の解釈を明示します。
+> 対象version: **1.0.0**。この文書は1.0.0時点の設計上の正本です。
 
-1.0.0の解析backendはC#を対象とします。C++ / Go / Pythonおよびmixed-language解析は1.1.0以降の対象であり、1.0.0で対応済みとは扱いません。設計概念そのものは可能な限り言語非依存に記述しますが、1.0.0の実装契約はC# backend・release fixture・自動testで固定します。
+## 1.0.0の適用範囲
+
+1.0.0で正式に実装・保証する解析backendは**C#**です。Roslyn/MSBuildを用い、単体`.cs`、`.csproj`、`.sln`、`.slnx`、およびC# projectを含むdirectoryを解析対象とします。
+
+この文書の設計原則自体は可能な限り言語固有構文へ依存させませんが、1.0.0で「実装済み」とみなす判定はC# backendの挙動に限ります。C++ / Go / Python / mixed-language解析は1.0.0の契約外です。
+
+## 静的解析としての判定
+
+このチェッカーのruleには、コンパイラから決定論的に確定できる条件と、設計上のsignalを組み合わせるheuristicの両方があります。
+
+- diagnosticは、コードから静的に確認できる根拠に基づく設計上の指摘です。
+- heuristic ruleでは、概念上の問題が存在しても静的証拠が不足すれば報告しない場合があります。
+- false positiveを避けるため、data carrier、framework contract、外部library、正当なcomposition rootなど既知の境界条件を除外します。
+- severityは**設計上の影響度**を表し、検出confidenceそのものではありません。confidenceが低い場合は、原則としてseverityを下げるのではなく報告を控える方向で保守的に判定します。
+- 1.0.0の実装上の検出境界は、`tests/fixtures/release-validation-csharp/` とrelease CIのexact expectationを回帰契約として固定します。
+
+
+このリポジトリでは、オブジェクト指向設計について、静的解析で確認可能な独自の解釈を明示します。
 
 このチェッカーは、OOPそのものが良いか悪いかを評価するものではありません。オブジェクト指向設計を採用するとするプロジェクトが、ここで定義したルールに沿っているかを解析します。
 

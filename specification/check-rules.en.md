@@ -1,41 +1,45 @@
-# Check Rules
+# Check Rules — 1.0.0 Normative Specification
 
 [日本語（正本）](check-rules.md)
 
 > The Japanese specification is normative. If this English translation differs from the Japanese version, the Japanese version takes precedence.
 
-This document is the **normative check-rule specification for OOP Design Checker 1.0.0**. The 24 rules from OOP001 through OOP405 listed here are the implemented scope of the 1.0.0 C# backend. Because several rules are heuristic, detection is deliberately conservative and major boundaries are fixed by the release fixture and precision tests.
+> Target version: **1.0.0**. This document is the normative definition of the C# rules implemented by 1.0.0.
 
-## 1.0.0 rule inventory and default severity
+This document defines the checks, severities, known exclusion boundaries, and configuration contract that are implemented and release-gated in 1.0.0. Conceptual future candidates are not treated as implemented rules.
 
-| Rule | Default severity |
-| --- | --- |
-| OOP001 | WARNING |
-| OOP002 | WARNING |
-| OOP003 | ATTENTION |
-| OOP101 | WARNING |
-| OOP102 | ATTENTION |
-| OOP103 | ATTENTION |
-| OOP104 | ATTENTION |
-| OOP105 | WARNING |
-| OOP106 | WARNING (high-confidence direct encapsulation breaks may escalate to DANGER) |
-| OOP107 | DANGER |
-| OOP108 | WARNING |
-| OOP201 | WARNING |
-| OOP301 | WARNING |
-| OOP302 | WARNING |
-| OOP303 | DANGER |
-| OOP304 | ATTENTION |
-| OOP305 | WARNING |
-| OOP306 | WARNING |
-| OOP307 | ATTENTION |
-| OOP401 | WARNING |
-| OOP402 | WARNING |
-| OOP403 | WARNING |
-| OOP404 | ATTENTION |
-| OOP405 | ATTENTION |
+## 1.0.0 rule catalog
 
-Default severity means the severity declared by the rule descriptor. A rule such as OOP106 may escalate an individual diagnostic when the detected structure is a clearly more severe form of the same violation.
+The 1.0.0 rule IDs and severity contract are listed below. Severity is the fixed or default severity for the rule.
+
+| Rule | Meaning | Severity |
+| --- | --- | --- |
+| OOP001 | Missing common abstraction | WARNING |
+| OOP002 | Polymorphism bypassed by type branching | WARNING |
+| OOP003 | Unnecessary abstraction | ATTENTION |
+| OOP101 | Excessive visibility | WARNING |
+| OOP102 | Sealing candidate | ATTENTION |
+| OOP103 | Static member candidate | ATTENTION |
+| OOP104 | Static class candidate | ATTENTION |
+| OOP105 | Stateful static design | WARNING |
+| OOP106 | Encapsulation leak | WARNING (DANGER for high-confidence directly mutable exposure) |
+| OOP107 | Object invariant can be bypassed | DANGER |
+| OOP108 | Excessive external state manipulation | WARNING |
+| OOP201 | Oversized main operation | WARNING |
+| OOP301 | Suspicious inheritance relationship | WARNING |
+| OOP302 | Parent contract mostly unused | WARNING |
+| OOP303 | Child disables parent behavior | DANGER |
+| OOP304 | Excessive inheritance depth | ATTENTION |
+| OOP305 | Concrete-type dependency despite abstraction | WARNING |
+| OOP306 | Avoidable concrete construction dependency | WARNING |
+| OOP307 | Composition may be more appropriate than inheritance | ATTENTION |
+| OOP401 | Possible multiple objects in one class | WARNING |
+| OOP402 | Anemic object candidate | WARNING |
+| OOP403 | Excessive unrelated dependencies | WARNING |
+| OOP404 | Excessive navigation through object internals | ATTENTION |
+| OOP405 | Getter/setter-only object candidate | ATTENTION |
+
+OOP106 is the only 1.0.0 rule that raises severity within the same rule. A public readonly field or unnecessarily public setter is WARNING; a public mutable field or property that directly exposes mutable internal storage is DANGER. The current release-fixture OOP106 positive case locks the WARNING path, while the DANGER path is covered separately by rule regression tests.
 
 ## OOP001 Missing common abstraction
 
@@ -49,7 +53,7 @@ Warn when callers repeatedly branch on concrete runtime types or type codes wher
 
 ## OOP003 Unnecessary abstraction
 
-Warn when an interface or abstract type has no meaningful shared concept and appears to exist only as ceremony. This must be conservative because single-implementation abstractions can still be intentional extension points.
+Attention when an interface or abstract type has no meaningful shared concept and appears to exist only as ceremony. This must be conservative because single-implementation abstractions can still be intentional extension points.
 
 ## OOP101 Excessive visibility
 
@@ -59,15 +63,15 @@ Example: a type used only inside a parent/child hierarchy is declared public.
 
 ## OOP102 Sealing candidate
 
-Suggest sealing when a type is not externally extensible, has no known derived types, and is not intended for inheritance.
+Attention when a type is not externally extensible, has no known derived types, and is not intended for inheritance.
 
 ## OOP103 Static member candidate
 
-Suggest static for methods that do not depend on instance state.
+Attention for methods that do not depend on instance state.
 
 ## OOP104 Static class candidate
 
-Suggest static form for classes that have no meaningful instance state and no polymorphic/DI/identity reason to be instantiated.
+Attention for classes that have no meaningful instance state and no polymorphic/DI/identity reason to be instantiated.
 
 ## OOP105 Stateful static design
 
@@ -75,11 +79,11 @@ Warn when a static class accumulates mutable shared state and behaves as global 
 
 ## OOP106 Encapsulation leak
 
-Warn when internal representation is exposed directly. Directly mutable public state and directly exposed mutable storage are Danger-level violations because callers can bypass the owning object. Less severe exposure, such as an unnecessarily public setter whose use is still controlled, may remain Warning.
+Report WARNING or DANGER when internal representation is exposed directly. A public mutable field or a property that directly exposes mutable internal storage is DANGER because callers can bypass the owning object. A public readonly field or unnecessarily public setter, where direct mutability is more limited, is WARNING.
 
 ## OOP107 Object invariant can be bypassed
 
-Warn when callers can place an object into an invalid state by directly mutating values that should be guarded by the object itself. High-confidence direct invariant bypasses may be Danger.
+Report DANGER when the analyzer can structurally establish that callers can bypass validation and place an object into an invalid state by directly mutating a value that the object otherwise guards. OOP107 is fixed at DANGER in 1.0.0.
 
 ## OOP108 Excessive external state manipulation
 
@@ -125,7 +129,7 @@ A `new` expression by itself is not a violation. Value objects, owned internal o
 
 ## OOP307 Composition may be more appropriate than inheritance
 
-Warn conservatively when a child type uses inheritance mainly to obtain implementation while its semantic relationship to the parent is weak, especially when it overrides or hides a large part of the inherited behavior.
+Attention conservatively when a child type uses inheritance mainly to obtain implementation while its semantic relationship to the parent is weak, especially when it overrides or hides a large part of the inherited behavior.
 
 ## OOP401 Possible multiple objects in one class
 
@@ -140,7 +144,7 @@ Useful signals:
 - little or no shared state
 - one cluster can be removed without changing the identity of another
 
-High-confidence cases may become Danger; uncertain cases remain Warning or Attention.
+In 1.0.0, OOP401 is fixed at WARNING. When detection confidence is insufficient, the analyzer should conservatively avoid reporting rather than change this severity.
 
 ## OOP402 Anemic object candidate
 
@@ -156,7 +160,7 @@ Warn when an object directly knows about many unrelated subsystems or dependency
 
 ## OOP404 Excessive navigation through object internals
 
-Warn when code repeatedly traverses deep object chains such as `a.B.C.D.DoSomething()` and therefore depends on the internal object graph of another object.
+Attention when code repeatedly traverses deep object chains such as `a.B.C.D.DoSomething()` and therefore depends on the internal object graph of another object.
 
 This is inspired by the Law of Demeter, but raw dot-counting must not be used as the only criterion. Fluent APIs, LINQ-style pipelines, builders, immutable value transformations, namespaces, and ordinary static qualification can legitimately contain long chains.
 
@@ -164,7 +168,7 @@ Prefer semantic detection of repeated navigation across object boundaries.
 
 ## OOP405 Getter/setter-only object candidate
 
-Warn when a class is overwhelmingly composed of trivial getters and setters while meaningful operations on its state are implemented elsewhere.
+Attention when a class is overwhelmingly composed of trivial getters and setters while meaningful operations on its state are implemented elsewhere.
 
 This is a supporting signal for OOP402 rather than an automatic Danger. Explicit data-carrier types are exempt through the same shared classifier used by OOP402.
 
@@ -191,6 +195,17 @@ In particular:
 - high complexity should strengthen OOP201 rather than becoming a generic OOP violation;
 - SOLID rules may be provided as optional or supporting analyses, but SOLID is not defined as identical to OOP in this project.
 
+## 1.0.0 C# analysis boundary
+
+All 24 rules above are implemented by the C# backend in 1.0.0.
+
+- For `.csproj`, `.sln`, `.slnx`, and project directories, analysis uses the real Roslyn/MSBuild project compilation as the unit of analysis. Unrelated projects are not merged into one artificial compilation.
+- When project references are loaded into the same analysis, rules may inspect symbol relationships across that project set where required.
+- A loose `.cs` file is analyzed as a standalone compilation without requiring a project file. Rules that depend on MSBuild project metadata therefore have less context than project/solution analysis.
+- OOP101 and OOP102 run only for **application projects**, where assumptions about external visibility and extensibility can be made safely. The same assumptions are not mechanically applied to library or standalone contexts.
+- Framework/runtime/NuGet symbols outside the analyzed project set are not treated as project-owned types.
+- C++, Go, Python, and mixed-language analysis are outside the 1.0.0 implementation scope.
+
 ## Severity model
 
 - `DANGER`: a structurally clear violation of a rule this project considers fundamental to claiming OOP design. These fail CI by default.
@@ -201,11 +216,24 @@ Severity expresses design impact, not detection confidence alone. A heuristic ru
 
 ## Suppression and CI configuration
 
-Projects may use `oop-design-checker.json` to:
+The configuration file is optional. Without an explicit path, the checker searches from the target directory upward for the nearest `oop-design-checker.json`; if none is found, built-in defaults are used.
 
-- exclude paths with `ignoredPaths`;
-- suppress selected rule IDs for a project/run with `disabledRules`;
-- choose the CI failure level with `failureThreshold`;
-- tune supported rule-specific heuristics under `ruleSettings`, such as OOP304 inheritance depth.
+The 1.0.0 built-in defaults are:
+
+- `ignoredPaths = []`
+- `disabledRules = []`
+- `failureThreshold = danger`
+- `ruleSettings.oop304.warningDepth = 4`
+
+Supported settings:
+
+- `ignoredPaths` excludes matching paths from analysis.
+- `disabledRules` suppresses selected rule IDs for that project/run. Rule ID matching is case-insensitive.
+- `failureThreshold` selects the minimum severity that makes the process fail: `attention`, `warning`, or `danger`. Numeric enum values are rejected.
+- `ruleSettings.oop304.warningDepth` changes the OOP304 inheritance-depth threshold. The minimum value is `1`.
+
+When `--config <path>` is explicitly supplied, that configuration must exist; the checker does not silently fall back to defaults. A relative path is checked against the current working directory first and then against the target directory.
+
+CLI `--fail-on <severity>` overrides the configuration file's `failureThreshold` for that run. `--warnings-as-errors` remains a compatibility alias for `--fail-on warning`.
 
 Suppression is a project decision and does not change the rule's defined severity. Rule-specific tuning changes heuristic sensitivity, not the severity definition. The checker project itself should not suppress its own rule violations and should self-check at the `attention` threshold.

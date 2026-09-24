@@ -1,12 +1,29 @@
-# Object-Oriented Design Definition
+# Object-Oriented Design Definition — 1.0.0 Normative Specification
 
 [日本語（正本）](object-oriented-design.md)
 
 > The Japanese specification is normative. If this English translation differs from the Japanese version, the Japanese version takes precedence.
 
-This document is the **normative object-oriented design specification for OOP Design Checker 1.0.0**. This repository defines its own checkable interpretation of object-oriented design.
+> Target version: **1.0.0**. This document is the normative design snapshot for the 1.0.0 release.
 
-The 1.0.0 analysis backend targets C#. C++, Go, Python, and mixed-language analysis belong to 1.1.0 or later and are not represented as supported in 1.0.0. The design concepts are written to be language-neutral where practical, while the 1.0.0 implementation contract is fixed by the C# backend, release fixture, and automated tests.
+## 1.0.0 scope
+
+The only analysis backend formally implemented and supported by 1.0.0 is **C#**. It uses Roslyn/MSBuild and accepts loose `.cs` files, `.csproj`, `.sln`, `.slnx`, and directories containing C# projects.
+
+The design principles in this document avoid language-specific syntax where practical, but an analysis is considered "implemented" in 1.0.0 only when the C# backend provides it. C++, Go, Python, and mixed-language analysis are outside the 1.0.0 contract.
+
+## Nature of static-analysis judgments
+
+The rule set combines conditions that can be established deterministically from compiler information with heuristic design signals.
+
+- A diagnostic is a design finding supported by statically observable evidence.
+- A heuristic rule may intentionally produce no diagnostic when the conceptual problem cannot be established with sufficient static evidence.
+- Known legitimate boundaries such as data carriers, framework contracts, external libraries, and composition roots are excluded where applicable to reduce false positives.
+- Severity represents **design impact**, not detection confidence. When confidence is insufficient, the analyzer should normally refrain from reporting rather than merely lower the severity.
+- The implemented 1.0.0 detection boundary is regression-locked by `tests/fixtures/release-validation-csharp/` and the release CI exact expectations.
+
+
+This repository defines its own checkable interpretation of object-oriented design.
 
 The checker does not judge whether OOP itself is good or bad. It analyzes whether a project that claims to use object-oriented design follows the rules defined here.
 
