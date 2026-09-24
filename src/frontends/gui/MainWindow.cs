@@ -117,6 +117,12 @@ internal sealed class MainWindow : Window
 
         try
         {
+            var automationDelay = UiAutomationSettings.AnalysisDelayMilliseconds;
+            if (automationDelay > 0)
+            {
+                await Task.Delay(automationDelay, cancellation.Token);
+            }
+
             var configurationPath = NormalizeOptionalPath(_view.ConfigurationPath.Text);
             var result = await Task.Run(
                 () =>
@@ -402,31 +408,41 @@ internal sealed class MainWindow : Window
 
         var extension = format == DiagnosticExportFormat.Sarif ? "sarif" : "json";
         var description = format == DiagnosticExportFormat.Sarif ? "SARIF" : "JSON";
-        var file = await StorageProvider.SaveFilePickerAsync(
-            new FilePickerSaveOptions
-            {
-                Title = GuiText.Format(GuiTextKey.ExportDiagnosticsAs, _language, description),
-                SuggestedFileName = $"oop-design-checker-results.{extension}",
-                DefaultExtension = extension,
-                FileTypeChoices =
-                [
-                    new FilePickerFileType(
-                        GuiText.Format(GuiTextKey.DiagnosticsFileType, _language, description)
-                    )
-                    {
-                        Patterns = [$"*.{extension}"],
-                    },
-                ],
-            }
-        );
-        var outputPath = file?.TryGetLocalPath();
+        var outputPath = UiAutomationSettings.ExportPath(format);
         if (string.IsNullOrWhiteSpace(outputPath))
         {
-            return;
+            var file = await StorageProvider.SaveFilePickerAsync(
+                new FilePickerSaveOptions
+                {
+                    Title = GuiText.Format(GuiTextKey.ExportDiagnosticsAs, _language, description),
+                    SuggestedFileName = $"oop-design-checker-results.{extension}",
+                    DefaultExtension = extension,
+                    FileTypeChoices =
+                    [
+                        new FilePickerFileType(
+                            GuiText.Format(GuiTextKey.DiagnosticsFileType, _language, description)
+                        )
+                        {
+                            Patterns = [$"*.{extension}"],
+                        },
+                    ],
+                }
+            );
+            outputPath = file?.TryGetLocalPath();
+            if (string.IsNullOrWhiteSpace(outputPath))
+            {
+                return;
+            }
         }
 
         try
         {
+            var outputDirectory = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrWhiteSpace(outputDirectory))
+            {
+                Directory.CreateDirectory(outputDirectory);
+            }
+
             await Task.Run(() =>
                 DiagnosticExportService.Export(_lastResult.Diagnostics, outputPath, format)
             );

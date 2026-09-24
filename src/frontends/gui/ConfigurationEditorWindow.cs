@@ -22,6 +22,7 @@ internal sealed class ConfigurationEditorWindow : Window
         Height = 620;
         MinWidth = 560;
         MinHeight = 420;
+        AutomationProperties.SetAutomationId(this, "ConfigurationEditorWindow");
 
         _editor.Text = initialJson;
         _editor.AcceptsReturn = true;

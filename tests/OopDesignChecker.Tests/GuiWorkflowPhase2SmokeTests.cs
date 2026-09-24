@@ -14,6 +14,7 @@ internal static class GuiWorkflowPhase2SmokeTests
         DiagnosticExportServiceWritesJsonAndSarif();
         CheckerServiceHonorsPreCancelledToken();
         ClipboardFailureIsContained();
+        UiAutomationSettingsAreOptIn();
     }
 
     private static void ConfigurationJsonRoundTripsAndValidates()
@@ -115,6 +116,61 @@ internal static class GuiWorkflowPhase2SmokeTests
         finally
         {
             Directory.Delete(temporaryDirectory, recursive: true);
+        }
+    }
+
+    private static void UiAutomationSettingsAreOptIn()
+    {
+        const string delayVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS";
+        const string exportVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR";
+        var previousDelay = Environment.GetEnvironmentVariable(delayVariable);
+        var previousExport = Environment.GetEnvironmentVariable(exportVariable);
+        var temporaryDirectory = Path.Combine(
+            Path.GetTempPath(),
+            $"oop-checker-ui-automation-{Guid.NewGuid():N}"
+        );
+
+        try
+        {
+            Environment.SetEnvironmentVariable(delayVariable, null);
+            Environment.SetEnvironmentVariable(exportVariable, null);
+            if (
+                UiAutomationSettings.AnalysisDelayMilliseconds != 0
+                || UiAutomationSettings.ExportPath(DiagnosticExportFormat.Json) is not null
+            )
+            {
+                throw new InvalidOperationException(
+                    "GUI automation settings changed normal runtime behavior without opt-in."
+                );
+            }
+
+            Environment.SetEnvironmentVariable(delayVariable, "2500");
+            Environment.SetEnvironmentVariable(exportVariable, temporaryDirectory);
+            var jsonPath = UiAutomationSettings.ExportPath(DiagnosticExportFormat.Json);
+            var sarifPath = UiAutomationSettings.ExportPath(DiagnosticExportFormat.Sarif);
+            if (
+                UiAutomationSettings.AnalysisDelayMilliseconds != 2500
+                || jsonPath != Path.Combine(temporaryDirectory, "actual-diagnostics.json")
+                || sarifPath != Path.Combine(temporaryDirectory, "actual-diagnostics.sarif")
+            )
+            {
+                throw new InvalidOperationException(
+                    "GUI automation settings did not resolve deterministic test values."
+                );
+            }
+
+            Environment.SetEnvironmentVariable(delayVariable, "30001");
+            if (UiAutomationSettings.AnalysisDelayMilliseconds != 0)
+            {
+                throw new InvalidOperationException(
+                    "GUI automation delay accepted an out-of-range value."
+                );
+            }
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(delayVariable, previousDelay);
+            Environment.SetEnvironmentVariable(exportVariable, previousExport);
         }
     }
 
