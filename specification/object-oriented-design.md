@@ -1,4 +1,4 @@
-# オブジェクト指向設計の定義（ドラフト）
+# オブジェクト指向設計の定義
 
 [English](object-oriented-design.en.md)
 
