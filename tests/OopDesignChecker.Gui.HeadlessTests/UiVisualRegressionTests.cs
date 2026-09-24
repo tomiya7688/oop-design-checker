@@ -14,6 +14,8 @@ namespace OopDesignChecker.Gui.HeadlessTests;
 
 public sealed class UiVisualRegressionTests
 {
+    private const string VisualRegressionEnvironmentVariable =
+        "OOP_DESIGN_CHECKER_UI_VISUAL_REGRESSION";
     private const double MaximumChangedPixelRatio = 0.005;
     private const byte PixelDeltaThreshold = 12;
     private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
@@ -286,6 +288,14 @@ public sealed class UiVisualRegressionTests
     private static void Capture(Window window, string scenario, string language)
     {
         Flush();
+
+        if (!VisualRegressionRequested())
+        {
+            return;
+        }
+
+        EnsureCanonicalVisualEnvironment();
+
         var frame = window.CaptureRenderedFrame();
         Assert.NotNull(frame);
 
@@ -312,6 +322,24 @@ public sealed class UiVisualRegressionTests
             changedRatio <= MaximumChangedPixelRatio,
             $"Visual regression for {scenario}: {changedRatio:P3} pixels changed; "
                 + $"threshold is {MaximumChangedPixelRatio:P3}. Diff: {diffPath}"
+        );
+    }
+
+    private static bool VisualRegressionRequested() =>
+        Environment.GetEnvironmentVariable(VisualRegressionEnvironmentVariable) == "1"
+        || Environment.GetEnvironmentVariable("UPDATE_VISUAL_BASELINES") == "1";
+
+    private static void EnsureCanonicalVisualEnvironment()
+    {
+        if (OperatingSystem.IsLinux())
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "Pixel visual regression is pinned to the canonical Linux/Skia environment. "
+                + $"Run without {VisualRegressionEnvironmentVariable}=1 on Windows/macOS "
+                + "to execute the platform-independent structural UI assertions only."
         );
     }
 
