@@ -79,11 +79,11 @@ static classが可変な共有状態を蓄積し、global stateとして振る�
 
 ## OOP106 カプセル化漏れ
 
-内部表現を直接外部へ公開している場合に警告します。直接変更可能なpublic stateや、内部の可変storageをそのまま公開する設計は、所有オブジェクトを迂回して変更できるためDangerとします。一方、不必要なpublic setterのように、より軽度の公開はWarningに留める場合があります。
+内部表現を直接外部へ公開している場合にWARNINGまたはDANGERを報告します。public mutable fieldや、内部の可変storageをそのまま公開するpropertyは、所有オブジェクトを迂回して変更できるためDANGERとします。public readonly fieldや不必要なpublic setterのように、直接変更可能性が限定される公開はWARNINGとします。
 
 ## OOP107 オブジェクト不変条件の迂回
 
-本来オブジェクト自身が保護すべき値を呼び出し側が直接変更でき、不正な状態へ遷移させられる場合に警告します。確度の高い直接的な不変条件迂回はDangerになり得ます。
+本来オブジェクト自身が保護すべき値を呼び出し側が直接変更でき、不正な状態へ遷移させられることを構造的に確認できる場合はDANGERとします。1.0.0ではOOP107のseverityはDANGER固定です。
 
 ## OOP108 過剰な外部状態操作
 
@@ -195,6 +195,17 @@ classの大部分が単純なgetter/setterで構成され、そのstateに対す
 - high complexityはOOP201の根拠を強めるものであり、一般的なOOP違反へ変換しない。
 - SOLID系ルールを将来option/supporting analysisとして追加することはできるが、このprojectではSOLIDをOOPと同一には定義しない。
 
+## 1.0.0 C#解析境界
+
+1.0.0では上記24 ruleすべてをC# backendで実装します。
+
+- `.csproj` / `.sln` / `.slnx` / project directoryでは、Roslyn/MSBuildが構築した実project compilationを単位として解析します。複数projectを1つの仮想compilationへ結合しません。
+- project referenceを含む解析では、同一解析へ読み込まれたproject setを跨いで必要なsymbol関係を確認できます。
+- 単体`.cs`はproject fileを必要としないstandalone compilationとして解析します。MSBuild project metadataが必要な判定は、project/solution解析より利用できるcontextが少なくなります。
+- OOP101とOOP102は、外部利用・拡張可能性について安全に推論できる**application project**でのみ実行します。library projectやstandalone contextへ同じ仮定を機械的に適用しません。
+- framework/runtime/NuGetなど解析対象project setの外部symbolは、project-owned typeと同一視しません。
+- C++ / Go / Python / mixed-language解析は1.0.0の実装範囲外です。
+
 ## severity model
 
 - `DANGER`: このprojectがOOPを名乗る上で基本的とするルールに対する、構造的に明確な違反。既定ではCIを失敗させます。
@@ -205,11 +216,24 @@ severityは設計上の影響を表し、検出confidenceだけを表すもの�
 
 ## suppressionとCI設定
 
-projectは`oop-design-checker.json`で次を設定できます。
+設定fileは任意です。明示指定がない場合、targetのdirectoryから親directoryへ向かって最も近い`oop-design-checker.json`を探索し、見つからなければbuilt-in defaultを使用します。
+
+1.0.0のbuilt-in defaultは次です。
+
+- `ignoredPaths = []`
+- `disabledRules = []`
+- `failureThreshold = danger`
+- `ruleSettings.oop304.warningDepth = 4`
+
+設定できる項目:
 
 - `ignoredPaths`でpathを解析対象から除外する。
-- `disabledRules`で特定rule IDをそのproject/runでは出力しない。
-- `failureThreshold`でCIを失敗させるseverityを選ぶ。
-- `ruleSettings`で、OOP304の継承深度など対応するrule固有heuristicを調整する。
+- `disabledRules`で特定rule IDをそのproject/runでは出力しない。rule ID比較は大文字小文字を区別しません。
+- `failureThreshold`でprocessを失敗終了させる最小severityを`attention` / `warning` / `danger`から選ぶ。numeric enum値は受理しません。
+- `ruleSettings.oop304.warningDepth`でOOP304の継承深度を調整する。最小値は`1`です。
+
+`--config <path>`を明示した場合はその設定を使用し、存在しないfileをdefaultへ黙ってfallbackしません。relative pathはcurrent working directoryを先に確認し、その後target directory基準を確認します。
+
+CLIの`--fail-on <severity>`は、そのrunに限って設定fileの`failureThreshold`を上書きします。`--warnings-as-errors`は`--fail-on warning`の互換aliasです。
 
 suppressionはproject側の判断であり、rule自体のseverity定義は変えません。rule固有設定はheuristicの感度を変えるもので、severityの意味は変えません。チェッカー自身では原則として自己違反を抑制せず、`attention`しきい値でself-checkします。
