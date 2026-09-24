@@ -1,8 +1,16 @@
-# Object-Oriented Design Definition (Draft)
+# Object-Oriented Design Definition
 
 [日本語（正本）](object-oriented-design.md)
 
 > The Japanese specification is normative. If this English translation differs from the Japanese version, the Japanese version takes precedence.
+
+## 1.0.0 scope
+
+This document is the **formal design contract for OOP Design Checker 1.0.0**. The analysis backend implemented in 1.0.0 targets C# and uses Roslyn / MSBuild syntax and semantic information. C++, Go, Python, and mixed-language analysis belong to 1.1.0 or later and are not represented here as implemented 1.0.0 capabilities.
+
+The rules defined here detect design-problem candidates from evidence that static analysis can observe. Concepts such as abstraction intent, inheritance intent, object boundaries, data-carrier roles, and dependency ownership cannot be proven mechanically in every codebase, so the implementation is deliberately **heuristic and conservative**. Diagnostics are signals for design review rather than universal judgments of OOP correctness across every domain or framework.
+
+The normative 1.0.0 rule IDs, severities, exemptions, and configuration contract are defined in [Check Rules](check-rules.en.md). Positive and boundary behavior for every implemented rule is fixed by `tests/fixtures/release-validation-csharp/` and its exact release CI.
 
 This repository defines its own checkable interpretation of object-oriented design.
 
