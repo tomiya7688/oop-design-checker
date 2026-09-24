@@ -116,6 +116,7 @@ jobs:
         run: |
           python tests/ui-ai-judge/aggregate.py \
             --results provider-results \
+            --scenario "${{ inputs.scenario }}" \
             --output ui-ai-aggregate.json
 
       - name: Upload aggregate verdict
