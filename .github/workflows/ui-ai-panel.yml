@@ -77,12 +77,13 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          scenario="ui-evidence/${{ inputs.scenario }}"
-          if [[ ! -d "$scenario" ]]; then
-            echo "Scenario evidence was not found: $scenario" >&2
-            find ui-evidence -maxdepth 3 -type f -print
+          scenario="$(find ui-evidence -type d -name "${{ inputs.scenario }}" -print -quit)"
+          if [[ -z "$scenario" ]]; then
+            echo "Scenario evidence was not found: ${{ inputs.scenario }}" >&2
+            find ui-evidence -maxdepth 4 -type f -print
             exit 1
           fi
+          echo "Using scenario evidence: $scenario"
           python tests/ui-ai-judge/judge.py \
             --provider "${{ matrix.provider }}" \
             --scenario-dir "$scenario" \
