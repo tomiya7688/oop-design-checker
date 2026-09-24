@@ -1,10 +1,45 @@
-# チェックルール（ドラフト）
+# チェックルール — 1.0.0 正式仕様
 
 [English](check-rules.en.md)
 
 > この日本語版を正本とします。英語版との間に差異がある場合は、日本語版を優先します。
 
-この文書は、設計議論で確定・検討したチェック内容を記録します。
+> 対象version: **1.0.0**。この文書は1.0.0で実装されるC# ruleの正本です。
+
+この文書は、1.0.0で実装・release gateされるチェック内容とseverity、既知の除外境界、設定契約を定義します。概念上の将来候補は「実装済みrule」として扱いません。
+
+## 1.0.0 rule catalog
+
+1.0.0で実装されるrule IDとseverity契約は次のとおりです。ここでのseverityはruleの既定または固定severityです。
+
+| Rule | 意味 | Severity |
+| --- | --- | --- |
+| OOP001 | 共通抽象の欠如 | WARNING |
+| OOP002 | 型分岐による多態性の迂回 | WARNING |
+| OOP003 | 不要な抽象 | ATTENTION |
+| OOP101 | 過剰な可視性 | WARNING |
+| OOP102 | sealed候補 | ATTENTION |
+| OOP103 | static member候補 | ATTENTION |
+| OOP104 | static class候補 | ATTENTION |
+| OOP105 | stateful static設計 | WARNING |
+| OOP106 | カプセル化漏れ | WARNING（高確度の直接変更可能な公開はDANGER） |
+| OOP107 | オブジェクト不変条件の迂回 | DANGER |
+| OOP108 | 過剰な外部状態操作 | WARNING |
+| OOP201 | 巨大な主要操作 | WARNING |
+| OOP301 | 疑わしい継承関係 | WARNING |
+| OOP302 | 親契約の大部分を未使用 | WARNING |
+| OOP303 | 子が親の振る舞いを無効化 | DANGER |
+| OOP304 | 過剰な継承深度 | ATTENTION |
+| OOP305 | 抽象があるにもかかわらず具象型へ依存 | WARNING |
+| OOP306 | 回避可能な具象生成依存 | WARNING |
+| OOP307 | 継承よりcompositionが適切な可能性 | ATTENTION |
+| OOP401 | 1class内に複数objectが存在する可能性 | WARNING |
+| OOP402 | 貧血オブジェクト候補 | WARNING |
+| OOP403 | 無関係な依存の過剰保持 | WARNING |
+| OOP404 | オブジェクト内部構造の過剰navigation | ATTENTION |
+| OOP405 | getter/setterだけのオブジェクト候補 | ATTENTION |
+
+OOP106は1.0.0で唯一、同一rule内でseverityを上げる実装を持ちます。public readonly fieldや不要なpublic setterはWARNING、public mutable fieldや内部のmutable storageをそのまま公開するpropertyはDANGERです。release fixtureの現在のOOP106 positive caseはWARNING経路を固定しており、DANGER経路はrule regression testで別途固定します。
 
 ## OOP001 共通抽象の欠如
 
@@ -109,7 +144,7 @@ static classが可変な共有状態を蓄積し、global stateとして振る�
 - 共有stateがほとんど、または全くない
 - 一方のclusterを取り除いても、もう一方のidentityが変わらない
 
-確度の高いケースは将来的に強められますが、不確かなケースはWarningまたはAttentionに留めます。
+1.0.0ではOOP401のseverityはWARNINGで固定します。検出confidenceが不足する場合はseverityを変更するのではなく、報告しない方向で保守的に判定します。
 
 ## OOP402 貧血オブジェクト候補
 
