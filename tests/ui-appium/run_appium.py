@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import ctypes
 import json
 import os
 import sys
@@ -70,28 +71,57 @@ def create_driver(args):
     return webdriver.Remote(args.server, options=options)
 
 
-def create_windows_root_driver(args):
-    from appium.options.windows import WindowsOptions
-
-    options = WindowsOptions()
-    options.platform_name = "Windows"
-    options.automation_name = "NovaWindows"
-    options.app = "Root"
-    options.set_capability("appium:shouldCloseApp", False)
-    options.set_capability("appium:newCommandTimeout", 180)
-    return webdriver.Remote(args.server, options=options)
-
-
 def create_windows_attached_driver(args, window_handle):
     from appium.options.windows import WindowsOptions
 
     options = WindowsOptions()
     options.platform_name = "Windows"
     options.automation_name = "NovaWindows"
-    options.app_top_level_window = str(window_handle)
+    options.app_top_level_window = hex(window_handle)
     options.set_capability("appium:shouldCloseApp", False)
     options.set_capability("appium:newCommandTimeout", 180)
     return webdriver.Remote(args.server, options=options)
+
+
+def find_windows_top_level_window(title, timeout=20):
+    if os.name != "nt":
+        raise RuntimeError("Windows top-level window discovery requires Windows.")
+
+    from ctypes import wintypes
+
+    user32 = ctypes.windll.user32
+    enum_proc_type = ctypes.WINFUNCTYPE(
+        wintypes.BOOL,
+        wintypes.HWND,
+        wintypes.LPARAM,
+    )
+    deadline = time.monotonic() + timeout
+
+    while time.monotonic() < deadline:
+        matches = []
+
+        def visit(hwnd, _):
+            if not user32.IsWindowVisible(hwnd):
+                return True
+
+            length = user32.GetWindowTextLengthW(hwnd)
+            if length <= 0:
+                return True
+
+            buffer = ctypes.create_unicode_buffer(length + 1)
+            user32.GetWindowTextW(hwnd, buffer, length + 1)
+            if buffer.value == title:
+                matches.append(int(hwnd))
+            return True
+
+        callback = enum_proc_type(visit)
+        user32.EnumWindows(callback, 0)
+        if matches:
+            return matches[-1]
+
+        time.sleep(0.25)
+
+    raise TimeoutError(f"Could not find Windows top-level window: {title}")
 
 
 def find(driver, automation_id):
@@ -423,28 +453,10 @@ def main():
             try:
                 wait_until(driver, switch_to_configuration_editor, timeout=5)
             except Exception:
-                root_driver = create_windows_root_driver(args)
-                try:
-                    editor_window = WebDriverWait(
-                        root_driver,
-                        20,
-                        poll_frequency=0.5,
-                    ).until(
-                        lambda _: root_driver.find_element(
-                            AppiumBy.NAME,
-                            "OOP Design Checker configuration",
-                        )
-                    )
-                    native_window_handle = editor_window.get_attribute(
-                        "NativeWindowHandle"
-                    )
-                    if not native_window_handle:
-                        raise AssertionError(
-                            "Configuration editor window did not expose NativeWindowHandle."
-                        )
-                finally:
-                    root_driver.quit()
-
+                native_window_handle = find_windows_top_level_window(
+                    "OOP Design Checker configuration",
+                    timeout=20,
+                )
                 desktop_driver = create_windows_attached_driver(
                     args,
                     native_window_handle,
