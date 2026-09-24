@@ -1,8 +1,16 @@
-# オブジェクト指向設計の定義（ドラフト）
+# オブジェクト指向設計の定義
 
 [English](object-oriented-design.en.md)
 
 > この日本語版を正本とします。英語版との間に差異がある場合は、日本語版を優先します。
+
+## 1.0.0の適用範囲
+
+この文書は、**OOP Design Checker 1.0.0の正式な設計契約**です。1.0.0で実装される解析backendはC#を対象とし、Roslyn / MSBuildが提供する構文・semantic情報を用いて判定します。C++ / Go / Pythonおよびmixed-language解析は1.1.0以降の範囲であり、この1.0.0仕様では対応済みとして扱いません。
+
+ここで定義するルールは、静的解析で観測できる証拠から設計上の問題候補を検出するためのものです。特に共通抽象、継承意図、object boundary、data carrier、dependency ownershipなどは完全に機械証明できないため、実装は**heuristicかつ保守的**に判定します。診断は設計レビューのためのsignalであり、あらゆるdomain/frameworkに対する普遍的なOOP正誤判定ではありません。
+
+1.0.0の具体的なrule ID、severity、除外・設定契約は[チェックルール](check-rules.md)を正とします。release時の全rule positive/boundary契約は`tests/fixtures/release-validation-csharp/`とそのexact CIで固定します。
 
 このリポジトリでは、オブジェクト指向設計について、静的解析で確認可能な独自の解釈を明示します。
 
