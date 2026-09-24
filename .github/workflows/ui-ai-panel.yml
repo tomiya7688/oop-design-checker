@@ -20,6 +20,20 @@ on:
         required: true
         default: '02-fixture-analysis'
         type: string
+  workflow_call:
+    inputs:
+      evidence_run_id:
+        description: 'Workflow run ID that produced the UI evidence artifact'
+        required: true
+        type: string
+      evidence_artifact:
+        description: 'Artifact name containing the normalized UI evidence'
+        required: true
+        type: string
+      scenario:
+        description: 'Scenario directory to judge'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -46,7 +60,7 @@ jobs:
 
   provider:
     name: ui-ai (${{ matrix.provider }})
-    if: github.event_name == 'workflow_dispatch'
+    if: inputs.evidence_artifact != ''
     needs: contracts
     strategy:
       fail-fast: false
@@ -95,11 +109,11 @@ jobs:
           name: ui-ai-result-${{ matrix.provider }}
           path: provider-results/${{ matrix.provider }}.json
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
 
   aggregate:
     name: ui-ai-aggregate
-    if: github.event_name == 'workflow_dispatch' && always()
+    if: inputs.evidence_artifact != '' && always()
     needs: [contracts, provider]
     runs-on: ubuntu-latest
     steps:
@@ -126,4 +140,4 @@ jobs:
           name: ui-ai-aggregate
           path: ui-ai-aggregate.json
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
