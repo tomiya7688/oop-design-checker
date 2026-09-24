@@ -324,7 +324,7 @@ def main():
 
         config_path = evidence / "05-config-editor" / "oop-design-checker.json"
         config_path.write_text(
-            '{"disabledRules":["OOP105"]}\n',
+            '{"disabledRules":["OOP105"]}',
             encoding="utf-8",
         )
         replace_text(driver, "ConfigurationPath", str(config_path))
@@ -370,12 +370,21 @@ def main():
                 timeout=20,
             )
             driver.switch_to.window(main_window)
+
         wait_until(
             driver,
-            lambda: "Configuration saved" in text_of(driver, "Status"),
+            lambda: config_path.exists()
+            and config_path.read_text(encoding="utf-8").endswith("\n")
+            and "OOP105" in config_path.read_text(encoding="utf-8"),
             timeout=20,
         )
-        record("05-config-editor", "edit-validate-save", path=str(config_path))
+        wait_until(driver, lambda: find(driver, "AnalyzeButton").is_enabled(), timeout=20)
+        record(
+            "05-config-editor",
+            "edit-validate-save",
+            path=str(config_path),
+            status=text_of(driver, "Status"),
+        )
 
         find(driver, "AnalyzeButton").click()
         configured_counts = dict(expected_counts)
