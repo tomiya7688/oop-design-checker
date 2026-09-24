@@ -45,6 +45,8 @@ class AggregateTests(unittest.TestCase):
                 str(AGGREGATE),
                 "--results",
                 str(results),
+                "--scenario",
+                "fixture-analysis",
                 "--output",
                 str(output),
             ]
@@ -98,6 +100,12 @@ class AggregateTests(unittest.TestCase):
         code, result = self.run_case({"openai": provider_result("openai")})
         self.assertEqual(1, code)
         self.assertEqual("fail", result["verdict"])
+
+    def test_all_providers_missing_still_emits_fail_result(self):
+        code, result = self.run_case({})
+        self.assertEqual(1, code)
+        self.assertEqual("fail", result["verdict"])
+        self.assertEqual("fixture-analysis", result["scenario"])
 
     def test_review_can_be_explicitly_waived(self):
         providers = {
