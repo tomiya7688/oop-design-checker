@@ -1,10 +1,41 @@
-# チェックルール（ドラフト）
+# チェックルール
 
 [English](check-rules.en.md)
 
 > この日本語版を正本とします。英語版との間に差異がある場合は、日本語版を優先します。
 
-この文書は、設計議論で確定・検討したチェック内容を記録します。
+この文書は **OOP Design Checker 1.0.0 のチェックルール正本仕様**です。ここに記載した OOP001〜OOP405 の24ルールが、1.0.0 C# backendの実装対象です。ルールはheuristicを含むため、検出条件は保守的に実装し、release fixtureとprecision testで主要境界を固定します。
+
+## 1.0.0 ルール一覧と既定severity
+
+| Rule | 既定severity |
+| --- | --- |
+| OOP001 | WARNING |
+| OOP002 | WARNING |
+| OOP003 | ATTENTION |
+| OOP101 | WARNING |
+| OOP102 | ATTENTION |
+| OOP103 | ATTENTION |
+| OOP104 | ATTENTION |
+| OOP105 | WARNING |
+| OOP106 | WARNING（高確度な直接的カプセル化破壊はDANGERへ昇格可能） |
+| OOP107 | DANGER |
+| OOP108 | WARNING |
+| OOP201 | WARNING |
+| OOP301 | WARNING |
+| OOP302 | WARNING |
+| OOP303 | DANGER |
+| OOP304 | ATTENTION |
+| OOP305 | WARNING |
+| OOP306 | WARNING |
+| OOP307 | ATTENTION |
+| OOP401 | WARNING |
+| OOP402 | WARNING |
+| OOP403 | WARNING |
+| OOP404 | ATTENTION |
+| OOP405 | ATTENTION |
+
+ここでいう既定severityは各ruleのdescriptor上のseverityです。OOP106のように、検出した構造の危険度が明確な場合に個別diagnosticをより強いseverityへ昇格するruleがあります。
 
 ## OOP001 共通抽象の欠如
 
