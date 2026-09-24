@@ -355,7 +355,7 @@ def main():
         wait_until(driver, switch_to_configuration_editor, timeout=20)
         editor = configuration_editor(driver, args.platform)
         editor.send_keys(Keys.END)
-        editor.send_keys(Keys.ENTER)
+        editor.send_keys(" ")
         find(driver, "ValidateConfigurationButton").click()
         wait_until(
             driver,
@@ -374,7 +374,7 @@ def main():
         wait_until(
             driver,
             lambda: config_path.exists()
-            and config_path.read_text(encoding="utf-8").endswith("\n")
+            and config_path.read_text(encoding="utf-8").endswith(" ")
             and "OOP105" in config_path.read_text(encoding="utf-8"),
             timeout=20,
         )
