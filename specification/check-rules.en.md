@@ -79,11 +79,11 @@ Warn when a static class accumulates mutable shared state and behaves as global 
 
 ## OOP106 Encapsulation leak
 
-Warn when internal representation is exposed directly. Directly mutable public state and directly exposed mutable storage are Danger-level violations because callers can bypass the owning object. Less severe exposure, such as an unnecessarily public setter whose use is still controlled, may remain Warning.
+Report WARNING or DANGER when internal representation is exposed directly. A public mutable field or a property that directly exposes mutable internal storage is DANGER because callers can bypass the owning object. A public readonly field or unnecessarily public setter, where direct mutability is more limited, is WARNING.
 
 ## OOP107 Object invariant can be bypassed
 
-Warn when callers can place an object into an invalid state by directly mutating values that should be guarded by the object itself. High-confidence direct invariant bypasses may be Danger.
+Report DANGER when the analyzer can structurally establish that callers can bypass validation and place an object into an invalid state by directly mutating a value that the object otherwise guards. OOP107 is fixed at DANGER in 1.0.0.
 
 ## OOP108 Excessive external state manipulation
 
@@ -195,6 +195,17 @@ In particular:
 - high complexity should strengthen OOP201 rather than becoming a generic OOP violation;
 - SOLID rules may be provided as optional or supporting analyses, but SOLID is not defined as identical to OOP in this project.
 
+## 1.0.0 C# analysis boundary
+
+All 24 rules above are implemented by the C# backend in 1.0.0.
+
+- For `.csproj`, `.sln`, `.slnx`, and project directories, analysis uses the real Roslyn/MSBuild project compilation as the unit of analysis. Unrelated projects are not merged into one artificial compilation.
+- When project references are loaded into the same analysis, rules may inspect symbol relationships across that project set where required.
+- A loose `.cs` file is analyzed as a standalone compilation without requiring a project file. Rules that depend on MSBuild project metadata therefore have less context than project/solution analysis.
+- OOP101 and OOP102 run only for **application projects**, where assumptions about external visibility and extensibility can be made safely. The same assumptions are not mechanically applied to library or standalone contexts.
+- Framework/runtime/NuGet symbols outside the analyzed project set are not treated as project-owned types.
+- C++, Go, Python, and mixed-language analysis are outside the 1.0.0 implementation scope.
+
 ## Severity model
 
 - `DANGER`: a structurally clear violation of a rule this project considers fundamental to claiming OOP design. These fail CI by default.
@@ -205,11 +216,24 @@ Severity expresses design impact, not detection confidence alone. A heuristic ru
 
 ## Suppression and CI configuration
 
-Projects may use `oop-design-checker.json` to:
+The configuration file is optional. Without an explicit path, the checker searches from the target directory upward for the nearest `oop-design-checker.json`; if none is found, built-in defaults are used.
 
-- exclude paths with `ignoredPaths`;
-- suppress selected rule IDs for a project/run with `disabledRules`;
-- choose the CI failure level with `failureThreshold`;
-- tune supported rule-specific heuristics under `ruleSettings`, such as OOP304 inheritance depth.
+The 1.0.0 built-in defaults are:
+
+- `ignoredPaths = []`
+- `disabledRules = []`
+- `failureThreshold = danger`
+- `ruleSettings.oop304.warningDepth = 4`
+
+Supported settings:
+
+- `ignoredPaths` excludes matching paths from analysis.
+- `disabledRules` suppresses selected rule IDs for that project/run. Rule ID matching is case-insensitive.
+- `failureThreshold` selects the minimum severity that makes the process fail: `attention`, `warning`, or `danger`. Numeric enum values are rejected.
+- `ruleSettings.oop304.warningDepth` changes the OOP304 inheritance-depth threshold. The minimum value is `1`.
+
+When `--config <path>` is explicitly supplied, that configuration must exist; the checker does not silently fall back to defaults. A relative path is checked against the current working directory first and then against the target directory.
+
+CLI `--fail-on <severity>` overrides the configuration file's `failureThreshold` for that run. `--warnings-as-errors` remains a compatibility alias for `--fail-on warning`.
 
 Suppression is a project decision and does not change the rule's defined severity. Rule-specific tuning changes heuristic sensitivity, not the severity definition. The checker project itself should not suppress its own rule violations and should self-check at the `attention` threshold.
