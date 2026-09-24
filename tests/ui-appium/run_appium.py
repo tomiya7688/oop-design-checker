@@ -365,7 +365,31 @@ def main():
         main_window = driver.current_window_handle if args.platform == "windows" else None
         desktop_driver = None
         editor_driver = driver
-        find(driver, "EditConfigurationButton").click()
+        edit_button = find(driver, "EditConfigurationButton")
+        edit_button.click()
+
+        if args.platform == "windows":
+            time.sleep(0.75)
+            try:
+                editor_control(
+                    driver,
+                    args.platform,
+                    "ValidateConfigurationButton",
+                    "Validate",
+                )
+            except Exception:
+                edit_button.send_keys(Keys.ENTER)
+                time.sleep(0.75)
+                try:
+                    editor_control(
+                        driver,
+                        args.platform,
+                        "ValidateConfigurationButton",
+                        "Validate",
+                    )
+                except Exception:
+                    edit_button.send_keys(Keys.SPACE)
+                    time.sleep(0.75)
 
         def switch_to_configuration_editor():
             if args.platform == "windows":
