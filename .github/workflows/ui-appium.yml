@@ -9,6 +9,7 @@ on:
       - 'tests/fixtures/release-validation-csharp/**'
       - 'tests/ui-appium/**'
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -226,4 +227,4 @@ jobs:
             ${{ runner.temp }}/ui-appium-release
             ${{ runner.temp }}/appium.log
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 30

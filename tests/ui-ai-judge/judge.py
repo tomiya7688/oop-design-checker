@@ -42,7 +42,13 @@ def image_data_url(path):
 
 def evidence_text(scenario_dir):
     documents = []
-    for name in ("expected.json", "ui-state.json", "action-log.json", "actual-diagnostics.json"):
+    for name in (
+        "manifest.json",
+        "expected.json",
+        "ui-state.json",
+        "action-log.json",
+        "actual-diagnostics.json",
+    ):
         path = scenario_dir / name
         if path.exists():
             documents.append(
@@ -65,13 +71,27 @@ def build_prompt(scenario_dir):
 
 
 def images(scenario_dir):
-    preferred = ("before.png", "after.png", "resized.png", "actual.png", "diff.png", "failure.png")
+    preferred = (
+        "before.png",
+        "after.png",
+        "resized.png",
+        "actual.png",
+        "diff.png",
+        "failure.png",
+    )
     found = []
+    seen = set()
     for name in preferred:
         path = scenario_dir / name
         if path.exists():
             found.append(path)
-    return found[:6]
+            seen.add(path.name)
+
+    for path in sorted(scenario_dir.glob("*.png")):
+        if path.name not in seen:
+            found.append(path)
+
+    return found[:12]
 
 
 def call_openai(model, api_key, prompt, image_paths, schema):

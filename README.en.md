@@ -100,13 +100,15 @@ On Windows use `oop-design-checker-cui.exe`.
 
 ### Release process
 
-For a new release:
+Before creating a release tag, run the `release-candidate` workflow once. That workflow run is the normative release candidate.
 
-1. Update `VersionPrefix` in `Directory.Build.props`.
-2. Add the release entry to `CHANGELOG.md`.
-3. Merge the change only after normal CI, strict self-check, analyzers, CSharpier, and the six-RID release packaging matrix are green.
-4. Push a tag exactly matching the declared version with a `v` prefix, for example `v0.1.0`.
-5. The release workflow validates the tag/version match, rebuilds all six packages, generates SHA-256 checksums, and creates the GitHub Release.
+1. Finalize version / changelog metadata, licensing / third-party notices, and the normative specification.
+2. Select the release commit and manually dispatch `release-candidate` from that commit/ref. The workflow-start commit SHA is fixed as the candidate SHA.
+3. For that same SHA, pass normal CI, strict self-check, analyzers, CSharpier, exact release-fixture validation, six-RID CUI/GUI packaging, packaged E2E, Windows/macOS Appium, Headless visual regression, and the OpenAI/Gemini/Claude UI consensus gate.
+4. A successful automatic gate stores `release-candidate-manifest` plus the candidate packages and evidence. The #105 manual GUI sign-off must use the GUI artifact and shared release fixture from that same run.
+5. ARM64 remains an official package target but is excluded from the user's manual hardware sign-off; automated build, package, and checksum checks remain mandatory.
+6. After #105 sign-off, verify that the candidate SHA has not changed and create the version-matching `v` tag on **that exact SHA**. Do not tag a different commit.
+7. The tag-triggered `release` workflow revalidates the version, rebuilds packages/checksums, and creates the GitHub Release.
 
 ### CI output formats
 
