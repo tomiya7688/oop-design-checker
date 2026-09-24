@@ -1,4 +1,4 @@
-# Object-Oriented Design Definition (Draft)
+# Object-Oriented Design Definition
 
 [日本語（正本）](object-oriented-design.md)
 
