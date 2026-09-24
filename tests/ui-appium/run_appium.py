@@ -82,6 +82,18 @@ def create_windows_root_driver(args):
     return webdriver.Remote(args.server, options=options)
 
 
+def create_windows_attached_driver(args, window_handle):
+    from appium.options.windows import WindowsOptions
+
+    options = WindowsOptions()
+    options.platform_name = "Windows"
+    options.automation_name = "NovaWindows"
+    options.app_top_level_window = str(window_handle)
+    options.set_capability("appium:shouldCloseApp", False)
+    options.set_capability("appium:newCommandTimeout", 180)
+    return webdriver.Remote(args.server, options=options)
+
+
 def find(driver, automation_id):
     return driver.find_element(AppiumBy.ACCESSIBILITY_ID, automation_id)
 
@@ -387,7 +399,32 @@ def main():
             try:
                 wait_until(driver, switch_to_configuration_editor, timeout=5)
             except Exception:
-                desktop_driver = create_windows_root_driver(args)
+                root_driver = create_windows_root_driver(args)
+                try:
+                    editor_window = WebDriverWait(
+                        root_driver,
+                        20,
+                        poll_frequency=0.5,
+                    ).until(
+                        lambda _: root_driver.find_element(
+                            AppiumBy.NAME,
+                            "OOP Design Checker configuration",
+                        )
+                    )
+                    native_window_handle = editor_window.get_attribute(
+                        "NativeWindowHandle"
+                    )
+                    if not native_window_handle:
+                        raise AssertionError(
+                            "Configuration editor window did not expose NativeWindowHandle."
+                        )
+                finally:
+                    root_driver.quit()
+
+                desktop_driver = create_windows_attached_driver(
+                    args,
+                    native_window_handle,
+                )
                 editor_driver = desktop_driver
                 wait_until(
                     editor_driver,
