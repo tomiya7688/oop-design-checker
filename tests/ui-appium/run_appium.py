@@ -329,27 +329,29 @@ def main():
         )
         replace_text(driver, "ConfigurationPath", str(config_path))
         main_window = driver.current_window_handle if args.platform == "windows" else None
-        known_windows = set(driver.window_handles) if args.platform == "windows" else set()
         find(driver, "EditConfigurationButton").click()
 
         def switch_to_configuration_editor():
             if args.platform == "windows":
-                for handle in driver.window_handles:
-                    if handle in known_windows:
-                        continue
+                handles = list(driver.window_handles)
+                handles.sort(key=lambda handle: handle == main_window)
+                for handle in handles:
                     try:
                         driver.switch_to.window(handle)
+                        find(driver, "ValidateConfigurationButton")
                         configuration_editor(driver, args.platform)
                         return True
                     except Exception:
                         continue
 
+                if main_window is not None:
+                    driver.switch_to.window(main_window)
+                return False
+
             try:
                 configuration_editor(driver, args.platform)
                 return True
             except Exception:
-                if args.platform == "windows" and main_window is not None:
-                    driver.switch_to.window(main_window)
                 return False
 
         wait_until(driver, switch_to_configuration_editor, timeout=20)
