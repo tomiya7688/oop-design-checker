@@ -123,6 +123,15 @@ def summary_matches(driver, counts):
     )
 
 
+def editor_control(driver, platform, automation_id, fallback_name):
+    try:
+        return find(driver, automation_id)
+    except Exception:
+        if platform == "windows":
+            return driver.find_element(AppiumBy.NAME, fallback_name)
+        raise
+
+
 def configuration_editor(driver, platform):
     try:
         return find(driver, "ConfigurationEditor")
@@ -353,7 +362,12 @@ def main():
                 for handle in handles:
                     try:
                         driver.switch_to.window(handle)
-                        find(driver, "ValidateConfigurationButton")
+                        editor_control(
+                            driver,
+                            args.platform,
+                            "ValidateConfigurationButton",
+                            "Validate",
+                        )
                         configuration_editor(driver, args.platform)
                         return True
                     except Exception:
@@ -377,21 +391,52 @@ def main():
                 editor_driver = desktop_driver
                 wait_until(
                     editor_driver,
-                    lambda: bool(find(editor_driver, "ValidateConfigurationButton")),
+                    lambda: bool(
+                        editor_control(
+                            editor_driver,
+                            args.platform,
+                            "ValidateConfigurationButton",
+                            "Validate",
+                        )
+                    ),
                     timeout=20,
                 )
         else:
             wait_until(driver, switch_to_configuration_editor, timeout=20)
 
         _ = configuration_editor(editor_driver, args.platform)
-        find(editor_driver, "ValidateConfigurationButton").click()
-        wait_until(
+        editor_control(
             editor_driver,
-            lambda: "valid"
-            in text_of(editor_driver, "ConfigurationEditorStatus").lower(),
-            timeout=20,
-        )
-        find(editor_driver, "SaveConfigurationButton").click()
+            args.platform,
+            "ValidateConfigurationButton",
+            "Validate",
+        ).click()
+
+        def configuration_is_valid():
+            try:
+                return "valid" in text_of(
+                    editor_driver,
+                    "ConfigurationEditorStatus",
+                ).lower()
+            except Exception:
+                if args.platform == "windows":
+                    try:
+                        editor_driver.find_element(
+                            AppiumBy.NAME,
+                            "Configuration is valid.",
+                        )
+                        return True
+                    except Exception:
+                        return False
+                return False
+
+        wait_until(editor_driver, configuration_is_valid, timeout=20)
+        editor_control(
+            editor_driver,
+            args.platform,
+            "SaveConfigurationButton",
+            "Save",
+        ).click()
 
         if desktop_driver is not None:
             desktop_driver.quit()
