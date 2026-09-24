@@ -4,6 +4,36 @@
 
 > The Japanese changelog is normative. If this English translation differs from the Japanese version, the Japanese version takes precedence.
 
+## 1.0.0 - 2026-09-24
+
+Stable 1.0.0 release of the C# implementation.
+
+### Added
+
+- Both CUI and Avalonia GUI as official release artifacts.
+- Self-contained CUI/GUI packages for six RIDs across Windows, Linux, and macOS on x64 and arm64.
+- Release-fixture coverage for positive, boundary, and negative cases across every current OOPxxx rule.
+- Exact release gating against 66 canonical diagnostics.
+- Release validation for JSON/text/SARIF semantic consistency, target entrypoints, configuration, and failure thresholds.
+- Windows/macOS Appium real-window E2E plus Avalonia.Headless + Skia visual regression.
+- Independent OpenAI, Gemini, and Claude UI judges with a consensus gate.
+- Unified release-candidate workflow with a fixed candidate commit SHA.
+- GUI configuration editor, filtering, detail view, copy, source open, JSON/SARIF export, cancellation, and Japanese/English switching.
+
+### Improved
+
+- Built-in defaults when no config is supplied, with nearest parent-directory config discovery.
+- More robust directory, multi-project, .csproj, .sln, and .slnx analysis.
+- Roslyn MSBuild BuildHost and .NET reference assemblies included in packaged CUI/GUI artifacts.
+- Stronger handling for diagnostic paths, case-sensitive path identity, invalid enum values, and data-carrier boundaries.
+- Published-artifact E2E for exit codes 0/1/2, extracted archives, and checksums.
+
+### Compatibility and limitations
+
+- The 1.0.0 analysis backend supports C# only. C++, Go, and Python are planned for 1.1.0.
+- .csproj, .sln, and .slnx analysis requires a compatible discoverable .NET SDK/MSBuild installation.
+- ARM64 packages are official release targets but are outside the user's manual hardware sign-off; automated build, packaging, and checksum validation remain mandatory.
+
 ## 0.1.0 - 2026-09-16
 
 Initial public release of `oop-design-checker`.
