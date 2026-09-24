@@ -78,7 +78,7 @@ oop-design-checker-cui <target-path> --language en
 
 ### Release packages
 
-Pushing a matching version tag such as `v0.1.0` creates a GitHub Release after all platform packages build successfully. The product version is declared once in `Directory.Build.props`; a `v*` tag that does not match that declared version fails before release packaging is published.
+Pushing a matching version tag such as `v1.0.0` creates a GitHub Release after all platform packages build successfully. The product version is declared once in `Directory.Build.props`; a `v*` tag that does not match that declared version fails before release packaging is published.
 
 Release archives contain the complete `dotnet publish` output, both README files, both CHANGELOG files, `oop-design-checker.example.json`, and the specification. CUI archives use `oop-design-checker-<version>-<rid>` and GUI archives use `oop-design-checker-gui-<version>-<rid>`. Every archive also has a `.sha256` file, and tagged releases include a combined `SHA256SUMS.txt` manifest.
 

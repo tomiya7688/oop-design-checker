@@ -79,10 +79,10 @@ internal static class OutputFormatSmokeTests
             Console.SetOut(originalOut);
         }
 
-        if (!string.Equals(captured.ToString().Trim(), "0.1.0", StringComparison.Ordinal))
+        if (!string.Equals(captured.ToString().Trim(), "1.0.0", StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
-                $"Expected product version 0.1.0, found '{captured.ToString().Trim()}'."
+                $"Expected product version 1.0.0, found '{captured.ToString().Trim()}'."
             );
         }
     }
