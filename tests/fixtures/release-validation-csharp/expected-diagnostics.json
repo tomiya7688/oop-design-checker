@@ -44,7 +44,7 @@
     },
     {
       "ruleId": "OOP106",
-      "severity": "danger",
+      "severity": "warning",
       "file": "Positive/Encapsulation.cs"
     },
     {

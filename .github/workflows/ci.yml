@@ -31,6 +31,9 @@ jobs:
       - name: Rule smoke tests
         run: dotnet run --project tests/OopDesignChecker.Tests/OopDesignChecker.Tests.csproj -c Release --no-build
 
+      - name: Headless UI structural tests
+        run: dotnet run --project tests/OopDesignChecker.Gui.HeadlessTests/OopDesignChecker.Gui.HeadlessTests.csproj -c Release --no-build
+
   ui-headless:
     name: ui-headless
     runs-on: ubuntu-latest
@@ -42,8 +45,9 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Headless UI structural and visual regression
+      - name: Headless UI canonical visual regression
         env:
+          OOP_DESIGN_CHECKER_UI_VISUAL_REGRESSION: '1'
           UI_EVIDENCE_DIR: ${{ runner.temp }}/ui-evidence
         run: >-
           dotnet run
@@ -58,6 +62,20 @@ jobs:
           path: ${{ runner.temp }}/ui-evidence
           if-no-files-found: error
           retention-days: 30
+
+  specification-contract:
+    name: specification-contract
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate 1.0.0 specification contract
+        run: python tests/release/SpecificationContract.py
 
   self-check:
     name: self-check
