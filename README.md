@@ -78,7 +78,7 @@ oop-design-checker-cui <target-path> --language en
 
 ### Release package
 
-`v0.1.0`のように宣言versionと一致するtagをpushすると、全platform packageが成功した後にGitHub Releaseを作成します。製品versionは`Directory.Build.props`へ一元化しており、`v*` tagと宣言versionが一致しなければrelease packaging前に失敗します。
+`v1.0.0`のように宣言versionと一致するtagをpushすると、全platform packageが成功した後にGitHub Releaseを作成します。製品versionは`Directory.Build.props`へ一元化しており、`v*` tagと宣言versionが一致しなければrelease packaging前に失敗します。
 
 release archiveには`dotnet publish`の完全な出力、日英両README、日英両CHANGELOG、`oop-design-checker.example.json`、仕様書を含めます。CUIは`oop-design-checker-<version>-<rid>`、GUIは`oop-design-checker-gui-<version>-<rid>`として別archiveで配布します。各archiveには`.sha256`を付け、tagged releaseには統合`SHA256SUMS.txt`も含めます。
 
