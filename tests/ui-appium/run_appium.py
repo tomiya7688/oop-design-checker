@@ -70,6 +70,18 @@ def create_driver(args):
     return webdriver.Remote(args.server, options=options)
 
 
+def create_windows_root_driver(args):
+    from appium.options.windows import WindowsOptions
+
+    options = WindowsOptions()
+    options.platform_name = "Windows"
+    options.automation_name = "NovaWindows"
+    options.app = "Root"
+    options.set_capability("appium:shouldCloseApp", False)
+    options.set_capability("appium:newCommandTimeout", 180)
+    return webdriver.Remote(args.server, options=options)
+
+
 def find(driver, automation_id):
     return driver.find_element(AppiumBy.ACCESSIBILITY_ID, automation_id)
 
@@ -241,6 +253,7 @@ def main():
         )
 
     driver = None
+    desktop_driver = None
     moved_source = None
     try:
         driver = create_driver(args)
@@ -329,6 +342,8 @@ def main():
         )
         replace_text(driver, "ConfigurationPath", str(config_path))
         main_window = driver.current_window_handle if args.platform == "windows" else None
+        desktop_driver = None
+        editor_driver = driver
         find(driver, "EditConfigurationButton").click()
 
         def switch_to_configuration_editor():
@@ -354,15 +369,34 @@ def main():
             except Exception:
                 return False
 
-        wait_until(driver, switch_to_configuration_editor, timeout=20)
-        _ = configuration_editor(driver, args.platform)
-        find(driver, "ValidateConfigurationButton").click()
+        if args.platform == "windows":
+            try:
+                wait_until(driver, switch_to_configuration_editor, timeout=5)
+            except Exception:
+                desktop_driver = create_windows_root_driver(args)
+                editor_driver = desktop_driver
+                wait_until(
+                    editor_driver,
+                    lambda: bool(find(editor_driver, "ValidateConfigurationButton")),
+                    timeout=20,
+                )
+        else:
+            wait_until(driver, switch_to_configuration_editor, timeout=20)
+
+        _ = configuration_editor(editor_driver, args.platform)
+        find(editor_driver, "ValidateConfigurationButton").click()
         wait_until(
-            driver,
-            lambda: "valid" in text_of(driver, "ConfigurationEditorStatus").lower(),
+            editor_driver,
+            lambda: "valid"
+            in text_of(editor_driver, "ConfigurationEditorStatus").lower(),
             timeout=20,
         )
-        find(driver, "SaveConfigurationButton").click()
+        find(editor_driver, "SaveConfigurationButton").click()
+
+        if desktop_driver is not None:
+            desktop_driver.quit()
+            desktop_driver = None
+
         if args.platform == "windows":
             wait_until(
                 driver,
@@ -503,6 +537,12 @@ def main():
             (directory / "action-log.json").write_text(
                 json.dumps(items, indent=2, ensure_ascii=False), encoding="utf-8"
             )
+
+        if desktop_driver is not None:
+            try:
+                desktop_driver.quit()
+            except Exception:
+                pass
 
         if driver is not None:
             try:
