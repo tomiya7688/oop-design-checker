@@ -1,10 +1,52 @@
-# チェックルール（ドラフト）
+# チェックルール
 
 [English](check-rules.en.md)
 
 > この日本語版を正本とします。英語版との間に差異がある場合は、日本語版を優先します。
 
-この文書は、設計議論で確定・検討したチェック内容を記録します。
+この文書は、**OOP Design Checker 1.0.0の正式なC#チェック契約**です。ここに列挙するOOPxxxだけを1.0.0の実装済みruleとして扱います。
+
+## 1.0.0 rule contract
+
+1.0.0の解析対象言語はC#です。以下の24 rule IDとseverity契約を正とします。個別診断がこの表と異なるseverityを持てるのは、表で明示しているOOP106の昇格だけです。
+
+| Rule | Severity contract | Note |
+| --- | --- | --- |
+| OOP001 | `WARNING` |  |
+| OOP002 | `WARNING` |  |
+| OOP003 | `ATTENTION` |  |
+| OOP101 | `WARNING` |  |
+| OOP102 | `ATTENTION` |  |
+| OOP103 | `ATTENTION` |  |
+| OOP104 | `ATTENTION` |  |
+| OOP105 | `WARNING` |  |
+| OOP106 | `WARNING → DANGER` | 通常はWARNING。内部の可変storageを直接変更可能な形で公開するなど、高確度のケースはDANGERへ昇格。 |
+| OOP107 | `DANGER` |  |
+| OOP108 | `WARNING` |  |
+| OOP201 | `WARNING` |  |
+| OOP301 | `WARNING` |  |
+| OOP302 | `WARNING` |  |
+| OOP303 | `DANGER` |  |
+| OOP304 | `ATTENTION` |  |
+| OOP305 | `WARNING` |  |
+| OOP306 | `WARNING` |  |
+| OOP307 | `ATTENTION` |  |
+| OOP401 | `WARNING` |  |
+| OOP402 | `WARNING` |  |
+| OOP403 | `WARNING` |  |
+| OOP404 | `ATTENTION` |  |
+| OOP405 | `ATTENTION` |  |
+
+`DANGER` / `WARNING` / `ATTENTION` は下記のseverity modelに従います。`failureThreshold`はprocessの終了判定だけを変え、発生したdiagnostic自体のseverityを書き換えません。
+
+### heuristicと除外の原則
+
+- ruleは静的に観測可能なsyntax / semantic usageを根拠にし、型名やLOCなど単一の弱いsignalだけで重大診断を確定しません。
+- DTO、serialization model、database recordなど明示的なdata carrierは、状態保持そのものを理由にOOP106/OOP107/OOP108/OOP402/OOP405へ機械的に分類しません。
+- framework/runtime/libraryが要求するcontract、external ancestry、framework/value型navigationはproject-ownedな設計違反と同一視しません。
+- value object、owned internal object、composition rootなど意図的な直接生成をOOP306へ機械的に分類しません。
+- overlapping diagnosticは、同じ設計問題を二重に強く報告しないためcoordination/deduplicationされる場合があります。rule ID自体の意味やseverity契約は変わりません。
+
 
 ## OOP001 共通抽象の欠如
 
@@ -170,11 +212,13 @@ severityは設計上の影響を表し、検出confidenceだけを表すもの�
 
 ## suppressionとCI設定
 
+設定fileを明示しない場合、target directoryから親directoryへ`oop-design-checker.json`を探索し、最も近いものを使用します。明示した`--config`が存在しない、または内容が不正な場合はbuilt-in defaultへ黙ってfallbackせずruntime errorにします。
+
 projectは`oop-design-checker.json`で次を設定できます。
 
 - `ignoredPaths`でpathを解析対象から除外する。
 - `disabledRules`で特定rule IDをそのproject/runでは出力しない。
 - `failureThreshold`でCIを失敗させるseverityを選ぶ。
-- `ruleSettings`で、OOP304の継承深度など対応するrule固有heuristicを調整する。
+- `ruleSettings`で、対応するrule固有heuristicを調整する。1.0.0では`ruleSettings.oop304.warningDepth`を提供し、既定`4`、最小`1`とする。
 
 suppressionはproject側の判断であり、rule自体のseverity定義は変えません。rule固有設定はheuristicの感度を変えるもので、severityの意味は変えません。チェッカー自身では原則として自己違反を抑制せず、`attention`しきい値でself-checkします。
