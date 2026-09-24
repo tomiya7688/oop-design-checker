@@ -12,6 +12,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--results", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--scenario")
     parser.add_argument("--waiver")
     return parser.parse_args()
 
@@ -70,9 +71,18 @@ def main():
     ok_results = [item["result"] for item in providers if item["status"] == "ok"]
     scenarios = {item.get("scenario") for item in ok_results}
     scenarios.discard(None)
-    if len(scenarios) != 1:
-        raise ValueError(f"Expected exactly one scenario across provider results, found {sorted(scenarios)}.")
-    scenario = next(iter(scenarios))
+    if args.scenario:
+        if scenarios and scenarios != {args.scenario}:
+            raise ValueError(
+                f"Provider scenario mismatch: expected {args.scenario}, found {sorted(scenarios)}."
+            )
+        scenario = args.scenario
+    else:
+        if len(scenarios) != 1:
+            raise ValueError(
+                f"Expected exactly one scenario across provider results, found {sorted(scenarios)}."
+            )
+        scenario = next(iter(scenarios))
     error_count = sum(item["status"] != "ok" for item in providers)
 
     checks = []
