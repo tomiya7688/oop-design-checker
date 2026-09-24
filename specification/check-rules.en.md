@@ -1,10 +1,45 @@
-# Check Rules (Draft)
+# Check Rules — 1.0.0 Normative Specification
 
 [日本語（正本）](check-rules.md)
 
 > The Japanese specification is normative. If this English translation differs from the Japanese version, the Japanese version takes precedence.
 
-This file records candidate checks discussed during design.
+> Target version: **1.0.0**. This document is the normative definition of the C# rules implemented by 1.0.0.
+
+This document defines the checks, severities, known exclusion boundaries, and configuration contract that are implemented and release-gated in 1.0.0. Conceptual future candidates are not treated as implemented rules.
+
+## 1.0.0 rule catalog
+
+The 1.0.0 rule IDs and severity contract are listed below. Severity is the fixed or default severity for the rule.
+
+| Rule | Meaning | Severity |
+| --- | --- | --- |
+| OOP001 | Missing common abstraction | WARNING |
+| OOP002 | Polymorphism bypassed by type branching | WARNING |
+| OOP003 | Unnecessary abstraction | ATTENTION |
+| OOP101 | Excessive visibility | WARNING |
+| OOP102 | Sealing candidate | ATTENTION |
+| OOP103 | Static member candidate | ATTENTION |
+| OOP104 | Static class candidate | ATTENTION |
+| OOP105 | Stateful static design | WARNING |
+| OOP106 | Encapsulation leak | WARNING (DANGER for high-confidence directly mutable exposure) |
+| OOP107 | Object invariant can be bypassed | DANGER |
+| OOP108 | Excessive external state manipulation | WARNING |
+| OOP201 | Oversized main operation | WARNING |
+| OOP301 | Suspicious inheritance relationship | WARNING |
+| OOP302 | Parent contract mostly unused | WARNING |
+| OOP303 | Child disables parent behavior | DANGER |
+| OOP304 | Excessive inheritance depth | ATTENTION |
+| OOP305 | Concrete-type dependency despite abstraction | WARNING |
+| OOP306 | Avoidable concrete construction dependency | WARNING |
+| OOP307 | Composition may be more appropriate than inheritance | ATTENTION |
+| OOP401 | Possible multiple objects in one class | WARNING |
+| OOP402 | Anemic object candidate | WARNING |
+| OOP403 | Excessive unrelated dependencies | WARNING |
+| OOP404 | Excessive navigation through object internals | ATTENTION |
+| OOP405 | Getter/setter-only object candidate | ATTENTION |
+
+OOP106 is the only 1.0.0 rule that raises severity within the same rule. A public readonly field or unnecessarily public setter is WARNING; a public mutable field or property that directly exposes mutable internal storage is DANGER. The current release-fixture OOP106 positive case locks the WARNING path, while the DANGER path is covered separately by rule regression tests.
 
 ## OOP001 Missing common abstraction
 
@@ -18,7 +53,7 @@ Warn when callers repeatedly branch on concrete runtime types or type codes wher
 
 ## OOP003 Unnecessary abstraction
 
-Warn when an interface or abstract type has no meaningful shared concept and appears to exist only as ceremony. This must be conservative because single-implementation abstractions can still be intentional extension points.
+Attention when an interface or abstract type has no meaningful shared concept and appears to exist only as ceremony. This must be conservative because single-implementation abstractions can still be intentional extension points.
 
 ## OOP101 Excessive visibility
 
@@ -28,15 +63,15 @@ Example: a type used only inside a parent/child hierarchy is declared public.
 
 ## OOP102 Sealing candidate
 
-Suggest sealing when a type is not externally extensible, has no known derived types, and is not intended for inheritance.
+Attention when a type is not externally extensible, has no known derived types, and is not intended for inheritance.
 
 ## OOP103 Static member candidate
 
-Suggest static for methods that do not depend on instance state.
+Attention for methods that do not depend on instance state.
 
 ## OOP104 Static class candidate
 
-Suggest static form for classes that have no meaningful instance state and no polymorphic/DI/identity reason to be instantiated.
+Attention for classes that have no meaningful instance state and no polymorphic/DI/identity reason to be instantiated.
 
 ## OOP105 Stateful static design
 
@@ -94,7 +129,7 @@ A `new` expression by itself is not a violation. Value objects, owned internal o
 
 ## OOP307 Composition may be more appropriate than inheritance
 
-Warn conservatively when a child type uses inheritance mainly to obtain implementation while its semantic relationship to the parent is weak, especially when it overrides or hides a large part of the inherited behavior.
+Attention conservatively when a child type uses inheritance mainly to obtain implementation while its semantic relationship to the parent is weak, especially when it overrides or hides a large part of the inherited behavior.
 
 ## OOP401 Possible multiple objects in one class
 
@@ -109,7 +144,7 @@ Useful signals:
 - little or no shared state
 - one cluster can be removed without changing the identity of another
 
-High-confidence cases may become Danger; uncertain cases remain Warning or Attention.
+In 1.0.0, OOP401 is fixed at WARNING. When detection confidence is insufficient, the analyzer should conservatively avoid reporting rather than change this severity.
 
 ## OOP402 Anemic object candidate
 
@@ -125,7 +160,7 @@ Warn when an object directly knows about many unrelated subsystems or dependency
 
 ## OOP404 Excessive navigation through object internals
 
-Warn when code repeatedly traverses deep object chains such as `a.B.C.D.DoSomething()` and therefore depends on the internal object graph of another object.
+Attention when code repeatedly traverses deep object chains such as `a.B.C.D.DoSomething()` and therefore depends on the internal object graph of another object.
 
 This is inspired by the Law of Demeter, but raw dot-counting must not be used as the only criterion. Fluent APIs, LINQ-style pipelines, builders, immutable value transformations, namespaces, and ordinary static qualification can legitimately contain long chains.
 
@@ -133,7 +168,7 @@ Prefer semantic detection of repeated navigation across object boundaries.
 
 ## OOP405 Getter/setter-only object candidate
 
-Warn when a class is overwhelmingly composed of trivial getters and setters while meaningful operations on its state are implemented elsewhere.
+Attention when a class is overwhelmingly composed of trivial getters and setters while meaningful operations on its state are implemented elsewhere.
 
 This is a supporting signal for OOP402 rather than an automatic Danger. Explicit data-carrier types are exempt through the same shared classifier used by OOP402.
 
