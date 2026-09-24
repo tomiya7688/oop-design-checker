@@ -1,10 +1,41 @@
-# Check Rules (Draft)
+# Check Rules
 
 [日本語（正本）](check-rules.md)
 
 > The Japanese specification is normative. If this English translation differs from the Japanese version, the Japanese version takes precedence.
 
-This file records candidate checks discussed during design.
+This document is the **normative check-rule specification for OOP Design Checker 1.0.0**. The 24 rules from OOP001 through OOP405 listed here are the implemented scope of the 1.0.0 C# backend. Because several rules are heuristic, detection is deliberately conservative and major boundaries are fixed by the release fixture and precision tests.
+
+## 1.0.0 rule inventory and default severity
+
+| Rule | Default severity |
+| --- | --- |
+| OOP001 | WARNING |
+| OOP002 | WARNING |
+| OOP003 | ATTENTION |
+| OOP101 | WARNING |
+| OOP102 | ATTENTION |
+| OOP103 | ATTENTION |
+| OOP104 | ATTENTION |
+| OOP105 | WARNING |
+| OOP106 | WARNING (high-confidence direct encapsulation breaks may escalate to DANGER) |
+| OOP107 | DANGER |
+| OOP108 | WARNING |
+| OOP201 | WARNING |
+| OOP301 | WARNING |
+| OOP302 | WARNING |
+| OOP303 | DANGER |
+| OOP304 | ATTENTION |
+| OOP305 | WARNING |
+| OOP306 | WARNING |
+| OOP307 | ATTENTION |
+| OOP401 | WARNING |
+| OOP402 | WARNING |
+| OOP403 | WARNING |
+| OOP404 | ATTENTION |
+| OOP405 | ATTENTION |
+
+Default severity means the severity declared by the rule descriptor. A rule such as OOP106 may escalate an individual diagnostic when the detected structure is a clearly more severe form of the same violation.
 
 ## OOP001 Missing common abstraction
 
