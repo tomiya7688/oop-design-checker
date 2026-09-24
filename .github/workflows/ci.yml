@@ -58,6 +58,20 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  specification-contract:
+    name: specification-contract
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate 1.0.0 specification contract
+        run: python tests/release/SpecificationContract.py
+
   self-check:
     name: self-check
     runs-on: ubuntu-latest
