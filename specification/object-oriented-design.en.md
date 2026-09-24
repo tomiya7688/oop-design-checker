@@ -1,10 +1,12 @@
-# Object-Oriented Design Definition (Draft)
+# Object-Oriented Design Definition
 
 [日本語（正本）](object-oriented-design.md)
 
 > The Japanese specification is normative. If this English translation differs from the Japanese version, the Japanese version takes precedence.
 
-This repository defines its own checkable interpretation of object-oriented design.
+This document is the **normative object-oriented design specification for OOP Design Checker 1.0.0**. This repository defines its own checkable interpretation of object-oriented design.
+
+The 1.0.0 analysis backend targets C#. C++, Go, Python, and mixed-language analysis belong to 1.1.0 or later and are not represented as supported in 1.0.0. The design concepts are written to be language-neutral where practical, while the 1.0.0 implementation contract is fixed by the C# backend, release fixture, and automated tests.
 
 The checker does not judge whether OOP itself is good or bad. It analyzes whether a project that claims to use object-oriented design follows the rules defined here.
 
