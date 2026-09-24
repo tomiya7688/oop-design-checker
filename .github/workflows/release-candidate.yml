@@ -143,7 +143,10 @@ jobs:
       evidence_run_id: ${{ github.run_id }}
       evidence_artifact: ui-release-candidate-evidence
       scenario: release-candidate
-    secrets: inherit
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
   automatic-gate:
     name: automatic-release-gate-pass
