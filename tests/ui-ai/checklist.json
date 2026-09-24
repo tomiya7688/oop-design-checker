@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "checks": [
+    {
+      "id": "UI-001",
+      "criterion": "fixture期待diagnostic件数とGUI summaryが一致する"
+    },
+    {
+      "id": "UI-002",
+      "criterion": "rule ID / severity / file / line / symbol表示がevidenceと一致する"
+    },
+    {
+      "id": "UI-003",
+      "criterion": "文字やcontrolの欠落がない"
+    },
+    {
+      "id": "UI-004",
+      "criterion": "明らかなoverlap / clipping / off-screen controlがない"
+    },
+    {
+      "id": "UI-005",
+      "criterion": "resize後も主要操作が可能なlayoutを維持する"
+    },
+    {
+      "id": "UI-006",
+      "criterion": "日本語で未翻訳・空欄・文字化けがない"
+    },
+    {
+      "id": "UI-007",
+      "criterion": "英語切替後に未翻訳・空欄・文字化けがない"
+    },
+    {
+      "id": "UI-008",
+      "criterion": "filter操作後の表示状態がaction logと整合する"
+    },
+    {
+      "id": "UI-009",
+      "criterion": "detail paneが選択diagnosticと一致する"
+    },
+    {
+      "id": "UI-010",
+      "criterion": "error stateが視認可能で原因を判別できる"
+    },
+    {
+      "id": "UI-011",
+      "criterion": "config editor / export / source-open / cancelの結果がaction logと整合する"
+    },
+    {
+      "id": "UI-012",
+      "criterion": "前後screenshot間のstate transitionに不自然な欠落がない"
+    }
+  ]
+}
