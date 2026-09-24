@@ -185,6 +185,12 @@ def parse_json_text(text):
     return json.loads(value.strip())
 
 
+def provider_schema(schema):
+    sanitized = dict(schema)
+    sanitized.pop("$schema", None)
+    return sanitized
+
+
 def validate_verdict(document, schema):
     Draft202012Validator(schema).validate(document)
     expected_ids = {f"UI-{index:03d}" for index in range(1, 13)}
@@ -226,6 +232,7 @@ def main():
         return 0
 
     schema = read_json(ROOT / "verdict.schema.json")
+    request_schema = provider_schema(schema)
     prompt = build_prompt(scenario_dir)
     image_paths = images(scenario_dir)
     callers = {
@@ -237,7 +244,13 @@ def main():
     last_error = None
     for attempt in range(1, max(1, args.attempts) + 1):
         try:
-            text = callers[args.provider](model, api_key, prompt, image_paths, schema)
+            text = callers[args.provider](
+                model,
+                api_key,
+                prompt,
+                image_paths,
+                request_schema,
+            )
             document = parse_json_text(text)
             validate_verdict(document, schema)
             if document["scenario"] != scenario_dir.name:
