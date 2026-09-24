@@ -100,13 +100,15 @@ Windowsでは`oop-design-checker-cui.exe`を使用します。
 
 ### Release手順
 
-新しいreleaseでは次を行います。
+正式releaseでは、tag作成前に`release-candidate` workflowを1回実行し、そのrunをrelease candidateの正本とします。
 
-1. `Directory.Build.props`の`VersionPrefix`を更新する。
-2. `CHANGELOG.md`へrelease entryを追加する。
-3. normal CI、strict self-check、analyzer、CSharpier、6 RID release packagingがすべて緑になってからmergeする。
-4. 宣言versionと完全一致する`v` prefix付きtagをpushする。例: `v0.1.0`。
-5. release workflowがtag/version一致を検証し、6 packageを再buildし、SHA-256を生成してGitHub Releaseを作成する。
+1. version / CHANGELOG、license / third-party notice、正式仕様を確定する。
+2. release対象commitを選び、そのcommit/refから`release-candidate` workflowをmanual dispatchする。workflow開始時のcommit SHAがcandidate SHAとして固定される。
+3. 同一candidate SHAに対してnormal CI、strict self-check、analyzer、CSharpier、release fixture exact check、CUI/GUI 6 RID package、packaged E2E、Windows/macOS Appium、Headless visual regression、OpenAI/Gemini/Claude UI合議を順に通す。
+4. automatic gateがPASSすると`release-candidate-manifest`とcandidate artifact/evidenceが保存される。#105の手動GUI確認では、このrunのGUI artifactと共通release fixtureを使用する。
+5. ARM64は正式package対象だが、ユーザー本人のmanual hardware sign-off対象外とし、自動build/package/checksumを必須とする。
+6. #105 sign-off後、candidate SHAから変更がないことを確認し、**同じSHA**へ宣言versionと一致する`v` prefix付きtagを作成する。別SHAをtagしてはいけない。
+7. tagによる`release` workflowがversion一致を再検証し、package/checksumを再生成してGitHub Releaseを作成する。
 
 ### CI出力形式
 

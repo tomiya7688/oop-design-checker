@@ -19,6 +19,7 @@ on:
       - 'README.en.md'
       - 'specification/**'
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -98,7 +99,7 @@ jobs:
           name: release-fixture-exact
           path: ${{ runner.temp }}/release-fixture-exact
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 30
 
   package:
     name: package (${{ matrix.rid }})
@@ -305,7 +306,7 @@ jobs:
           name: oop-design-checker-${{ matrix.rid }}
           path: dist/*
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 30
 
   gui-package:
     name: gui-package (${{ matrix.rid }})
@@ -502,7 +503,7 @@ jobs:
           name: oop-design-checker-gui-${{ matrix.rid }}
           path: dist-gui/*
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 30
 
   release:
     name: create-release
