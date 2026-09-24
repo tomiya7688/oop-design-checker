@@ -83,6 +83,8 @@ jobs:
     name: release-packages-and-exact-fixture
     if: github.event_name == 'workflow_dispatch'
     needs: ci
+    permissions:
+      contents: write
     uses: ./.github/workflows/release.yml
 
   native-ui:
