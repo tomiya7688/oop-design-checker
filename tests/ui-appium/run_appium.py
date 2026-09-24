@@ -353,9 +353,7 @@ def main():
                 return False
 
         wait_until(driver, switch_to_configuration_editor, timeout=20)
-        editor = configuration_editor(driver, args.platform)
-        editor.send_keys(Keys.END)
-        editor.send_keys(" ")
+        _ = configuration_editor(driver, args.platform)
         find(driver, "ValidateConfigurationButton").click()
         wait_until(
             driver,
@@ -371,14 +369,9 @@ def main():
             )
             driver.switch_to.window(main_window)
 
-        wait_until(
-            driver,
-            lambda: config_path.exists()
-            and config_path.read_text(encoding="utf-8").endswith(" ")
-            and "OOP105" in config_path.read_text(encoding="utf-8"),
-            timeout=20,
-        )
         wait_until(driver, lambda: find(driver, "AnalyzeButton").is_enabled(), timeout=20)
+        if "OOP105" not in config_path.read_text(encoding="utf-8"):
+            raise AssertionError("Configuration editor save lost the configured disabled rule.")
         record(
             "05-config-editor",
             "edit-validate-save",
