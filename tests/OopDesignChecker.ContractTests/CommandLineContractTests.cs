@@ -247,7 +247,7 @@ public sealed class CommandLineContractTests
 
             Assert.Equal(1, result.ExitCode);
             Assert.True(File.Exists(output));
-            Assert.Contains(""ruleId": "OOP106"", File.ReadAllText(output), StringComparison.Ordinal);
+            Assert.Contains("\\\"ruleId\\\": \\\"OOP106\\\"", File.ReadAllText(output), StringComparison.Ordinal);
         });
     }
 
