@@ -15,10 +15,7 @@ public sealed class CommandLineContractTests
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Options);
-        Assert.Equal(
-            Path.GetFullPath(Directory.GetCurrentDirectory()),
-            result.Options.TargetPath
-        );
+        Assert.Equal(Path.GetFullPath(Directory.GetCurrentDirectory()), result.Options.TargetPath);
     }
 
     [Theory]
@@ -219,10 +216,7 @@ public sealed class CommandLineContractTests
 
             Assert.Equal(0, RunCommand([clean, "--fail-on", "danger"]).ExitCode);
             Assert.Equal(1, RunCommand([danger, "--fail-on", "danger"]).ExitCode);
-            Assert.Equal(
-                2,
-                RunCommand([Path.Combine(root, "missing-target")]).ExitCode
-            );
+            Assert.Equal(2, RunCommand([Path.Combine(root, "missing-target")]).ExitCode);
         });
     }
 
