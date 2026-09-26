@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker.Tests", "t
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker.Gui.HeadlessTests", "tests\OopDesignChecker.Gui.HeadlessTests\OopDesignChecker.Gui.HeadlessTests.csproj", "{C472AD52-4D6C-49B1-A57A-C80748EC52B4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OopDesignChecker.ContractTests", "tests\\OopDesignChecker.ContractTests\\OopDesignChecker.ContractTests.csproj", "{9F51A69A-1288-4428-BE51-CB4EC65F4540}"
+EndProject
 Global
     GlobalSection(SolutionConfigurationPlatforms) = preSolution
         Debug|Any CPU = Debug|Any CPU
