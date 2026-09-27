@@ -6,6 +6,22 @@
 
 > 対象version: **1.0.0**。この文書は1.0.0で実装されるC# ruleの正本です。
 
+## 本文原則との関係
+
+この文書は補助toolの実装仕様です。OOPの定義そのものはrepository rootの[オブジェクト指向設計の定義](../../../docs/object-oriented-design.md)を正とします。
+
+ruleは本文原則を静的解析へ写像したsignalであり、「ruleで検知できる範囲 = OOPのすべて」ではありません。
+
+代表的なmapping:
+
+- encapsulation / invariant / state ownership: OOP101, OOP106, OOP107, OOP108, OOP402, OOP405
+- polymorphism / abstraction: OOP001, OOP002, OOP003, OOP305, OOP306
+- inheritance / composition: OOP102, OOP301, OOP302, OOP303, OOP304, OOP307
+- object integrity / behavior ownership: OOP103, OOP104, OOP105, OOP201, OOP401, OOP402, OOP405
+- dependency / object boundary / navigation: OOP305, OOP306, OOP403, OOP404
+
+静的に十分な根拠を得られない原則は無理にdiagnostic化せず、本文だけに存在しても構いません。
+
 この文書は、1.0.0で実装・release gateされるチェック内容とseverity、既知の除外境界、設定契約を定義します。概念上の将来候補は「実装済みrule」として扱いません。
 
 ## 1.0.0 rule catalog
