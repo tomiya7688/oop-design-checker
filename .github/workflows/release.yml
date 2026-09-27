@@ -7,17 +7,18 @@ on:
   pull_request:
     paths:
       - '.github/workflows/release.yml'
-      - 'Directory.Build.props'
-      - 'CHANGELOG.md'
-      - 'CHANGELOG.en.md'
-      - 'src/OopDesignChecker/**'
-      - 'src/frontends/cui/**'
-      - 'src/frontends/gui/**'
-      - 'tests/**'
-      - 'oop-design-checker.example.json'
+      - 'tools/oop-design-checker/Directory.Build.props'
+      - 'tools/oop-design-checker/CHANGELOG.md'
+      - 'tools/oop-design-checker/CHANGELOG.en.md'
+      - 'tools/oop-design-checker/src/OopDesignChecker/**'
+      - 'tools/oop-design-checker/tools/oop-design-checker/src/frontends/cui/**'
+      - 'tools/oop-design-checker/tools/oop-design-checker/src/frontends/gui/**'
+      - 'tools/oop-design-checker/tests/**'
+      - 'tools/oop-design-checker/oop-design-checker.example.json'
       - 'README.md'
       - 'README.en.md'
-      - 'specification/**'
+      - 'docs/**'
+      - 'tools/oop-design-checker/docs/**'
   workflow_dispatch:
   workflow_call:
 
@@ -38,7 +39,7 @@ jobs:
         id: version
         shell: bash
         run: |
-          version="$(sed -n 's:.*<VersionPrefix>\(.*\)</VersionPrefix>.*:\1:p' Directory.Build.props | head -n 1)"
+          version="$(sed -n 's:.*<VersionPrefix>\(.*\)</VersionPrefix>.*:\1:p' tools/oop-design-checker/Directory.Build.props | head -n 1)"
           if [[ -z "$version" ]]; then
             echo "Could not read VersionPrefix from Directory.Build.props." >&2
             exit 1
@@ -65,7 +66,7 @@ jobs:
 
       - name: Publish checker for fixture validation
         run: >-
-          dotnet publish src/frontends/cui/OopDesignChecker.Cui.csproj
+          dotnet publish tools/oop-design-checker/src/frontends/cui/OopDesignChecker.Cui.csproj
           -c Release
           --self-contained false
           --output publish/release-fixture
@@ -87,9 +88,9 @@ jobs:
       - name: Validate release fixture exact expectations
         shell: pwsh
         run: |
-          ./tests/release/ReleaseFixtureExact.ps1 `
+          ./tools/oop-design-checker/tests/release/ReleaseFixtureExact.ps1 `
             -Checker "publish/release-fixture/oop-design-checker-cui" `
-            -FixtureRoot "tests/fixtures/release-validation-csharp" `
+            -FixtureRoot "tools/oop-design-checker/tests/fixtures/release-validation-csharp" `
             -ArtifactRoot (Join-Path $env:RUNNER_TEMP "release-fixture-exact")
 
       - name: Upload release fixture evidence
@@ -139,7 +140,7 @@ jobs:
 
       - name: Publish CUI
         run: >-
-          dotnet publish src/frontends/cui/OopDesignChecker.Cui.csproj
+          dotnet publish tools/oop-design-checker/src/frontends/cui/OopDesignChecker.Cui.csproj
           -c Release
           -r ${{ matrix.rid }}
           --self-contained true
@@ -197,7 +198,7 @@ jobs:
             $checker = Join-Path "publish/${{ matrix.rid }}" "oop-design-checker-cui"
           }
 
-          ./tests/release/PackagedCuiE2e.ps1 `
+          ./tools/oop-design-checker/tests/release/PackagedCuiE2e.ps1 `
             -Checker $checker `
             -Root (Join-Path $env:RUNNER_TEMP "oop-checker-release-smoke-publish") `
             -ExpectedVersion $env:PACKAGE_VERSION
@@ -205,12 +206,14 @@ jobs:
       - name: Add documentation and configuration example
         shell: bash
         run: |
-          cp README.md publish/${{ matrix.rid }}/README.md
-          cp README.en.md publish/${{ matrix.rid }}/README.en.md
-          cp CHANGELOG.md publish/${{ matrix.rid }}/CHANGELOG.md
-          cp CHANGELOG.en.md publish/${{ matrix.rid }}/CHANGELOG.en.md
-          cp oop-design-checker.example.json publish/${{ matrix.rid }}/oop-design-checker.example.json
-          cp -R specification publish/${{ matrix.rid }}/specification
+          cp tools/oop-design-checker/README.md publish/${{ matrix.rid }}/README.md
+          cp tools/oop-design-checker/README.en.md publish/${{ matrix.rid }}/README.en.md
+          cp tools/oop-design-checker/CHANGELOG.md publish/${{ matrix.rid }}/CHANGELOG.md
+          cp tools/oop-design-checker/CHANGELOG.en.md publish/${{ matrix.rid }}/CHANGELOG.en.md
+          cp tools/oop-design-checker/oop-design-checker.example.json publish/${{ matrix.rid }}/oop-design-checker.example.json
+          cp -R tools/oop-design-checker/docs publish/${{ matrix.rid }}/docs
+          mkdir -p publish/${{ matrix.rid }}/docs/definition
+          cp docs/object-oriented-design*.md publish/${{ matrix.rid }}/docs/definition/
 
       - name: Package Windows archive
         if: matrix.archive == 'zip'
@@ -260,7 +263,7 @@ jobs:
             $checker = Join-Path $extractRoot "oop-design-checker-cui"
           }
 
-          ./tests/release/PackagedCuiE2e.ps1 `
+          ./tools/oop-design-checker/tests/release/PackagedCuiE2e.ps1 `
             -Checker $checker `
             -Root (Join-Path $env:RUNNER_TEMP "oop-checker-release-smoke-archive") `
             -ExpectedVersion $env:PACKAGE_VERSION
@@ -346,7 +349,7 @@ jobs:
 
       - name: Publish GUI
         run: >-
-          dotnet publish src/frontends/gui/OopDesignChecker.Gui.csproj
+          dotnet publish tools/oop-design-checker/src/frontends/gui/OopDesignChecker.Gui.csproj
           -c Release
           -r ${{ matrix.rid }}
           --self-contained true
@@ -402,17 +405,19 @@ jobs:
             $gui = Join-Path "publish/gui/${{ matrix.rid }}" "oop-design-checker-gui"
           }
 
-          ./tests/release/PackagedGuiSmoke.ps1 -Gui $gui -ExpectedVersion $env:PACKAGE_VERSION
+          ./tools/oop-design-checker/tests/release/PackagedGuiSmoke.ps1 -Gui $gui -ExpectedVersion $env:PACKAGE_VERSION
 
       - name: Add documentation and configuration example
         shell: bash
         run: |
-          cp README.md publish/gui/${{ matrix.rid }}/README.md
-          cp README.en.md publish/gui/${{ matrix.rid }}/README.en.md
-          cp CHANGELOG.md publish/gui/${{ matrix.rid }}/CHANGELOG.md
-          cp CHANGELOG.en.md publish/gui/${{ matrix.rid }}/CHANGELOG.en.md
-          cp oop-design-checker.example.json publish/gui/${{ matrix.rid }}/oop-design-checker.example.json
-          cp -R specification publish/gui/${{ matrix.rid }}/specification
+          cp tools/oop-design-checker/README.md publish/gui/${{ matrix.rid }}/README.md
+          cp tools/oop-design-checker/README.en.md publish/gui/${{ matrix.rid }}/README.en.md
+          cp tools/oop-design-checker/CHANGELOG.md publish/gui/${{ matrix.rid }}/CHANGELOG.md
+          cp tools/oop-design-checker/CHANGELOG.en.md publish/gui/${{ matrix.rid }}/CHANGELOG.en.md
+          cp tools/oop-design-checker/oop-design-checker.example.json publish/gui/${{ matrix.rid }}/oop-design-checker.example.json
+          cp -R tools/oop-design-checker/docs publish/gui/${{ matrix.rid }}/docs
+          mkdir -p publish/gui/${{ matrix.rid }}/docs/definition
+          cp docs/object-oriented-design*.md publish/gui/${{ matrix.rid }}/docs/definition/
 
       - name: Package GUI Windows archive
         if: matrix.archive == 'zip'
@@ -460,7 +465,7 @@ jobs:
             $gui = Join-Path $extractRoot "oop-design-checker-gui"
           }
 
-          ./tests/release/PackagedGuiSmoke.ps1 -Gui $gui -ExpectedVersion $env:PACKAGE_VERSION
+          ./tools/oop-design-checker/tests/release/PackagedGuiSmoke.ps1 -Gui $gui -ExpectedVersion $env:PACKAGE_VERSION
 
       - name: Generate GUI archive checksum
         shell: bash
