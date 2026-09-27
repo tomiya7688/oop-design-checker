@@ -10,10 +10,7 @@ on:
       - '.github/workflows/ui-appium.yml'
       - '.github/workflows/ui-ai-panel.yml'
       - 'tools/oop-design-checker/tests/release/BuildUiReleaseEvidence.py'
-      python tools/oop-design-checker/tests/release/ValidateReleaseCandidatePrerequisites.py \
-        --root tools/oop-design-checker \
-        --repository-root . \
-        --output candidate-prerequisites.json
+      - 'tools/oop-design-checker/tests/release/ValidateReleaseCandidatePrerequisites.py'
       - 'tools/oop-design-checker/tests/release/test_build_ui_release_evidence.py'
       - 'tools/oop-design-checker/tests/release/test_release_candidate_prerequisites.py'
       - 'tools/oop-design-checker/tests/ui-ai-judge/**'
@@ -64,7 +61,8 @@ jobs:
       - name: Validate 1.0.0 release prerequisites
         run: >-
           python tools/oop-design-checker/tests/release/ValidateReleaseCandidatePrerequisites.py
-          --root .
+          --root tools/oop-design-checker
+          --repository-root .
           --output candidate-prerequisites.json
 
       - name: Upload prerequisite evidence
