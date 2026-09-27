@@ -11,17 +11,20 @@ NOTICE_CANDIDATES = (
     "THIRD-PARTY-NOTICES.txt",
     "THIRD-PARTY-NOTICES",
 )
-SPEC_FILES = (
-    ("specification/object-oriented-design.md", "ドラフト"),
-    ("specification/check-rules.md", "ドラフト"),
-    ("specification/object-oriented-design.en.md", "draft"),
-    ("specification/check-rules.en.md", "draft"),
+TOOL_SPEC_FILES = (
+    ("docs/check-rules.md", "ドラフト"),
+    ("docs/check-rules.en.md", "draft"),
+)
+REPOSITORY_SPEC_FILES = (
+    ("docs/object-oriented-design.md", "ドラフト"),
+    ("docs/object-oriented-design.en.md", "draft"),
 )
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
+    parser.add_argument("--repository-root")
     parser.add_argument("--output")
     return parser.parse_args()
 
@@ -53,8 +56,9 @@ def changelog_has_version(path):
     return pattern.search(path.read_text(encoding="utf-8-sig")) is not None
 
 
-def check(root):
+def check(root, repository_root=None):
     checks = []
+    repository_root = repository_root or root
 
     version = declared_version(root)
     checks.append({
@@ -63,7 +67,7 @@ def check(root):
         "detail": f"VersionPrefix={version!r}; expected {TARGET_VERSION!r}.",
     })
 
-    license_path = root / "LICENSE"
+    license_path = repository_root / "LICENSE"
     checks.append({
         "id": "RC-LICENSE",
         "passed": non_empty_file(license_path),
@@ -71,7 +75,12 @@ def check(root):
     })
 
     notice = next(
-        (root / name for name in NOTICE_CANDIDATES if non_empty_file(root / name)),
+        (
+            candidate
+            for name in NOTICE_CANDIDATES
+            for candidate in (root / name, repository_root / name)
+            if non_empty_file(candidate)
+        ),
         None,
     )
     checks.append({
@@ -84,15 +93,19 @@ def check(root):
         ),
     })
 
-    for relative, draft_marker in SPEC_FILES:
-        path = root / relative
-        heading = first_heading(path) if path.exists() else ""
-        passed = bool(heading) and draft_marker.casefold() not in heading.casefold()
-        checks.append({
-            "id": "RC-SPEC-" + Path(relative).stem.upper().replace(".", "-"),
-            "passed": passed,
-            "detail": f"{relative} heading: {heading!r}; draft marker must be absent.",
-        })
+    for base, files in (
+        (root, TOOL_SPEC_FILES),
+        (repository_root, REPOSITORY_SPEC_FILES),
+    ):
+        for relative, draft_marker in files:
+            path = base / relative
+            heading = first_heading(path) if path.exists() else ""
+            passed = bool(heading) and draft_marker.casefold() not in heading.casefold()
+            checks.append({
+                "id": "RC-SPEC-" + Path(relative).stem.upper().replace(".", "-"),
+                "passed": passed,
+                "detail": f"{relative} heading: {heading!r}; draft marker must be absent.",
+            })
 
     for relative in ("CHANGELOG.md", "CHANGELOG.en.md"):
         checks.append({
@@ -107,7 +120,12 @@ def check(root):
 def main():
     args = parse_args()
     root = Path(args.root).resolve()
-    checks = check(root)
+    repository_root = (
+        Path(args.repository_root).resolve()
+        if args.repository_root
+        else root
+    )
+    checks = check(root, repository_root)
     result = {
         "version": 1,
         "targetVersion": TARGET_VERSION,
