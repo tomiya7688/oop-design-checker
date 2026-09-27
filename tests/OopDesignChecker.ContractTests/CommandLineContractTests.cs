@@ -92,19 +92,16 @@ public sealed class CommandLineContractTests
     }
 
     [Theory]
-    [InlineData("text", DiagnosticOutputFormat.Text)]
-    [InlineData("json", DiagnosticOutputFormat.Json)]
-    [InlineData("sarif", DiagnosticOutputFormat.Sarif)]
-    [InlineData("github", DiagnosticOutputFormat.GitHub)]
-    public void OutputFormatAcceptsEveryNamedValue(
-        string value,
-        DiagnosticOutputFormat expected
-    )
+    [InlineData("text", "Text")]
+    [InlineData("json", "Json")]
+    [InlineData("sarif", "Sarif")]
+    [InlineData("github", "GitHub")]
+    public void OutputFormatAcceptsEveryNamedValue(string value, string expected)
     {
         var result = CommandLineOptionsParser.Parse(["--format", value]);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(expected, result.Options!.OutputFormat);
+        Assert.Equal(expected, result.Options!.OutputFormat.ToString());
     }
 
     [Theory]
