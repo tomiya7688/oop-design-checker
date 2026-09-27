@@ -4,11 +4,12 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+REPOSITORY_ROOT = ROOT.parent.parent
 RULES_DIR = ROOT / "src" / "OopDesignChecker" / "Rules"
-JA_RULES = ROOT / "specification" / "check-rules.md"
-EN_RULES = ROOT / "specification" / "check-rules.en.md"
-JA_DESIGN = ROOT / "specification" / "object-oriented-design.md"
-EN_DESIGN = ROOT / "specification" / "object-oriented-design.en.md"
+JA_RULES = ROOT / "docs" / "check-rules.md"
+EN_RULES = ROOT / "docs" / "check-rules.en.md"
+JA_DESIGN = REPOSITORY_ROOT / "docs" / "object-oriented-design.md"
+EN_DESIGN = REPOSITORY_ROOT / "docs" / "object-oriented-design.en.md"
 MANIFEST = ROOT / "tests" / "fixtures" / "release-validation-csharp" / "expected-diagnostics.json"
 
 SEVERITY_NAME = {
@@ -65,21 +66,43 @@ def specification_rule_severities(path):
 
 
 def validate_titles_and_normative_markers():
-    documents = {
-        JA_DESIGN: ("ドラフト", "1.0.0", "この日本語版を正本"),
-        JA_RULES: ("ドラフト", "1.0.0", "この日本語版を正本"),
-        EN_DESIGN: ("Draft", "1.0.0", "Japanese specification is normative"),
-        EN_RULES: ("Draft", "1.0.0", "Japanese specification is normative"),
+    tool_documents = {
+        JA_RULES: ("ドラフト", "この日本語版を正本"),
+        EN_RULES: ("Draft", "Japanese specification is normative"),
     }
-    for path, (draft_marker, version_marker, normative_marker) in documents.items():
+    design_documents = {
+        JA_DESIGN: ("ドラフト", "この日本語版を正本"),
+        EN_DESIGN: ("Draft", "Japanese document is normative"),
+    }
+
+    for path, (draft_marker, normative_marker) in tool_documents.items():
         text = path.read_text(encoding="utf-8")
         first_line = text.splitlines()[0]
         if draft_marker in first_line:
             fail(f"{path}: draft marker remains in the specification title.")
-        if version_marker not in first_line:
-            fail(f"{path}: title does not identify the 1.0.0 snapshot.")
+        if "1.0.0" not in first_line:
+            fail(f"{path}: title does not identify the 1.0.0 checker snapshot.")
         if normative_marker not in text:
             fail(f"{path}: normative-language marker is missing.")
+
+    for path, (draft_marker, normative_marker) in design_documents.items():
+        text = path.read_text(encoding="utf-8")
+        first_line = text.splitlines()[0]
+        if draft_marker in first_line:
+            fail(f"{path}: draft marker remains in the design title.")
+        if "1.0.0" in first_line:
+            fail(f"{path}: conceptual design definition must not be versioned as checker 1.0.0.")
+        if normative_marker not in text:
+            fail(f"{path}: normative-language marker is missing.")
+
+    forbidden = ("Roslyn", "MSBuild", ".csproj", ".sln", "release fixture", "--fail-on")
+    for path in (JA_DESIGN, EN_DESIGN):
+        text = path.read_text(encoding="utf-8")
+        for token in forbidden:
+            if token.casefold() in text.casefold():
+                fail(f"{path}: checker-specific token leaked into normative design document: {token}")
+        if re.search(r"\bOOP\d{3}\b", text):
+            fail(f"{path}: checker rule IDs must not define the normative design document.")
 
 
 def validate_fixture(spec):

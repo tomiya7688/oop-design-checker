@@ -9,11 +9,11 @@ on:
       - '.github/workflows/release.yml'
       - '.github/workflows/ui-appium.yml'
       - '.github/workflows/ui-ai-panel.yml'
-      - 'tests/release/BuildUiReleaseEvidence.py'
-      - 'tests/release/ValidateReleaseCandidatePrerequisites.py'
-      - 'tests/release/test_build_ui_release_evidence.py'
-      - 'tests/release/test_release_candidate_prerequisites.py'
-      - 'tests/ui-ai-judge/**'
+      - 'tools/oop-design-checker/tests/release/BuildUiReleaseEvidence.py'
+      - 'tools/oop-design-checker/tests/release/ValidateReleaseCandidatePrerequisites.py'
+      - 'tools/oop-design-checker/tests/release/test_build_ui_release_evidence.py'
+      - 'tools/oop-design-checker/tests/release/test_release_candidate_prerequisites.py'
+      - 'tools/oop-design-checker/tests/ui-ai-judge/**'
 
 permissions:
   contents: read
@@ -32,9 +32,9 @@ jobs:
 
       - name: Test candidate evidence and prerequisite contracts
         run: |
-          python tests/release/test_build_ui_release_evidence.py -v
-          python tests/release/test_release_candidate_prerequisites.py -v
-          python -m py_compile             tests/release/BuildUiReleaseEvidence.py             tests/release/ValidateReleaseCandidatePrerequisites.py
+          python tools/oop-design-checker/tests/release/test_build_ui_release_evidence.py -v
+          python tools/oop-design-checker/tests/release/test_release_candidate_prerequisites.py -v
+          python -m py_compile             tools/oop-design-checker/tests/release/BuildUiReleaseEvidence.py             tools/oop-design-checker/tests/release/ValidateReleaseCandidatePrerequisites.py
 
   candidate:
     name: candidate-identity-and-prerequisites
@@ -60,8 +60,9 @@ jobs:
 
       - name: Validate 1.0.0 release prerequisites
         run: >-
-          python tests/release/ValidateReleaseCandidatePrerequisites.py
-          --root .
+          python tools/oop-design-checker/tests/release/ValidateReleaseCandidatePrerequisites.py
+          --root tools/oop-design-checker
+          --repository-root .
           --output candidate-prerequisites.json
 
       - name: Upload prerequisite evidence
@@ -121,7 +122,7 @@ jobs:
 
       - name: Build common AI evidence bundle
         run: >-
-          python tests/release/BuildUiReleaseEvidence.py
+          python tools/oop-design-checker/tests/release/BuildUiReleaseEvidence.py
           --windows candidate-input/windows
           --macos candidate-input/macos
           --headless candidate-input/headless
@@ -163,7 +164,7 @@ jobs:
         env:
           CANDIDATE_SHA: ${{ needs.candidate.outputs.candidate-sha }}
         run: |
-          version="$(sed -n 's:.*<VersionPrefix>\(.*\)</VersionPrefix>.*:\1:p' Directory.Build.props | head -n 1)"
+          version="$(sed -n 's:.*<VersionPrefix>\(.*\)</VersionPrefix>.*:\1:p' tools/oop-design-checker/Directory.Build.props | head -n 1)"
           cat > release-candidate-manifest.json <<JSON
           {
             "version": 1,
