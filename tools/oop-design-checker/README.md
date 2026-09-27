@@ -1,12 +1,12 @@
-# oop-design-checker
+# OOP Design Checker
 
 [English](README.en.md)
 
 > この日本語版を正本とします。英語版との間に差異がある場合は、日本語版を優先します。
 
-オブジェクト指向を採用するプロジェクトが、このリポジトリで定義したオブジェクト指向設計ルールに沿っているかを静的解析するチェッカーです。
+このtoolは、repository rootの[オブジェクト指向設計の定義](../../docs/object-oriented-design.md)を正本として、そのうち静的に観測できるsignalを補助確認するcheckerです。checkerは定義そのものではなく、検知できない原則も本文には存在します。
 
-チェッカー本体はC#で実装し、原則として自己違反を抑制せず、自分自身のルールを通過することを求めます。
+checker本体はC#で実装し、原則として自己違反を抑制せず、自分自身のruleを通過することを求めます。以下のcommand例は `tools/oop-design-checker/` をcurrent directoryとして記載します。
 
 ## フロントエンド
 
@@ -29,7 +29,7 @@
 
 最初の解析backendはC#を対象とし、RoslynとMSBuildを使用しています。`.csproj`、`.sln`、`.slnx`、複数のC# projectを含むdirectoryを解析する場合も、実際のproject compilationを保ちます。無関係なprojectを1つの仮想compilationへ混ぜることはしません。
 
-実装済みruleは[チェックルール仕様](specification/check-rules.md)で定義しています。カプセル化、継承、多態性、可視性、static state、operation complexity、object integrity、dependency、navigationなどを扱います。
+実装済みruleは[チェックルール仕様](docs/check-rules.md)で定義しています。カプセル化、継承、多態性、可視性、static state、operation complexity、object integrity、dependency、navigationなどを扱います。
 
 ## 品質ゲート
 
@@ -190,7 +190,7 @@ dotnet publish src/frontends/cui/OopDesignChecker.Cui.csproj -c Release -r win-x
 - [English README](README.en.md)
 - [Changelog（日本語・正本）](CHANGELOG.md)
 - [Changelog (English)](CHANGELOG.en.md)
-- [オブジェクト指向設計の定義](specification/object-oriented-design.md)
-- [チェックルール](specification/check-rules.md)
-- [Object-oriented design definition (English)](specification/object-oriented-design.en.md)
-- [Check rules (English)](specification/check-rules.en.md)
+- [オブジェクト指向設計の定義](../../docs/object-oriented-design.md)
+- [チェックルール](docs/check-rules.md)
+- [Object-oriented design definition (English)](../../docs/object-oriented-design.en.md)
+- [Check rules (English)](docs/check-rules.en.md)
