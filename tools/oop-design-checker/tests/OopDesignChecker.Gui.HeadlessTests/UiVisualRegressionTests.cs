@@ -81,6 +81,7 @@ public sealed class UiVisualRegressionTests
             window.UpdateSelectedDiagnosticForTesting();
             Flush();
             Assert.Contains("OOP106", window.TestView.DetailRule.Text, StringComparison.Ordinal);
+            StabilizeFixtureLocationForVisualBaseline(window, fixtureRoot, rows[0].FilePath);
             Capture(window, "filter-detail-oop106-ja", "ja");
 
             window.TestView.DangerFilter.IsChecked = true;
@@ -322,6 +323,36 @@ public sealed class UiVisualRegressionTests
             changedRatio <= MaximumChangedPixelRatio,
             $"Visual regression for {scenario}: {changedRatio:P3} pixels changed; "
                 + $"threshold is {MaximumChangedPixelRatio:P3}. Diff: {diffPath}"
+        );
+    }
+
+    private static void StabilizeFixtureLocationForVisualBaseline(
+        MainWindow window,
+        string fixtureRoot,
+        string sourcePath
+    )
+    {
+        if (!VisualRegressionRequested())
+        {
+            return;
+        }
+
+        // Golden images should validate UI layout, not the repository folder used to store
+        // the fixture. Keep the pre-migration visual path stable so moving the checker
+        // under tools/ does not create a false visual regression.
+        var repositoryRoot = Path.GetFullPath(Path.Combine(RepositoryRoot(), "..", ".."));
+        var relativePath = Path.GetRelativePath(fixtureRoot, sourcePath);
+        var stablePath = Path.Combine(
+            repositoryRoot,
+            "tests",
+            "fixtures",
+            "release-validation-csharp",
+            relativePath
+        );
+        window.TestView.DetailLocation.Text = window.TestView.DetailLocation.Text.Replace(
+            sourcePath,
+            stablePath,
+            StringComparison.Ordinal
         );
     }
 
