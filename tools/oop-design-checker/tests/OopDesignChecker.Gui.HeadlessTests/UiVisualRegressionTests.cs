@@ -349,11 +349,9 @@ public sealed class UiVisualRegressionTests
             "release-validation-csharp",
             relativePath
         );
-        window.TestView.DetailLocation.Text = window.TestView.DetailLocation.Text.Replace(
-            sourcePath,
-            stablePath,
-            StringComparison.Ordinal
-        );
+        window.TestView.DetailLocation.Text = (
+            window.TestView.DetailLocation.Text ?? string.Empty
+        ).Replace(sourcePath, stablePath, StringComparison.Ordinal);
     }
 
     private static bool VisualRegressionRequested() =>
