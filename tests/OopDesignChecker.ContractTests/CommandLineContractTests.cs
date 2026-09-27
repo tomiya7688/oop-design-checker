@@ -252,7 +252,8 @@ public sealed class CommandLineContractTests
         WithTemporaryDirectory(root =>
         {
             var source = Path.Combine(root, "Clean.cs");
-            var output = Path.Combine(root, "missing-directory", "diagnostics.json");
+            var output = Path.Combine(root, "output-target");
+            Directory.CreateDirectory(output);
             File.WriteAllText(
                 source,
                 "internal sealed class Clean { private int _value; public int Value => _value; }"
