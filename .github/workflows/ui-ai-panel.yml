@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/ui-ai-panel.yml'
-      - 'tools/oop-design-checker/tools/oop-design-checker/tests/ui-ai-judge/**'
+      - 'tools/oop-design-checker/tests/ui-ai-judge/**'
   workflow_dispatch:
     inputs:
       evidence_run_id:
@@ -62,7 +62,7 @@ jobs:
 
       - name: Test schemas, provider failure handling, and consensus policy
         run: |
-          python -m unittest discover -s tests/ui-ai-judge -p 'test_*.py' -v
+          python -m unittest discover -s tools/oop-design-checker/tests/ui-ai-judge -p 'test_*.py' -v
           python -m py_compile tools/oop-design-checker/tests/ui-ai-judge/judge.py tools/oop-design-checker/tests/ui-ai-judge/aggregate.py
 
   provider:
