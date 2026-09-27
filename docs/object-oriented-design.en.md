@@ -1,88 +1,136 @@
-# Object-Oriented Design Definition — 1.0.0 Normative Specification
+# Object-Oriented Design Definition
 
 [日本語（正本）](object-oriented-design.md)
 
-> The Japanese specification is normative. If this English translation differs from the Japanese version, the Japanese version takes precedence.
+> The Japanese document is normative. If this English translation differs from the Japanese version, the Japanese version takes precedence.
 
-> Target version: **1.0.0**. This document is the normative design snapshot for the 1.0.0 release.
+## Status of this document
 
-## 1.0.0 scope
+This document describes **the definition of object-oriented design adopted by this project**.
 
-The only analysis backend formally implemented and supported by 1.0.0 is **C#**. It uses Roslyn/MSBuild and accepts loose `.cs` files, `.csproj`, `.sln`, `.slnx`, and directories containing C# projects.
+OOP has multiple historical and practical interpretations. This document does not claim to be the one universally correct definition. It states a project-specific position so design decisions can be discussed consistently.
 
-The design principles in this document avoid language-specific syntax where practical, but an analysis is considered "implemented" in 1.0.0 only when the C# backend provides it. C++, Go, Python, and mixed-language analysis are outside the 1.0.0 contract.
+The concepts are not derived from the constraints of any particular programming language, framework, or tool.
 
-## Nature of static-analysis judgments
+## What is an object?
 
-The rule set combines conditions that can be established deterministically from compiler information with heuristic design signals.
+An object is not merely "a value instantiated from a class." It is a **boundary that owns state, behavior, and invariants for a coherent conceptual responsibility**.
 
-- A diagnostic is a design finding supported by statically observable evidence.
-- A heuristic rule may intentionally produce no diagnostic when the conceptual problem cannot be established with sufficient static evidence.
-- Known legitimate boundaries such as data carriers, framework contracts, external libraries, and composition roots are excluded where applicable to reduce false positives.
-- Severity represents **design impact**, not detection confidence. When confidence is insufficient, the analyzer should normally refrain from reporting rather than merely lower the severity.
-- The implemented 1.0.0 detection boundary is regression-locked by `tests/fixtures/release-validation-csharp/` and the release CI exact expectations.
+Identity may matter for some objects while value equality matters for others. What matters is that ownership, external promises, and hidden internal details are clear.
 
+## Ownership of state and behavior
 
-This repository defines its own checkable interpretation of object-oriented design.
-
-The checker does not judge whether OOP itself is good or bad. It analyzes whether a project that claims to use object-oriented design follows the rules defined here.
-
-## Fundamental principles
-
-The primary checks are derived from the three basic OOP principles:
-
-- Encapsulation
-- Inheritance
-- Polymorphism
-
-The checker may also use supporting structural rules when they are necessary to make those principles work in actual code.
+- Keep state near the behavior that understands its meaning and constraints where practical.
+- Do not scatter state-transition rules across unrelated callers; let the owner provide the operations that change its state.
+- Even stateless behavior should have a clear conceptual owner.
+- Mechanically separating "data" from "processing" does not by itself make a design object-oriented.
 
 ## Encapsulation
 
-- Internal mutable state should not be exposed more than necessary.
-- Visibility should be the minimum required by actual usage.
-- Public setters, fields, collections, and methods should exist only when external access is truly required.
-- An object should preserve its own valid state and invariants where practical.
-- External classes should not need to manipulate another object's internal representation directly.
+Encapsulation is more than applying a private modifier.
 
-## Inheritance
+- Separate internal representation from the contract consumers need.
+- Do not expose mutable state more widely than necessary.
+- Reduce paths that let callers bypass invariants and mutate internals directly.
+- Public APIs should express what can be done while minimizing reliance on how data is stored.
+- Keep visibility no wider than required for real collaboration.
 
-- Inheritance should represent a meaningful parent/child relationship, not merely code reuse.
-- A child should make meaningful use of the parent contract.
-- A child that disables or rejects major parts of the parent behavior is suspicious.
-- Inheritance depth and unnecessary extensibility should be detected.
-- Types that are not intended to be inherited should be candidates for sealed form where supported.
+## Object invariants and integrity
+
+An object should preserve its valid state where practical.
+
+- Do not expose unrestricted operations that can freely create invalid states.
+- When several pieces of state must remain consistent, place operations that preserve that consistency at the owning boundary.
+- Reconsider ownership when an external service must manipulate an object's state in a particular sequence for the object to remain valid.
+- When external orchestration is necessary, make the reason and responsibility boundary explicit.
+
+## Object boundaries
+
+A useful object boundary separates internal detail from external collaboration.
+
+- Avoid designs that require callers to navigate deeply through another object's internals.
+- Ask collaborators for capabilities instead of obtaining their internal data structures and performing their work externally.
+- Moving data across a boundary is not inherently wrong. The concern is persistent external dependence on internal representation.
 
 ## Polymorphism
 
-- Types that are clearly handled as the same conceptual kind should have an appropriate common abstraction.
-- Repeated type checks and large type-switch branches are candidates for polymorphic replacement.
-- Callers should not routinely bypass a shared abstraction by depending directly on concrete child types.
-- Interfaces, abstract classes, traits, protocols, or equivalent abstractions should only be introduced when they represent a real shared concept.
+Polymorphism means **multiple implementations can provide behavior through the same meaningful conceptual contract**.
 
-## Object integrity and supporting structure
+- Consider a shared contract for things that are genuinely handled as the same kind.
+- Prefer delegating behavior to the participating object when callers would otherwise enumerate concrete types repeatedly.
+- Do not invent abstractions solely to claim polymorphism; the shared contract must have meaning.
 
-- A class may have multiple behaviors. The checker does not enforce one class = one responsibility.
-- The checker should warn when multiple clearly independent objects appear to be packed into one class.
-- State and the behavior that conceptually owns that state should not be split apart without a clear reason.
-- Data-only objects with all meaningful behavior moved into an external service may be flagged as an anemic-object candidate, while DTOs and similar transport models must remain valid use cases.
-- Classes with no meaningful instance state should be candidates for static form where the language supports it, unless instance identity, polymorphism, DI, or extensibility gives the instance meaning.
-- Stateful static classes that become global mutable state should be warned about.
-- Very large primary operations should be decomposed into meaningful functions when their internal complexity indicates multiple processing phases.
-- Dependency relationships should remain explicit and reasonably bounded; an object should not know about unrelated subsystems without need.
+## Abstraction
 
-## Checker implementation policy
+Abstraction hides implementation detail and expresses the conceptual contract consumers need.
 
-The checker itself is written in C# and must follow the object-oriented design rules defined by this project strictly.
+- Do not measure abstraction quality by the presence of interfaces or abstract classes alone.
+- Avoid ceremonial abstractions that do not represent a real shared concept.
+- Abstract when hiding implementation improves changeability, substitutability, or comprehension.
+- Do not ban an abstraction merely because it currently has one implementation; judge whether the boundary itself is meaningful.
 
-The checker is treated as a primary self-test target. A rule that the checker reports against its own implementation should be regarded as a defect in either the implementation, the rule definition, or the analyzer accuracy and must be reviewed rather than ignored by default.
+## Inheritance and composition
 
-The implementation should therefore prefer clear object boundaries, appropriate abstractions, minimal visibility, correct use of static/sealed modifiers, meaningful function decomposition, and explicit dependency relationships.
+Inheritance is a strong relationship that carries "is-a" meaning and inherited contract.
 
-## Non-goals
+- Do not choose inheritance merely for code reuse.
+- A child used as its parent should meaningfully satisfy the parent's contract.
+- Reconsider the relationship when children routinely reject or disable major parent operations.
+- Prefer composition when the goal is to combine or replace independent roles.
+- Neither inheritance nor composition is universally correct; choose based on meaning and expected direction of change.
 
-- Do not define SOLID as identical to OOP.
-- Do not reject classes only because they are large.
-- Do not force interfaces mechanically.
-- Do not enforce one class = one responsibility.
-- Do not treat every data-only type as invalid; DTO/value/serialization models are legitimate when their role is explicit.
+## Dependencies
+
+A dependency is a collaboration relationship between objects.
+
+- Knowing required collaborators is not inherently a problem.
+- Avoid broad dependency on unrelated subsystems that imports many unrelated reasons to change.
+- Consider directing dependencies toward conceptually stable boundaries.
+- Separate creation responsibility from use responsibility when useful.
+- Dependency injection or any particular wiring mechanism is not itself the definition of OOP.
+
+## Object integrity and multiple responsibilities
+
+This project does not define OOP as "one class = one responsibility."
+
+An object may have many behaviors when they remain coherent around the same state, invariants, and identity.
+
+Conversely, when multiple concepts do not share state or behavior and change independently but are merely packed into one class, their object boundaries may deserve separation.
+
+## Intentional data carriers, values, and DTOs
+
+Not every type needs rich behavior.
+
+Data-centered types can be legitimate, including:
+
+- DTOs, messages, and serialization models
+- immutable values
+- query results and projections
+- data contracts crossing boundaries
+- data shapes required by a framework
+
+The important distinction is whether being a data carrier is the intended role, or whether behavior and invariants that belong to an object were accidentally pushed outside it.
+
+## What this project does not equate with OOP
+
+None of the following, by itself, defines OOP here:
+
+- SOLID compliance
+- class or method line counts
+- number of interfaces
+- number of design patterns
+- use of a dependency-injection container
+- making everything a class
+- "one class = one responsibility"
+- presence of getters/setters
+- use of inheritance itself
+
+These can affect design quality in context, but they do not replace the meaning of object boundaries, ownership, contracts, and collaboration.
+
+## Trade-offs and non-goals
+
+- Performance, interoperability, framework contracts, serialization, memory layout, and similar constraints may make an ideal object boundary impractical.
+- The goal is not zero exceptions; it is clear reasons and clear responsibility for exceptions.
+- Other paradigms such as functional programming and data-oriented design are not rejected.
+- Do not force this definition onto parts of a system that intentionally do not use OOP.
+- Fully automating design judgment is not a goal.
