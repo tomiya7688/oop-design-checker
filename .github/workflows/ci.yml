@@ -133,7 +133,7 @@ jobs:
           rm oop-annotation-sample.cs
 
       - name: Solution loading smoke test
-        run: dotnet run --project tools/oop-design-checker/src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- OopDesignChecker.sln --fail-on danger
+        run: dotnet run --project tools/oop-design-checker/src/frontends/cui/OopDesignChecker.Cui.csproj -c Release --no-build -- tools/oop-design-checker/OopDesignChecker.sln --fail-on danger
 
       - name: SLNX loading smoke test
         shell: bash
