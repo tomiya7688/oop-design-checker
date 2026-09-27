@@ -4,10 +4,10 @@ on:
   pull_request:
     paths:
       - '.github/workflows/ui-appium.yml'
-      - 'src/OopDesignChecker/**'
-      - 'src/frontends/gui/**'
-      - 'tests/fixtures/release-validation-csharp/**'
-      - 'tests/ui-appium/**'
+      - 'tools/oop-design-checker/src/OopDesignChecker/**'
+      - 'tools/oop-design-checker/src/frontends/gui/**'
+      - 'tools/oop-design-checker/tests/fixtures/release-validation-csharp/**'
+      - 'tools/oop-design-checker/tests/ui-appium/**'
   workflow_dispatch:
   workflow_call:
 
@@ -54,13 +54,13 @@ jobs:
       - name: Test macOS bundle contract
         shell: bash
         run: |
-          python -m unittest discover -s tests/ui-appium -p 'test_*.py' -v
-          python -m py_compile tests/ui-appium/run_appium.py
+          python -m unittest discover -s tools/oop-design-checker/tests/ui-appium -p 'test_*.py' -v
+          python -m py_compile tools/oop-design-checker/tests/ui-appium/run_appium.py
 
       - name: Publish GUI under test
         shell: pwsh
         run: |
-          dotnet publish src/frontends/gui/OopDesignChecker.Gui.csproj `
+          dotnet publish tools/oop-design-checker/src/frontends/gui/OopDesignChecker.Gui.csproj `
             -c Release `
             -r ${{ matrix.rid }} `
             --self-contained true `
@@ -97,12 +97,14 @@ jobs:
       - name: Build and extract GUI release archive
         shell: pwsh
         run: |
-          Copy-Item README.md publish/ui-appium/README.md
-          Copy-Item README.en.md publish/ui-appium/README.en.md
-          Copy-Item CHANGELOG.md publish/ui-appium/CHANGELOG.md
-          Copy-Item CHANGELOG.en.md publish/ui-appium/CHANGELOG.en.md
-          Copy-Item oop-design-checker.example.json publish/ui-appium/oop-design-checker.example.json
-          Copy-Item specification publish/ui-appium/specification -Recurse
+          Copy-Item tools/oop-design-checker/README.md publish/ui-appium/README.md
+          Copy-Item tools/oop-design-checker/README.en.md publish/ui-appium/README.en.md
+          Copy-Item tools/oop-design-checker/CHANGELOG.md publish/ui-appium/CHANGELOG.md
+          Copy-Item tools/oop-design-checker/CHANGELOG.en.md publish/ui-appium/CHANGELOG.en.md
+          Copy-Item tools/oop-design-checker/oop-design-checker.example.json publish/ui-appium/oop-design-checker.example.json
+          Copy-Item tools/oop-design-checker/docs publish/ui-appium/docs -Recurse
+          New-Item -ItemType Directory -Force -Path publish/ui-appium/docs/definition | Out-Null
+          Copy-Item docs/object-oriented-design*.md publish/ui-appium/docs/definition/
 
           $archiveRoot = Join-Path $env:RUNNER_TEMP "ui-appium-release"
           $extractRoot = Join-Path $env:RUNNER_TEMP "ui-appium-extracted"
@@ -136,7 +138,7 @@ jobs:
         shell: bash
         run: |
           version="$("$UI_RELEASE_EXTRACT_ROOT/oop-design-checker-gui" --version)"
-          python tests/ui-appium/macos_bundle.py \
+          python tools/oop-design-checker/tests/ui-appium/macos_bundle.py \
             --publish "$UI_RELEASE_EXTRACT_ROOT" \
             --bundle publish/OopDesignChecker.app \
             --version "$version"
@@ -146,7 +148,7 @@ jobs:
         shell: bash
         run: |
           npm install --global appium@3
-          python -m pip install --requirement tests/ui-appium/requirements.txt
+          python -m pip install --requirement tools/oop-design-checker/tests/ui-appium/requirements.txt
 
       - name: Install Windows Appium driver
         if: matrix.platform == 'windows'
@@ -193,10 +195,10 @@ jobs:
             $gui = "publish/OopDesignChecker.app"
           }
 
-          python tests/ui-appium/run_appium.py `
+          python tools/oop-design-checker/tests/ui-appium/run_appium.py `
             --platform ${{ matrix.platform }} `
             --app $gui `
-            --fixture tests/fixtures/release-validation-csharp `
+            --fixture tools/oop-design-checker/tests/fixtures/release-validation-csharp `
             --evidence (Join-Path $env:RUNNER_TEMP "ui-appium-evidence")
 
       - name: Show Appium failure details
