@@ -1,12 +1,12 @@
-# oop-design-checker
+# OOP Design Checker
 
 [日本語（正本）](README.md)
 
 > The Japanese documentation is normative. If this English translation differs from the Japanese version, the Japanese version takes precedence.
 
-Static-analysis tool for checking whether an object-oriented project follows the object-oriented design rules defined by this repository.
+This tool is an auxiliary static analyzer mapped to the repository-root [Object-Oriented Design Definition](../../docs/object-oriented-design.en.md). The document is normative; the checker is not the definition itself, and some principles are intentionally not mechanically checkable.
 
-The checker itself is implemented in C# and is intended to pass its own rules without suppressing violations by default.
+The checker is implemented in C# and is intended to pass its own rules without suppressing violations by default. Command examples below assume `tools/oop-design-checker/` is the current directory.
 
 ## Frontends
 
@@ -29,7 +29,7 @@ The checker itself is tested with `--fail-on attention` so its own source must s
 
 The first implementation targets C# through Roslyn and MSBuild. Real project compilations are preserved when analyzing `.csproj`, `.sln`, `.slnx`, or directories containing multiple C# projects; unrelated projects are never merged into one artificial compilation.
 
-Implemented rules are defined in `specification/check-rules.en.md` and include encapsulation, inheritance, polymorphism, visibility, static-state, operation complexity, object-integrity, dependency, and navigation checks.
+Implemented rules are defined in `docs/check-rules.en.md` and include encapsulation, inheritance, polymorphism, visibility, static-state, operation complexity, object-integrity, dependency, and navigation checks.
 
 ## Quality gates
 
@@ -190,5 +190,5 @@ Replace `win-x64` with `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, or `o
 - [Japanese README (normative)](README.md)
 - [Japanese changelog (normative)](CHANGELOG.md)
 - [English changelog](CHANGELOG.en.md)
-- [Design definition](specification/object-oriented-design.en.md)
-- [Check rules](specification/check-rules.en.md)
+- [Design definition](../../docs/object-oriented-design.en.md)
+- [Check rules](docs/check-rules.en.md)
