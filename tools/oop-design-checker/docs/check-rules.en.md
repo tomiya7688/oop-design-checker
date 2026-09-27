@@ -6,6 +6,22 @@
 
 > Target version: **1.0.0**. This document is the normative definition of the C# rules implemented by 1.0.0.
 
+## Relationship to the normative design document
+
+This document is the implementation specification of an auxiliary tool. The repository-root [Object-Oriented Design Definition](../../../docs/object-oriented-design.en.md) is normative.
+
+Rules map statically observable signals to principles in that document. "What rules can detect" is not the complete definition of OOP.
+
+Representative mapping:
+
+- encapsulation / invariants / state ownership: OOP101, OOP106, OOP107, OOP108, OOP402, OOP405
+- polymorphism / abstraction: OOP001, OOP002, OOP003, OOP305, OOP306
+- inheritance / composition: OOP102, OOP301, OOP302, OOP303, OOP304, OOP307
+- object integrity / behavior ownership: OOP103, OOP104, OOP105, OOP201, OOP401, OOP402, OOP405
+- dependencies / object boundaries / navigation: OOP305, OOP306, OOP403, OOP404
+
+A principle may remain only in the normative document when static evidence is not strong enough for a useful diagnostic.
+
 This document defines the checks, severities, known exclusion boundaries, and configuration contract that are implemented and release-gated in 1.0.0. Conceptual future candidates are not treated as implemented rules.
 
 ## 1.0.0 rule catalog
