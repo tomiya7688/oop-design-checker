@@ -8,6 +8,9 @@ internal enum GuiTextKey
 {
     WindowTitle,
     LanguageLabel,
+    ThemeLabel,
+    DarkTheme,
+    LightTheme,
     TargetPlaceholder,
     ConfigurationPlaceholder,
     FileButton,
@@ -82,6 +85,9 @@ internal static class GuiText
     {
         [GuiTextKey.WindowTitle] = "OOP Design Checker",
         [GuiTextKey.LanguageLabel] = "言語:",
+        [GuiTextKey.ThemeLabel] = "テーマ:",
+        [GuiTextKey.DarkTheme] = "ダーク",
+        [GuiTextKey.LightTheme] = "ライト",
         [GuiTextKey.TargetPlaceholder] = "project / solution / C# file / project directory",
         [GuiTextKey.ConfigurationPlaceholder] = "任意: oop-design-checker.json",
         [GuiTextKey.FileButton] = "ファイル...",
@@ -156,6 +162,9 @@ internal static class GuiText
     {
         [GuiTextKey.WindowTitle] = "OOP Design Checker",
         [GuiTextKey.LanguageLabel] = "Language:",
+        [GuiTextKey.ThemeLabel] = "Theme:",
+        [GuiTextKey.DarkTheme] = "Dark",
+        [GuiTextKey.LightTheme] = "Light",
         [GuiTextKey.TargetPlaceholder] = "Project, solution, C# file, or project directory",
         [GuiTextKey.ConfigurationPlaceholder] = "Optional oop-design-checker.json",
         [GuiTextKey.FileButton] = "File...",

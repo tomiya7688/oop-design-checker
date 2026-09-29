@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Media.Imaging;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using OopDesignChecker.Core;
 using OopDesignChecker.Localization;
@@ -41,6 +42,52 @@ public sealed class UiVisualRegressionTests
         }
         finally
         {
+            window.Close();
+        }
+    }
+
+    [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void ThemeSwitchPreservesAnalysisAndFilterState()
+    {
+        var fixtureRoot = FixtureRoot();
+        var result = CheckerService.Analyze(fixtureRoot);
+        var window = CreateWindow(1280, 820);
+
+        try
+        {
+            Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
+
+            window.SetThemeForTesting(ThemeVariant.Light);
+            Flush();
+            Assert.Equal(ThemeVariant.Light, Avalonia.Application.Current!.RequestedThemeVariant);
+            Assert.Equal(ThemeVariant.Light, window.ActualThemeVariant);
+            Assert.Equal(1, window.TestView.ThemeSelector.SelectedIndex);
+            Capture(window, "ready-light-default", "ja");
+
+            window.PresentResultForTesting(result);
+            window.TestView.DangerFilter.IsChecked = false;
+            window.TestView.WarningFilter.IsChecked = true;
+            window.TestView.AttentionFilter.IsChecked = false;
+            window.TestView.SearchFilter.Text = "OOP106";
+            window.ApplyFiltersForTesting();
+            Flush();
+
+            var rows = VisibleRows(window);
+            Assert.NotEmpty(rows);
+            Assert.All(rows, row => Assert.Equal("OOP106", row.RuleId));
+            Assert.Equal("OOP106", window.TestView.SearchFilter.Text);
+            AssertSummaryMatches(window, result.Diagnostics);
+            Capture(window, "fixture-light-default", "ja");
+
+            window.SetThemeForTesting(ThemeVariant.Dark);
+            Flush();
+            Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
+            Assert.Equal("OOP106", window.TestView.SearchFilter.Text);
+            Assert.NotEmpty(VisibleRows(window));
+        }
+        finally
+        {
+            window.SetThemeForTesting(ThemeVariant.Dark);
             window.Close();
         }
     }
@@ -151,6 +198,9 @@ public sealed class UiVisualRegressionTests
         var window = CreateWindow(width, height);
         try
         {
+            Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
+            Assert.Equal(ThemeVariant.Dark, window.ActualThemeVariant);
+            Assert.Equal(0, window.TestView.ThemeSelector.SelectedIndex);
             AssertMainWindowLayout(window);
             Capture(window, scenario, "ja");
         }
@@ -223,6 +273,7 @@ public sealed class UiVisualRegressionTests
             window.TestView.AnalyzeButton,
             window.TestView.CancelButton,
             window.TestView.LanguageSelector,
+            window.TestView.ThemeSelector,
             window.TestView.DiagnosticsGrid,
             window.TestView.Status,
         };
@@ -258,6 +309,7 @@ public sealed class UiVisualRegressionTests
                 window.TestView.AnalyzeButton,
                 window.TestView.CancelButton,
                 window.TestView.LanguageSelector,
+                window.TestView.ThemeSelector,
             ]
         );
     }
@@ -446,6 +498,7 @@ public sealed class UiVisualRegressionTests
             width = window.ClientSize.Width,
             height = window.ClientSize.Height,
             title = window.Title,
+            theme = window.ActualThemeVariant.ToString(),
             visibleRowCount = window is MainWindow main ? VisibleRows(main).Length : (int?)null,
             status = window is MainWindow statusWindow ? statusWindow.TestView.Status.Text : null,
             selectedRule = window is MainWindow selectedWindow

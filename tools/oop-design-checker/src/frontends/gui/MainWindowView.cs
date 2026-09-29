@@ -29,6 +29,7 @@ internal sealed class MainWindowView : Grid
     internal CheckBox AttentionFilter { get; } = new();
     internal TextBox SearchFilter { get; } = new();
     internal ComboBox LanguageSelector { get; } = new();
+    internal ComboBox ThemeSelector { get; } = new();
     internal DataGrid DiagnosticsGrid { get; } = new();
     internal TextBlock DetailSeverity { get; } = new();
     internal TextBlock DetailRule { get; } = new();
@@ -44,6 +45,7 @@ internal sealed class MainWindowView : Grid
 
     private readonly TextBlock _showLabel = new();
     private readonly TextBlock _languageLabel = new();
+    private readonly TextBlock _themeLabel = new();
     private readonly TextBlock _detailHeading = new();
 
     public MainWindowView()
@@ -84,6 +86,14 @@ internal sealed class MainWindowView : Grid
 
         _showLabel.Text = GuiText.Get(GuiTextKey.ShowLabel, language);
         _languageLabel.Text = GuiText.Get(GuiTextKey.LanguageLabel, language);
+        _themeLabel.Text = GuiText.Get(GuiTextKey.ThemeLabel, language);
+        var selectedTheme = Math.Max(ThemeSelector.SelectedIndex, 0);
+        ThemeSelector.ItemsSource = new[]
+        {
+            GuiText.Get(GuiTextKey.DarkTheme, language),
+            GuiText.Get(GuiTextKey.LightTheme, language),
+        };
+        ThemeSelector.SelectedIndex = selectedTheme;
         DangerFilter.Content = GuiText.Get(GuiTextKey.Danger, language);
         WarningFilter.Content = GuiText.Get(GuiTextKey.Warning, language);
         AttentionFilter.Content = GuiText.Get(GuiTextKey.Attention, language);
@@ -129,6 +139,7 @@ internal sealed class MainWindowView : Grid
             (AttentionFilter, "AttentionFilter"),
             (SearchFilter, "SearchFilter"),
             (LanguageSelector, "LanguageSelector"),
+            (ThemeSelector, "ThemeSelector"),
             (DiagnosticsGrid, "DiagnosticsGrid"),
             (DetailSeverity, "DetailSeverity"),
             (DetailRule, "DetailRule"),
@@ -161,6 +172,10 @@ internal sealed class MainWindowView : Grid
         LanguageSelector.ItemsSource = new[] { "日本語", "English" };
         LanguageSelector.SelectedIndex = 0;
         LanguageSelector.MinWidth = 100;
+
+        ThemeSelector.ItemsSource = new[] { "ダーク", "ライト" };
+        ThemeSelector.SelectedIndex = 0;
+        ThemeSelector.MinWidth = 100;
 
         Progress.IsIndeterminate = true;
         Progress.IsVisible = false;
@@ -212,26 +227,43 @@ internal sealed class MainWindowView : Grid
         return section;
     }
 
-    private StackPanel BuildFilterSection()
+    private Grid BuildFilterSection()
     {
-        var panel = new StackPanel
+        var grid = new Grid { RowSpacing = 8 };
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+
+        var filters = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 12,
             VerticalAlignment = VerticalAlignment.Center,
         };
         _showLabel.VerticalAlignment = VerticalAlignment.Center;
+        filters.Children.Add(_showLabel);
+        filters.Children.Add(DangerFilter);
+        filters.Children.Add(WarningFilter);
+        filters.Children.Add(AttentionFilter);
+        filters.Children.Add(SearchFilter);
+        filters.Children.Add(AnalyzeButton);
+        filters.Children.Add(CancelButton);
+
+        var preferences = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
         _languageLabel.VerticalAlignment = VerticalAlignment.Center;
-        panel.Children.Add(_showLabel);
-        panel.Children.Add(DangerFilter);
-        panel.Children.Add(WarningFilter);
-        panel.Children.Add(AttentionFilter);
-        panel.Children.Add(SearchFilter);
-        panel.Children.Add(AnalyzeButton);
-        panel.Children.Add(CancelButton);
-        panel.Children.Add(_languageLabel);
-        panel.Children.Add(LanguageSelector);
-        return panel;
+        _themeLabel.VerticalAlignment = VerticalAlignment.Center;
+        preferences.Children.Add(_languageLabel);
+        preferences.Children.Add(LanguageSelector);
+        preferences.Children.Add(_themeLabel);
+        preferences.Children.Add(ThemeSelector);
+
+        AddToGrid(grid, filters, 0, 0);
+        AddToGrid(grid, preferences, 1, 0);
+        return grid;
     }
 
     private StackPanel BuildSummarySection()

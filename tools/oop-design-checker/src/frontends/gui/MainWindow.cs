@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
+using Avalonia.Styling;
 using OopDesignChecker.Configuration;
 using OopDesignChecker.Core;
 using OopDesignChecker.Localization;
@@ -49,6 +50,12 @@ internal sealed class MainWindow : Window
         ChangeLanguage();
     }
 
+    internal void SetThemeForTesting(ThemeVariant theme)
+    {
+        _view.ThemeSelector.SelectedIndex = theme == ThemeVariant.Light ? 1 : 0;
+        ChangeTheme();
+    }
+
     private void WireEvents()
     {
         _view.AnalyzeButton.Click += async (_, _) => await AnalyzeAsync();
@@ -64,6 +71,7 @@ internal sealed class MainWindow : Window
         _view.AttentionFilter.Click += (_, _) => ApplyFilters();
         _view.SearchFilter.TextChanged += (_, _) => ApplyFilters();
         _view.LanguageSelector.SelectionChanged += (_, _) => ChangeLanguage();
+        _view.ThemeSelector.SelectionChanged += (_, _) => ChangeTheme();
         _view.DiagnosticsGrid.SelectionChanged += (_, _) => UpdateSelectedDiagnostic();
         _view.DiagnosticsGrid.DoubleTapped += async (_, _) => await OpenSelectedSourceAsync();
         _view.CopySelectedButton.Click += async (_, _) => await CopySelectedAsync();
@@ -95,6 +103,17 @@ internal sealed class MainWindow : Window
         UpdateSummary();
         UpdateSelectedDiagnostic();
         UpdateLocalizedStatus();
+    }
+
+    private void ChangeTheme()
+    {
+        if (Avalonia.Application.Current is not { } application)
+        {
+            return;
+        }
+
+        application.RequestedThemeVariant =
+            _view.ThemeSelector.SelectedIndex == 1 ? ThemeVariant.Light : ThemeVariant.Dark;
     }
 
     private async Task AnalyzeAsync()
