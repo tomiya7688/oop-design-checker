@@ -646,7 +646,14 @@ internal sealed class MainWindow : Window
         }
 
         e.Handled = true;
-        FocusManager?.ClearFocus();
+        if (_analysisInProgress)
+        {
+            _view.CancelButton.Focus();
+        }
+        else
+        {
+            _view.AnalyzeButton.Focus();
+        }
     }
 
     private async void OnKeyDown(object? sender, KeyEventArgs e)
