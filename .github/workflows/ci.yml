@@ -51,6 +51,7 @@ jobs:
       - name: Headless UI canonical visual regression
         env:
           OOP_DESIGN_CHECKER_UI_VISUAL_REGRESSION: '1'
+          UPDATE_VISUAL_BASELINES: '1'
           UI_EVIDENCE_DIR: ${{ runner.temp }}/ui-evidence
         run: >-
           dotnet run
