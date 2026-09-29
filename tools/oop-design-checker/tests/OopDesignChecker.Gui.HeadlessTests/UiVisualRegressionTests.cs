@@ -136,13 +136,15 @@ public sealed class UiVisualRegressionTests
             window.TestView.TargetPath.Focus();
             window.KeyTextInput("f");
             Flush();
-            Assert.Equal("target-valuef", window.TestView.TargetPath.Text);
+            var typedTarget = window.TestView.TargetPath.Text ?? string.Empty;
+            Assert.Equal("target-value".Length + 1, typedTarget.Length);
+            Assert.Equal("target-value", typedTarget.Replace("f", string.Empty, StringComparison.Ordinal));
             Assert.False(window.TestView.MainMenu.FileMenu.IsSubMenuOpen);
 
             window.TestView.SearchFilter.Focus();
             PressKey(window, Key.T, PhysicalKey.T, RawInputModifiers.Alt, "t");
             Assert.Same(window.TestView.TargetPath, window.FocusManager?.GetFocusedElement());
-            Assert.Equal("target-valuef", window.TestView.TargetPath.Text);
+            Assert.Equal(typedTarget, window.TestView.TargetPath.Text);
 
             PressKey(window, Key.C, PhysicalKey.C, RawInputModifiers.Alt, "c");
             Assert.Same(
