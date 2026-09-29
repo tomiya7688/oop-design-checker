@@ -10,6 +10,7 @@ Structural checks are the default on every operating system. They validate:
 
 - release fixture diagnostics against the GUI row count and severity summary
 - Japanese and English UI states
+- Dark-by-default theme plus runtime Light switching without losing analysis/filter state
 - small (900x600), default (1280x820), and large (1600x1000) layouts
 - filter and selected-diagnostic detail state
 - error state
@@ -43,7 +44,7 @@ This mode:
 
 If canonical visual mode is explicitly requested on Windows or macOS, the test fails with a clear configuration error instead of treating that platform as compatible with the Linux golden images.
 
-The GitHub Actions `ui-headless` job is the canonical visual-regression environment. Normal matrix CI executes structural checks on Windows, Linux, and macOS separately.
+The GitHub Actions `ui-headless` job is the canonical visual-regression environment. Canonical baselines use the explicit Dark application theme, independent of the runner/OS appearance. Light has dedicated ready/result baselines so runtime theme switching is also covered. Normal matrix CI executes structural checks on Windows, Linux, and macOS separately.
 
 ## Updating visual baselines
 
