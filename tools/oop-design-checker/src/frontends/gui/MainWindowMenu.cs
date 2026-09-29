@@ -127,16 +127,8 @@ internal sealed class MainWindowMenu : Menu
         SetHeader(WarningFilterItem, GuiText.Get(GuiTextKey.Warning, language), 'W');
         SetHeader(AttentionFilterItem, GuiText.Get(GuiTextKey.Attention, language), 'A');
         SetHeader(LanguageMenu, GuiText.Get(GuiTextKey.LanguageLabel, language).TrimEnd(':'), 'L');
-        SetHeader(
-            JapaneseLanguageItem,
-            GuiText.Get(GuiTextKey.JapaneseLanguage, language),
-            'J'
-        );
-        SetHeader(
-            EnglishLanguageItem,
-            GuiText.Get(GuiTextKey.EnglishLanguage, language),
-            'E'
-        );
+        SetHeader(JapaneseLanguageItem, GuiText.Get(GuiTextKey.JapaneseLanguage, language), 'J');
+        SetHeader(EnglishLanguageItem, GuiText.Get(GuiTextKey.EnglishLanguage, language), 'E');
         SetHeader(ThemeMenu, GuiText.Get(GuiTextKey.ThemeLabel, language).TrimEnd(':'), 'T');
         SetHeader(DarkThemeItem, GuiText.Get(GuiTextKey.DarkTheme, language), 'D');
         SetHeader(LightThemeItem, GuiText.Get(GuiTextKey.LightTheme, language), 'L');
