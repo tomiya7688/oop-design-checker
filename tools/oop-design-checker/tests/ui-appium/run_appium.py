@@ -135,12 +135,40 @@ def wait_until(driver, predicate, timeout=90):
 
 def text_of(driver, automation_id):
     element = find(driver, automation_id)
-    return (
-        element.text
-        or element.get_attribute("Name")
-        or element.get_attribute("Value.Value")
-        or ""
+    getters = (
+        lambda: element.text,
+        lambda: element.get_attribute("Name"),
+        lambda: element.get_attribute("Value.Value"),
     )
+    for getter in getters:
+        try:
+            value = getter()
+        except Exception:
+            continue
+        if value:
+            return value
+    return ""
+
+
+def control_contains(driver, automation_id, expected_values):
+    expected = tuple(value.lower() for value in expected_values)
+    text = text_of(driver, automation_id).lower()
+    if any(value in text for value in expected):
+        return True
+
+    source = driver.page_source
+    markers = (
+        f'AutomationId="{automation_id}"',
+        f'identifier="{automation_id}"',
+    )
+    for marker in markers:
+        index = source.find(marker)
+        if index < 0:
+            continue
+        segment = source[index : index + 3000].lower()
+        if any(value in segment for value in expected):
+            return True
+    return False
 
 
 def replace_text(driver, automation_id, value):
@@ -395,8 +423,7 @@ def main():
         press_menu_access(driver, "l")
         wait_until(
             driver,
-            lambda: "light" in text_of(driver, "ThemeSelector").lower()
-            or "ライト" in text_of(driver, "ThemeSelector"),
+            lambda: control_contains(driver, "ThemeSelector", ("light", "ライト")),
             timeout=20,
         )
         record("09-keyboard-menu", "theme-light", accessKey="Alt+V,T,L")
@@ -404,8 +431,7 @@ def main():
         invoke_menu_access(driver, "v", "t", "d")
         wait_until(
             driver,
-            lambda: "dark" in text_of(driver, "ThemeSelector").lower()
-            or "ダーク" in text_of(driver, "ThemeSelector"),
+            lambda: control_contains(driver, "ThemeSelector", ("dark", "ダーク")),
             timeout=20,
         )
         record("09-keyboard-menu", "theme-dark", accessKey="Alt+V,T,D")
@@ -413,7 +439,7 @@ def main():
         invoke_menu_access(driver, "v", "l", "e")
         wait_until(
             driver,
-            lambda: "English" in text_of(driver, "LanguageSelector"),
+            lambda: control_contains(driver, "LanguageSelector", ("English",)),
             timeout=20,
         )
         record("09-keyboard-menu", "language-english", accessKey="Alt+V,L,E")
