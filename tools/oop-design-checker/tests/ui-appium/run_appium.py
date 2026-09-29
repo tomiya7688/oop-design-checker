@@ -138,6 +138,7 @@ def text_of(driver, automation_id):
         element.text
         or element.get_attribute("Name")
         or element.get_attribute("Value.Value")
+        or element.get_attribute("value")
         or ""
     )
 
@@ -152,6 +153,33 @@ def replace_text(driver, automation_id, value):
 def screenshot(driver, path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     driver.save_screenshot(str(path))
+
+
+def select_combo_value(driver, platform, automation_id, value):
+    element = find(driver, automation_id)
+    element.click()
+    if platform == "macos":
+        item = driver.find_element(
+            AppiumBy.XPATH,
+            f"//XCUIElementTypeMenuItem[@title='{value}']",
+        )
+        rect = item.rect
+        driver.execute_script(
+            "macos: click",
+            {
+                "x": rect["x"] + rect["width"] / 2,
+                "y": rect["y"] + rect["height"] / 2,
+            },
+        )
+    else:
+        element.send_keys(value)
+        element.send_keys(Keys.ENTER)
+
+    wait_until(
+        driver,
+        lambda: value.lower() in text_of(driver, automation_id).lower(),
+        timeout=20,
+    )
 
 
 def summary_matches(driver, counts):
@@ -221,6 +249,7 @@ def write_scenario_state(driver, directory: Path, scenario, extra=None):
             "attention": text_of(driver, "AttentionCount"),
         },
         "status": text_of(driver, "Status"),
+        "theme": text_of(driver, "ThemeSelector"),
         "selectedRule": text_of(driver, "DetailRule"),
         "selectedFile": text_of(driver, "DetailLocation"),
     }
@@ -291,7 +320,11 @@ def main():
         "01-cancel": {"status": "Analysis cancelled."},
         "02-fixture-analysis": {"count": len(diagnostics), "summary": expected_counts},
         "03-filter-detail": {"ruleId": "OOP106"},
-        "04-language-resize": {"language": "en"},
+        "04-language-resize": {
+            "language": "en",
+            "themes": ["Dark", "Light"],
+            "finalTheme": "Dark",
+        },
         "05-config-editor": {"disabledRules": ["OOP105"]},
         "06-export": {"count": len(diagnostics), "formats": ["json", "sarif"]},
         "07-source-open-fallback": {"ruleId": "OOP106"},
@@ -342,35 +375,25 @@ def main():
         record("03-filter-detail", "filter-select", ruleId="OOP106")
         capture(driver, "03-filter-detail")
 
-        language = find(driver, "LanguageSelector")
-        language.click()
-        if args.platform == "macos":
-            english = driver.find_element(
-                AppiumBy.XPATH,
-                "//XCUIElementTypeMenuItem[@title='English']",
-            )
-            rect = english.rect
-            driver.execute_script(
-                "macos: click",
-                {
-                    "x": rect["x"] + rect["width"] / 2,
-                    "y": rect["y"] + rect["height"] / 2,
-                },
-            )
-            wait_until(
-                driver,
-                lambda: find(driver, "LanguageSelector").get_attribute("value") == "English",
-                timeout=20,
-            )
-        else:
-            language.send_keys("English")
-            language.send_keys(Keys.ENTER)
+        select_combo_value(driver, args.platform, "LanguageSelector", "English")
         wait_until(
             driver,
             lambda: "Rule:" in text_of(driver, "DetailRule"),
             timeout=20,
         )
         record("04-language-resize", "language", value="en")
+
+        theme_scenario = evidence / "04-language-resize"
+        screenshot(driver, theme_scenario / "dark.png")
+        record("04-language-resize", "theme", value="Dark")
+
+        select_combo_value(driver, args.platform, "ThemeSelector", "Light")
+        time.sleep(0.5)
+        screenshot(driver, theme_scenario / "light.png")
+        record("04-language-resize", "theme", value="Light")
+
+        select_combo_value(driver, args.platform, "ThemeSelector", "Dark")
+        record("04-language-resize", "theme", value="Dark", restored=True)
 
         if args.platform == "macos":
             resize_value = "native-resize-covered-by-headless"
@@ -383,7 +406,7 @@ def main():
             driver,
             "04-language-resize",
             "resized.png",
-            {"language": "en", "resize": resize_value},
+            {"language": "en", "theme": "Dark", "resize": resize_value},
         )
 
         config_path = evidence / "05-config-editor" / "oop-design-checker.json"
