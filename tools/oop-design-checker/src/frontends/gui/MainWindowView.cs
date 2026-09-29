@@ -10,6 +10,7 @@ namespace OopDesignChecker.Gui;
 
 internal sealed class MainWindowView : Grid
 {
+    internal MainWindowMenu MainMenu { get; } = new();
     internal TextBox TargetPath { get; } = new();
     internal TextBox ConfigurationPath { get; } = new();
     internal Button TargetFileButton { get; } = new();
@@ -43,6 +44,8 @@ internal sealed class MainWindowView : Grid
     internal Button ExportJsonButton { get; } = new();
     internal Button ExportSarifButton { get; } = new();
 
+    private readonly Label _targetLabel = new();
+    private readonly Label _configurationLabel = new();
     private readonly TextBlock _showLabel = new();
     private readonly TextBlock _languageLabel = new();
     private readonly TextBlock _themeLabel = new();
@@ -54,22 +57,28 @@ internal sealed class MainWindowView : Grid
         RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         RowDefinitions.Add(new RowDefinition(new GridLength(1, GridUnitType.Star)));
         RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         RowSpacing = 10;
 
         ConfigureControls();
         ConfigureAutomation();
-        AddSection(BuildTargetSection(), 0);
-        AddSection(BuildFilterSection(), 1);
-        AddSection(BuildSummarySection(), 2);
-        AddSection(BuildDiagnosticsSection(), 3);
-        AddSection(BuildStatusSection(), 4);
+        AddSection(MainMenu, 0);
+        AddSection(BuildTargetSection(), 1);
+        AddSection(BuildFilterSection(), 2);
+        AddSection(BuildSummarySection(), 3);
+        AddSection(BuildDiagnosticsSection(), 4);
+        AddSection(BuildStatusSection(), 5);
         ApplyLanguage(UserInterfaceLanguage.Japanese);
     }
 
     internal void ApplyLanguage(UserInterfaceLanguage language)
     {
+        MainMenu.ApplyLanguage(language);
+        _targetLabel.Content = $"{GuiText.Get(GuiTextKey.TargetLabel, language)} (_T):";
+        _configurationLabel.Content =
+            $"{GuiText.Get(GuiTextKey.ConfigurationLabel, language)} (_C):";
         TargetPath.PlaceholderText = GuiText.Get(GuiTextKey.TargetPlaceholder, language);
         ConfigurationPath.PlaceholderText = GuiText.Get(
             GuiTextKey.ConfigurationPlaceholder,
@@ -120,6 +129,8 @@ internal sealed class MainWindowView : Grid
     {
         var controls = new (StyledElement Element, string Id)[]
         {
+            (_targetLabel, "TargetPathLabel"),
+            (_configurationLabel, "ConfigurationPathLabel"),
             (TargetPath, "TargetPath"),
             (ConfigurationPath, "ConfigurationPath"),
             (TargetFileButton, "TargetFileButton"),
@@ -164,6 +175,15 @@ internal sealed class MainWindowView : Grid
     {
         TargetPath.Text = Directory.GetCurrentDirectory();
 
+        _targetLabel.Target = TargetPath;
+        _targetLabel.VerticalAlignment = VerticalAlignment.Center;
+        _configurationLabel.Target = ConfigurationPath;
+        _configurationLabel.VerticalAlignment = VerticalAlignment.Center;
+        AutomationProperties.SetAccessKey(_targetLabel, "Alt+T");
+        AutomationProperties.SetAccessKey(_configurationLabel, "Alt+C");
+
+        ConfigureTabOrder();
+
         CancelButton.IsEnabled = false;
         DangerFilter.IsChecked = true;
         WarningFilter.IsChecked = true;
@@ -184,6 +204,31 @@ internal sealed class MainWindowView : Grid
         ConfigurationSummary.TextWrapping = TextWrapping.Wrap;
 
         ConfigureDiagnosticsGrid();
+    }
+
+    private void ConfigureTabOrder()
+    {
+        TargetPath.TabIndex = 0;
+        TargetFileButton.TabIndex = 1;
+        TargetFolderButton.TabIndex = 2;
+        ConfigurationPath.TabIndex = 3;
+        ConfigurationButton.TabIndex = 4;
+        EditConfigurationButton.TabIndex = 5;
+        ClearConfigurationButton.TabIndex = 6;
+        DangerFilter.TabIndex = 7;
+        WarningFilter.TabIndex = 8;
+        AttentionFilter.TabIndex = 9;
+        SearchFilter.TabIndex = 10;
+        AnalyzeButton.TabIndex = 11;
+        CancelButton.TabIndex = 12;
+        LanguageSelector.TabIndex = 13;
+        ThemeSelector.TabIndex = 14;
+        DiagnosticsGrid.TabIndex = 15;
+        CopySelectedButton.TabIndex = 16;
+        OpenSourceButton.TabIndex = 17;
+        CopyAllButton.TabIndex = 18;
+        ExportJsonButton.TabIndex = 19;
+        ExportSarifButton.TabIndex = 20;
     }
 
     private void ConfigureDiagnosticsGrid()
@@ -210,6 +255,7 @@ internal sealed class MainWindowView : Grid
     private Grid BuildTargetSection()
     {
         var section = new Grid { ColumnSpacing = 8, RowSpacing = 8 };
+        section.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
         section.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
         section.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
         section.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
@@ -217,13 +263,15 @@ internal sealed class MainWindowView : Grid
         section.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         section.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
-        AddToGrid(section, TargetPath, 0, 0);
-        AddToGrid(section, TargetFileButton, 0, 1);
-        AddToGrid(section, TargetFolderButton, 0, 2);
-        AddToGrid(section, ConfigurationPath, 1, 0);
-        AddToGrid(section, ConfigurationButton, 1, 1);
-        AddToGrid(section, EditConfigurationButton, 1, 2);
-        AddToGrid(section, ClearConfigurationButton, 1, 3);
+        AddToGrid(section, _targetLabel, 0, 0);
+        AddToGrid(section, TargetPath, 0, 1);
+        AddToGrid(section, TargetFileButton, 0, 2);
+        AddToGrid(section, TargetFolderButton, 0, 3);
+        AddToGrid(section, _configurationLabel, 1, 0);
+        AddToGrid(section, ConfigurationPath, 1, 1);
+        AddToGrid(section, ConfigurationButton, 1, 2);
+        AddToGrid(section, EditConfigurationButton, 1, 3);
+        AddToGrid(section, ClearConfigurationButton, 1, 4);
         return section;
     }
 
