@@ -138,7 +138,10 @@ public sealed class UiVisualRegressionTests
             Flush();
             var typedTarget = window.TestView.TargetPath.Text ?? string.Empty;
             Assert.Equal("target-value".Length + 1, typedTarget.Length);
-            Assert.Equal("target-value", typedTarget.Replace("f", string.Empty, StringComparison.Ordinal));
+            Assert.Equal(
+                "target-value",
+                typedTarget.Replace("f", string.Empty, StringComparison.Ordinal)
+            );
             Assert.False(window.TestView.MainMenu.FileMenu.IsSubMenuOpen);
 
             window.TestView.SearchFilter.Focus();
