@@ -2,7 +2,22 @@
 
 This project renders the production Avalonia GUI with the headless platform and the Skia renderer.
 
-The test suite now has two execution modes so ordinary developer test runs are not coupled to a Linux-generated golden image.
+The test suite has two execution modes so ordinary developer test runs are not coupled to a Linux-generated golden image.
+
+## Theme contract
+
+The GUI starts in **Dark** mode on every platform, independent of the operating-system appearance. Dark is the canonical release visual baseline. The in-app theme selector can switch between Dark and Light without recreating the window or losing diagnostics, filters, or selection state.
+
+The 1.0.0 UI preference policy is intentionally session-local: each new application start returns to Dark. Theme selection is not stored in `oop-design-checker.json`, because project analysis configuration and user-interface appearance are separate concerns.
+
+Headless coverage includes:
+
+- Dark: Japanese ready states at small/default/large sizes
+- Dark: English ready state
+- Dark: fixture result, filter/detail, error, and configuration editor states
+- Light: ready state and fixture result
+- Light: English-localized theme selector
+- state preservation across Dark/Light switching
 
 ## Structural UI checks
 
@@ -14,6 +29,7 @@ Structural checks are the default on every operating system. They validate:
 - filter and selected-diagnostic detail state
 - error state
 - configuration editor state
+- theme selector state
 - key control bounds and overlap
 
 Run them with:
@@ -26,7 +42,7 @@ No pixel baseline comparison is performed unless the canonical visual-regression
 
 ## Canonical visual regression
 
-PNG golden-image comparison is pinned to Linux + Skia. Enable it explicitly with:
+PNG golden-image comparison is pinned to Linux + Skia and uses Dark as the canonical theme. Enable it explicitly with:
 
 ```bash
 OOP_DESIGN_CHECKER_UI_VISUAL_REGRESSION=1 \
@@ -36,9 +52,10 @@ dotnet run --project tests/OopDesignChecker.Gui.HeadlessTests/OopDesignChecker.G
 
 This mode:
 
-- captures the rendered frame for each scenario
+- captures the rendered frame for each Dark and Light scenario
 - writes `actual.png`, `diff.png`, and `ui-state.json` to `UI_EVIDENCE_DIR`
-- compares against the committed PNG baselines
+- records the active theme in `ui-state.json`
+- compares against committed PNG baselines
 - fails when more than 0.5% of pixels differ beyond the per-channel threshold
 
 If canonical visual mode is explicitly requested on Windows or macOS, the test fails with a clear configuration error instead of treating that platform as compatible with the Linux golden images.
