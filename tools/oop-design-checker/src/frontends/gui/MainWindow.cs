@@ -646,11 +646,20 @@ internal sealed class MainWindow : Window
         }
 
         e.Handled = true;
-        Focus();
+        FocusManager?.ClearFocus();
     }
 
     private async void OnKeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.KeyModifiers == KeyModifiers.Alt)
+        {
+            if (TryHandleAltAccessKey(e.Key))
+            {
+                e.Handled = true;
+                return;
+            }
+        }
+
         if (e.Key == Key.Escape && _analysisInProgress)
         {
             e.Handled = true;
@@ -682,6 +691,38 @@ internal sealed class MainWindow : Window
             e.Handled = true;
             await CopySelectedAsync();
         }
+    }
+
+    private bool TryHandleAltAccessKey(Key key)
+    {
+        switch (key)
+        {
+            case Key.F:
+                OpenTopLevelMenu(_view.MainMenu.FileMenu);
+                return true;
+            case Key.A:
+                OpenTopLevelMenu(_view.MainMenu.AnalyzeMenu);
+                return true;
+            case Key.V:
+                OpenTopLevelMenu(_view.MainMenu.ViewMenu);
+                return true;
+            case Key.T:
+                _view.TargetPath.Focus();
+                return true;
+            case Key.C:
+                _view.ConfigurationPath.Focus();
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private void OpenTopLevelMenu(MenuItem menu)
+    {
+        _view.MainMenu.FileMenu.IsSubMenuOpen = false;
+        _view.MainMenu.AnalyzeMenu.IsSubMenuOpen = false;
+        _view.MainMenu.ViewMenu.IsSubMenuOpen = false;
+        menu.Open();
     }
 
     private void SetBusy(bool isBusy)
