@@ -18,15 +18,18 @@ APPIUM = (
     "08-error-state",
 )
 HEADLESS = (
-    "ready-ja-small",
-    "ready-ja-default",
-    "ready-ja-large",
-    "ready-en-default",
-    "fixture-ja-default",
-    "filter-detail-oop106-ja",
-    "fixture-en-default",
-    "error-ja-default",
-    "config-editor-ja-default",
+    "ready-ja-dark-small",
+    "ready-ja-dark-default",
+    "ready-ja-dark-large",
+    "ready-en-dark-default",
+    "fixture-ja-dark-default",
+    "filter-detail-oop106-ja-dark",
+    "fixture-en-dark-default",
+    "error-ja-dark-default",
+    "config-editor-ja-dark-default",
+    "ready-ja-light-default",
+    "fixture-ja-light-default",
+    "fixture-en-light-default",
 )
 
 
@@ -52,6 +55,9 @@ class BuildUiReleaseEvidenceTests(unittest.TestCase):
                     write_json(directory / "action-log.json", [{"action": scenario}])
                     (directory / "after.png").write_bytes(b"png")
                     (directory / "resized.png").write_bytes(b"png")
+                    if scenario == "04-language-resize":
+                        (directory / "dark.png").write_bytes(b"png")
+                        (directory / "light.png").write_bytes(b"png")
                 export = platform_root / "ui-appium-evidence" / "06-export"
                 write_json(
                     export / "actual-diagnostics.json",
@@ -90,10 +96,12 @@ class BuildUiReleaseEvidenceTests(unittest.TestCase):
             candidate = output / "release-candidate"
             manifest = json.loads((candidate / "manifest.json").read_text())
             self.assertEqual("a" * 40, manifest["candidateSha"])
-            self.assertEqual(10, len(manifest["visuals"]))
+            self.assertEqual(14, len(manifest["visuals"]))
             self.assertTrue((candidate / "actual-diagnostics.json").exists())
             self.assertTrue((candidate / "windows-fixture.png").exists())
-            self.assertTrue((candidate / "headless-config-editor.png").exists())
+            self.assertTrue((candidate / "headless-config-editor-dark.png").exists())
+            self.assertTrue((candidate / "headless-ja-light.png").exists())
+            self.assertTrue((candidate / "windows-english-light.png").exists())
 
     def test_missing_required_scenario_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
