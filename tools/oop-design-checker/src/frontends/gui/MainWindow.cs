@@ -672,6 +672,16 @@ internal sealed class MainWindow : Window
             return;
         }
 
+        if (
+            e.KeyModifiers == KeyModifiers.None
+            && AnyTopLevelMenuOpen()
+            && TryHandleOpenMenuAccessKey(e.Key)
+        )
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (e.KeyModifiers.HasFlag(KeyModifiers.Alt) && TryHandleAltAccessKey(e.Key))
         {
             e.Handled = true;
@@ -711,6 +721,134 @@ internal sealed class MainWindow : Window
             e.Handled = true;
             await CopySelectedAsync();
         }
+    }
+
+    private bool TryHandleOpenMenuAccessKey(Key key)
+    {
+        var menu = _view.MainMenu;
+
+        if (menu.LanguageMenu.IsSubMenuOpen)
+        {
+            switch (key)
+            {
+                case Key.J:
+                    CloseTopLevelMenus();
+                    _view.LanguageSelector.SelectedIndex = 0;
+                    return true;
+                case Key.E:
+                    CloseTopLevelMenus();
+                    _view.LanguageSelector.SelectedIndex = 1;
+                    return true;
+            }
+        }
+
+        if (menu.ThemeMenu.IsSubMenuOpen)
+        {
+            switch (key)
+            {
+                case Key.D:
+                    CloseTopLevelMenus();
+                    _view.ThemeSelector.SelectedIndex = 0;
+                    return true;
+                case Key.L:
+                    CloseTopLevelMenus();
+                    _view.ThemeSelector.SelectedIndex = 1;
+                    return true;
+            }
+        }
+
+        if (menu.FileMenu.IsSubMenuOpen)
+        {
+            switch (key)
+            {
+                case Key.T:
+                    CloseTopLevelMenus();
+                    _ = PickTargetFileAsync();
+                    return true;
+                case Key.D:
+                    CloseTopLevelMenus();
+                    _ = PickTargetFolderAsync();
+                    return true;
+                case Key.C:
+                    CloseTopLevelMenus();
+                    _ = PickConfigurationAsync();
+                    return true;
+                case Key.E:
+                    CloseTopLevelMenus();
+                    _ = EditConfigurationAsync();
+                    return true;
+                case Key.L:
+                    CloseTopLevelMenus();
+                    ClearConfiguration();
+                    return true;
+                case Key.J:
+                    CloseTopLevelMenus();
+                    _ = ExportAsync(DiagnosticExportFormat.Json);
+                    return true;
+                case Key.S:
+                    CloseTopLevelMenus();
+                    _ = ExportAsync(DiagnosticExportFormat.Sarif);
+                    return true;
+                case Key.X:
+                    Close();
+                    return true;
+            }
+        }
+
+        if (menu.AnalyzeMenu.IsSubMenuOpen)
+        {
+            switch (key)
+            {
+                case Key.R:
+                    CloseTopLevelMenus();
+                    _ = AnalyzeAsync();
+                    return true;
+                case Key.C:
+                    CloseTopLevelMenus();
+                    CancelAnalysis();
+                    return true;
+                case Key.O:
+                    CloseTopLevelMenus();
+                    _ = OpenSelectedSourceAsync();
+                    return true;
+            }
+        }
+
+        if (menu.ViewMenu.IsSubMenuOpen)
+        {
+            switch (key)
+            {
+                case Key.F:
+                    CloseTopLevelMenus();
+                    FocusSearch();
+                    return true;
+                case Key.D:
+                    CloseTopLevelMenus();
+                    ToggleFilterFromMenu(_view.DangerFilter);
+                    return true;
+                case Key.W:
+                    CloseTopLevelMenus();
+                    ToggleFilterFromMenu(_view.WarningFilter);
+                    return true;
+                case Key.A:
+                    CloseTopLevelMenus();
+                    ToggleFilterFromMenu(_view.AttentionFilter);
+                    return true;
+                case Key.L:
+                    OpenSubMenu(menu.LanguageMenu);
+                    return true;
+                case Key.T:
+                    OpenSubMenu(menu.ThemeMenu);
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void OpenSubMenu(MenuItem menu)
+    {
+        menu.Open();
     }
 
     private bool TryHandleAltAccessKey(Key key)
