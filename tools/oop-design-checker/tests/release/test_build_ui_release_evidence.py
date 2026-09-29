@@ -27,6 +27,8 @@ HEADLESS = (
     "fixture-en-default",
     "error-ja-default",
     "config-editor-ja-default",
+    "ready-light-default",
+    "fixture-light-default",
 )
 
 
@@ -90,10 +92,12 @@ class BuildUiReleaseEvidenceTests(unittest.TestCase):
             candidate = output / "release-candidate"
             manifest = json.loads((candidate / "manifest.json").read_text())
             self.assertEqual("a" * 40, manifest["candidateSha"])
-            self.assertEqual(10, len(manifest["visuals"]))
+            self.assertEqual(12, len(manifest["visuals"]))
             self.assertTrue((candidate / "actual-diagnostics.json").exists())
             self.assertTrue((candidate / "windows-fixture.png").exists())
             self.assertTrue((candidate / "headless-config-editor.png").exists())
+            self.assertTrue((candidate / "headless-ready-light.png").exists())
+            self.assertTrue((candidate / "headless-fixture-light.png").exists())
 
     def test_missing_required_scenario_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
