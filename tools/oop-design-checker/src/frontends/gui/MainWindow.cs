@@ -699,8 +699,7 @@ internal sealed class MainWindow : Window
     {
         var canEdit = !_analysisInProgress;
         var canCancel =
-            _analysisInProgress
-            && _analysisCancellation is { IsCancellationRequested: false };
+            _analysisInProgress && _analysisCancellation is { IsCancellationRequested: false };
         var hasResult = _lastResult is not null;
         var hasSelection = _view.DiagnosticsGrid.SelectedItem is DiagnosticRow;
 
