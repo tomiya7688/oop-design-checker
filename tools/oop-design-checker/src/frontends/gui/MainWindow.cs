@@ -27,6 +27,7 @@ internal sealed class MainWindow : Window
         MinWidth = 900;
         MinHeight = 600;
         Content = _view;
+        _view.ThemeSelector.SelectedIndex = App.CurrentTheme == GuiTheme.Light ? 1 : 0;
 
         WireEvents();
         UpdateSummary();
@@ -49,6 +50,12 @@ internal sealed class MainWindow : Window
         ChangeLanguage();
     }
 
+    internal void SetThemeForTesting(GuiTheme theme)
+    {
+        _view.ThemeSelector.SelectedIndex = theme == GuiTheme.Light ? 1 : 0;
+        ChangeTheme();
+    }
+
     private void WireEvents()
     {
         _view.AnalyzeButton.Click += async (_, _) => await AnalyzeAsync();
@@ -64,6 +71,7 @@ internal sealed class MainWindow : Window
         _view.AttentionFilter.Click += (_, _) => ApplyFilters();
         _view.SearchFilter.TextChanged += (_, _) => ApplyFilters();
         _view.LanguageSelector.SelectionChanged += (_, _) => ChangeLanguage();
+        _view.ThemeSelector.SelectionChanged += (_, _) => ChangeTheme();
         _view.DiagnosticsGrid.SelectionChanged += (_, _) => UpdateSelectedDiagnostic();
         _view.DiagnosticsGrid.DoubleTapped += async (_, _) => await OpenSelectedSourceAsync();
         _view.CopySelectedButton.Click += async (_, _) => await CopySelectedAsync();
@@ -74,6 +82,11 @@ internal sealed class MainWindow : Window
         _view.ExportSarifButton.Click += async (_, _) =>
             await ExportAsync(DiagnosticExportFormat.Sarif);
         KeyDown += OnKeyDown;
+    }
+
+    private void ChangeTheme()
+    {
+        App.ApplyTheme(_view.ThemeSelector.SelectedIndex == 1 ? GuiTheme.Light : GuiTheme.Dark);
     }
 
     private void ChangeLanguage()
