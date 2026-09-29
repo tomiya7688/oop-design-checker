@@ -170,6 +170,13 @@
       "mustNotContain": [
         "OOP404"
       ]
+    },
+    {
+      "scenario": "private-nested-public-members-stay-implementation-detail",
+      "file": "Boundary/EncapsulationBoundary.cs",
+      "mustNotContain": [
+        "OOP106"
+      ]
     }
   ],
   "exactDiagnostics": [
