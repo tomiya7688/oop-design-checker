@@ -9,8 +9,8 @@ from pathlib import Path
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.command import Command
 from selenium.webdriver.support.ui import WebDriverWait
 
 from macos_bundle import validate_bundle
@@ -155,13 +155,55 @@ def screenshot(driver, path: Path):
     driver.save_screenshot(str(path))
 
 
+def perform_key_actions(driver, values):
+    actions = []
+    for value in values:
+        actions.extend(
+            [
+                {"type": "keyDown", "value": value},
+                {"type": "keyUp", "value": value},
+            ]
+        )
+
+    driver.execute(
+        Command.W3C_ACTIONS,
+        {
+            "actions": [
+                {
+                    "type": "key",
+                    "id": "keyboard",
+                    "actions": actions,
+                }
+            ]
+        },
+    )
+    driver.execute(Command.W3C_CLEAR_ACTIONS, {})
+
+
 def press_alt_access(driver, key):
-    ActionChains(driver).key_down(Keys.ALT).send_keys(key).key_up(Keys.ALT).perform()
+    driver.execute(
+        Command.W3C_ACTIONS,
+        {
+            "actions": [
+                {
+                    "type": "key",
+                    "id": "keyboard",
+                    "actions": [
+                        {"type": "keyDown", "value": Keys.ALT},
+                        {"type": "keyDown", "value": key},
+                        {"type": "keyUp", "value": key},
+                        {"type": "keyUp", "value": Keys.ALT},
+                    ],
+                }
+            ]
+        },
+    )
+    driver.execute(Command.W3C_CLEAR_ACTIONS, {})
     time.sleep(0.4)
 
 
 def press_menu_access(driver, key):
-    ActionChains(driver).send_keys(key).perform()
+    perform_key_actions(driver, [key])
     time.sleep(0.3)
 
 
