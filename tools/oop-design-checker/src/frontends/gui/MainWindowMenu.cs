@@ -7,6 +7,8 @@ namespace OopDesignChecker.Gui;
 
 internal sealed class MainWindowMenu : Menu
 {
+    protected override Type StyleKeyOverride => typeof(Menu);
+
     internal MenuItem FileMenu { get; } = new();
     internal MenuItem AnalyzeMenu { get; } = new();
     internal MenuItem ViewMenu { get; } = new();
