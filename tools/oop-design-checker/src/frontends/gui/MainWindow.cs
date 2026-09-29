@@ -107,7 +107,7 @@ internal sealed class MainWindow : Window
 
     private void ChangeTheme()
     {
-        if (Application.Current is not { } application)
+        if (Avalonia.Application.Current is not { } application)
         {
             return;
         }
