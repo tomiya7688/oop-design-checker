@@ -741,10 +741,8 @@ internal sealed class MainWindow : Window
         menu.DangerFilterItem.IsChecked = _view.DangerFilter.IsChecked == true;
         menu.WarningFilterItem.IsChecked = _view.WarningFilter.IsChecked == true;
         menu.AttentionFilterItem.IsChecked = _view.AttentionFilter.IsChecked == true;
-        menu.JapaneseLanguageItem.IsChecked =
-            _view.LanguageSelector.SelectedIndex != 1;
-        menu.EnglishLanguageItem.IsChecked =
-            _view.LanguageSelector.SelectedIndex == 1;
+        menu.JapaneseLanguageItem.IsChecked = _view.LanguageSelector.SelectedIndex != 1;
+        menu.EnglishLanguageItem.IsChecked = _view.LanguageSelector.SelectedIndex == 1;
         menu.DarkThemeItem.IsChecked = _view.ThemeSelector.SelectedIndex != 1;
         menu.LightThemeItem.IsChecked = _view.ThemeSelector.SelectedIndex == 1;
     }
