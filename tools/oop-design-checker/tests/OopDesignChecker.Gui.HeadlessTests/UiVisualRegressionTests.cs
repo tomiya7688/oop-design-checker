@@ -23,9 +23,9 @@ public sealed class UiVisualRegressionTests
     [Avalonia.Headless.XUnit.AvaloniaFact]
     public void ReadyStateRendersJapaneseAtSupportedSizes()
     {
-        CaptureReadyState("ready-ja-small", 900, 600);
-        CaptureReadyState("ready-ja-default", 1280, 820);
-        CaptureReadyState("ready-ja-large", 1600, 1000);
+        CaptureReadyState("ready-ja-dark-small", 900, 600);
+        CaptureReadyState("ready-ja-dark-default", 1280, 820);
+        CaptureReadyState("ready-ja-dark-large", 1600, 1000);
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
@@ -37,11 +37,87 @@ public sealed class UiVisualRegressionTests
             window.SetLanguageForTesting(UserInterfaceLanguage.English);
             Flush();
             AssertMainWindowLayout(window);
-            Capture(window, "ready-en-default", "en");
+            Capture(window, "ready-en-dark-default", "en");
         }
         finally
         {
             window.Close();
+        }
+    }
+
+    [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void LightThemeTogglePreservesReadyAndFixtureState()
+    {
+        var readyWindow = CreateWindow(1280, 820);
+        try
+        {
+            Assert.Equal(GuiTheme.Dark, App.CurrentTheme);
+            Assert.Equal(0, readyWindow.TestView.ThemeSelector.SelectedIndex);
+
+            readyWindow.SetThemeForTesting(GuiTheme.Light);
+            Flush();
+
+            Assert.Equal(GuiTheme.Light, App.CurrentTheme);
+            Assert.Equal(1, readyWindow.TestView.ThemeSelector.SelectedIndex);
+            Assert.Contains(
+                "ライト",
+                readyWindow.TestView.ThemeSelector.ItemsSource!.Cast<string>()
+            );
+            AssertMainWindowLayout(readyWindow);
+            Capture(readyWindow, "ready-ja-light-default", "ja");
+        }
+        finally
+        {
+            readyWindow.Close();
+            App.ApplyTheme(GuiTheme.Dark);
+        }
+
+        var fixtureRoot = FixtureRoot();
+        var result = CheckerService.Analyze(fixtureRoot);
+        var window = CreateWindow(1280, 820);
+        try
+        {
+            window.PresentResultForTesting(result);
+            window.TestView.SearchFilter.Text = "OOP106";
+            window.ApplyFiltersForTesting();
+            Flush();
+
+            var rows = VisibleRows(window);
+            Assert.NotEmpty(rows);
+            window.TestView.DiagnosticsGrid.SelectedItem = rows[0];
+            window.UpdateSelectedDiagnosticForTesting();
+            Flush();
+
+            var selectedRule = window.TestView.DetailRule.Text;
+            var status = window.TestView.Status.Text;
+            var visibleCount = VisibleRows(window).Length;
+
+            window.SetThemeForTesting(GuiTheme.Light);
+            Flush();
+
+            Assert.Equal("OOP106", window.TestView.SearchFilter.Text);
+            Assert.Equal(visibleCount, VisibleRows(window).Length);
+            Assert.Equal(selectedRule, window.TestView.DetailRule.Text);
+            Assert.Equal(status, window.TestView.Status.Text);
+            Assert.Equal(GuiTheme.Light, App.CurrentTheme);
+            AssertMainWindowLayout(window);
+            StabilizeFixtureLocationForVisualBaseline(window, fixtureRoot, rows[0].FilePath);
+            Capture(window, "fixture-ja-light-default", "ja");
+
+            window.SetLanguageForTesting(UserInterfaceLanguage.English);
+            Flush();
+
+            Assert.Equal(
+                new[] { "Dark", "Light" },
+                window.TestView.ThemeSelector.ItemsSource!.Cast<string>().ToArray()
+            );
+            Assert.Equal(GuiTheme.Light, App.CurrentTheme);
+            Capture(window, "fixture-en-light-default", "en");
+        }
+        finally
+        {
+            window.Close();
+            App.ApplyTheme(GuiTheme.Dark);
         }
     }
 
@@ -64,7 +140,7 @@ public sealed class UiVisualRegressionTests
             Assert.Equal(expectedCount, rows.Length);
             AssertSummaryMatches(window, result.Diagnostics);
             AssertMainWindowLayout(window);
-            Capture(window, "fixture-ja-default", "ja");
+            Capture(window, "fixture-ja-dark-default", "ja");
 
             window.TestView.DangerFilter.IsChecked = false;
             window.TestView.WarningFilter.IsChecked = true;
@@ -82,7 +158,7 @@ public sealed class UiVisualRegressionTests
             Flush();
             Assert.Contains("OOP106", window.TestView.DetailRule.Text, StringComparison.Ordinal);
             StabilizeFixtureLocationForVisualBaseline(window, fixtureRoot, rows[0].FilePath);
-            Capture(window, "filter-detail-oop106-ja", "ja");
+            Capture(window, "filter-detail-oop106-ja-dark", "ja");
 
             window.TestView.DangerFilter.IsChecked = true;
             window.TestView.WarningFilter.IsChecked = true;
@@ -95,7 +171,7 @@ public sealed class UiVisualRegressionTests
             Assert.Equal(expectedCount, VisibleRows(window).Length);
             AssertSummaryMatches(window, result.Diagnostics);
             AssertMainWindowLayout(window);
-            Capture(window, "fixture-en-default", "en");
+            Capture(window, "fixture-en-dark-default", "en");
         }
         finally
         {
@@ -116,7 +192,7 @@ public sealed class UiVisualRegressionTests
             Assert.Equal(error, window.TestView.Status.Text);
             Assert.Empty(VisibleRows(window));
             AssertMainWindowLayout(window);
-            Capture(window, "error-ja-default", "ja");
+            Capture(window, "error-ja-dark-default", "ja");
         }
         finally
         {
@@ -138,7 +214,7 @@ public sealed class UiVisualRegressionTests
             Flush();
             Assert.True(editor.ClientSize.Width >= 560);
             Assert.True(editor.ClientSize.Height >= 420);
-            Capture(editor, "config-editor-ja-default", "ja");
+            Capture(editor, "config-editor-ja-dark-default", "ja");
         }
         finally
         {
@@ -162,6 +238,7 @@ public sealed class UiVisualRegressionTests
 
     private static MainWindow CreateWindow(double width, double height)
     {
+        App.ApplyTheme(GuiTheme.Dark);
         var window = new MainWindow { Width = width, Height = height };
         window.Show();
         Flush();
@@ -223,6 +300,7 @@ public sealed class UiVisualRegressionTests
             window.TestView.AnalyzeButton,
             window.TestView.CancelButton,
             window.TestView.LanguageSelector,
+            window.TestView.ThemeSelector,
             window.TestView.DiagnosticsGrid,
             window.TestView.Status,
         };
@@ -258,6 +336,7 @@ public sealed class UiVisualRegressionTests
                 window.TestView.AnalyzeButton,
                 window.TestView.CancelButton,
                 window.TestView.LanguageSelector,
+                window.TestView.ThemeSelector,
             ]
         );
     }
@@ -443,6 +522,7 @@ public sealed class UiVisualRegressionTests
         {
             scenario,
             language,
+            theme = App.CurrentTheme.ToString().ToLowerInvariant(),
             width = window.ClientSize.Width,
             height = window.ClientSize.Height,
             title = window.Title,
