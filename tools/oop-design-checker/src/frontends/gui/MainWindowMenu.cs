@@ -37,8 +37,10 @@ internal sealed class MainWindowMenu : Menu
 
     public MainWindowMenu()
     {
-        FileMenu.ItemsSource = new object[]
-        {
+        MinHeight = 28;
+
+        AddItems(
+            FileMenu,
             TargetFileItem,
             TargetFolderItem,
             new Separator(),
@@ -49,21 +51,15 @@ internal sealed class MainWindowMenu : Menu
             ExportJsonItem,
             ExportSarifItem,
             new Separator(),
-            ExitItem,
-        };
+            ExitItem
+        );
 
-        AnalyzeMenu.ItemsSource = new object[]
-        {
-            AnalyzeItem,
-            CancelItem,
-            new Separator(),
-            OpenSourceItem,
-        };
+        AddItems(AnalyzeMenu, AnalyzeItem, CancelItem, new Separator(), OpenSourceItem);
 
-        LanguageMenu.ItemsSource = new object[] { JapaneseLanguageItem, EnglishLanguageItem };
-        ThemeMenu.ItemsSource = new object[] { DarkThemeItem, LightThemeItem };
-        ViewMenu.ItemsSource = new object[]
-        {
+        AddItems(LanguageMenu, JapaneseLanguageItem, EnglishLanguageItem);
+        AddItems(ThemeMenu, DarkThemeItem, LightThemeItem);
+        AddItems(
+            ViewMenu,
             SearchItem,
             new Separator(),
             DangerFilterItem,
@@ -71,10 +67,10 @@ internal sealed class MainWindowMenu : Menu
             AttentionFilterItem,
             new Separator(),
             LanguageMenu,
-            ThemeMenu,
-        };
+            ThemeMenu
+        );
 
-        ItemsSource = new object[] { FileMenu, AnalyzeMenu, ViewMenu };
+        AddItems(this, FileMenu, AnalyzeMenu, ViewMenu);
 
         DangerFilterItem.ToggleType = MenuItemToggleType.CheckBox;
         WarningFilterItem.ToggleType = MenuItemToggleType.CheckBox;
@@ -89,6 +85,10 @@ internal sealed class MainWindowMenu : Menu
         DarkThemeItem.GroupName = "Theme";
         LightThemeItem.ToggleType = MenuItemToggleType.Radio;
         LightThemeItem.GroupName = "Theme";
+
+        FileMenu.HotKey = new KeyGesture(Key.F, KeyModifiers.Alt);
+        AnalyzeMenu.HotKey = new KeyGesture(Key.A, KeyModifiers.Alt);
+        ViewMenu.HotKey = new KeyGesture(Key.V, KeyModifiers.Alt);
 
         AnalyzeItem.InputGesture = new KeyGesture(Key.F5);
         CancelItem.InputGesture = new KeyGesture(Key.Escape);
@@ -132,6 +132,14 @@ internal sealed class MainWindowMenu : Menu
         SetHeader(ThemeMenu, GuiText.Get(GuiTextKey.ThemeLabel, language).TrimEnd(':'), 'T');
         SetHeader(DarkThemeItem, GuiText.Get(GuiTextKey.DarkTheme, language), 'D');
         SetHeader(LightThemeItem, GuiText.Get(GuiTextKey.LightTheme, language), 'L');
+    }
+
+    private static void AddItems(ItemsControl parent, params object[] items)
+    {
+        foreach (var item in items)
+        {
+            parent.Items.Add(item);
+        }
     }
 
     private void ConfigureAutomation()
