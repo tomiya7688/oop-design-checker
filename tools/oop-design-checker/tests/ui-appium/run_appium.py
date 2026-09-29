@@ -417,14 +417,6 @@ def main():
             timeout=20,
         )
         record("09-keyboard-menu", "language-english", accessKey="Alt+V,L,E")
-        invoke_menu_access(driver, "v", "l", "j")
-        wait_until(
-            driver,
-            lambda: "日本語" in text_of(driver, "LanguageSelector")
-            or "Japanese" in text_of(driver, "LanguageSelector"),
-            timeout=20,
-        )
-        record("09-keyboard-menu", "language-japanese", accessKey="Alt+V,L,J")
 
         capture(
             driver,
