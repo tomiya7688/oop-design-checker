@@ -24,6 +24,8 @@ HEADLESS_SCENARIOS = (
     "fixture-en-default",
     "error-ja-default",
     "config-editor-ja-default",
+    "ready-light-default",
+    "fixture-light-default",
 )
 VISUAL_SELECTION = (
     ("windows", "02-fixture-analysis", ("after.png",), "windows-fixture.png"),
@@ -36,6 +38,8 @@ VISUAL_SELECTION = (
     ("headless", "ready-en-default", ("actual.png",), "headless-en-default.png"),
     ("headless", "filter-detail-oop106-ja", ("actual.png",), "headless-filter-detail.png"),
     ("headless", "config-editor-ja-default", ("actual.png",), "headless-config-editor.png"),
+    ("headless", "ready-light-default", ("actual.png",), "headless-ready-light.png"),
+    ("headless", "fixture-light-default", ("actual.png",), "headless-fixture-light.png"),
 )
 
 
