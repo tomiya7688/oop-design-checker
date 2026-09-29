@@ -640,6 +640,12 @@ internal sealed class MainWindow : Window
 
     private void OnEditableKeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.KeyModifiers == KeyModifiers.Alt && TryHandleAltAccessKey(e.Key))
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key != Key.Escape)
         {
             return;
