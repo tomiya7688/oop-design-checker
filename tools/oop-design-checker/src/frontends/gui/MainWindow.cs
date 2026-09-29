@@ -32,6 +32,7 @@ internal sealed class MainWindow : Window
         WireEvents();
         UpdateSummary();
         _view.Status.Text = GuiText.Get(GuiTextKey.Ready, _language);
+        UpdateActionAvailability();
     }
 
     internal MainWindowView TestView => _view;
@@ -64,11 +65,10 @@ internal sealed class MainWindow : Window
         _view.TargetFolderButton.Click += async (_, _) => await PickTargetFolderAsync();
         _view.ConfigurationButton.Click += async (_, _) => await PickConfigurationAsync();
         _view.EditConfigurationButton.Click += async (_, _) => await EditConfigurationAsync();
-        _view.ClearConfigurationButton.Click += (_, _) =>
-            _view.ConfigurationPath.Text = string.Empty;
-        _view.DangerFilter.Click += (_, _) => ApplyFilters();
-        _view.WarningFilter.Click += (_, _) => ApplyFilters();
-        _view.AttentionFilter.Click += (_, _) => ApplyFilters();
+        _view.ClearConfigurationButton.Click += (_, _) => ClearConfiguration();
+        _view.DangerFilter.Click += (_, _) => FilterStateChanged();
+        _view.WarningFilter.Click += (_, _) => FilterStateChanged();
+        _view.AttentionFilter.Click += (_, _) => FilterStateChanged();
         _view.SearchFilter.TextChanged += (_, _) => ApplyFilters();
         _view.LanguageSelector.SelectionChanged += (_, _) => ChangeLanguage();
         _view.ThemeSelector.SelectionChanged += (_, _) => ChangeTheme();
@@ -81,6 +81,40 @@ internal sealed class MainWindow : Window
             await ExportAsync(DiagnosticExportFormat.Json);
         _view.ExportSarifButton.Click += async (_, _) =>
             await ExportAsync(DiagnosticExportFormat.Sarif);
+
+        _view.MainMenu.TargetFileItem.Click += async (_, _) => await PickTargetFileAsync();
+        _view.MainMenu.TargetFolderItem.Click += async (_, _) => await PickTargetFolderAsync();
+        _view.MainMenu.ConfigurationItem.Click += async (_, _) => await PickConfigurationAsync();
+        _view.MainMenu.EditConfigurationItem.Click += async (_, _) =>
+            await EditConfigurationAsync();
+        _view.MainMenu.ClearConfigurationItem.Click += (_, _) => ClearConfiguration();
+        _view.MainMenu.ExportJsonItem.Click += async (_, _) =>
+            await ExportAsync(DiagnosticExportFormat.Json);
+        _view.MainMenu.ExportSarifItem.Click += async (_, _) =>
+            await ExportAsync(DiagnosticExportFormat.Sarif);
+        _view.MainMenu.ExitItem.Click += (_, _) => Close();
+
+        _view.MainMenu.AnalyzeItem.Click += async (_, _) => await AnalyzeAsync();
+        _view.MainMenu.CancelItem.Click += (_, _) => CancelAnalysis();
+        _view.MainMenu.OpenSourceItem.Click += async (_, _) => await OpenSelectedSourceAsync();
+
+        _view.MainMenu.SearchItem.Click += (_, _) => FocusSearch();
+        _view.MainMenu.DangerFilterItem.Click += (_, _) =>
+            ToggleFilterFromMenu(_view.DangerFilter);
+        _view.MainMenu.WarningFilterItem.Click += (_, _) =>
+            ToggleFilterFromMenu(_view.WarningFilter);
+        _view.MainMenu.AttentionFilterItem.Click += (_, _) =>
+            ToggleFilterFromMenu(_view.AttentionFilter);
+        _view.MainMenu.JapaneseLanguageItem.Click += (_, _) =>
+            _view.LanguageSelector.SelectedIndex = 0;
+        _view.MainMenu.EnglishLanguageItem.Click += (_, _) =>
+            _view.LanguageSelector.SelectedIndex = 1;
+        _view.MainMenu.DarkThemeItem.Click += (_, _) => _view.ThemeSelector.SelectedIndex = 0;
+        _view.MainMenu.LightThemeItem.Click += (_, _) => _view.ThemeSelector.SelectedIndex = 1;
+
+        _view.TargetPath.KeyDown += OnEditableKeyDown;
+        _view.ConfigurationPath.KeyDown += OnEditableKeyDown;
+        _view.SearchFilter.KeyDown += OnEditableKeyDown;
         KeyDown += OnKeyDown;
     }
 
@@ -103,6 +137,7 @@ internal sealed class MainWindow : Window
         UpdateSummary();
         UpdateSelectedDiagnostic();
         UpdateLocalizedStatus();
+        UpdateActionAvailability();
     }
 
     private void ChangeTheme()
@@ -114,6 +149,7 @@ internal sealed class MainWindow : Window
 
         application.RequestedThemeVariant =
             _view.ThemeSelector.SelectedIndex == 1 ? ThemeVariant.Light : ThemeVariant.Dark;
+        UpdateActionAvailability();
     }
 
     private async Task AnalyzeAsync()
@@ -186,8 +222,8 @@ internal sealed class MainWindow : Window
         }
 
         _analysisCancellation.Cancel();
-        _view.CancelButton.IsEnabled = false;
         _view.Status.Text = GuiText.Get(GuiTextKey.Cancelling, _language);
+        UpdateActionAvailability();
     }
 
     private void ShowResult(CheckerRunResult result)
@@ -200,6 +236,7 @@ internal sealed class MainWindow : Window
         UpdateSummary();
         _view.Status.Text = GuiText.Format(GuiTextKey.Completed, _language, _allRows.Length);
         _view.ConfigurationPath.Text = result.ConfigurationPath ?? _view.ConfigurationPath.Text;
+        UpdateActionAvailability();
     }
 
     private void ShowError(string message)
@@ -211,6 +248,7 @@ internal sealed class MainWindow : Window
         _view.ClearDetails(_language);
         UpdateSummary();
         _view.Status.Text = message;
+        UpdateActionAvailability();
     }
 
     private void ApplyFilters()
@@ -222,6 +260,7 @@ internal sealed class MainWindow : Window
             _view.SearchFilter.Text ?? string.Empty
         );
         _view.DiagnosticsGrid.ItemsSource = DiagnosticFilter.Apply(_allRows, options);
+        SyncMenuState();
     }
 
     private void UpdateSummary()
@@ -261,6 +300,7 @@ internal sealed class MainWindow : Window
         if (_view.DiagnosticsGrid.SelectedItem is not DiagnosticRow row)
         {
             _view.ClearDetails(_language);
+            UpdateActionAvailability();
             return;
         }
 
@@ -285,6 +325,7 @@ internal sealed class MainWindow : Window
             row.LocationText
         );
         _view.DetailMessage.Text = row.Message;
+        UpdateActionAvailability();
     }
 
     private async Task PickTargetFileAsync()
@@ -576,6 +617,39 @@ internal sealed class MainWindow : Window
         }
     }
 
+    private void ClearConfiguration()
+    {
+        _view.ConfigurationPath.Text = string.Empty;
+    }
+
+    private void FilterStateChanged()
+    {
+        ApplyFilters();
+        SyncMenuState();
+    }
+
+    private void ToggleFilterFromMenu(CheckBox filter)
+    {
+        filter.IsChecked = filter.IsChecked != true;
+        FilterStateChanged();
+    }
+
+    private void FocusSearch()
+    {
+        _view.SearchFilter.Focus();
+    }
+
+    private void OnEditableKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        FocusManager?.ClearFocus();
+    }
+
     private async void OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && _analysisInProgress)
@@ -595,12 +669,17 @@ internal sealed class MainWindow : Window
         if (e.Key == Key.F && e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
             e.Handled = true;
-            _view.SearchFilter.Focus();
+            FocusSearch();
             return;
         }
 
         if (e.Key == Key.C && e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
+            if (FocusManager?.GetFocusedElement() is TextBox)
+            {
+                return;
+            }
+
             e.Handled = true;
             await CopySelectedAsync();
         }
@@ -609,20 +688,67 @@ internal sealed class MainWindow : Window
     private void SetBusy(bool isBusy)
     {
         _analysisInProgress = isBusy;
-        _view.AnalyzeButton.IsEnabled = !isBusy;
-        _view.CancelButton.IsEnabled = isBusy;
-        _view.TargetFileButton.IsEnabled = !isBusy;
-        _view.TargetFolderButton.IsEnabled = !isBusy;
-        _view.ConfigurationButton.IsEnabled = !isBusy;
-        _view.EditConfigurationButton.IsEnabled = !isBusy;
-        _view.ExportJsonButton.IsEnabled = !isBusy && _lastResult is not null;
-        _view.ExportSarifButton.IsEnabled = !isBusy && _lastResult is not null;
-        _view.LanguageSelector.IsEnabled = !isBusy;
         _view.Progress.IsVisible = isBusy;
+        UpdateActionAvailability();
         if (isBusy)
         {
             _view.Status.Text = GuiText.Get(GuiTextKey.Analyzing, _language);
         }
+    }
+
+    private void UpdateActionAvailability()
+    {
+        var canEdit = !_analysisInProgress;
+        var canCancel =
+            _analysisInProgress
+            && _analysisCancellation is { IsCancellationRequested: false };
+        var hasResult = _lastResult is not null;
+        var hasSelection = _view.DiagnosticsGrid.SelectedItem is DiagnosticRow;
+
+        _view.AnalyzeButton.IsEnabled = canEdit;
+        _view.CancelButton.IsEnabled = canCancel;
+        _view.TargetFileButton.IsEnabled = canEdit;
+        _view.TargetFolderButton.IsEnabled = canEdit;
+        _view.ConfigurationButton.IsEnabled = canEdit;
+        _view.EditConfigurationButton.IsEnabled = canEdit;
+        _view.ClearConfigurationButton.IsEnabled = canEdit;
+        _view.ExportJsonButton.IsEnabled = canEdit && hasResult;
+        _view.ExportSarifButton.IsEnabled = canEdit && hasResult;
+        _view.OpenSourceButton.IsEnabled = canEdit && hasSelection;
+        _view.CopySelectedButton.IsEnabled = hasSelection;
+        _view.CopyAllButton.IsEnabled = hasResult;
+        _view.LanguageSelector.IsEnabled = canEdit;
+        _view.ThemeSelector.IsEnabled = canEdit;
+
+        var menu = _view.MainMenu;
+        menu.TargetFileItem.IsEnabled = canEdit;
+        menu.TargetFolderItem.IsEnabled = canEdit;
+        menu.ConfigurationItem.IsEnabled = canEdit;
+        menu.EditConfigurationItem.IsEnabled = canEdit;
+        menu.ClearConfigurationItem.IsEnabled = canEdit;
+        menu.ExportJsonItem.IsEnabled = canEdit && hasResult;
+        menu.ExportSarifItem.IsEnabled = canEdit && hasResult;
+        menu.AnalyzeItem.IsEnabled = canEdit;
+        menu.CancelItem.IsEnabled = canCancel;
+        menu.OpenSourceItem.IsEnabled = canEdit && hasSelection;
+        menu.LanguageMenu.IsEnabled = canEdit;
+        menu.ThemeMenu.IsEnabled = canEdit;
+
+        SyncMenuState();
+    }
+
+    private void SyncMenuState()
+    {
+        var menu = _view.MainMenu;
+        menu.DangerFilterItem.IsChecked = _view.DangerFilter.IsChecked == true;
+        menu.WarningFilterItem.IsChecked = _view.WarningFilter.IsChecked == true;
+        menu.AttentionFilterItem.IsChecked = _view.AttentionFilter.IsChecked == true;
+        menu.JapaneseLanguageItem.IsChecked =
+            _view.LanguageSelector.SelectedIndex != 1;
+        menu.EnglishLanguageItem.IsChecked =
+            _view.LanguageSelector.SelectedIndex == 1;
+        menu.DarkThemeItem.IsChecked = _view.ThemeSelector.SelectedIndex != 1;
+        menu.LightThemeItem.IsChecked = _view.ThemeSelector.SelectedIndex == 1;
     }
 
     private void UpdateLocalizedStatus()
