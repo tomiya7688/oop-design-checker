@@ -86,10 +86,6 @@ internal sealed class MainWindowMenu : Menu
         LightThemeItem.ToggleType = MenuItemToggleType.Radio;
         LightThemeItem.GroupName = "Theme";
 
-        FileMenu.HotKey = new KeyGesture(Key.F, KeyModifiers.Alt);
-        AnalyzeMenu.HotKey = new KeyGesture(Key.A, KeyModifiers.Alt);
-        ViewMenu.HotKey = new KeyGesture(Key.V, KeyModifiers.Alt);
-
         AnalyzeItem.InputGesture = new KeyGesture(Key.F5);
         CancelItem.InputGesture = new KeyGesture(Key.Escape);
         SearchItem.InputGesture = new KeyGesture(Key.F, KeyModifiers.Control);
