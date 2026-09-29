@@ -188,7 +188,7 @@ public sealed class UiVisualRegressionTests
             Assert.False(window.TestView.CancelButton.IsEnabled);
             WaitUntil(
                 () =>
-                    window.TestView.Status.Text.Contains(
+                    (window.TestView.Status.Text ?? string.Empty).Contains(
                         "キャンセル",
                         StringComparison.OrdinalIgnoreCase
                     ),
