@@ -16,7 +16,7 @@ Evidence is grouped under stable scenario IDs:
 - `01-cancel` - start analysis and cancel it
 - `02-fixture-analysis` - analyze the release-validation fixture and verify severity counts
 - `03-filter-detail` - filter/select OOP106 and verify detail state
-- `04-language-resize` - switch to English and resize/maximize
+- `04-language-resize` - switch to English, capture Dark/Light theme states, restore Dark, and resize/maximize
 - `05-config-editor` - edit, validate, save, and apply a configuration
 - `06-export` - export JSON and SARIF and validate their contents
 - `07-source-open-fallback` - exercise the missing-source fallback after selection
