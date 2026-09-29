@@ -55,11 +55,11 @@ public sealed class UiVisualRegressionTests
 
         try
         {
-            Assert.Equal(ThemeVariant.Dark, Application.Current!.RequestedThemeVariant);
+            Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
 
             window.SetThemeForTesting(ThemeVariant.Light);
             Flush();
-            Assert.Equal(ThemeVariant.Light, Application.Current!.RequestedThemeVariant);
+            Assert.Equal(ThemeVariant.Light, Avalonia.Application.Current!.RequestedThemeVariant);
             Assert.Equal(ThemeVariant.Light, window.ActualThemeVariant);
             Assert.Equal(1, window.TestView.ThemeSelector.SelectedIndex);
             Capture(window, "ready-light-default", "ja");
@@ -81,7 +81,7 @@ public sealed class UiVisualRegressionTests
 
             window.SetThemeForTesting(ThemeVariant.Dark);
             Flush();
-            Assert.Equal(ThemeVariant.Dark, Application.Current!.RequestedThemeVariant);
+            Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
             Assert.Equal("OOP106", window.TestView.SearchFilter.Text);
             Assert.NotEmpty(VisibleRows(window));
         }
@@ -198,7 +198,7 @@ public sealed class UiVisualRegressionTests
         var window = CreateWindow(width, height);
         try
         {
-            Assert.Equal(ThemeVariant.Dark, Application.Current!.RequestedThemeVariant);
+            Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
             Assert.Equal(ThemeVariant.Dark, window.ActualThemeVariant);
             Assert.Equal(0, window.TestView.ThemeSelector.SelectedIndex);
             AssertMainWindowLayout(window);
