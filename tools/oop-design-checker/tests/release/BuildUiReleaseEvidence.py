@@ -13,6 +13,7 @@ APPIUM_SCENARIOS = (
     "06-export",
     "07-source-open-fallback",
     "08-error-state",
+    "09-keyboard-menu",
 )
 HEADLESS_SCENARIOS = (
     "ready-ja-small",
@@ -26,6 +27,7 @@ HEADLESS_SCENARIOS = (
     "config-editor-ja-default",
     "ready-light-default",
     "fixture-light-default",
+    "menu-file-open-ja",
 )
 VISUAL_SELECTION = (
     ("windows", "02-fixture-analysis", ("after.png",), "windows-fixture.png"),
@@ -34,12 +36,15 @@ VISUAL_SELECTION = (
     ("macos", "02-fixture-analysis", ("after.png",), "macos-fixture.png"),
     ("macos", "04-language-resize", ("resized.png", "after.png"), "macos-english-resized.png"),
     ("macos", "08-error-state", ("after.png",), "macos-error.png"),
+    ("windows", "09-keyboard-menu", ("menu-open.png",), "windows-keyboard-menu.png"),
+    ("macos", "09-keyboard-menu", ("menu-open.png",), "macos-keyboard-menu.png"),
     ("headless", "ready-ja-small", ("actual.png",), "headless-ja-small.png"),
     ("headless", "ready-en-default", ("actual.png",), "headless-en-default.png"),
     ("headless", "filter-detail-oop106-ja", ("actual.png",), "headless-filter-detail.png"),
     ("headless", "config-editor-ja-default", ("actual.png",), "headless-config-editor.png"),
     ("headless", "ready-light-default", ("actual.png",), "headless-ready-light.png"),
     ("headless", "fixture-light-default", ("actual.png",), "headless-fixture-light.png"),
+    ("headless", "menu-file-open-ja", ("actual.png",), "headless-keyboard-menu.png"),
 )
 
 

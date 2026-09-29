@@ -10,6 +10,7 @@ from pathlib import Path
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.command import Command
 from selenium.webdriver.support.ui import WebDriverWait
 
 from macos_bundle import validate_bundle
@@ -134,12 +135,40 @@ def wait_until(driver, predicate, timeout=90):
 
 def text_of(driver, automation_id):
     element = find(driver, automation_id)
-    return (
-        element.text
-        or element.get_attribute("Name")
-        or element.get_attribute("Value.Value")
-        or ""
+    getters = (
+        lambda: element.text,
+        lambda: element.get_attribute("Name"),
+        lambda: element.get_attribute("Value.Value"),
     )
+    for getter in getters:
+        try:
+            value = getter()
+        except Exception:
+            continue
+        if value:
+            return value
+    return ""
+
+
+def control_contains(driver, automation_id, expected_values):
+    expected = tuple(value.lower() for value in expected_values)
+    text = text_of(driver, automation_id).lower()
+    if any(value in text for value in expected):
+        return True
+
+    source = driver.page_source
+    markers = (
+        f'AutomationId="{automation_id}"',
+        f'identifier="{automation_id}"',
+    )
+    for marker in markers:
+        index = source.find(marker)
+        if index < 0:
+            continue
+        segment = source[index : index + 3000].lower()
+        if any(value in segment for value in expected):
+            return True
+    return False
 
 
 def replace_text(driver, automation_id, value):
@@ -152,6 +181,64 @@ def replace_text(driver, automation_id, value):
 def screenshot(driver, path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     driver.save_screenshot(str(path))
+
+
+def perform_key_actions(driver, values):
+    actions = []
+    for value in values:
+        actions.extend(
+            [
+                {"type": "keyDown", "value": value},
+                {"type": "keyUp", "value": value},
+            ]
+        )
+
+    driver.execute(
+        Command.W3C_ACTIONS,
+        {
+            "actions": [
+                {
+                    "type": "key",
+                    "id": "keyboard",
+                    "actions": actions,
+                }
+            ]
+        },
+    )
+    driver.execute(Command.W3C_CLEAR_ACTIONS, {})
+
+
+def press_alt_access(driver, key):
+    driver.execute(
+        Command.W3C_ACTIONS,
+        {
+            "actions": [
+                {
+                    "type": "key",
+                    "id": "keyboard",
+                    "actions": [
+                        {"type": "keyDown", "value": Keys.ALT},
+                        {"type": "keyDown", "value": key},
+                        {"type": "keyUp", "value": key},
+                        {"type": "keyUp", "value": Keys.ALT},
+                    ],
+                }
+            ]
+        },
+    )
+    driver.execute(Command.W3C_CLEAR_ACTIONS, {})
+    time.sleep(0.4)
+
+
+def press_menu_access(driver, key):
+    perform_key_actions(driver, [key])
+    time.sleep(0.3)
+
+
+def invoke_menu_access(driver, top_level, *access_keys):
+    press_alt_access(driver, top_level)
+    for key in access_keys:
+        press_menu_access(driver, key)
 
 
 def summary_matches(driver, counts):
@@ -223,6 +310,8 @@ def write_scenario_state(driver, directory: Path, scenario, extra=None):
         "status": text_of(driver, "Status"),
         "selectedRule": text_of(driver, "DetailRule"),
         "selectedFile": text_of(driver, "DetailLocation"),
+        "language": text_of(driver, "LanguageSelector"),
+        "theme": text_of(driver, "ThemeSelector"),
     }
     if extra:
         state.update(extra)
@@ -296,6 +385,12 @@ def main():
         "06-export": {"count": len(diagnostics), "formats": ["json", "sarif"]},
         "07-source-open-fallback": {"ruleId": "OOP106"},
         "08-error-state": {"diagnostics": 0},
+        "09-keyboard-menu": {
+            "topMenus": ["File", "Analyze", "View"],
+            "analyzeCancel": "menu-access-key",
+            "language": ["ja", "en"],
+            "theme": ["Dark", "Light"],
+        },
     }.items():
         directory = evidence / scenario
         directory.mkdir(parents=True, exist_ok=True)
@@ -314,17 +409,58 @@ def main():
         replace_text(driver, "TargetPath", str(fixture))
         record("02-fixture-analysis", "set-target", value=str(fixture))
 
-        find(driver, "AnalyzeButton").click()
-        record("01-cancel", "analyze", result="started")
+        keyboard = evidence / "09-keyboard-menu"
+        screenshot(driver, keyboard / "before.png")
+        press_alt_access(driver, "f")
+        wait_until(driver, lambda: find(driver, "TargetFileMenuItem").is_displayed(), timeout=20)
+        screenshot(driver, keyboard / "menu-open.png")
+        record("09-keyboard-menu", "open-file-menu", accessKey="Alt+F")
+        press_menu_access(driver, Keys.ESCAPE)
+
+        press_alt_access(driver, "v")
+        wait_until(driver, lambda: find(driver, "ThemeMenu").is_displayed(), timeout=20)
+        press_menu_access(driver, "t")
+        press_menu_access(driver, "l")
+        wait_until(
+            driver,
+            lambda: control_contains(driver, "ThemeSelector", ("light", "ライト")),
+            timeout=20,
+        )
+        record("09-keyboard-menu", "theme-light", accessKey="Alt+V,T,L")
+
+        invoke_menu_access(driver, "v", "t", "d")
+        wait_until(
+            driver,
+            lambda: control_contains(driver, "ThemeSelector", ("dark", "ダーク")),
+            timeout=20,
+        )
+        record("09-keyboard-menu", "theme-dark", accessKey="Alt+V,T,D")
+
+        invoke_menu_access(driver, "v", "l", "e")
+        wait_until(
+            driver,
+            lambda: control_contains(driver, "LanguageSelector", ("English",)),
+            timeout=20,
+        )
+        record("09-keyboard-menu", "language-english", accessKey="Alt+V,L,E")
+
+        capture(
+            driver,
+            "09-keyboard-menu",
+            extra={"accessKeys": ["Alt+F", "Alt+A", "Alt+V", "Alt+T", "Alt+C"]},
+        )
+
+        invoke_menu_access(driver, "a", "r")
+        record("01-cancel", "analyze", result="started", accessKey="Alt+A,R")
         wait_until(driver, lambda: find(driver, "CancelButton").is_enabled(), timeout=20)
-        find(driver, "CancelButton").click()
+        invoke_menu_access(driver, "a", "c")
         wait_until(
             driver,
             lambda: "cancelled" in text_of(driver, "Status").lower()
             or "キャンセル" in text_of(driver, "Status"),
             timeout=20,
         )
-        record("01-cancel", "cancel")
+        record("01-cancel", "cancel", accessKey="Alt+A,C")
         capture(driver, "01-cancel")
         wait_until(driver, lambda: find(driver, "AnalyzeButton").is_enabled(), timeout=20)
 
@@ -554,7 +690,7 @@ def main():
         for path in (json_path, sarif_path):
             path.unlink(missing_ok=True)
 
-        find(driver, "ExportJsonButton").click()
+        invoke_menu_access(driver, "f", "j")
         wait_until(
             driver,
             lambda: exported_document_is_ready(
@@ -564,7 +700,7 @@ def main():
         )
         record("06-export", "export-json", path=str(json_path))
 
-        find(driver, "ExportSarifButton").click()
+        invoke_menu_access(driver, "f", "s")
         wait_until(
             driver,
             lambda: exported_document_is_ready(
@@ -593,7 +729,7 @@ def main():
         source_path.rename(backup_path)
         moved_source = (source_path, backup_path)
         try:
-            find(driver, "OpenSourceButton").click()
+            invoke_menu_access(driver, "a", "o")
             wait_until(
                 driver,
                 lambda: "not found" in text_of(driver, "Status").lower(),

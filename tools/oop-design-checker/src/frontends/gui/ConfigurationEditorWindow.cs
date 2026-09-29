@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using OopDesignChecker.Configuration;
@@ -31,6 +32,16 @@ internal sealed class ConfigurationEditorWindow : Window
         AutomationProperties.SetAutomationId(_status, "ConfigurationEditorStatus");
 
         Content = BuildContent();
+        KeyDown += (_, args) =>
+        {
+            if (args.Key != Key.Escape)
+            {
+                return;
+            }
+
+            args.Handled = true;
+            Close(null);
+        };
     }
 
     private Grid BuildContent()

@@ -16,6 +16,9 @@ Structural checks are the default on every operating system. They validate:
 - error state
 - configuration editor state
 - key control bounds and overlap
+- Alt+F / Alt+A / Alt+V menu access, menu Escape behavior, and ordinary TextBox typing isolation
+- Alt+T / Alt+C / Ctrl+F direct focus plus Escape editing-focus exit before analysis cancellation
+- menu/button disabled-state synchronization and keyboard theme/language switching
 
 Run them with:
 

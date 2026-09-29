@@ -3,6 +3,8 @@ using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -84,6 +86,170 @@ public sealed class UiVisualRegressionTests
             Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
             Assert.Equal("OOP106", window.TestView.SearchFilter.Text);
             Assert.NotEmpty(VisibleRows(window));
+        }
+        finally
+        {
+            window.SetThemeForTesting(ThemeVariant.Dark);
+            window.Close();
+        }
+    }
+
+    [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void AltAccessKeysOpenMenusInBothLanguages()
+    {
+        var window = CreateWindow(1280, 820);
+        try
+        {
+            window.TestView.TargetPath.Focus();
+            PressKey(window, Key.F, PhysicalKey.F, RawInputModifiers.Alt, "f");
+            Assert.True(window.TestView.MainMenu.FileMenu.IsSubMenuOpen);
+            Capture(window, "menu-file-open-ja", "ja");
+            PressKey(window, Key.Escape, PhysicalKey.Escape);
+            Assert.False(window.TestView.MainMenu.FileMenu.IsSubMenuOpen);
+
+            PressKey(window, Key.A, PhysicalKey.A, RawInputModifiers.Alt, "a");
+            Assert.True(window.TestView.MainMenu.AnalyzeMenu.IsSubMenuOpen);
+            PressKey(window, Key.Escape, PhysicalKey.Escape);
+
+            window.SetLanguageForTesting(UserInterfaceLanguage.English);
+            window.TestView.SearchFilter.Focus();
+            PressKey(window, Key.V, PhysicalKey.V, RawInputModifiers.Alt, "v");
+            Assert.True(window.TestView.MainMenu.ViewMenu.IsSubMenuOpen);
+            PressKey(window, Key.Escape, PhysicalKey.Escape);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void DirectFocusShortcutsPreserveTextAndOrdinaryTypingDoesNotTriggerActions()
+    {
+        var window = CreateWindow(1280, 820);
+        try
+        {
+            window.TestView.TargetPath.Text = "target-value";
+            window.TestView.ConfigurationPath.Text = "config-value";
+            window.TestView.SearchFilter.Text = "search-value";
+
+            window.TestView.TargetPath.Focus();
+            window.KeyTextInput("f");
+            Flush();
+            var typedTarget = window.TestView.TargetPath.Text ?? string.Empty;
+            Assert.Equal("target-value".Length + 1, typedTarget.Length);
+            Assert.Equal(
+                "target-value",
+                typedTarget.Replace("f", string.Empty, StringComparison.Ordinal)
+            );
+            Assert.False(window.TestView.MainMenu.FileMenu.IsSubMenuOpen);
+
+            window.TestView.SearchFilter.Focus();
+            PressKey(window, Key.T, PhysicalKey.T, RawInputModifiers.Alt, "t");
+            Assert.Same(window.TestView.TargetPath, window.FocusManager?.GetFocusedElement());
+            Assert.Equal(typedTarget, window.TestView.TargetPath.Text);
+
+            PressKey(window, Key.C, PhysicalKey.C, RawInputModifiers.Alt, "c");
+            Assert.Same(
+                window.TestView.ConfigurationPath,
+                window.FocusManager?.GetFocusedElement()
+            );
+            Assert.Equal("config-value", window.TestView.ConfigurationPath.Text);
+
+            PressKey(window, Key.F, PhysicalKey.F, RawInputModifiers.Control, "f");
+            Assert.Same(window.TestView.SearchFilter, window.FocusManager?.GetFocusedElement());
+            Assert.Equal("search-value", window.TestView.SearchFilter.Text);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void EscapeLeavesEditingBeforeCancellingAnalysis()
+    {
+        const string delayVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS";
+        var previousDelay = Environment.GetEnvironmentVariable(delayVariable);
+        Environment.SetEnvironmentVariable(delayVariable, "30000");
+
+        var window = CreateWindow(1280, 820);
+        try
+        {
+            window.TestView.SearchFilter.Text = "OOP106";
+            window.TestView.SearchFilter.Focus();
+            window.TestView.AnalyzeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Flush();
+
+            Assert.True(window.TestView.CancelButton.IsEnabled);
+            Assert.Same(window.TestView.SearchFilter, window.FocusManager?.GetFocusedElement());
+
+            PressKey(window, Key.Escape, PhysicalKey.Escape);
+            Assert.Equal("OOP106", window.TestView.SearchFilter.Text);
+            Assert.NotSame(window.TestView.SearchFilter, window.FocusManager?.GetFocusedElement());
+            Assert.True(window.TestView.CancelButton.IsEnabled);
+
+            PressKey(window, Key.Escape, PhysicalKey.Escape);
+            Assert.False(window.TestView.CancelButton.IsEnabled);
+            WaitUntil(
+                () =>
+                    (window.TestView.Status.Text ?? string.Empty).Contains(
+                        "キャンセル",
+                        StringComparison.OrdinalIgnoreCase
+                    ),
+                timeoutMilliseconds: 3000
+            );
+        }
+        finally
+        {
+            window.Close();
+            Environment.SetEnvironmentVariable(delayVariable, previousDelay);
+        }
+    }
+
+    [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void MenuStateTracksFiltersLanguageThemeAndResultAvailability()
+    {
+        var fixtureRoot = FixtureRoot();
+        var result = CheckerService.Analyze(fixtureRoot);
+        var window = CreateWindow(1280, 820);
+
+        try
+        {
+            var menu = window.TestView.MainMenu;
+            Assert.True(menu.AnalyzeItem.IsEnabled);
+            Assert.False(menu.CancelItem.IsEnabled);
+            Assert.False(menu.ExportJsonItem.IsEnabled);
+            Assert.False(menu.OpenSourceItem.IsEnabled);
+            Assert.True(menu.DangerFilterItem.IsChecked);
+            Assert.True(menu.WarningFilterItem.IsChecked);
+            Assert.True(menu.AttentionFilterItem.IsChecked);
+
+            menu.WarningFilterItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            Flush();
+            Assert.False(window.TestView.WarningFilter.IsChecked);
+            Assert.False(menu.WarningFilterItem.IsChecked);
+
+            menu.LightThemeItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            Flush();
+            Assert.Equal(1, window.TestView.ThemeSelector.SelectedIndex);
+            Assert.True(menu.LightThemeItem.IsChecked);
+            Assert.Equal(ThemeVariant.Light, Avalonia.Application.Current!.RequestedThemeVariant);
+
+            menu.EnglishLanguageItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            Flush();
+            Assert.Equal(1, window.TestView.LanguageSelector.SelectedIndex);
+            Assert.True(menu.EnglishLanguageItem.IsChecked);
+
+            window.PresentResultForTesting(result);
+            Flush();
+            Assert.True(menu.ExportJsonItem.IsEnabled);
+
+            var row = VisibleRows(window).First();
+            window.TestView.DiagnosticsGrid.SelectedItem = row;
+            window.UpdateSelectedDiagnosticForTesting();
+            Flush();
+            Assert.True(menu.OpenSourceItem.IsEnabled);
         }
         finally
         {
@@ -210,6 +376,36 @@ public sealed class UiVisualRegressionTests
         }
     }
 
+    private static void PressKey(
+        Window window,
+        Key key,
+        PhysicalKey physicalKey,
+        RawInputModifiers modifiers = RawInputModifiers.None,
+        string? keySymbol = null
+    )
+    {
+        window.KeyPress(key, modifiers, physicalKey, keySymbol);
+        window.KeyRelease(key, modifiers, physicalKey, keySymbol);
+        Flush();
+    }
+
+    private static void WaitUntil(Func<bool> predicate, int timeoutMilliseconds)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMilliseconds);
+        while (DateTime.UtcNow < deadline)
+        {
+            Flush();
+            if (predicate())
+            {
+                return;
+            }
+
+            Thread.Sleep(10);
+        }
+
+        Assert.True(predicate(), "Timed out waiting for UI state.");
+    }
+
     private static MainWindow CreateWindow(double width, double height)
     {
         var window = new MainWindow { Width = width, Height = height };
@@ -259,6 +455,7 @@ public sealed class UiVisualRegressionTests
     {
         var controls = new Control[]
         {
+            window.TestView.MainMenu,
             window.TestView.TargetPath,
             window.TestView.TargetFileButton,
             window.TestView.TargetFolderButton,
