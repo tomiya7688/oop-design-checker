@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
+using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using OopDesignChecker.Configuration;
@@ -114,6 +115,12 @@ internal sealed class MainWindow : Window
         _view.TargetPath.KeyDown += OnEditableKeyDown;
         _view.ConfigurationPath.KeyDown += OnEditableKeyDown;
         _view.SearchFilter.KeyDown += OnEditableKeyDown;
+        AddHandler(
+            InputElement.KeyDownEvent,
+            OnPreviewKeyDown,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true
+        );
         KeyDown += OnKeyDown;
     }
 
@@ -640,12 +647,6 @@ internal sealed class MainWindow : Window
 
     private void OnEditableKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.KeyModifiers == KeyModifiers.Alt && TryHandleAltAccessKey(e.Key))
-        {
-            e.Handled = true;
-            return;
-        }
-
         if (e.Key != Key.Escape)
         {
             return;
@@ -662,17 +663,23 @@ internal sealed class MainWindow : Window
         }
     }
 
-    private async void OnKeyDown(object? sender, KeyEventArgs e)
+    private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.KeyModifiers == KeyModifiers.Alt)
+        if (e.Key == Key.Escape && AnyTopLevelMenuOpen())
         {
-            if (TryHandleAltAccessKey(e.Key))
-            {
-                e.Handled = true;
-                return;
-            }
+            CloseTopLevelMenus();
+            e.Handled = true;
+            return;
         }
 
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Alt) && TryHandleAltAccessKey(e.Key))
+        {
+            e.Handled = true;
+        }
+    }
+
+    private async void OnKeyDown(object? sender, KeyEventArgs e)
+    {
         if (e.Key == Key.Escape && _analysisInProgress)
         {
             e.Handled = true;
@@ -730,11 +737,21 @@ internal sealed class MainWindow : Window
         }
     }
 
-    private void OpenTopLevelMenu(MenuItem menu)
+    private bool AnyTopLevelMenuOpen() =>
+        _view.MainMenu.FileMenu.IsSubMenuOpen
+        || _view.MainMenu.AnalyzeMenu.IsSubMenuOpen
+        || _view.MainMenu.ViewMenu.IsSubMenuOpen;
+
+    private void CloseTopLevelMenus()
     {
         _view.MainMenu.FileMenu.IsSubMenuOpen = false;
         _view.MainMenu.AnalyzeMenu.IsSubMenuOpen = false;
         _view.MainMenu.ViewMenu.IsSubMenuOpen = false;
+    }
+
+    private void OpenTopLevelMenu(MenuItem menu)
+    {
+        CloseTopLevelMenus();
         menu.Open();
     }
 
