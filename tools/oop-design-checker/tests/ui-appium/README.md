@@ -21,6 +21,7 @@ Evidence is grouped under stable scenario IDs:
 - `06-export` - export JSON and SARIF and validate their contents
 - `07-source-open-fallback` - exercise the missing-source fallback after selection
 - `08-error-state` - analyze an invalid target and verify the visible error state
+- `09-keyboard-menu` - drive Alt access keys, capture an open menu, switch language/theme, and invoke menu actions
 
 Each scenario contains `expected.json`, screenshots where relevant, `ui-state.json`, and `action-log.json`. Export evidence also contains the actual JSON and SARIF diagnostics.
 
