@@ -99,8 +99,7 @@ internal sealed class MainWindow : Window
         _view.MainMenu.OpenSourceItem.Click += async (_, _) => await OpenSelectedSourceAsync();
 
         _view.MainMenu.SearchItem.Click += (_, _) => FocusSearch();
-        _view.MainMenu.DangerFilterItem.Click += (_, _) =>
-            ToggleFilterFromMenu(_view.DangerFilter);
+        _view.MainMenu.DangerFilterItem.Click += (_, _) => ToggleFilterFromMenu(_view.DangerFilter);
         _view.MainMenu.WarningFilterItem.Click += (_, _) =>
             ToggleFilterFromMenu(_view.WarningFilter);
         _view.MainMenu.AttentionFilterItem.Click += (_, _) =>
@@ -647,7 +646,7 @@ internal sealed class MainWindow : Window
         }
 
         e.Handled = true;
-        FocusManager?.ClearFocus();
+        Focus();
     }
 
     private async void OnKeyDown(object? sender, KeyEventArgs e)
