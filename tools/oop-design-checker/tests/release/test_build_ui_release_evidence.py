@@ -56,6 +56,8 @@ class BuildUiReleaseEvidenceTests(unittest.TestCase):
                     write_json(directory / "action-log.json", [{"action": scenario}])
                     (directory / "after.png").write_bytes(b"png")
                     (directory / "resized.png").write_bytes(b"png")
+                    if scenario == "09-keyboard-menu":
+                        (directory / "menu-open.png").write_bytes(b"png")
                 export = platform_root / "ui-appium-evidence" / "06-export"
                 write_json(
                     export / "actual-diagnostics.json",
