@@ -89,8 +89,7 @@ internal sealed record GuiCommandDefinition(
         );
 
     internal string PrimaryHint =>
-        PrimaryShortcut?.DisplayText
-        ?? (MenuPath.Count == 1 ? MenuPathText : string.Empty);
+        PrimaryShortcut?.DisplayText ?? (MenuPath.Count == 1 ? MenuPathText : string.Empty);
 
     internal Key? MenuAccessKey => MenuPath.Count == 0 ? null : MenuPath[^1];
 
@@ -102,8 +101,7 @@ internal sealed record GuiCommandDefinition(
             return description;
         }
 
-        var keyboardLabel =
-            language == UserInterfaceLanguage.Japanese ? "キーボード" : "Keyboard";
+        var keyboardLabel = language == UserInterfaceLanguage.Japanese ? "キーボード" : "Keyboard";
         return $"{description}{Environment.NewLine}{keyboardLabel}: {ShortcutText}";
     }
 
