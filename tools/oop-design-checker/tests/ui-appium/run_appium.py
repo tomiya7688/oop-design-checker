@@ -152,9 +152,22 @@ def text_of(driver, automation_id):
 
 def control_contains(driver, automation_id, expected_values):
     expected = tuple(value.lower() for value in expected_values)
-    text = text_of(driver, automation_id).lower()
-    if any(value in text for value in expected):
-        return True
+    element = find(driver, automation_id)
+    getters = (
+        lambda: element.text,
+        lambda: element.get_attribute("Name"),
+        lambda: element.get_attribute("Value.Value"),
+        lambda: element.get_attribute("value"),
+        lambda: element.get_attribute("title"),
+        lambda: element.get_attribute("label"),
+    )
+    for getter in getters:
+        try:
+            value = getter()
+        except Exception:
+            continue
+        if value and any(expected_value in str(value).lower() for expected_value in expected):
+            return True
 
     source = driver.page_source
     markers = (
