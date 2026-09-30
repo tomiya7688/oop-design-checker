@@ -7,8 +7,7 @@ namespace OopDesignChecker.Gui;
 
 internal readonly record struct GuiShortcut(Key Key, KeyModifiers Modifiers = KeyModifiers.None)
 {
-    internal bool Matches(KeyEventArgs args) =>
-        args.Key == Key && args.KeyModifiers == Modifiers;
+    internal bool Matches(KeyEventArgs args) => args.Key == Key && args.KeyModifiers == Modifiers;
 
     internal KeyGesture ToKeyGesture() => new(Key, Modifiers);
 
