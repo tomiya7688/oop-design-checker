@@ -158,12 +158,7 @@ internal sealed class MainWindowMenu : Menu
             GuiCommands.ExportSarif,
             language
         );
-        SetHeader(
-            ExitItem,
-            GuiText.Get(GuiTextKey.ExitMenu, language),
-            GuiCommands.Exit,
-            language
-        );
+        SetHeader(ExitItem, GuiText.Get(GuiTextKey.ExitMenu, language), GuiCommands.Exit, language);
 
         SetHeader(
             AnalyzeItem,
