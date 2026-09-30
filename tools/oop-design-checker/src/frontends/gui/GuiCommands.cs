@@ -315,6 +315,26 @@ internal static class GuiCommands
             "Toggle Attention diagnostics."
         );
 
+    internal static GuiCommandDefinition LanguageMenu { get; } =
+        new(
+            "language-menu",
+            null,
+            null,
+            [Key.V, Key.L],
+            "表示言語メニューを開きます。",
+            "Open the UI language menu."
+        );
+
+    internal static GuiCommandDefinition ThemeMenu { get; } =
+        new(
+            "theme-menu",
+            null,
+            null,
+            [Key.V, Key.T],
+            "テーマメニューを開きます。",
+            "Open the theme menu."
+        );
+
     internal static GuiCommandDefinition JapaneseLanguage { get; } =
         new(
             "language-ja",
