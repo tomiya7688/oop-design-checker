@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Text.Json;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -208,6 +209,99 @@ public sealed class UiVisualRegressionTests
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void ShortcutPresentationMatchesCommandMetadataAcrossLanguages()
+    {
+        var window = CreateWindow(1280, 820);
+        try
+        {
+            var view = window.TestView;
+            Assert.Contains(
+                GuiCommands.Analyze.PrimaryHint,
+                view.ShortcutHints.Text,
+                StringComparison.Ordinal
+            );
+            Assert.Contains(
+                GuiCommands.Cancel.PrimaryHint,
+                view.ShortcutHints.Text,
+                StringComparison.Ordinal
+            );
+            Assert.Contains(
+                GuiCommands.Search.PrimaryHint,
+                view.ShortcutHints.Text,
+                StringComparison.Ordinal
+            );
+
+            AssertCommandHelp(view.AnalyzeButton, GuiCommands.Analyze, UserInterfaceLanguage.Japanese);
+            AssertCommandHelp(view.CancelButton, GuiCommands.Cancel, UserInterfaceLanguage.Japanese);
+            AssertCommandHelp(view.SearchFilter, GuiCommands.Search, UserInterfaceLanguage.Japanese);
+            AssertCommandHelp(view.TargetPath, GuiCommands.TargetFocus, UserInterfaceLanguage.Japanese);
+            AssertCommandHelp(
+                view.ConfigurationPath,
+                GuiCommands.ConfigurationFocus,
+                UserInterfaceLanguage.Japanese
+            );
+            AssertCommandHelp(
+                view.TargetFileButton,
+                GuiCommands.TargetFile,
+                UserInterfaceLanguage.Japanese
+            );
+            AssertCommandHelp(
+                view.ExportJsonButton,
+                GuiCommands.ExportJson,
+                UserInterfaceLanguage.Japanese
+            );
+
+            Assert.False(view.CancelButton.IsEnabled);
+            Assert.Contains(
+                GuiCommands.Cancel.ShortcutText,
+                AutomationProperties.GetHelpText(view.CancelButton),
+                StringComparison.Ordinal
+            );
+
+            AssertInputGestureMatches(
+                view.MainMenu.AnalyzeItem,
+                GuiCommands.Analyze.PrimaryShortcut!.Value
+            );
+            AssertInputGestureMatches(
+                view.MainMenu.CancelItem,
+                GuiCommands.Cancel.PrimaryShortcut!.Value
+            );
+            AssertInputGestureMatches(
+                view.MainMenu.SearchItem,
+                GuiCommands.Search.PrimaryShortcut!.Value
+            );
+
+            var japaneseHelp = AutomationProperties.GetHelpText(view.AnalyzeButton);
+            window.SetLanguageForTesting(UserInterfaceLanguage.English);
+            Flush();
+
+            Assert.Contains(
+                GuiCommands.Analyze.PrimaryHint,
+                view.ShortcutHints.Text,
+                StringComparison.Ordinal
+            );
+            Assert.Contains(
+                GuiCommands.TargetFocus.PrimaryHint,
+                AutomationProperties.GetHelpText(view.TargetPath),
+                StringComparison.Ordinal
+            );
+            AssertCommandHelp(view.AnalyzeButton, GuiCommands.Analyze, UserInterfaceLanguage.English);
+            var englishHelp = AutomationProperties.GetHelpText(view.AnalyzeButton);
+            Assert.NotEqual(japaneseHelp, englishHelp);
+            Assert.Contains("Start analysis.", englishHelp, StringComparison.Ordinal);
+            Assert.Contains(
+                GuiCommands.Analyze.ShortcutText,
+                englishHelp,
+                StringComparison.Ordinal
+            );
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [Avalonia.Headless.XUnit.AvaloniaFact]
     public void MenuStateTracksFiltersLanguageThemeAndResultAvailability()
     {
         var fixtureRoot = FixtureRoot();
@@ -374,6 +468,24 @@ public sealed class UiVisualRegressionTests
         {
             window.Close();
         }
+    }
+
+    private static void AssertCommandHelp(
+        Control control,
+        GuiCommandDefinition command,
+        UserInterfaceLanguage language
+    )
+    {
+        var expected = command.HelpText(language);
+        Assert.Equal(expected, AutomationProperties.GetHelpText(control));
+        Assert.Equal(expected, ToolTip.GetTip(control)?.ToString());
+    }
+
+    private static void AssertInputGestureMatches(MenuItem item, GuiShortcut expected)
+    {
+        var gesture = Assert.IsType<KeyGesture>(item.InputGesture);
+        Assert.Equal(expected.Key, gesture.Key);
+        Assert.Equal(expected.Modifiers, gesture.KeyModifiers);
     }
 
     private static void PressKey(
