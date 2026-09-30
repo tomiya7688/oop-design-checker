@@ -932,10 +932,7 @@ internal sealed class MainWindow : Window
     private static bool MatchesMenuAccessKey(GuiCommandDefinition command, Key key) =>
         command.MenuAccessKey == key;
 
-    private static bool MatchesTopLevelAccessKey(
-        GuiCommandDefinition command,
-        KeyEventArgs e
-    ) =>
+    private static bool MatchesTopLevelAccessKey(GuiCommandDefinition command, KeyEventArgs e) =>
         e.KeyModifiers == KeyModifiers.Alt
         && command.MenuPath.Count == 1
         && command.MenuPath[0] == e.Key;
