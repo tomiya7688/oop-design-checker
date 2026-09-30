@@ -72,10 +72,11 @@ internal sealed record GuiCommandDefinition(
             ? string.Empty
             : string.Join(
                 " → ",
-                MenuPath.Select((key, index) =>
-                    index == 0
-                        ? $"Alt+{GuiShortcut.FormatKey(key)}"
-                        : GuiShortcut.FormatKey(key)
+                MenuPath.Select(
+                    (key, index) =>
+                        index == 0
+                            ? $"Alt+{GuiShortcut.FormatKey(key)}"
+                            : GuiShortcut.FormatKey(key)
                 )
             );
 
