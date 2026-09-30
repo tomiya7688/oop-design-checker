@@ -8,6 +8,8 @@
 
 この定義は唯一絶対のオブジェクト指向を主張するものではありません。設計判断を共有・議論・検証するために、このprojectが採用する立場を明文化したものです。
 
+特に、object boundary、encapsulation、状態と振る舞いの所有、inheritance / composition、polymorphism、abstractionを重視する、現在のclass-based application designに近い実務的な解釈です。message passingやobject間協調をより中心に置く歴史的なOOP観とは重点が異なることを前提としています。
+
 ## 正本文書
 
 - [オブジェクト指向設計の定義](docs/object-oriented-design.md)
