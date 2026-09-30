@@ -10,17 +10,19 @@
 
 オブジェクト指向には歴史的・実務的に複数の説明があります。この文書は唯一絶対の定義を主張せず、設計判断の基準を明確にするためのproject固有の立場を示します。
 
-この文書が特に重視するのは、object boundary、encapsulation、状態と振る舞いの所有、inheritance / composition、polymorphism、abstractionといった、現在のclass-based application designで広く使われる考え方です。
+この文書が特に重視するのは、object boundary（オブジェクトの責任範囲の境界）、encapsulation（内部詳細を隠し、必要な契約だけを外へ見せること）、状態と振る舞いの所有、inheritance / composition（継承と、部品を組み合わせる構成）、polymorphism（同じ契約で異なる実装を扱うこと）、abstraction（必要な概念だけを取り出して実装詳細を隠すこと）といった、現在のclass-based application design（classを主要な設計単位として組み立てる実務的な設計）で広く使われる考え方です。
 
-歴史的には、object-oriented programmingをmessage passingやobject間の協調をより中心に捉える立場もあります。その立場から見ると、この文書の定義は重点が異なる、あるいはOOPの一部だけを強く扱うものに見える場合があります。このprojectはその違いを否定せず、ここで扱う設計判断のための実務的な定義として、この立場を明示的に採用します。
+歴史的には、object-oriented programming（オブジェクト指向プログラミング）をmessage passing（object同士が依頼や通知を送り合って協調する考え方）やobject間の協調をより中心に捉える立場もあります。その立場から見ると、この文書の定義は重点が異なる、あるいはOOPの一部だけを強く扱うものに見える場合があります。このprojectはその違いを否定せず、ここで扱う設計判断のための実務的な定義として、この立場を明示的に採用します。
 
 特定のprogramming language、framework、toolの都合から概念を逆算しません。
 
-## Objectとは何か
+## Object（オブジェクト）とは何か
+
+objectとは、単なるclassの実体ではなく、**状態・振る舞い・守るべき条件をひとまとまりとして受け持つ設計上の単位**を指します。
 
 objectは単に「classから生成された値」ではなく、**ある概念上の責任範囲について状態・振る舞い・不変条件をひとまとまりとして所有する境界**です。
 
-object identityが重要な場合も、valueとしての同一性が重要な場合もあります。重要なのは、何をそのobjectが所有し、何を外部へ約束し、何を内部詳細として隠すかが明確であることです。
+object identity（同じ実体であること）が重要な場合も、value（値そのものが同じであること）としての同一性が重要な場合もあります。重要なのは、何をそのobjectが所有し、何を外部へ約束し、何を内部詳細として隠すかが明確であることです。
 
 ## 状態と振る舞いの所有
 
@@ -29,7 +31,9 @@ object identityが重要な場合も、valueとしての同一性が重要な場
 - 状態を持たない振る舞いでも、概念上どのobjectの責務かを明確にする。
 - 「data」と「処理」を機械的に別層へ分けること自体をobject-orientedとはみなさない。
 
-## Encapsulation
+## Encapsulation（カプセル化）
+
+encapsulationとは、内部の持ち方や変更方法を隠し、外部には必要な契約だけを見せることです。
 
 encapsulationは単なるprivate modifierの利用ではありません。
 
@@ -39,7 +43,9 @@ encapsulationは単なるprivate modifierの利用ではありません。
 - 公開APIは「何ができるか」を表し、「内部でどう保持しているか」への依存を最小化する。
 - 可視性は実際の協調に必要な範囲へ抑える。
 
-## Object invariant / integrity
+## Object invariant / integrity（不変条件と整合性）
+
+invariantは「常に守るべき状態の条件」、integrityは「その条件を崩さず整合した状態を保つこと」を意味します。
 
 objectは、実用上可能な範囲で自身の正しい状態を守ります。
 
@@ -48,7 +54,9 @@ objectは、実用上可能な範囲で自身の正しい状態を守ります�
 - 外部serviceがobject内部の状態を順番に書き換えなければ成立しない設計は、所有境界を再検討する。
 - 例外的に外部調整が必要な場合は、その理由と責任境界を明確にする。
 
-## Object boundary
+## Object boundary（オブジェクト境界）
+
+object boundaryとは、どこまでをそのobject自身の責任とし、どこからを外部との協調にするかという境界です。
 
 良いobject boundaryでは、内部詳細と外部協調の境界が明確です。
 
@@ -56,7 +64,9 @@ objectは、実用上可能な範囲で自身の正しい状態を守ります�
 - 協調相手には必要な能力を依頼し、内部data構造を取得して代わりに処理しない。
 - 境界をまたぐdata transfer自体は問題ではない。問題は、内部表現への継続的な依存が外部へ漏れることです。
 
-## Polymorphism
+## Polymorphism（多態性）
+
+polymorphismとは、同じ種類・契約として扱いながら、実際の振る舞いを複数の実装へ差し替えられることです。
 
 polymorphismは、**同じ概念上の契約に対して複数の実装が振る舞いを提供できること**です。
 
@@ -64,7 +74,9 @@ polymorphismは、**同じ概念上の契約に対して複数の実装が振る
 - 呼び出し側が具体型を列挙し続けるより、対象自身の振る舞いへ委譲できるならその方を優先する。
 - polymorphismを導入するためだけの抽象化は避ける。共有契約に意味があることが前提です。
 
-## Abstraction
+## Abstraction（抽象化）
+
+abstractionとは、細かな実装方法ではなく、利用者に必要な共通の意味や契約だけを取り出して扱うことです。
 
 abstractionは実装詳細を隠し、利用者が必要とする概念上の契約を表現します。
 
@@ -73,9 +85,11 @@ abstractionは実装詳細を隠し、利用者が必要とする概念上の契
 - 具体実装を隠すことで変更可能性、置換可能性、理解容易性が改善する場合に抽象化する。
 - 1実装しかないことだけを理由に抽象を禁止もしない。境界として意味があるかで判断する。
 
-## Inheritance と composition
+## Inheritance（継承）と composition（合成）
 
-inheritanceは「is-a」の意味と契約継承を伴う強い関係です。
+inheritanceは親の契約や性質を子へ引き継ぐ関係、compositionは複数のobjectを組み合わせて1つの役割を作る方法です。
+
+inheritanceは「is-a（〜は〜の一種である）」の意味と契約継承を伴う強い関係です。
 
 - 単なるcode reuseだけを目的にinheritanceを選ばない。
 - childはparentとして扱われたとき、parentの契約を意味のある形で満たす。
@@ -83,7 +97,9 @@ inheritanceは「is-a」の意味と契約継承を伴う強い関係です。
 - 独立した役割の組み合わせや差し替えが目的ならcompositionを優先して検討する。
 - inheritanceとcompositionのどちらかを常に正解とはしない。関係の意味と変更方向で選ぶ。
 
-## Dependency
+## Dependency（依存関係）
+
+dependencyとは、あるobjectが仕事をするために別のobjectや能力を必要とする関係です。
 
 dependencyはobject間の協調関係です。
 
@@ -91,9 +107,9 @@ dependencyはobject間の協調関係です。
 - 無関係なsubsystemへ広く依存し、変更理由が大量に流入する状態を避ける。
 - dependencyの方向は、概念上の安定した境界へ向けることを検討する。
 - 生成責務と利用責務は、必要に応じて分離する。
-- dependency injection等の特定手法をOOPそのものとは定義しない。
+- dependency injection（必要な依存を外から渡す手法）等の特定手法をOOPそのものとは定義しない。
 
-## Object integrity と複数責務
+## Object integrity（オブジェクトの一貫性）と複数責務
 
 「1 class = 1責務」をこのprojectのOOP定義にはしません。
 
@@ -103,15 +119,17 @@ dependencyはobject間の協調関係です。
 
 ## Data carrier / value / DTO の意図的例外
 
+data carrierは「データを運ぶことが主目的の型」、valueは「実体の識別より値そのものを表す型」、DTOは「層や境界の間でデータを受け渡すための型」です。
+
 すべての型が豊富な振る舞いを持つ必要はありません。
 
 次のような役割はdata中心でも正当です。
 
-- DTO / message / serialization model
-- immutable value
-- query result / projection
-- boundaryを越えるためのdata contract
-- frameworkが要求するdata shape
+- DTO / message（通知・要求などをデータとして表す型）/ serialization model（保存・通信形式へ変換するための型）
+- immutable value（生成後に内容が変わらない値）
+- query result / projection（検索結果や、必要な項目だけへ写し替えた結果）
+- boundaryを越えるためのdata contract（境界間で共有するデータ形式の約束）
+- frameworkが要求するdata shape（framework側の都合で必要になるデータ構造）
 
 重要なのは、**data carrierであることが意図された役割か**、本来objectが守るべき不変条件や振る舞いを外部へ追い出した結果なのかを区別することです。
 
@@ -119,11 +137,11 @@ dependencyはobject間の協調関係です。
 
 次のものを、単独ではOOPの定義としません。
 
-- SOLIDへの準拠
+- SOLID（代表的な設計原則群）への準拠
 - classやmethodの行数
-- interfaceの数
-- design patternの使用数
-- dependency injection containerの利用
+- interface（実装から分離した契約）の数
+- design pattern（よく使われる設計上の定型）の使用数
+- dependency injection container（依存関係の生成・受け渡しを管理する仕組み）の利用
 - すべてをclassにすること
 - 「1 class = 1責務」
 - getter/setterの存在そのもの
@@ -131,10 +149,12 @@ dependencyはobject間の協調関係です。
 
 これらは文脈によって設計品質へ影響しますが、object boundary・状態所有・契約・協調関係の意味を置き換えるものではありません。
 
-## Trade-off と非目標
+## Trade-off（両立しない条件の折り合い）と非目標
 
-- performance、interop、framework contract、serialization、memory layout等の制約により、理想的なobject boundaryをそのまま採用できない場合があります。
+trade-offとは、一方を良くすると別の条件が悪くなるため、どこで折り合うかを判断することです。
+
+- performance（性能）、interop（他の仕組みとの相互運用）、framework contract（frameworkが要求する約束）、serialization（保存・通信可能な形への変換）、memory layout（memory上の配置）等の制約により、理想的なobject boundaryをそのまま採用できない場合があります。
 - 例外をゼロにすることより、例外の理由と責任範囲を明確にすることを重視します。
-- functional programmingやdata-oriented design等、他のparadigmを否定しません。
+- functional programming（関数と値の変換を中心に組み立てる考え方）やdata-oriented design（データ配置と処理効率を中心に組み立てる考え方）等、他のparadigm（設計・実装の基本的な考え方）を否定しません。
 - OOPを採用しない部分へ無理にこの定義を適用しません。
 - 設計判断を完全に機械化することを目標にしません。
