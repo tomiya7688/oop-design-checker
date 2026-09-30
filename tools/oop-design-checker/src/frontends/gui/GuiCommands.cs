@@ -83,7 +83,9 @@ internal sealed record GuiCommandDefinition(
     internal string ShortcutText =>
         string.Join(
             " · ",
-            new[] { DirectShortcutText, MenuPathText }.Where(text => !string.IsNullOrWhiteSpace(text))
+            new[] { DirectShortcutText, MenuPathText }.Where(text =>
+                !string.IsNullOrWhiteSpace(text)
+            )
         );
 
     internal string PrimaryHint =>
