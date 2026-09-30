@@ -10,6 +10,10 @@ This document describes **the definition of object-oriented design adopted by th
 
 OOP has multiple historical and practical interpretations. This document does not claim to be the one universally correct definition. It states a project-specific position so design decisions can be discussed consistently.
 
+This document particularly emphasizes object boundaries, encapsulation, ownership of state and behavior, inheritance and composition, polymorphism, and abstraction: ideas commonly used in modern class-based application design.
+
+Historically, some interpretations place more emphasis on message passing and collaboration between objects. From those perspectives, this document may appear to emphasize a different subset of what object-oriented programming means. This project does not reject those interpretations; it explicitly adopts the position described here as a practical basis for the design decisions covered by this repository.
+
 The concepts are not derived from the constraints of any particular programming language, framework, or tool.
 
 ## What is an object?
