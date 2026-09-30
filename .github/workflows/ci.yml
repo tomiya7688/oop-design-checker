@@ -40,13 +40,9 @@ jobs:
   ui-headless:
     name: ui-headless
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -55,25 +51,11 @@ jobs:
       - name: Headless UI canonical visual regression
         env:
           OOP_DESIGN_CHECKER_UI_VISUAL_REGRESSION: '1'
-          UPDATE_VISUAL_BASELINES: '1'
           UI_EVIDENCE_DIR: ${{ runner.temp }}/ui-evidence
         run: >-
           dotnet run
           --project tools/oop-design-checker/tests/OopDesignChecker.Gui.HeadlessTests/OopDesignChecker.Gui.HeadlessTests.csproj
           -c Release
-
-      - name: Commit regenerated visual baselines
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add tools/oop-design-checker/tests/OopDesignChecker.Gui.HeadlessTests/Baselines
-          if git diff --cached --quiet; then
-            echo "No baseline changes."
-            exit 0
-          fi
-          git commit -m "Update shortcut hint visual baselines"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
       - name: Upload headless UI evidence
         if: always()
