@@ -10,6 +10,10 @@
 
 オブジェクト指向には歴史的・実務的に複数の説明があります。この文書は唯一絶対の定義を主張せず、設計判断の基準を明確にするためのproject固有の立場を示します。
 
+この文書が特に重視するのは、object boundary、encapsulation、状態と振る舞いの所有、inheritance / composition、polymorphism、abstractionといった、現在のclass-based application designで広く使われる考え方です。
+
+歴史的には、object-oriented programmingをmessage passingやobject間の協調をより中心に捉える立場もあります。その立場から見ると、この文書の定義は重点が異なる、あるいはOOPの一部だけを強く扱うものに見える場合があります。このprojectはその違いを否定せず、ここで扱う設計判断のための実務的な定義として、この立場を明示的に採用します。
+
 特定のprogramming language、framework、toolの都合から概念を逆算しません。
 
 ## Objectとは何か
