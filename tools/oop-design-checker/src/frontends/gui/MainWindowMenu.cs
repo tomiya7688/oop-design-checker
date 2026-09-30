@@ -1,6 +1,5 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
-using Avalonia.Input;
 using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Gui;
@@ -88,9 +87,9 @@ internal sealed class MainWindowMenu : Menu
         LightThemeItem.ToggleType = MenuItemToggleType.Radio;
         LightThemeItem.GroupName = "Theme";
 
-        AnalyzeItem.InputGesture = new KeyGesture(Key.F5);
-        CancelItem.InputGesture = new KeyGesture(Key.Escape);
-        SearchItem.InputGesture = new KeyGesture(Key.F, KeyModifiers.Control);
+        AnalyzeItem.InputGesture = GuiCommands.Analyze.PrimaryShortcut?.ToKeyGesture();
+        CancelItem.InputGesture = GuiCommands.Cancel.PrimaryShortcut?.ToKeyGesture();
+        SearchItem.InputGesture = GuiCommands.Search.PrimaryShortcut?.ToKeyGesture();
 
         ConfigureAutomation();
         ApplyLanguage(UserInterfaceLanguage.Japanese);
@@ -98,38 +97,153 @@ internal sealed class MainWindowMenu : Menu
 
     internal void ApplyLanguage(UserInterfaceLanguage language)
     {
-        SetTopLevelHeader(FileMenu, GuiText.Get(GuiTextKey.FileMenu, language), 'F', language);
+        SetTopLevelHeader(
+            FileMenu,
+            GuiText.Get(GuiTextKey.FileMenu, language),
+            GuiCommands.FileMenu,
+            language
+        );
         SetTopLevelHeader(
             AnalyzeMenu,
             GuiText.Get(GuiTextKey.AnalyzeMenu, language),
-            'A',
+            GuiCommands.AnalyzeMenu,
             language
         );
-        SetTopLevelHeader(ViewMenu, GuiText.Get(GuiTextKey.ViewMenu, language), 'V', language);
+        SetTopLevelHeader(
+            ViewMenu,
+            GuiText.Get(GuiTextKey.ViewMenu, language),
+            GuiCommands.ViewMenu,
+            language
+        );
 
-        SetHeader(TargetFileItem, GuiText.Get(GuiTextKey.FileButton, language), 'T');
-        SetHeader(TargetFolderItem, GuiText.Get(GuiTextKey.FolderButton, language), 'D');
-        SetHeader(ConfigurationItem, GuiText.Get(GuiTextKey.ConfigurationButton, language), 'C');
-        SetHeader(EditConfigurationItem, GuiText.Get(GuiTextKey.EditButton, language), 'E');
-        SetHeader(ClearConfigurationItem, GuiText.Get(GuiTextKey.ClearButton, language), 'L');
-        SetHeader(ExportJsonItem, GuiText.Get(GuiTextKey.ExportJsonButton, language), 'J');
-        SetHeader(ExportSarifItem, GuiText.Get(GuiTextKey.ExportSarifButton, language), 'S');
-        SetHeader(ExitItem, GuiText.Get(GuiTextKey.ExitMenu, language), 'X');
+        SetHeader(
+            TargetFileItem,
+            GuiText.Get(GuiTextKey.FileButton, language),
+            GuiCommands.TargetFile,
+            language
+        );
+        SetHeader(
+            TargetFolderItem,
+            GuiText.Get(GuiTextKey.FolderButton, language),
+            GuiCommands.TargetFolder,
+            language
+        );
+        SetHeader(
+            ConfigurationItem,
+            GuiText.Get(GuiTextKey.ConfigurationButton, language),
+            GuiCommands.PickConfiguration,
+            language
+        );
+        SetHeader(
+            EditConfigurationItem,
+            GuiText.Get(GuiTextKey.EditButton, language),
+            GuiCommands.EditConfiguration,
+            language
+        );
+        SetHeader(
+            ClearConfigurationItem,
+            GuiText.Get(GuiTextKey.ClearButton, language),
+            GuiCommands.ClearConfiguration,
+            language
+        );
+        SetHeader(
+            ExportJsonItem,
+            GuiText.Get(GuiTextKey.ExportJsonButton, language),
+            GuiCommands.ExportJson,
+            language
+        );
+        SetHeader(
+            ExportSarifItem,
+            GuiText.Get(GuiTextKey.ExportSarifButton, language),
+            GuiCommands.ExportSarif,
+            language
+        );
+        SetHeader(
+            ExitItem,
+            GuiText.Get(GuiTextKey.ExitMenu, language),
+            GuiCommands.Exit,
+            language
+        );
 
-        SetHeader(AnalyzeItem, GuiText.Get(GuiTextKey.AnalyzeButton, language), 'R');
-        SetHeader(CancelItem, GuiText.Get(GuiTextKey.CancelButton, language), 'C');
-        SetHeader(OpenSourceItem, GuiText.Get(GuiTextKey.OpenSourceButton, language), 'O');
+        SetHeader(
+            AnalyzeItem,
+            GuiText.Get(GuiTextKey.AnalyzeButton, language),
+            GuiCommands.Analyze,
+            language
+        );
+        SetHeader(
+            CancelItem,
+            GuiText.Get(GuiTextKey.CancelButton, language),
+            GuiCommands.Cancel,
+            language
+        );
+        SetHeader(
+            OpenSourceItem,
+            GuiText.Get(GuiTextKey.OpenSourceButton, language),
+            GuiCommands.OpenSource,
+            language
+        );
 
-        SetHeader(SearchItem, GuiText.Get(GuiTextKey.SearchMenu, language), 'F');
-        SetHeader(DangerFilterItem, GuiText.Get(GuiTextKey.Danger, language), 'D');
-        SetHeader(WarningFilterItem, GuiText.Get(GuiTextKey.Warning, language), 'W');
-        SetHeader(AttentionFilterItem, GuiText.Get(GuiTextKey.Attention, language), 'A');
-        SetHeader(LanguageMenu, GuiText.Get(GuiTextKey.LanguageLabel, language).TrimEnd(':'), 'L');
-        SetHeader(JapaneseLanguageItem, GuiText.Get(GuiTextKey.JapaneseLanguage, language), 'J');
-        SetHeader(EnglishLanguageItem, GuiText.Get(GuiTextKey.EnglishLanguage, language), 'E');
-        SetHeader(ThemeMenu, GuiText.Get(GuiTextKey.ThemeLabel, language).TrimEnd(':'), 'T');
-        SetHeader(DarkThemeItem, GuiText.Get(GuiTextKey.DarkTheme, language), 'D');
-        SetHeader(LightThemeItem, GuiText.Get(GuiTextKey.LightTheme, language), 'L');
+        SetHeader(
+            SearchItem,
+            GuiText.Get(GuiTextKey.SearchMenu, language),
+            GuiCommands.Search,
+            language
+        );
+        SetHeader(
+            DangerFilterItem,
+            GuiText.Get(GuiTextKey.Danger, language),
+            GuiCommands.DangerFilter,
+            language
+        );
+        SetHeader(
+            WarningFilterItem,
+            GuiText.Get(GuiTextKey.Warning, language),
+            GuiCommands.WarningFilter,
+            language
+        );
+        SetHeader(
+            AttentionFilterItem,
+            GuiText.Get(GuiTextKey.Attention, language),
+            GuiCommands.AttentionFilter,
+            language
+        );
+        SetHeader(
+            LanguageMenu,
+            GuiText.Get(GuiTextKey.LanguageLabel, language).TrimEnd(':'),
+            GuiCommands.LanguageMenu,
+            language
+        );
+        SetHeader(
+            JapaneseLanguageItem,
+            GuiText.Get(GuiTextKey.JapaneseLanguage, language),
+            GuiCommands.JapaneseLanguage,
+            language
+        );
+        SetHeader(
+            EnglishLanguageItem,
+            GuiText.Get(GuiTextKey.EnglishLanguage, language),
+            GuiCommands.EnglishLanguage,
+            language
+        );
+        SetHeader(
+            ThemeMenu,
+            GuiText.Get(GuiTextKey.ThemeLabel, language).TrimEnd(':'),
+            GuiCommands.ThemeMenu,
+            language
+        );
+        SetHeader(
+            DarkThemeItem,
+            GuiText.Get(GuiTextKey.DarkTheme, language),
+            GuiCommands.DarkTheme,
+            language
+        );
+        SetHeader(
+            LightThemeItem,
+            GuiText.Get(GuiTextKey.LightTheme, language),
+            GuiCommands.LightTheme,
+            language
+        );
     }
 
     private static void AddItems(ItemsControl parent, params object[] items)
@@ -142,67 +256,77 @@ internal sealed class MainWindowMenu : Menu
 
     private void ConfigureAutomation()
     {
-        var items = new (MenuItem Item, string Id, string? AccessKey)[]
+        var items = new (MenuItem Item, string Id)[]
         {
-            (FileMenu, "FileMenu", "Alt+F"),
-            (AnalyzeMenu, "AnalyzeMenu", "Alt+A"),
-            (ViewMenu, "ViewMenu", "Alt+V"),
-            (TargetFileItem, "TargetFileMenuItem", null),
-            (TargetFolderItem, "TargetFolderMenuItem", null),
-            (ConfigurationItem, "ConfigurationMenuItem", null),
-            (EditConfigurationItem, "EditConfigurationMenuItem", null),
-            (ClearConfigurationItem, "ClearConfigurationMenuItem", null),
-            (ExportJsonItem, "ExportJsonMenuItem", null),
-            (ExportSarifItem, "ExportSarifMenuItem", null),
-            (ExitItem, "ExitMenuItem", null),
-            (AnalyzeItem, "AnalyzeMenuItem", "F5"),
-            (CancelItem, "CancelMenuItem", "Escape"),
-            (OpenSourceItem, "OpenSourceMenuItem", null),
-            (SearchItem, "SearchMenuItem", "Ctrl+F"),
-            (DangerFilterItem, "DangerFilterMenuItem", null),
-            (WarningFilterItem, "WarningFilterMenuItem", null),
-            (AttentionFilterItem, "AttentionFilterMenuItem", null),
-            (LanguageMenu, "LanguageMenu", null),
-            (JapaneseLanguageItem, "JapaneseLanguageMenuItem", null),
-            (EnglishLanguageItem, "EnglishLanguageMenuItem", null),
-            (ThemeMenu, "ThemeMenu", null),
-            (DarkThemeItem, "DarkThemeMenuItem", null),
-            (LightThemeItem, "LightThemeMenuItem", null),
+            (FileMenu, "FileMenu"),
+            (AnalyzeMenu, "AnalyzeMenu"),
+            (ViewMenu, "ViewMenu"),
+            (TargetFileItem, "TargetFileMenuItem"),
+            (TargetFolderItem, "TargetFolderMenuItem"),
+            (ConfigurationItem, "ConfigurationMenuItem"),
+            (EditConfigurationItem, "EditConfigurationMenuItem"),
+            (ClearConfigurationItem, "ClearConfigurationMenuItem"),
+            (ExportJsonItem, "ExportJsonMenuItem"),
+            (ExportSarifItem, "ExportSarifMenuItem"),
+            (ExitItem, "ExitMenuItem"),
+            (AnalyzeItem, "AnalyzeMenuItem"),
+            (CancelItem, "CancelMenuItem"),
+            (OpenSourceItem, "OpenSourceMenuItem"),
+            (SearchItem, "SearchMenuItem"),
+            (DangerFilterItem, "DangerFilterMenuItem"),
+            (WarningFilterItem, "WarningFilterMenuItem"),
+            (AttentionFilterItem, "AttentionFilterMenuItem"),
+            (LanguageMenu, "LanguageMenu"),
+            (JapaneseLanguageItem, "JapaneseLanguageMenuItem"),
+            (EnglishLanguageItem, "EnglishLanguageMenuItem"),
+            (ThemeMenu, "ThemeMenu"),
+            (DarkThemeItem, "DarkThemeMenuItem"),
+            (LightThemeItem, "LightThemeMenuItem"),
         };
 
         AutomationProperties.SetAutomationId(this, "MainMenu");
-        foreach (var (item, id, accessKey) in items)
+        foreach (var (item, id) in items)
         {
             AutomationProperties.SetAutomationId(item, id);
-            if (accessKey is not null)
-            {
-                AutomationProperties.SetAccessKey(item, accessKey);
-            }
         }
     }
 
     private static void SetTopLevelHeader(
         MenuItem item,
         string text,
-        char accessKey,
+        GuiCommandDefinition command,
         UserInterfaceLanguage language
     )
     {
+        var accessKey = AccessKey(command);
         var header =
             language == UserInterfaceLanguage.English
                 ? PrefixAccessKey(text, accessKey)
                 : $"{text} (_{accessKey})";
         item.Header = header;
         AutomationProperties.SetName(item, text);
+        command.ApplyHelp(item, language);
     }
 
-    private static void SetHeader(MenuItem item, string text, char accessKey)
+    private static void SetHeader(
+        MenuItem item,
+        string text,
+        GuiCommandDefinition command,
+        UserInterfaceLanguage language
+    )
     {
+        var accessKey = AccessKey(command);
         item.Header = $"{text} (_{accessKey})";
         AutomationProperties.SetName(item, text);
+        command.ApplyHelp(item, language);
     }
 
-    private static string PrefixAccessKey(string text, char accessKey)
+    private static string AccessKey(GuiCommandDefinition command) =>
+        command.MenuAccessKey is { } key
+            ? GuiShortcut.FormatKey(key)
+            : throw new InvalidOperationException($"Command {command.Id} has no menu access key.");
+
+    private static string PrefixAccessKey(string text, string accessKey)
     {
         var index = text.IndexOf(accessKey, StringComparison.OrdinalIgnoreCase);
         return index < 0 ? $"{text} (_{accessKey})" : text.Insert(index, "_");
