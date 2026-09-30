@@ -95,7 +95,7 @@ static classが可変な共有状態を蓄積し、global stateとして振る�
 
 ## OOP106 カプセル化漏れ
 
-内部表現を直接外部へ公開している場合にWARNINGまたはDANGERを報告します。public mutable fieldや、内部の可変storageをそのまま公開するpropertyは、所有オブジェクトを迂回して変更できるためDANGERとします。public readonly fieldや不必要なpublic setterのように、直接変更可能性が限定される公開はWARNINGとします。
+内部表現を実際に所有オブジェクトの境界外へ直接公開している場合にWARNINGまたはDANGERを報告します。member自身の`public` modifierだけでなくcontaining type chainを含む実効的な可視範囲を評価します。private nested type内のpublic memberは外部callerから到達できないため、OOP106の公開とは扱いません。`internal` / `protected` / `private protected`など、宣言type外のcallerから到達可能な範囲は無条件には除外しません。到達可能なpublic mutable fieldや、内部の可変storageをそのまま公開するpropertyは、所有オブジェクトを迂回して変更できるためDANGERとします。public readonly fieldや不必要なpublic setterのように、直接変更可能性が限定される公開はWARNINGとします。
 
 ## OOP107 オブジェクト不変条件の迂回
 

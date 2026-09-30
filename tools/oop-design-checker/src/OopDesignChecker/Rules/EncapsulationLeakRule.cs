@@ -27,6 +27,7 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
             {
                 if (
                     semanticModel.GetDeclaredSymbol(property) is not IPropertySymbol propertySymbol
+                    || !IsExposedBeyondDeclaringType(propertySymbol.ContainingType)
                     || DataCarrierClassifier.IsExplicitDataCarrier(propertySymbol.ContainingType)
                 )
                 {
@@ -73,6 +74,7 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
                 semanticModel.GetDeclaredSymbol(variable) is not IFieldSymbol field
                 || field.DeclaredAccessibility != Accessibility.Public
                 || field.IsConst
+                || !IsExposedBeyondDeclaringType(field.ContainingType)
                 || DataCarrierClassifier.IsExplicitDataCarrier(field.ContainingType)
             )
             {
@@ -94,6 +96,19 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
                 severity
             );
         }
+    }
+
+    private static bool IsExposedBeyondDeclaringType(INamedTypeSymbol type)
+    {
+        for (var current = type; current is not null; current = current.ContainingType)
+        {
+            if (current.DeclaredAccessibility == Accessibility.Private)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static bool ExposesMutableStoredValue(

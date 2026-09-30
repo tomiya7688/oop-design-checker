@@ -95,7 +95,7 @@ Warn when a static class accumulates mutable shared state and behaves as global 
 
 ## OOP106 Encapsulation leak
 
-Report WARNING or DANGER when internal representation is exposed directly. A public mutable field or a property that directly exposes mutable internal storage is DANGER because callers can bypass the owning object. A public readonly field or unnecessarily public setter, where direct mutability is more limited, is WARNING.
+Report WARNING or DANGER when internal representation is actually exposed beyond the owning object's boundary. The rule evaluates effective visibility through the containing-type chain, not only the member's `public` modifier. Public members inside a private nested type are not treated as OOP106 exposure because callers outside that owner cannot reach them. `internal`, `protected`, and `private protected` scopes are not blanket-excluded when callers outside the declaring type can still reach them. A reachable public mutable field or property that directly exposes mutable internal storage is DANGER because callers can bypass the owning object. A public readonly field or unnecessarily public setter, where direct mutability is more limited, is WARNING.
 
 ## OOP107 Object invariant can be bypassed
 

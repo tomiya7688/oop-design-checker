@@ -24,3 +24,20 @@ internal sealed class EncapsulatedAccount
         _balance = value;
     }
 }
+
+internal sealed class NestedPrivateStateOwner
+{
+    private State _state;
+
+    public void Set(int value)
+    {
+        _state.Value = value;
+    }
+
+    public int Read() => _state.Value;
+
+    private struct State
+    {
+        public int Value;
+    }
+}

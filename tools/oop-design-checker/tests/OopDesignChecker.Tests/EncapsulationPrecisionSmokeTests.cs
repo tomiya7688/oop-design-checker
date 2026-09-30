@@ -9,6 +9,13 @@ internal static class EncapsulationPrecisionSmokeTests
     {
         FrameworkFacingPublicTypeIsAllowed();
         SerializableCarrierIsAllowedByEncapsulationRule();
+        PrivateNestedMutableFieldsAreNotExposed();
+        PrivateNestedCollectionAndSetterAreNotExposed();
+        PrivateNestedInsidePrivateNestedIsNotExposed();
+        PublicMutableFieldRemainsDanger();
+        InternalMutableFieldRemainsDanger();
+        ProtectedNestedMutableFieldRemainsDanger();
+        PrivateProtectedNestedMutableFieldRemainsDanger();
         MessageCarrierExternalWritesAreAllowed();
         ValidatingPublicSetterDoesNotBypassInvariant();
         UnguardedPublicSetterStillBypassesInvariant();
@@ -39,6 +46,160 @@ internal static class EncapsulationPrecisionSmokeTests
             """;
 
         AssertNone(new EncapsulationLeakRule(), source, "OOP106");
+    }
+
+    private static void PrivateNestedMutableFieldsAreNotExposed()
+    {
+        const string source = """
+            public sealed class Owner
+            {
+                private struct State
+                {
+                    public int X;
+                    public int Y;
+                }
+
+                private State _state;
+
+                public void Set(int value)
+                {
+                    _state.X = value;
+                }
+
+                public int Read() => _state.X + _state.Y;
+            }
+            """;
+
+        AssertNone(new EncapsulationLeakRule(), source, "OOP106");
+    }
+
+    private static void PrivateNestedCollectionAndSetterAreNotExposed()
+    {
+        const string source = """
+            using System.Collections.Generic;
+
+            public sealed class Owner
+            {
+                private sealed class State
+                {
+                    private readonly List<int> _values = new();
+
+                    public List<int> Values => _values;
+
+                    public int Count { get; set; }
+                }
+
+                private readonly State _state = new();
+
+                public int Count => _state.Count;
+            }
+            """;
+
+        AssertNone(new EncapsulationLeakRule(), source, "OOP106");
+    }
+
+    private static void PrivateNestedInsidePrivateNestedIsNotExposed()
+    {
+        const string source = """
+            public sealed class Owner
+            {
+                private sealed class Container
+                {
+                    private struct State
+                    {
+                        public int Value;
+                    }
+
+                    private State _state;
+
+                    public int Read() => _state.Value;
+                }
+
+                private readonly Container _container = new();
+
+                public int Read() => _container.Read();
+            }
+            """;
+
+        AssertNone(new EncapsulationLeakRule(), source, "OOP106");
+    }
+
+    private static void PublicMutableFieldRemainsDanger()
+    {
+        const string source = """
+            public struct PublicState
+            {
+                public int Value;
+            }
+            """;
+
+        AssertSingle(
+            new EncapsulationLeakRule(),
+            source,
+            "OOP106",
+            DesignDiagnosticSeverity.Danger
+        );
+    }
+
+    private static void InternalMutableFieldRemainsDanger()
+    {
+        const string source = """
+            internal struct InternalState
+            {
+                public int Value;
+            }
+            """;
+
+        AssertSingle(
+            new EncapsulationLeakRule(),
+            source,
+            "OOP106",
+            DesignDiagnosticSeverity.Danger
+        );
+    }
+
+    private static void ProtectedNestedMutableFieldRemainsDanger()
+    {
+        const string source = """
+            public class Owner
+            {
+                protected struct State
+                {
+                    public int Value;
+                }
+
+                protected State Create() => new();
+            }
+            """;
+
+        AssertSingle(
+            new EncapsulationLeakRule(),
+            source,
+            "OOP106",
+            DesignDiagnosticSeverity.Danger
+        );
+    }
+
+    private static void PrivateProtectedNestedMutableFieldRemainsDanger()
+    {
+        const string source = """
+            public class Owner
+            {
+                private protected struct State
+                {
+                    public int Value;
+                }
+
+                private protected State Create() => new();
+            }
+            """;
+
+        AssertSingle(
+            new EncapsulationLeakRule(),
+            source,
+            "OOP106",
+            DesignDiagnosticSeverity.Danger
+        );
     }
 
     private static void MessageCarrierExternalWritesAreAllowed()
@@ -145,7 +306,7 @@ internal static class EncapsulationPrecisionSmokeTests
     }
 
     private static void AssertSingle(
-        ObjectInvariantBypassRule rule,
+        IAnalysisRule rule,
         string source,
         string ruleId,
         DesignDiagnosticSeverity severity
