@@ -452,7 +452,7 @@ def main():
         driver.switch_to.active_element.send_keys("__target_focus__")
         wait_until(
             driver,
-            lambda: "__target_focus__" in text_of(driver, "TargetPath"),
+            lambda: control_contains(driver, "TargetPath", ("__target_focus__",)),
             timeout=20,
         )
         record("09-keyboard-menu", "focus-target", accessKey="Alt+T")
@@ -463,7 +463,11 @@ def main():
         driver.switch_to.active_element.send_keys("__config_focus__")
         wait_until(
             driver,
-            lambda: "__config_focus__" in text_of(driver, "ConfigurationPath"),
+            lambda: control_contains(
+                driver,
+                "ConfigurationPath",
+                ("__config_focus__",),
+            ),
             timeout=20,
         )
         record("09-keyboard-menu", "focus-configuration", accessKey="Alt+C")
@@ -474,7 +478,7 @@ def main():
         driver.switch_to.active_element.send_keys("shortcut-check")
         wait_until(
             driver,
-            lambda: "shortcut-check" in text_of(driver, "SearchFilter"),
+            lambda: control_contains(driver, "SearchFilter", ("shortcut-check",)),
             timeout=20,
         )
         record("09-keyboard-menu", "focus-search", shortcut="Ctrl+F")
