@@ -194,14 +194,7 @@ internal static class GuiCommands
         );
 
     internal static GuiCommandDefinition ViewMenu { get; } =
-        new(
-            "view-menu",
-            null,
-            null,
-            [Key.V],
-            "表示メニューを開きます。",
-            "Open the View menu."
-        );
+        new("view-menu", null, null, [Key.V], "表示メニューを開きます。", "Open the View menu.");
 
     internal static GuiCommandDefinition TargetFile { get; } =
         new(
@@ -274,14 +267,7 @@ internal static class GuiCommands
         );
 
     internal static GuiCommandDefinition Exit { get; } =
-        new(
-            "exit",
-            null,
-            null,
-            [Key.F, Key.X],
-            "GUIを終了します。",
-            "Exit the GUI."
-        );
+        new("exit", null, null, [Key.F, Key.X], "GUIを終了します。", "Exit the GUI.");
 
     internal static GuiCommandDefinition OpenSource { get; } =
         new(
@@ -304,14 +290,7 @@ internal static class GuiCommands
         );
 
     internal static GuiCommandDefinition CopyAll { get; } =
-        new(
-            "copy-all",
-            null,
-            null,
-            [],
-            "すべての診断をコピーします。",
-            "Copy all diagnostics."
-        );
+        new("copy-all", null, null, [], "すべての診断をコピーします。", "Copy all diagnostics.");
 
     internal static GuiCommandDefinition DangerFilter { get; } =
         new(
