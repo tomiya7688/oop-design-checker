@@ -252,20 +252,6 @@ def press_ctrl_access(driver, key):
     time.sleep(0.3)
 
 
-def focused_is(driver, automation_id):
-    try:
-        active = driver.switch_to.active_element
-        for attribute in ("AutomationId", "automationId", "identifier"):
-            try:
-                if active.get_attribute(attribute) == automation_id:
-                    return True
-            except Exception:
-                continue
-        return active.id == find(driver, automation_id).id
-    except Exception:
-        return False
-
-
 def press_menu_access(driver, key):
     perform_key_actions(driver, [key])
     time.sleep(0.3)
@@ -463,15 +449,28 @@ def main():
         )
 
         press_alt_access(driver, "t")
-        wait_until(driver, lambda: focused_is(driver, "TargetPath"), timeout=20)
+        driver.switch_to.active_element.send_keys("__target_focus__")
+        wait_until(
+            driver,
+            lambda: "__target_focus__" in text_of(driver, "TargetPath"),
+            timeout=20,
+        )
         record("09-keyboard-menu", "focus-target", accessKey="Alt+T")
+        replace_text(driver, "TargetPath", str(fixture))
 
+        replace_text(driver, "ConfigurationPath", "")
         press_alt_access(driver, "c")
-        wait_until(driver, lambda: focused_is(driver, "ConfigurationPath"), timeout=20)
+        driver.switch_to.active_element.send_keys("__config_focus__")
+        wait_until(
+            driver,
+            lambda: "__config_focus__" in text_of(driver, "ConfigurationPath"),
+            timeout=20,
+        )
         record("09-keyboard-menu", "focus-configuration", accessKey="Alt+C")
+        replace_text(driver, "ConfigurationPath", "")
 
+        replace_text(driver, "SearchFilter", "")
         press_ctrl_access(driver, "f")
-        wait_until(driver, lambda: focused_is(driver, "SearchFilter"), timeout=20)
         driver.switch_to.active_element.send_keys("shortcut-check")
         wait_until(
             driver,
