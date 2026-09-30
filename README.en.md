@@ -8,6 +8,8 @@ The main product of this repository is the document that defines **what this pro
 
 This is not a claim that there is one universally correct definition of OOP. It records the design position adopted by this project so design decisions can be shared, discussed, and reviewed consistently.
 
+In particular, it is a practical interpretation close to modern class-based application design, emphasizing object boundaries, encapsulation, ownership of state and behavior, inheritance and composition, polymorphism, and abstraction. It intentionally acknowledges that historical interpretations centered more strongly on message passing and object collaboration place emphasis elsewhere.
+
 ## Normative document
 
 - [オブジェクト指向設計の定義](docs/object-oriented-design.md)
