@@ -254,7 +254,14 @@ def press_ctrl_access(driver, key):
 
 def focused_is(driver, automation_id):
     try:
-        return driver.switch_to.active_element.id == find(driver, automation_id).id
+        active = driver.switch_to.active_element
+        for attribute in ("AutomationId", "automationId", "identifier"):
+            try:
+                if active.get_attribute(attribute) == automation_id:
+                    return True
+            except Exception:
+                continue
+        return active.id == find(driver, automation_id).id
     except Exception:
         return False
 
