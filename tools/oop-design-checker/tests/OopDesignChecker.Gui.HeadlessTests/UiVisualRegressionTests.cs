@@ -231,10 +231,26 @@ public sealed class UiVisualRegressionTests
                 StringComparison.Ordinal
             );
 
-            AssertCommandHelp(view.AnalyzeButton, GuiCommands.Analyze, UserInterfaceLanguage.Japanese);
-            AssertCommandHelp(view.CancelButton, GuiCommands.Cancel, UserInterfaceLanguage.Japanese);
-            AssertCommandHelp(view.SearchFilter, GuiCommands.Search, UserInterfaceLanguage.Japanese);
-            AssertCommandHelp(view.TargetPath, GuiCommands.TargetFocus, UserInterfaceLanguage.Japanese);
+            AssertCommandHelp(
+                view.AnalyzeButton,
+                GuiCommands.Analyze,
+                UserInterfaceLanguage.Japanese
+            );
+            AssertCommandHelp(
+                view.CancelButton,
+                GuiCommands.Cancel,
+                UserInterfaceLanguage.Japanese
+            );
+            AssertCommandHelp(
+                view.SearchFilter,
+                GuiCommands.Search,
+                UserInterfaceLanguage.Japanese
+            );
+            AssertCommandHelp(
+                view.TargetPath,
+                GuiCommands.TargetFocus,
+                UserInterfaceLanguage.Japanese
+            );
             AssertCommandHelp(
                 view.ConfigurationPath,
                 GuiCommands.ConfigurationFocus,
@@ -285,7 +301,11 @@ public sealed class UiVisualRegressionTests
                 AutomationProperties.GetHelpText(view.TargetPath),
                 StringComparison.Ordinal
             );
-            AssertCommandHelp(view.AnalyzeButton, GuiCommands.Analyze, UserInterfaceLanguage.English);
+            AssertCommandHelp(
+                view.AnalyzeButton,
+                GuiCommands.Analyze,
+                UserInterfaceLanguage.English
+            );
             var englishHelp = AutomationProperties.GetHelpText(view.AnalyzeButton);
             Assert.NotEqual(japaneseHelp, englishHelp);
             Assert.Contains("Start analysis.", englishHelp, StringComparison.Ordinal);
