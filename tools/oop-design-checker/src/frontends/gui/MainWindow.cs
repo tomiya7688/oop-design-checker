@@ -647,7 +647,7 @@ internal sealed class MainWindow : Window
 
     private void OnEditableKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Escape)
+        if (!GuiCommands.Cancel.Matches(e))
         {
             return;
         }
@@ -665,7 +665,7 @@ internal sealed class MainWindow : Window
 
     private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && AnyTopLevelMenuOpen())
+        if (GuiCommands.Cancel.Matches(e) && AnyTopLevelMenuOpen())
         {
             CloseTopLevelMenus();
             e.Handled = true;
@@ -682,7 +682,7 @@ internal sealed class MainWindow : Window
             return;
         }
 
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Alt) && TryHandleAltAccessKey(e.Key))
+        if (TryHandleAltAccessKey(e))
         {
             e.Handled = true;
         }
@@ -690,28 +690,28 @@ internal sealed class MainWindow : Window
 
     private async void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && _analysisInProgress)
+        if (GuiCommands.Cancel.Matches(e) && _analysisInProgress)
         {
             e.Handled = true;
             CancelAnalysis();
             return;
         }
 
-        if (e.Key == Key.F5 || (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control)))
+        if (GuiCommands.Analyze.Matches(e))
         {
             e.Handled = true;
             await AnalyzeAsync();
             return;
         }
 
-        if (e.Key == Key.F && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (GuiCommands.Search.Matches(e))
         {
             e.Handled = true;
             FocusSearch();
             return;
         }
 
-        if (e.Key == Key.C && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (GuiCommands.CopySelected.Matches(e))
         {
             if (FocusManager?.GetFocusedElement() is TextBox)
             {
@@ -729,117 +729,160 @@ internal sealed class MainWindow : Window
 
         if (menu.LanguageMenu.IsSubMenuOpen)
         {
-            switch (key)
+            if (MatchesMenuAccessKey(GuiCommands.JapaneseLanguage, key))
             {
-                case Key.J:
-                    CloseTopLevelMenus();
-                    _view.LanguageSelector.SelectedIndex = 0;
-                    return true;
-                case Key.E:
-                    CloseTopLevelMenus();
-                    _view.LanguageSelector.SelectedIndex = 1;
-                    return true;
+                CloseTopLevelMenus();
+                _view.LanguageSelector.SelectedIndex = 0;
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.EnglishLanguage, key))
+            {
+                CloseTopLevelMenus();
+                _view.LanguageSelector.SelectedIndex = 1;
+                return true;
             }
         }
 
         if (menu.ThemeMenu.IsSubMenuOpen)
         {
-            switch (key)
+            if (MatchesMenuAccessKey(GuiCommands.DarkTheme, key))
             {
-                case Key.D:
-                    CloseTopLevelMenus();
-                    _view.ThemeSelector.SelectedIndex = 0;
-                    return true;
-                case Key.L:
-                    CloseTopLevelMenus();
-                    _view.ThemeSelector.SelectedIndex = 1;
-                    return true;
+                CloseTopLevelMenus();
+                _view.ThemeSelector.SelectedIndex = 0;
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.LightTheme, key))
+            {
+                CloseTopLevelMenus();
+                _view.ThemeSelector.SelectedIndex = 1;
+                return true;
             }
         }
 
         if (menu.FileMenu.IsSubMenuOpen)
         {
-            switch (key)
+            if (MatchesMenuAccessKey(GuiCommands.TargetFile, key))
             {
-                case Key.T:
-                    CloseTopLevelMenus();
-                    _ = PickTargetFileAsync();
-                    return true;
-                case Key.D:
-                    CloseTopLevelMenus();
-                    _ = PickTargetFolderAsync();
-                    return true;
-                case Key.C:
-                    CloseTopLevelMenus();
-                    _ = PickConfigurationAsync();
-                    return true;
-                case Key.E:
-                    CloseTopLevelMenus();
-                    _ = EditConfigurationAsync();
-                    return true;
-                case Key.L:
-                    CloseTopLevelMenus();
-                    ClearConfiguration();
-                    return true;
-                case Key.J:
-                    CloseTopLevelMenus();
-                    _ = ExportAsync(DiagnosticExportFormat.Json);
-                    return true;
-                case Key.S:
-                    CloseTopLevelMenus();
-                    _ = ExportAsync(DiagnosticExportFormat.Sarif);
-                    return true;
-                case Key.X:
-                    Close();
-                    return true;
+                CloseTopLevelMenus();
+                _ = PickTargetFileAsync();
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.TargetFolder, key))
+            {
+                CloseTopLevelMenus();
+                _ = PickTargetFolderAsync();
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.PickConfiguration, key))
+            {
+                CloseTopLevelMenus();
+                _ = PickConfigurationAsync();
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.EditConfiguration, key))
+            {
+                CloseTopLevelMenus();
+                _ = EditConfigurationAsync();
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.ClearConfiguration, key))
+            {
+                CloseTopLevelMenus();
+                ClearConfiguration();
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.ExportJson, key))
+            {
+                CloseTopLevelMenus();
+                _ = ExportAsync(DiagnosticExportFormat.Json);
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.ExportSarif, key))
+            {
+                CloseTopLevelMenus();
+                _ = ExportAsync(DiagnosticExportFormat.Sarif);
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.Exit, key))
+            {
+                Close();
+                return true;
             }
         }
 
         if (menu.AnalyzeMenu.IsSubMenuOpen)
         {
-            switch (key)
+            if (MatchesMenuAccessKey(GuiCommands.Analyze, key))
             {
-                case Key.R:
-                    CloseTopLevelMenus();
-                    _ = AnalyzeAsync();
-                    return true;
-                case Key.C:
-                    CloseTopLevelMenus();
-                    CancelAnalysis();
-                    return true;
-                case Key.O:
-                    CloseTopLevelMenus();
-                    _ = OpenSelectedSourceAsync();
-                    return true;
+                CloseTopLevelMenus();
+                _ = AnalyzeAsync();
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.Cancel, key))
+            {
+                CloseTopLevelMenus();
+                CancelAnalysis();
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.OpenSource, key))
+            {
+                CloseTopLevelMenus();
+                _ = OpenSelectedSourceAsync();
+                return true;
             }
         }
 
         if (menu.ViewMenu.IsSubMenuOpen)
         {
-            switch (key)
+            if (MatchesMenuAccessKey(GuiCommands.Search, key))
             {
-                case Key.F:
-                    CloseTopLevelMenus();
-                    FocusSearch();
-                    return true;
-                case Key.D:
-                    CloseTopLevelMenus();
-                    ToggleFilterFromMenu(_view.DangerFilter);
-                    return true;
-                case Key.W:
-                    CloseTopLevelMenus();
-                    ToggleFilterFromMenu(_view.WarningFilter);
-                    return true;
-                case Key.A:
-                    CloseTopLevelMenus();
-                    ToggleFilterFromMenu(_view.AttentionFilter);
-                    return true;
-                case Key.L:
-                    OpenSubMenu(menu.LanguageMenu);
-                    return true;
-                case Key.T:
-                    OpenSubMenu(menu.ThemeMenu);
-                    return true;
+                CloseTopLevelMenus();
+                FocusSearch();
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.DangerFilter, key))
+            {
+                CloseTopLevelMenus();
+                ToggleFilterFromMenu(_view.DangerFilter);
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.WarningFilter, key))
+            {
+                CloseTopLevelMenus();
+                ToggleFilterFromMenu(_view.WarningFilter);
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.AttentionFilter, key))
+            {
+                CloseTopLevelMenus();
+                ToggleFilterFromMenu(_view.AttentionFilter);
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.LanguageMenu, key))
+            {
+                OpenSubMenu(menu.LanguageMenu);
+                return true;
+            }
+
+            if (MatchesMenuAccessKey(GuiCommands.ThemeMenu, key))
+            {
+                OpenSubMenu(menu.ThemeMenu);
+                return true;
             }
         }
 
@@ -851,29 +894,51 @@ internal sealed class MainWindow : Window
         menu.Open();
     }
 
-    private bool TryHandleAltAccessKey(Key key)
+    private bool TryHandleAltAccessKey(KeyEventArgs e)
     {
-        switch (key)
+        if (MatchesTopLevelAccessKey(GuiCommands.FileMenu, e))
         {
-            case Key.F:
-                OpenTopLevelMenu(_view.MainMenu.FileMenu);
-                return true;
-            case Key.A:
-                OpenTopLevelMenu(_view.MainMenu.AnalyzeMenu);
-                return true;
-            case Key.V:
-                OpenTopLevelMenu(_view.MainMenu.ViewMenu);
-                return true;
-            case Key.T:
-                _view.TargetPath.Focus();
-                return true;
-            case Key.C:
-                _view.ConfigurationPath.Focus();
-                return true;
-            default:
-                return false;
+            OpenTopLevelMenu(_view.MainMenu.FileMenu);
+            return true;
         }
+
+        if (MatchesTopLevelAccessKey(GuiCommands.AnalyzeMenu, e))
+        {
+            OpenTopLevelMenu(_view.MainMenu.AnalyzeMenu);
+            return true;
+        }
+
+        if (MatchesTopLevelAccessKey(GuiCommands.ViewMenu, e))
+        {
+            OpenTopLevelMenu(_view.MainMenu.ViewMenu);
+            return true;
+        }
+
+        if (GuiCommands.TargetFocus.Matches(e))
+        {
+            _view.TargetPath.Focus();
+            return true;
+        }
+
+        if (GuiCommands.ConfigurationFocus.Matches(e))
+        {
+            _view.ConfigurationPath.Focus();
+            return true;
+        }
+
+        return false;
     }
+
+    private static bool MatchesMenuAccessKey(GuiCommandDefinition command, Key key) =>
+        command.MenuAccessKey == key;
+
+    private static bool MatchesTopLevelAccessKey(
+        GuiCommandDefinition command,
+        KeyEventArgs e
+    ) =>
+        e.KeyModifiers == KeyModifiers.Alt
+        && command.MenuPath.Count == 1
+        && command.MenuPath[0] == e.Key;
 
     private bool AnyTopLevelMenuOpen() =>
         _view.MainMenu.FileMenu.IsSubMenuOpen
