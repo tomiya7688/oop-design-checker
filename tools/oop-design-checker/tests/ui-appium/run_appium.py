@@ -230,6 +230,35 @@ def press_alt_access(driver, key):
     time.sleep(0.4)
 
 
+def press_ctrl_access(driver, key):
+    driver.execute(
+        Command.W3C_ACTIONS,
+        {
+            "actions": [
+                {
+                    "type": "key",
+                    "id": "keyboard",
+                    "actions": [
+                        {"type": "keyDown", "value": Keys.CONTROL},
+                        {"type": "keyDown", "value": key},
+                        {"type": "keyUp", "value": key},
+                        {"type": "keyUp", "value": Keys.CONTROL},
+                    ],
+                }
+            ]
+        },
+    )
+    driver.execute(Command.W3C_CLEAR_ACTIONS, {})
+    time.sleep(0.3)
+
+
+def focused_is(driver, automation_id):
+    try:
+        return driver.switch_to.active_element.id == find(driver, automation_id).id
+    except Exception:
+        return False
+
+
 def press_menu_access(driver, key):
     perform_key_actions(driver, [key])
     time.sleep(0.3)
@@ -410,6 +439,47 @@ def main():
         record("02-fixture-analysis", "set-target", value=str(fixture))
 
         keyboard = evidence / "09-keyboard-menu"
+        shortcut_hints = text_of(driver, "ShortcutHints")
+        for expected_shortcut in ("F5", "Esc", "Ctrl+F"):
+            if expected_shortcut not in shortcut_hints:
+                raise AssertionError(
+                    f"Visible shortcut hint is missing {expected_shortcut}: {shortcut_hints}"
+                )
+        if not control_contains(driver, "TargetPathLabel", ("Alt+T",)):
+            raise AssertionError("Target label does not expose Alt+T.")
+        if not control_contains(driver, "ConfigurationPathLabel", ("Alt+C",)):
+            raise AssertionError("Configuration label does not expose Alt+C.")
+        record(
+            "09-keyboard-menu",
+            "visible-shortcut-hints",
+            shortcuts=["F5", "Esc", "Ctrl+F", "Alt+T", "Alt+C"],
+        )
+
+        press_alt_access(driver, "t")
+        wait_until(driver, lambda: focused_is(driver, "TargetPath"), timeout=20)
+        record("09-keyboard-menu", "focus-target", accessKey="Alt+T")
+
+        press_alt_access(driver, "c")
+        wait_until(driver, lambda: focused_is(driver, "ConfigurationPath"), timeout=20)
+        record("09-keyboard-menu", "focus-configuration", accessKey="Alt+C")
+
+        press_ctrl_access(driver, "f")
+        wait_until(driver, lambda: focused_is(driver, "SearchFilter"), timeout=20)
+        driver.switch_to.active_element.send_keys("shortcut-check")
+        wait_until(
+            driver,
+            lambda: "shortcut-check" in text_of(driver, "SearchFilter"),
+            timeout=20,
+        )
+        record("09-keyboard-menu", "focus-search", shortcut="Ctrl+F")
+        replace_text(driver, "SearchFilter", "")
+
+        press_menu_access(driver, Keys.F5)
+        wait_until(driver, lambda: find(driver, "CancelButton").is_enabled(), timeout=20)
+        record("09-keyboard-menu", "analyze-direct-shortcut", shortcut="F5")
+        find(driver, "CancelButton").click()
+        wait_until(driver, lambda: find(driver, "AnalyzeButton").is_enabled(), timeout=20)
+
         screenshot(driver, keyboard / "before.png")
         press_alt_access(driver, "f")
         wait_until(driver, lambda: find(driver, "TargetFileMenuItem").is_displayed(), timeout=20)
