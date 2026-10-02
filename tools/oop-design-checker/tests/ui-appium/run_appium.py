@@ -468,8 +468,6 @@ def main():
         replace_text(driver, "TargetPath", str(fixture))
         record("02-fixture-analysis", "set-target", value=str(fixture))
 
-        record("02-fixture-analysis", "set-target", value=str(fixture))
-
         keyboard = evidence / "09-keyboard-menu"
         shortcut_hints = text_of(driver, "ShortcutHints")
         for expected_shortcut in ("F5", "Esc", "Ctrl+F"):
@@ -488,20 +486,43 @@ def main():
         )
 
         press_alt_access(driver, "t")
-        wait_until(
-            driver,
-            lambda: control_has_keyboard_focus(driver, "TargetPath"),
-            timeout=20,
-        )
+        if args.platform == "macos":
+            driver.switch_to.active_element.send_keys("__target_focus__")
+            wait_until(
+                driver,
+                lambda: control_contains(driver, "TargetPath", ("__target_focus__",)),
+                timeout=20,
+            )
+        else:
+            wait_until(
+                driver,
+                lambda: control_has_keyboard_focus(driver, "TargetPath"),
+                timeout=20,
+            )
         record("09-keyboard-menu", "focus-target", accessKey="Alt+T")
+        replace_text(driver, "TargetPath", str(fixture))
 
+        replace_text(driver, "ConfigurationPath", "")
         press_alt_access(driver, "c")
-        wait_until(
-            driver,
-            lambda: control_has_keyboard_focus(driver, "ConfigurationPath"),
-            timeout=20,
-        )
+        if args.platform == "macos":
+            driver.switch_to.active_element.send_keys("__config_focus__")
+            wait_until(
+                driver,
+                lambda: control_contains(
+                    driver,
+                    "ConfigurationPath",
+                    ("__config_focus__",),
+                ),
+                timeout=20,
+            )
+        else:
+            wait_until(
+                driver,
+                lambda: control_has_keyboard_focus(driver, "ConfigurationPath"),
+                timeout=20,
+            )
         record("09-keyboard-menu", "focus-configuration", accessKey="Alt+C")
+        replace_text(driver, "ConfigurationPath", "")
 
         replace_text(driver, "SearchFilter", "")
         press_ctrl_access(driver, "f")
