@@ -25,6 +25,8 @@ Evidence is grouped under stable scenario IDs:
 
 Each scenario contains `expected.json`, screenshots where relevant, `ui-state.json`, and `action-log.json`. Export evidence also contains the actual JSON and SARIF diagnostics.
 
+When the E2E run fails, the artifact also includes `failure.json` and `traceback.txt`. The failure report records the exception type, current scenario/action, wait condition and timeout when applicable, target automation ID, evidence paths, and any evidence-capture errors. The workflow log prints the same report, including when the exception message is empty.
+
 ## Deterministic automation hooks
 
 The production GUI behaves normally unless these environment variables are explicitly set by the native UI workflow:
