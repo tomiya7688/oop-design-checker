@@ -526,12 +526,19 @@ def main():
 
         replace_text(driver, "SearchFilter", "")
         press_ctrl_access(driver, "f")
-        driver.switch_to.active_element.send_keys("shortcut-check")
-        wait_until(
-            driver,
-            lambda: control_contains(driver, "SearchFilter", ("shortcut-check",)),
-            timeout=20,
-        )
+        if args.platform == "macos":
+            driver.switch_to.active_element.send_keys("shortcut-check")
+            wait_until(
+                driver,
+                lambda: control_contains(driver, "SearchFilter", ("shortcut-check",)),
+                timeout=20,
+            )
+        else:
+            wait_until(
+                driver,
+                lambda: control_has_keyboard_focus(driver, "SearchFilter"),
+                timeout=20,
+            )
         record("09-keyboard-menu", "focus-search", shortcut="Ctrl+F")
         replace_text(driver, "SearchFilter", "")
 
