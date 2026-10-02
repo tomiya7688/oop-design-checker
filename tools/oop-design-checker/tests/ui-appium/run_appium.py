@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import time
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from appium import webdriver
@@ -137,9 +138,6 @@ def text_of(driver, automation_id):
     element = find(driver, automation_id)
     getters = (
         lambda: element.text,
-        lambda: element.get_property("Value.Value"),
-        lambda: element.get_property("Value"),
-        lambda: element.get_property("value"),
         lambda: element.get_attribute("Name"),
         lambda: element.get_attribute("Value.Value"),
     )
@@ -158,9 +156,6 @@ def control_contains(driver, automation_id, expected_values):
     element = find(driver, automation_id)
     getters = (
         lambda: element.text,
-        lambda: element.get_property("Value.Value"),
-        lambda: element.get_property("Value"),
-        lambda: element.get_property("value"),
         lambda: element.get_attribute("Name"),
         lambda: element.get_attribute("Value.Value"),
         lambda: element.get_attribute("value"),
@@ -187,6 +182,30 @@ def control_contains(driver, automation_id, expected_values):
         segment = source[index : index + 3000].lower()
         if any(value in segment for value in expected):
             return True
+    return False
+
+
+def control_has_keyboard_focus(driver, automation_id):
+    try:
+        root = ET.fromstring(driver.page_source)
+    except ET.ParseError:
+        return False
+
+    for element in root.iter():
+        attributes = {
+            "".join(character for character in name.lower() if character.isalnum()): value
+            for name, value in element.attrib.items()
+        }
+        element_id = attributes.get("automationid") or attributes.get("identifier")
+        if element_id != automation_id:
+            continue
+        return any(
+            attributes.get(name, "").lower() == "true"
+            for name in ("haskeyboardfocus", "iskeyboardfocused", "focused", "isfocused")
+        ) or any(
+            "keyboardfocus" in name and value.lower() == "true"
+            for name, value in attributes.items()
+        )
     return False
 
 
@@ -446,8 +465,9 @@ def main():
         driver = create_driver(args)
         record("02-fixture-analysis", "session-start", platform=args.platform)
         screenshot(driver, evidence / "02-fixture-analysis" / "before.png")
-
         replace_text(driver, "TargetPath", str(fixture))
+        record("02-fixture-analysis", "set-target", value=str(fixture))
+
         record("02-fixture-analysis", "set-target", value=str(fixture))
 
         keyboard = evidence / "09-keyboard-menu"
@@ -468,29 +488,20 @@ def main():
         )
 
         press_alt_access(driver, "t")
-        driver.switch_to.active_element.send_keys("__target_focus__")
         wait_until(
             driver,
-            lambda: control_contains(driver, "TargetPath", ("__target_focus__",)),
+            lambda: control_has_keyboard_focus(driver, "TargetPath"),
             timeout=20,
         )
         record("09-keyboard-menu", "focus-target", accessKey="Alt+T")
-        replace_text(driver, "TargetPath", str(fixture))
 
-        replace_text(driver, "ConfigurationPath", "")
         press_alt_access(driver, "c")
-        driver.switch_to.active_element.send_keys("__config_focus__")
         wait_until(
             driver,
-            lambda: control_contains(
-                driver,
-                "ConfigurationPath",
-                ("__config_focus__",),
-            ),
+            lambda: control_has_keyboard_focus(driver, "ConfigurationPath"),
             timeout=20,
         )
         record("09-keyboard-menu", "focus-configuration", accessKey="Alt+C")
-        replace_text(driver, "ConfigurationPath", "")
 
         replace_text(driver, "SearchFilter", "")
         press_ctrl_access(driver, "f")
