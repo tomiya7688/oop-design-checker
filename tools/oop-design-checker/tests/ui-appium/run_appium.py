@@ -137,6 +137,9 @@ def text_of(driver, automation_id):
     element = find(driver, automation_id)
     getters = (
         lambda: element.text,
+        lambda: element.get_property("Value.Value"),
+        lambda: element.get_property("Value"),
+        lambda: element.get_property("value"),
         lambda: element.get_attribute("Name"),
         lambda: element.get_attribute("Value.Value"),
     )
@@ -155,6 +158,9 @@ def control_contains(driver, automation_id, expected_values):
     element = find(driver, automation_id)
     getters = (
         lambda: element.text,
+        lambda: element.get_property("Value.Value"),
+        lambda: element.get_property("Value"),
+        lambda: element.get_property("value"),
         lambda: element.get_attribute("Name"),
         lambda: element.get_attribute("Value.Value"),
         lambda: element.get_attribute("value"),
