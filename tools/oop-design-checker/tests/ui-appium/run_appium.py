@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import time
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from appium import webdriver
@@ -152,9 +153,22 @@ def text_of(driver, automation_id):
 
 def control_contains(driver, automation_id, expected_values):
     expected = tuple(value.lower() for value in expected_values)
-    text = text_of(driver, automation_id).lower()
-    if any(value in text for value in expected):
-        return True
+    element = find(driver, automation_id)
+    getters = (
+        lambda: element.text,
+        lambda: element.get_attribute("Name"),
+        lambda: element.get_attribute("Value.Value"),
+        lambda: element.get_attribute("value"),
+        lambda: element.get_attribute("title"),
+        lambda: element.get_attribute("label"),
+    )
+    for getter in getters:
+        try:
+            value = getter()
+        except Exception:
+            continue
+        if value and any(expected_value in str(value).lower() for expected_value in expected):
+            return True
 
     source = driver.page_source
     markers = (
@@ -168,6 +182,30 @@ def control_contains(driver, automation_id, expected_values):
         segment = source[index : index + 3000].lower()
         if any(value in segment for value in expected):
             return True
+    return False
+
+
+def control_has_keyboard_focus(driver, automation_id):
+    try:
+        root = ET.fromstring(driver.page_source)
+    except ET.ParseError:
+        return False
+
+    for element in root.iter():
+        attributes = {
+            "".join(character for character in name.lower() if character.isalnum()): value
+            for name, value in element.attrib.items()
+        }
+        element_id = attributes.get("automationid") or attributes.get("identifier")
+        if element_id != automation_id:
+            continue
+        return any(
+            attributes.get(name, "").lower() == "true"
+            for name in ("haskeyboardfocus", "iskeyboardfocused", "focused", "isfocused")
+        ) or any(
+            "keyboardfocus" in name and value.lower() == "true"
+            for name, value in attributes.items()
+        )
     return False
 
 
@@ -228,6 +266,28 @@ def press_alt_access(driver, key):
     )
     driver.execute(Command.W3C_CLEAR_ACTIONS, {})
     time.sleep(0.4)
+
+
+def press_ctrl_access(driver, key):
+    driver.execute(
+        Command.W3C_ACTIONS,
+        {
+            "actions": [
+                {
+                    "type": "key",
+                    "id": "keyboard",
+                    "actions": [
+                        {"type": "keyDown", "value": Keys.CONTROL},
+                        {"type": "keyDown", "value": key},
+                        {"type": "keyUp", "value": key},
+                        {"type": "keyUp", "value": Keys.CONTROL},
+                    ],
+                }
+            ]
+        },
+    )
+    driver.execute(Command.W3C_CLEAR_ACTIONS, {})
+    time.sleep(0.3)
 
 
 def press_menu_access(driver, key):
@@ -405,11 +465,89 @@ def main():
         driver = create_driver(args)
         record("02-fixture-analysis", "session-start", platform=args.platform)
         screenshot(driver, evidence / "02-fixture-analysis" / "before.png")
-
         replace_text(driver, "TargetPath", str(fixture))
         record("02-fixture-analysis", "set-target", value=str(fixture))
 
         keyboard = evidence / "09-keyboard-menu"
+        shortcut_hints = text_of(driver, "ShortcutHints")
+        for expected_shortcut in ("F5", "Esc", "Ctrl+F"):
+            if expected_shortcut not in shortcut_hints:
+                raise AssertionError(
+                    f"Visible shortcut hint is missing {expected_shortcut}: {shortcut_hints}"
+                )
+        if not control_contains(driver, "TargetPathLabel", ("Alt+T",)):
+            raise AssertionError("Target label does not expose Alt+T.")
+        if not control_contains(driver, "ConfigurationPathLabel", ("Alt+C",)):
+            raise AssertionError("Configuration label does not expose Alt+C.")
+        record(
+            "09-keyboard-menu",
+            "visible-shortcut-hints",
+            shortcuts=["F5", "Esc", "Ctrl+F", "Alt+T", "Alt+C"],
+        )
+
+        press_alt_access(driver, "t")
+        if args.platform == "macos":
+            driver.switch_to.active_element.send_keys("__target_focus__")
+            wait_until(
+                driver,
+                lambda: control_contains(driver, "TargetPath", ("__target_focus__",)),
+                timeout=20,
+            )
+        else:
+            wait_until(
+                driver,
+                lambda: control_has_keyboard_focus(driver, "TargetPath"),
+                timeout=20,
+            )
+        record("09-keyboard-menu", "focus-target", accessKey="Alt+T")
+        replace_text(driver, "TargetPath", str(fixture))
+
+        replace_text(driver, "ConfigurationPath", "")
+        press_alt_access(driver, "c")
+        if args.platform == "macos":
+            driver.switch_to.active_element.send_keys("__config_focus__")
+            wait_until(
+                driver,
+                lambda: control_contains(
+                    driver,
+                    "ConfigurationPath",
+                    ("__config_focus__",),
+                ),
+                timeout=20,
+            )
+        else:
+            wait_until(
+                driver,
+                lambda: control_has_keyboard_focus(driver, "ConfigurationPath"),
+                timeout=20,
+            )
+        record("09-keyboard-menu", "focus-configuration", accessKey="Alt+C")
+        replace_text(driver, "ConfigurationPath", "")
+
+        replace_text(driver, "SearchFilter", "")
+        press_ctrl_access(driver, "f")
+        if args.platform == "macos":
+            driver.switch_to.active_element.send_keys("shortcut-check")
+            wait_until(
+                driver,
+                lambda: control_contains(driver, "SearchFilter", ("shortcut-check",)),
+                timeout=20,
+            )
+        else:
+            wait_until(
+                driver,
+                lambda: control_has_keyboard_focus(driver, "SearchFilter"),
+                timeout=20,
+            )
+        record("09-keyboard-menu", "focus-search", shortcut="Ctrl+F")
+        replace_text(driver, "SearchFilter", "")
+
+        press_menu_access(driver, Keys.F5)
+        wait_until(driver, lambda: find(driver, "CancelButton").is_enabled(), timeout=20)
+        record("09-keyboard-menu", "analyze-direct-shortcut", shortcut="F5")
+        find(driver, "CancelButton").click()
+        wait_until(driver, lambda: find(driver, "AnalyzeButton").is_enabled(), timeout=20)
+
         screenshot(driver, keyboard / "before.png")
         press_alt_access(driver, "f")
         wait_until(driver, lambda: find(driver, "TargetFileMenuItem").is_displayed(), timeout=20)

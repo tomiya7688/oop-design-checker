@@ -29,6 +29,7 @@ internal sealed class MainWindowView : Grid
     internal CheckBox WarningFilter { get; } = new();
     internal CheckBox AttentionFilter { get; } = new();
     internal TextBox SearchFilter { get; } = new();
+    internal TextBlock ShortcutHints { get; } = new();
     internal ComboBox LanguageSelector { get; } = new();
     internal ComboBox ThemeSelector { get; } = new();
     internal DataGrid DiagnosticsGrid { get; } = new();
@@ -76,9 +77,10 @@ internal sealed class MainWindowView : Grid
     internal void ApplyLanguage(UserInterfaceLanguage language)
     {
         MainMenu.ApplyLanguage(language);
-        _targetLabel.Content = $"{GuiText.Get(GuiTextKey.TargetLabel, language)} (_T):";
+        _targetLabel.Content =
+            $"{GuiText.Get(GuiTextKey.TargetLabel, language)} (_{GuiShortcut.FormatKey(GuiCommands.TargetFocus.PrimaryShortcut!.Value.Key)})  {GuiCommands.TargetFocus.PrimaryHint}:";
         _configurationLabel.Content =
-            $"{GuiText.Get(GuiTextKey.ConfigurationLabel, language)} (_C):";
+            $"{GuiText.Get(GuiTextKey.ConfigurationLabel, language)} (_{GuiShortcut.FormatKey(GuiCommands.ConfigurationFocus.PrimaryShortcut!.Value.Key)})  {GuiCommands.ConfigurationFocus.PrimaryHint}:";
         TargetPath.PlaceholderText = GuiText.Get(GuiTextKey.TargetPlaceholder, language);
         ConfigurationPath.PlaceholderText = GuiText.Get(
             GuiTextKey.ConfigurationPlaceholder,
@@ -107,6 +109,10 @@ internal sealed class MainWindowView : Grid
         WarningFilter.Content = GuiText.Get(GuiTextKey.Warning, language);
         AttentionFilter.Content = GuiText.Get(GuiTextKey.Attention, language);
         SearchFilter.PlaceholderText = GuiText.Get(GuiTextKey.SearchPlaceholder, language);
+        ShortcutHints.Text =
+            $"{GuiText.Get(GuiTextKey.AnalyzeButton, language)}: {GuiCommands.Analyze.PrimaryHint}  ·  "
+            + $"{GuiText.Get(GuiTextKey.CancelButton, language)}: {GuiCommands.Cancel.PrimaryHint}  ·  "
+            + $"{GuiText.Get(GuiTextKey.SearchMenu, language)}: {GuiCommands.Search.PrimaryHint}";
 
         CopySelectedButton.Content = GuiText.Get(GuiTextKey.CopySelectedButton, language);
         CopyAllButton.Content = GuiText.Get(GuiTextKey.CopyAllButton, language);
@@ -122,6 +128,7 @@ internal sealed class MainWindowView : Grid
         DiagnosticsGrid.Columns[4].Header = GuiText.Get(GuiTextKey.ColumnColumn, language);
         DiagnosticsGrid.Columns[5].Header = GuiText.Get(GuiTextKey.MessageColumn, language);
 
+        ApplyCommandHelp(language);
         ClearDetails(language);
     }
 
@@ -149,6 +156,7 @@ internal sealed class MainWindowView : Grid
             (WarningFilter, "WarningFilter"),
             (AttentionFilter, "AttentionFilter"),
             (SearchFilter, "SearchFilter"),
+            (ShortcutHints, "ShortcutHints"),
             (LanguageSelector, "LanguageSelector"),
             (ThemeSelector, "ThemeSelector"),
             (DiagnosticsGrid, "DiagnosticsGrid"),
@@ -179,8 +187,9 @@ internal sealed class MainWindowView : Grid
         _targetLabel.VerticalAlignment = VerticalAlignment.Center;
         _configurationLabel.Target = ConfigurationPath;
         _configurationLabel.VerticalAlignment = VerticalAlignment.Center;
-        AutomationProperties.SetAccessKey(_targetLabel, "Alt+T");
-        AutomationProperties.SetAccessKey(_configurationLabel, "Alt+C");
+        ShortcutHints.FontSize = 11;
+        ShortcutHints.Opacity = 0.75;
+        ShortcutHints.TextWrapping = TextWrapping.Wrap;
 
         ConfigureTabOrder();
 
@@ -205,6 +214,48 @@ internal sealed class MainWindowView : Grid
 
         ConfigureDiagnosticsGrid();
     }
+
+    private void ApplyCommandHelp(UserInterfaceLanguage language)
+    {
+        ApplyCommandHelp(_targetLabel, GuiCommands.TargetFocus, language);
+        ApplyCommandHelp(TargetPath, GuiCommands.TargetFocus, language);
+        ApplyCommandHelp(_configurationLabel, GuiCommands.ConfigurationFocus, language);
+        ApplyCommandHelp(ConfigurationPath, GuiCommands.ConfigurationFocus, language);
+
+        ApplyCommandHelp(TargetFileButton, GuiCommands.TargetFile, language);
+        ApplyCommandHelp(TargetFolderButton, GuiCommands.TargetFolder, language);
+        ApplyCommandHelp(ConfigurationButton, GuiCommands.PickConfiguration, language);
+        ApplyCommandHelp(EditConfigurationButton, GuiCommands.EditConfiguration, language);
+        ApplyCommandHelp(ClearConfigurationButton, GuiCommands.ClearConfiguration, language);
+        ApplyCommandHelp(AnalyzeButton, GuiCommands.Analyze, language);
+        ApplyCommandHelp(CancelButton, GuiCommands.Cancel, language);
+        ApplyCommandHelp(SearchFilter, GuiCommands.Search, language);
+
+        ApplyCommandHelp(DangerFilter, GuiCommands.DangerFilter, language);
+        ApplyCommandHelp(WarningFilter, GuiCommands.WarningFilter, language);
+        ApplyCommandHelp(AttentionFilter, GuiCommands.AttentionFilter, language);
+        ApplyCommandHelp(LanguageSelector, GuiCommands.LanguageMenu, language);
+        ApplyCommandHelp(ThemeSelector, GuiCommands.ThemeMenu, language);
+
+        ApplyCommandHelp(CopySelectedButton, GuiCommands.CopySelected, language);
+        ApplyCommandHelp(CopyAllButton, GuiCommands.CopyAll, language);
+        ApplyCommandHelp(OpenSourceButton, GuiCommands.OpenSource, language);
+        ApplyCommandHelp(ExportJsonButton, GuiCommands.ExportJson, language);
+        ApplyCommandHelp(ExportSarifButton, GuiCommands.ExportSarif, language);
+
+        AutomationProperties.SetHelpText(
+            ShortcutHints,
+            language == UserInterfaceLanguage.Japanese
+                ? "主要shortcut。詳細は各controlのtooltipまたはメニューで確認できます。"
+                : "Primary shortcuts. More shortcuts are available in control tooltips and menus."
+        );
+    }
+
+    private static void ApplyCommandHelp(
+        Control control,
+        GuiCommandDefinition command,
+        UserInterfaceLanguage language
+    ) => command.ApplyHelp(control, language);
 
     private void ConfigureTabOrder()
     {
@@ -280,6 +331,7 @@ internal sealed class MainWindowView : Grid
         var grid = new Grid { RowSpacing = 8 };
         grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
         var filters = new StackPanel
         {
@@ -311,6 +363,7 @@ internal sealed class MainWindowView : Grid
 
         AddToGrid(grid, filters, 0, 0);
         AddToGrid(grid, preferences, 1, 0);
+        AddToGrid(grid, ShortcutHints, 2, 0);
         return grid;
     }
 
