@@ -146,6 +146,9 @@ public sealed class UiVisualRegressionTests
             Assert.False(window.TestView.MainMenu.FileMenu.IsSubMenuOpen);
 
             window.TestView.SearchFilter.Focus();
+            PressKey(window, Key.LeftAlt, PhysicalKey.AltLeft);
+            Assert.False(window.TestView.MainMenu.FileMenu.IsSubMenuOpen);
+
             PressKey(window, Key.T, PhysicalKey.T, RawInputModifiers.Alt, "t");
             Assert.Same(window.TestView.TargetPath, window.FocusManager?.GetFocusedElement());
             Assert.Equal(typedTarget, window.TestView.TargetPath.Text);

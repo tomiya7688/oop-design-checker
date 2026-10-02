@@ -665,6 +665,12 @@ internal sealed class MainWindow : Window
 
     private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.Key is Key.LeftAlt or Key.RightAlt)
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (GuiCommands.Cancel.Matches(e) && AnyTopLevelMenuOpen())
         {
             CloseTopLevelMenus();
