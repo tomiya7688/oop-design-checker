@@ -1,20 +1,34 @@
 #!/usr/bin/env python3
 import argparse
 import ctypes
+import inspect
 import json
 import os
 import sys
 import time
+import traceback
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.command import Command
 from selenium.webdriver.support.ui import WebDriverWait
 
+from appium_diagnostics import (
+    build_failure_report,
+    build_wait_context,
+    capture_evidence,
+    format_failure_report,
+    write_failure_report,
+)
 from macos_bundle import validate_bundle
+
+
+_ACTIVE_FAILURE_CONTEXT = {}
+_LAST_AUTOMATION_ID = None
 
 
 def parse_args():
@@ -127,11 +141,33 @@ def find_windows_top_level_window(title, timeout=20):
 
 
 def find(driver, automation_id):
+    global _LAST_AUTOMATION_ID
+    _LAST_AUTOMATION_ID = automation_id
+    _ACTIVE_FAILURE_CONTEXT["automationId"] = automation_id
+    _ACTIVE_FAILURE_CONTEXT["action"] = f"find element: {automation_id}"
     return driver.find_element(AppiumBy.ACCESSIBILITY_ID, automation_id)
 
 
-def wait_until(driver, predicate, timeout=90):
-    WebDriverWait(driver, timeout, poll_frequency=0.5).until(lambda _: predicate())
+def wait_until(driver, predicate, timeout=90, expected_condition=None, automation_id=None):
+    caller = inspect.currentframe().f_back
+    try:
+        predicate_source = inspect.getsource(predicate).strip()
+    except (OSError, TypeError):
+        predicate_source = getattr(predicate, "__name__", "predicate")
+    condition = expected_condition or predicate_source
+    context = build_wait_context(
+        _ACTIVE_FAILURE_CONTEXT,
+        condition,
+        automation_id or _LAST_AUTOMATION_ID,
+        timeout,
+        f"{Path(caller.f_code.co_filename).name}:{caller.f_lineno}",
+    )
+    try:
+        WebDriverWait(driver, timeout, poll_frequency=0.5).until(lambda _: predicate())
+    except TimeoutException as exc:
+        context["automationId"] = automation_id or _LAST_AUTOMATION_ID
+        exc.appium_context = context
+        raise
 
 
 def text_of(driver, automation_id):
@@ -186,6 +222,8 @@ def control_contains(driver, automation_id, expected_values):
 
 
 def control_has_keyboard_focus(driver, automation_id):
+    global _LAST_AUTOMATION_ID
+    _LAST_AUTOMATION_ID = automation_id
     try:
         root = ET.fromstring(driver.page_source)
     except ET.ParseError:
@@ -427,6 +465,10 @@ def main():
     scenario_actions = {}
 
     def record(scenario, action, result="pass", **details):
+        _ACTIVE_FAILURE_CONTEXT["scenario"] = scenario
+        _ACTIVE_FAILURE_CONTEXT["action"] = action
+        if result == "pass":
+            _ACTIVE_FAILURE_CONTEXT["lastSuccessfulAction"] = f"{scenario}: {action}"
         item = {"scenario": scenario, "action": action, "result": result, **details}
         actions.append(item)
         scenario_actions.setdefault(scenario, []).append(item)
@@ -899,20 +941,76 @@ def main():
 
         return 0
     except Exception as exc:
+        traceback_text = traceback.format_exc()
+        context = dict(_ACTIVE_FAILURE_CONTEXT)
+        wait_context = getattr(exc, "appium_context", {})
+        context.update(wait_context)
+        traceback_frames = traceback.extract_tb(exc.__traceback__)
+        if traceback_frames:
+            failure_frame = traceback_frames[-1]
+            context["failureLocation"] = (
+                f"{Path(failure_frame.filename).name}:{failure_frame.lineno}"
+            )
+            if not wait_context:
+                context["action"] = (
+                    f"{failure_frame.name} at {context['failureLocation']}"
+                )
+                context["source"] = context["failureLocation"]
         record(
-            "failure",
-            "exception",
+            context.get("scenario") or "failure",
+            context.get("action") or "exception",
             result="fail",
             errorType=type(exc).__name__,
             error=str(exc),
+            expectedCondition=context.get("expectedCondition"),
+            automationId=context.get("automationId"),
+            timeoutSeconds=context.get("timeoutSeconds"),
+            source=context.get("source"),
         )
+        evidence_paths = {
+            "screenshot": str(evidence / "failure.png"),
+            "pageSource": str(evidence / "page-source.xml"),
+            "actionLog": str(evidence / "action-log.json"),
+            "traceback": str(evidence / "traceback.txt"),
+            "failureReport": str(evidence / "failure.json"),
+        }
+        evidence_errors = []
+
+        def capture_failure_evidence(name, callback):
+            error = capture_evidence(name, callback)
+            if error:
+                evidence_errors.append(error)
+
         if driver is not None:
-            try:
-                screenshot(driver, evidence / "failure.png")
-                (evidence / "page-source.xml").write_text(driver.page_source, encoding="utf-8")
-            except Exception:
-                pass
-        print(f"Appium UI E2E failed: {exc}", file=sys.stderr)
+            capture_failure_evidence(
+                "screenshot",
+                lambda: screenshot(driver, evidence / "failure.png"),
+            )
+            capture_failure_evidence(
+                "page source",
+                lambda: (evidence / "page-source.xml").write_text(
+                    driver.page_source, encoding="utf-8"
+                ),
+            )
+        capture_failure_evidence(
+            "traceback",
+            lambda: (evidence / "traceback.txt").write_text(
+                traceback_text, encoding="utf-8"
+            ),
+        )
+        report = build_failure_report(
+            exc,
+            traceback_text,
+            context=context,
+            evidence_paths=evidence_paths,
+            evidence_errors=evidence_errors,
+        )
+        capture_failure_evidence(
+            "failure report",
+            lambda: write_failure_report(evidence / "failure.json", report),
+        )
+        report["evidenceErrors"] = evidence_errors
+        print(format_failure_report(report), file=sys.stderr)
         return 1
     finally:
         if moved_source is not None:
@@ -920,15 +1018,27 @@ def main():
             if backup_path.exists():
                 backup_path.rename(source_path)
 
-        (evidence / "action-log.json").write_text(
-            json.dumps(actions, indent=2, ensure_ascii=False), encoding="utf-8"
+        action_log_error = capture_evidence(
+            "action log",
+            lambda: (evidence / "action-log.json").write_text(
+                json.dumps(actions, indent=2, ensure_ascii=False), encoding="utf-8"
+            ),
         )
+        if action_log_error:
+            print(action_log_error, file=sys.stderr)
         for scenario, items in scenario_actions.items():
             directory = evidence / scenario
-            directory.mkdir(parents=True, exist_ok=True)
-            (directory / "action-log.json").write_text(
-                json.dumps(items, indent=2, ensure_ascii=False), encoding="utf-8"
+            scenario_log_error = capture_evidence(
+                f"{scenario} action log",
+                lambda directory=directory, items=items: (
+                    directory.mkdir(parents=True, exist_ok=True),
+                    (directory / "action-log.json").write_text(
+                        json.dumps(items, indent=2, ensure_ascii=False), encoding="utf-8"
+                    ),
+                ),
             )
+            if scenario_log_error:
+                print(scenario_log_error, file=sys.stderr)
 
         if desktop_driver is not None:
             try:
