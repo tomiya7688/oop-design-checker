@@ -9,6 +9,9 @@ internal static class InheritancePrecisionSmokeTests
     public static void Run()
     {
         MarkerInterfaceDoesNotCreateConcreteDependencyWarning();
+        InaccessibleInterfaceMembersDoNotCreateAbstractions();
+        InheritedInstanceContractRemainsMeaningful();
+        InternalInstanceContractIsAccessibleWithinProject();
         AbstractionOnlyConsumerIsConcreteDependencyWarning();
         ManyConstructorParametersReusePartialConsumerUsage();
         ConcreteOnlyBehaviorJustifiesConcreteDependency();
@@ -46,6 +49,138 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         AssertNone(new ConcreteTypeDependencyRule(), source, "OOP305");
+    }
+
+    private static void InaccessibleInterfaceMembersDoNotCreateAbstractions()
+    {
+        const string source = """
+            internal interface IPrivateHelperOnly
+            {
+                private void Reset() { }
+            }
+
+            internal interface IStaticOnly
+            {
+                static void Configure() { }
+                static int Count => 0;
+                static event System.Action? Changed
+                {
+                    add { }
+                    remove { }
+                }
+            }
+
+            internal sealed class PrivateHelperService : IPrivateHelperOnly
+            {
+                public void Run() { }
+            }
+
+            internal sealed class StaticContractService : IStaticOnly
+            {
+                public void Run() { }
+            }
+
+            internal sealed class Consumer
+            {
+                public Consumer(PrivateHelperService privateHelper, StaticContractService staticContract) { }
+
+                public void Run()
+                {
+                    _ = new PrivateHelperService();
+                    _ = new StaticContractService();
+                }
+            }
+            """;
+
+        AssertNone(new ConcreteTypeDependencyRule(), source, "OOP305");
+        AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
+    }
+
+    private static void InheritedInstanceContractRemainsMeaningful()
+    {
+        const string source = """
+            internal interface IReadOnlyClock
+            {
+                int Read();
+            }
+
+            internal interface IClock : IReadOnlyClock
+            {
+                private void ResetCache() { }
+                static void Configure() { }
+            }
+
+            internal sealed class Clock : IClock
+            {
+                public int Read() => 0;
+            }
+
+            internal sealed class Consumer
+            {
+                private readonly Clock _clock;
+
+                public Consumer(Clock clock)
+                {
+                    _clock = clock;
+                }
+
+                public int Run() => _clock.Read();
+            }
+
+            internal sealed class Worker
+            {
+                public int Run()
+                {
+                    _ = new Clock();
+                    return 0;
+                }
+            }
+            """;
+
+        AssertSingle(
+            new ConcreteTypeDependencyRule(),
+            source,
+            "OOP305",
+            DesignDiagnosticSeverity.Warning
+        );
+        AssertSingle(
+            new AvoidableConcreteConstructionRule(),
+            source,
+            "OOP306",
+            DesignDiagnosticSeverity.Warning
+        );
+    }
+
+    private static void InternalInstanceContractIsAccessibleWithinProject()
+    {
+        const string source = """
+            internal interface IAssemblyContract
+            {
+                internal void Reset() { }
+            }
+
+            internal sealed class Service : IAssemblyContract
+            {
+                public void Run() { }
+            }
+
+            internal sealed class Worker
+            {
+                public void Use(IAssemblyContract service) => service.Reset();
+
+                public void Run()
+                {
+                    _ = new Service();
+                }
+            }
+            """;
+
+        AssertSingle(
+            new AvoidableConcreteConstructionRule(),
+            source,
+            "OOP306",
+            DesignDiagnosticSeverity.Warning
+        );
     }
 
     private static void AbstractionOnlyConsumerIsConcreteDependencyWarning()
