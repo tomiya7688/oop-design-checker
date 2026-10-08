@@ -13,6 +13,8 @@ internal static class InheritancePrecisionSmokeTests
         InheritedInstanceContractRemainsMeaningful();
         InternalInstanceContractIsAccessibleWithinProject();
         AbstractionOnlyConsumerIsConcreteDependencyWarning();
+        LaterMeaningfulAbstractionMatchesConsumerUsage();
+        MultipleMatchingAbstractionsChooseDeterministically();
         ManyConstructorParametersReusePartialConsumerUsage();
         ConcreteOnlyBehaviorJustifiesConcreteDependency();
         MarkerInterfaceDoesNotCreateConstructionWarning();
@@ -218,6 +220,88 @@ internal static class InheritancePrecisionSmokeTests
         );
     }
 
+    private static void LaterMeaningfulAbstractionMatchesConsumerUsage()
+    {
+        const string source = """
+            internal interface IClock
+            {
+                int Read();
+            }
+
+            internal interface IResettable
+            {
+                void Reset();
+            }
+
+            internal sealed class Clock : IClock, IResettable
+            {
+                public int Read() => 0;
+                public void Reset() { }
+            }
+
+            internal sealed class Service
+            {
+                private readonly Clock _clock;
+
+                public Service(Clock clock)
+                {
+                    _clock = clock;
+                }
+
+                public void Run() => _clock.Reset();
+            }
+            """;
+
+        AssertSingle(
+            new ConcreteTypeDependencyRule(),
+            source,
+            "OOP305",
+            DesignDiagnosticSeverity.Warning
+        );
+    }
+
+    private static void MultipleMatchingAbstractionsChooseDeterministically()
+    {
+        const string source = """
+            internal interface IZeta
+            {
+                int Read();
+            }
+
+            internal interface IAlpha
+            {
+                int Read();
+            }
+
+            internal sealed class Clock : IZeta, IAlpha
+            {
+                public int Read() => 0;
+            }
+
+            internal sealed class Service
+            {
+                private readonly Clock _clock;
+
+                public Service(Clock clock)
+                {
+                    _clock = clock;
+                }
+
+                public int Run() => _clock.Read();
+            }
+            """;
+
+        var diagnostic = new ConcreteTypeDependencyRule()
+            .Analyze(TestProjectFactory.Create(source))
+            .Single(item => item.Rule.Id == "OOP305");
+        if (!diagnostic.Message.Contains("project abstraction IAlpha", StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                $"Expected deterministic IAlpha candidate in the diagnostic, found: {diagnostic.Message}"
+            );
+        }
+    }
+
     private static void ConcreteOnlyBehaviorJustifiesConcreteDependency()
     {
         const string source = """
@@ -226,10 +310,16 @@ internal static class InheritancePrecisionSmokeTests
                 int Read();
             }
 
-            internal sealed class Clock : IClock
+            internal interface IResettable
+            {
+                void Reset();
+            }
+
+            internal sealed class Clock : IClock, IResettable
             {
                 public int Read() => 0;
                 public void Calibrate() { }
+                public void Reset() { }
             }
 
             internal sealed class Service

@@ -7,6 +7,28 @@ internal static class ProjectAbstractionClassifier
     public static INamedTypeSymbol? FindMeaningfulAbstraction(INamedTypeSymbol concreteType) =>
         concreteType.AllInterfaces.FirstOrDefault(IsMeaningfulAbstraction);
 
+    /*
+    {
+      責務: OOP305が利用契約を比較する意味のあるinterface候補を列挙する
+      処理: 具象型の全interfaceから意味のある候補を選び、完全修飾名の昇順で返す
+      引数: [
+        concreteType: 抽象候補を調べる具象型
+      ]
+      戻り値: OOP305で利用契約を検証できる決定的な順序のinterface候補
+    }
+    */
+    public static IReadOnlyList<INamedTypeSymbol> FindMeaningfulAbstractions(
+        INamedTypeSymbol concreteType
+    ) =>
+        concreteType
+            .AllInterfaces.Where(IsMeaningfulAbstraction)
+            .OrderBy(
+                interfaceType =>
+                    interfaceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                StringComparer.Ordinal
+            )
+            .ToArray();
+
     public static bool IsMeaningfulAbstraction(INamedTypeSymbol interfaceType) =>
         interfaceType.TypeKind == TypeKind.Interface
         && interfaceType.Locations.Any(location => location.IsInSource)
