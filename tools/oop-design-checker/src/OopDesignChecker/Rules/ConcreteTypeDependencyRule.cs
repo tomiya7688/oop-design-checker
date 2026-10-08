@@ -37,10 +37,10 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
                         continue;
                     }
 
-                    var abstraction = ProjectAbstractionClassifier.FindMeaningfulAbstraction(
+                    var abstractions = ProjectAbstractionClassifier.FindMeaningfulAbstractions(
                         concreteType
                     );
-                    if (abstraction is null)
+                    if (abstractions.Count == 0)
                     {
                         continue;
                     }
@@ -52,15 +52,16 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
                         consumerTypeUsages.Add(consumerType, consumerTypeUsage);
                     }
 
-                    if (
-                        UsesConcreteOnlyContract(
+                    var abstraction = abstractions.FirstOrDefault(candidate =>
+                        !UsesConcreteOnlyContract(
                             context,
                             parameterSymbol,
                             concreteType,
-                            abstraction,
+                            candidate,
                             consumerTypeUsage
                         )
-                    )
+                    );
+                    if (abstraction is null)
                     {
                         continue;
                     }
