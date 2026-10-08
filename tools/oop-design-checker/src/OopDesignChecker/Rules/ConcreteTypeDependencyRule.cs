@@ -12,10 +12,14 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
 
     public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
     {
+        var consumerTypeUsages = new Dictionary<ISymbol, ConsumerTypeUsage>(
+            SymbolEqualityComparer.Default
+        );
+
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
             var semanticModel = context.Project.GetSemanticModel(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            var root = syntaxTree.GetRoot(context.CancellationToken);
 
             foreach (
                 var constructor in root.DescendantNodes().OfType<ConstructorDeclarationSyntax>()
@@ -24,7 +28,7 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
                 foreach (var parameter in constructor.ParameterList.Parameters)
                 {
                     if (
-                        semanticModel.GetDeclaredSymbol(parameter)
+                        semanticModel.GetDeclaredSymbol(parameter, context.CancellationToken)
                             is not IParameterSymbol parameterSymbol
                         || parameterSymbol.Type
                             is not INamedTypeSymbol { TypeKind: TypeKind.Class } concreteType
@@ -36,13 +40,25 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
                     var abstraction = ProjectAbstractionClassifier.FindMeaningfulAbstraction(
                         concreteType
                     );
+                    if (abstraction is null)
+                    {
+                        continue;
+                    }
+
+                    var consumerType = parameterSymbol.ContainingSymbol.ContainingType;
+                    if (!consumerTypeUsages.TryGetValue(consumerType, out var consumerTypeUsage))
+                    {
+                        consumerTypeUsage = CreateConsumerTypeUsage(context, consumerType);
+                        consumerTypeUsages.Add(consumerType, consumerTypeUsage);
+                    }
+
                     if (
-                        abstraction is null
-                        || UsesConcreteOnlyContract(
+                        UsesConcreteOnlyContract(
                             context,
                             parameterSymbol,
                             concreteType,
-                            abstraction
+                            abstraction,
+                            consumerTypeUsage
                         )
                     )
                     {
@@ -64,47 +80,170 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
         AnalysisContext context,
         IParameterSymbol parameter,
         INamedTypeSymbol concreteType,
-        INamedTypeSymbol abstraction
+        INamedTypeSymbol abstraction,
+        ConsumerTypeUsage consumerTypeUsage
     )
     {
         var trackedSymbols = new HashSet<ISymbol>(SymbolEqualityComparer.Default) { parameter };
-        TrackAssignedMembers(context, parameter, trackedSymbols);
+        TrackAssignedMembers(parameter, consumerTypeUsage, trackedSymbols);
 
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        return UsesConcreteOnlyMember(consumerTypeUsage, trackedSymbols, concreteType, abstraction)
+            || RequiresConcreteArgumentType(
+                context,
+                consumerTypeUsage,
+                trackedSymbols,
+                abstraction
+            );
+    }
+
+    private static ConsumerTypeUsage CreateConsumerTypeUsage(
+        AnalysisContext context,
+        INamedTypeSymbol consumerType
+    )
+    {
+        var memberAccessesByReceiver = new Dictionary<ISymbol, List<ISymbol>>(
+            SymbolEqualityComparer.Default
+        );
+        var argumentsBySymbol = new Dictionary<ISymbol, List<ITypeSymbol>>(
+            SymbolEqualityComparer.Default
+        );
+        var assignedMembersByParameter = new Dictionary<ISymbol, List<ISymbol>>(
+            SymbolEqualityComparer.Default
+        );
+
+        foreach (var syntaxReference in consumerType.DeclaringSyntaxReferences)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
-            var root = syntaxTree.GetRoot();
-
-            foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
+            context.CancellationToken.ThrowIfCancellationRequested();
+            if (
+                syntaxReference.GetSyntax(context.CancellationToken)
+                is not ClassDeclarationSyntax declaration
+            )
             {
+                continue;
+            }
+
+            var semanticModel = context.Project.GetSemanticModel(declaration.SyntaxTree);
+            foreach (
+                var access in declaration.DescendantNodes().OfType<MemberAccessExpressionSyntax>()
+            )
+            {
+                context.CancellationToken.ThrowIfCancellationRequested();
+                AddUsage(
+                    memberAccessesByReceiver,
+                    semanticModel
+                        .GetSymbolInfo(access.Expression, context.CancellationToken)
+                        .Symbol,
+                    semanticModel.GetSymbolInfo(access, context.CancellationToken).Symbol
+                );
+            }
+
+            foreach (var argument in declaration.DescendantNodes().OfType<ArgumentSyntax>())
+            {
+                context.CancellationToken.ThrowIfCancellationRequested();
+                AddUsage(
+                    argumentsBySymbol,
+                    semanticModel
+                        .GetSymbolInfo(argument.Expression, context.CancellationToken)
+                        .Symbol,
+                    semanticModel
+                        .GetTypeInfo(argument.Expression, context.CancellationToken)
+                        .ConvertedType
+                );
+            }
+
+            foreach (
+                var constructor in declaration
+                    .DescendantNodes()
+                    .OfType<ConstructorDeclarationSyntax>()
+            )
+            {
+                context.CancellationToken.ThrowIfCancellationRequested();
                 if (
-                    semanticModel.GetDeclaredSymbol(declaration)
-                        is not INamedTypeSymbol declaredType
-                    || !SymbolEqualityComparer.Default.Equals(
-                        declaredType,
-                        parameter.ContainingSymbol.ContainingType
-                    )
+                    semanticModel.GetDeclaredSymbol(constructor, context.CancellationToken)
+                    is not IMethodSymbol constructorSymbol
                 )
                 {
                     continue;
                 }
 
-                if (
-                    UsesConcreteOnlyMember(
-                        declaration,
-                        semanticModel,
-                        trackedSymbols,
-                        concreteType,
-                        abstraction
-                    )
-                    || RequiresConcreteArgumentType(
-                        context,
-                        declaration,
-                        semanticModel,
-                        trackedSymbols,
-                        abstraction
-                    )
+                foreach (
+                    var assignment in constructor
+                        .DescendantNodes()
+                        .OfType<AssignmentExpressionSyntax>()
                 )
+                {
+                    var valueSymbol = semanticModel
+                        .GetSymbolInfo(assignment.Right, context.CancellationToken)
+                        .Symbol;
+                    var targetSymbol = semanticModel
+                        .GetSymbolInfo(assignment.Left, context.CancellationToken)
+                        .Symbol;
+                    if (
+                        valueSymbol is not null
+                        && targetSymbol is IFieldSymbol or IPropertySymbol
+                        && SymbolEqualityComparer.Default.Equals(
+                            targetSymbol.ContainingType,
+                            constructorSymbol.ContainingType
+                        )
+                    )
+                    {
+                        AddUsage(assignedMembersByParameter, valueSymbol, targetSymbol);
+                    }
+                }
+            }
+        }
+
+        return new ConsumerTypeUsage(
+            memberAccessesByReceiver,
+            argumentsBySymbol,
+            assignedMembersByParameter
+        );
+    }
+
+    private static void TrackAssignedMembers(
+        IParameterSymbol parameter,
+        ConsumerTypeUsage consumerTypeUsage,
+        HashSet<ISymbol> trackedSymbols
+    )
+    {
+        if (!consumerTypeUsage.AssignedMembersByParameter.TryGetValue(parameter, out var members))
+        {
+            return;
+        }
+
+        foreach (var member in members)
+        {
+            trackedSymbols.Add(member);
+        }
+    }
+
+    private static bool UsesConcreteOnlyMember(
+        ConsumerTypeUsage consumerTypeUsage,
+        HashSet<ISymbol> trackedSymbols,
+        INamedTypeSymbol concreteType,
+        INamedTypeSymbol abstraction
+    )
+    {
+        foreach (var trackedSymbol in trackedSymbols)
+        {
+            if (
+                !consumerTypeUsage.MemberAccessesByReceiver.TryGetValue(
+                    trackedSymbol,
+                    out var accessedMembers
+                )
+            )
+            {
+                continue;
+            }
+
+            foreach (var accessedMember in accessedMembers)
+            {
+                if (accessedMember.ContainingType?.SpecialType == SpecialType.System_Object)
+                {
+                    continue;
+                }
+
+                if (!IsProvidedByAbstraction(concreteType, abstraction, accessedMember))
                 {
                     return true;
                 }
@@ -114,107 +253,35 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
         return false;
     }
 
-    private static void TrackAssignedMembers(
-        AnalysisContext context,
-        IParameterSymbol parameter,
-        HashSet<ISymbol> trackedSymbols
-    )
-    {
-        if (parameter.ContainingSymbol is not IMethodSymbol constructor)
-        {
-            return;
-        }
-
-        foreach (var syntaxReference in constructor.DeclaringSyntaxReferences)
-        {
-            if (syntaxReference.GetSyntax() is not ConstructorDeclarationSyntax declaration)
-            {
-                continue;
-            }
-
-            var semanticModel = context.Project.GetSemanticModel(declaration.SyntaxTree);
-            foreach (
-                var assignment in declaration.DescendantNodes().OfType<AssignmentExpressionSyntax>()
-            )
-            {
-                var rightSymbol = semanticModel.GetSymbolInfo(assignment.Right).Symbol;
-                if (!SymbolEqualityComparer.Default.Equals(rightSymbol, parameter))
-                {
-                    continue;
-                }
-
-                var leftSymbol = semanticModel.GetSymbolInfo(assignment.Left).Symbol;
-                if (
-                    leftSymbol is IFieldSymbol or IPropertySymbol
-                    && SymbolEqualityComparer.Default.Equals(
-                        leftSymbol.ContainingType,
-                        constructor.ContainingType
-                    )
-                )
-                {
-                    trackedSymbols.Add(leftSymbol);
-                }
-            }
-        }
-    }
-
-    private static bool UsesConcreteOnlyMember(
-        ClassDeclarationSyntax declaration,
-        SemanticModel semanticModel,
-        HashSet<ISymbol> trackedSymbols,
-        INamedTypeSymbol concreteType,
-        INamedTypeSymbol abstraction
-    )
-    {
-        foreach (var access in declaration.DescendantNodes().OfType<MemberAccessExpressionSyntax>())
-        {
-            var receiver = semanticModel.GetSymbolInfo(access.Expression).Symbol;
-            if (!ContainsSymbol(trackedSymbols, receiver))
-            {
-                continue;
-            }
-
-            var accessedMember = semanticModel.GetSymbolInfo(access).Symbol;
-            if (
-                accessedMember is null
-                || accessedMember.ContainingType?.SpecialType == SpecialType.System_Object
-                || IsProvidedByAbstraction(concreteType, abstraction, accessedMember)
-            )
-            {
-                continue;
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
     private static bool RequiresConcreteArgumentType(
         AnalysisContext context,
-        ClassDeclarationSyntax declaration,
-        SemanticModel semanticModel,
+        ConsumerTypeUsage consumerTypeUsage,
         HashSet<ISymbol> trackedSymbols,
         INamedTypeSymbol abstraction
     )
     {
-        foreach (var argument in declaration.DescendantNodes().OfType<ArgumentSyntax>())
+        foreach (var trackedSymbol in trackedSymbols)
         {
-            var argumentSymbol = semanticModel.GetSymbolInfo(argument.Expression).Symbol;
-            if (!ContainsSymbol(trackedSymbols, argumentSymbol))
+            if (
+                !consumerTypeUsage.ArgumentsBySymbol.TryGetValue(
+                    trackedSymbol,
+                    out var convertedTypes
+                )
+            )
             {
                 continue;
             }
 
-            var convertedType = semanticModel.GetTypeInfo(argument.Expression).ConvertedType;
-            if (
-                convertedType is not null
-                && !context
-                    .Project.Compilation.ClassifyConversion(abstraction, convertedType)
-                    .IsImplicit
-            )
+            foreach (var convertedType in convertedTypes)
             {
-                return true;
+                if (
+                    !context
+                        .Project.Compilation.ClassifyConversion(abstraction, convertedType)
+                        .IsImplicit
+                )
+                {
+                    return true;
+                }
             }
         }
 
@@ -250,6 +317,30 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
         return false;
     }
 
-    private static bool ContainsSymbol(HashSet<ISymbol> symbols, ISymbol? candidate) =>
-        candidate is not null && symbols.Contains(candidate);
+    private static void AddUsage<T>(
+        Dictionary<ISymbol, List<T>> usagesBySymbol,
+        ISymbol? symbol,
+        T? usage
+    )
+        where T : class
+    {
+        if (symbol is null || usage is null)
+        {
+            return;
+        }
+
+        if (!usagesBySymbol.TryGetValue(symbol, out var usages))
+        {
+            usages = [];
+            usagesBySymbol.Add(symbol, usages);
+        }
+
+        usages.Add(usage);
+    }
+
+    private sealed record ConsumerTypeUsage(
+        IReadOnlyDictionary<ISymbol, List<ISymbol>> MemberAccessesByReceiver,
+        IReadOnlyDictionary<ISymbol, List<ITypeSymbol>> ArgumentsBySymbol,
+        IReadOnlyDictionary<ISymbol, List<ISymbol>> AssignedMembersByParameter
+    );
 }
