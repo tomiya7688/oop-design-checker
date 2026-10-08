@@ -1,3 +1,4 @@
+using System.Globalization;
 using OopDesignChecker.Core;
 using OopDesignChecker.Rules;
 
@@ -9,6 +10,7 @@ internal static class InheritancePrecisionSmokeTests
     {
         MarkerInterfaceDoesNotCreateConcreteDependencyWarning();
         AbstractionOnlyConsumerIsConcreteDependencyWarning();
+        ManyConstructorParametersReusePartialConsumerUsage();
         ConcreteOnlyBehaviorJustifiesConcreteDependency();
         MarkerInterfaceDoesNotCreateConstructionWarning();
         OwnedFactoryConstructionIsAllowed();
@@ -109,6 +111,75 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         AssertNone(new ConcreteTypeDependencyRule(), source, "OOP305");
+    }
+
+    private static void ManyConstructorParametersReusePartialConsumerUsage()
+    {
+        var source = new System.Text.StringBuilder();
+        const int dependencyCount = 8;
+        const int unrelatedTypeCount = 200;
+
+        for (var index = 0; index < dependencyCount; index++)
+        {
+            source.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"internal interface IContract{index} {{ int Read{index}(); }}"
+            );
+            source.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"internal sealed class Dependency{index} : IContract{index} {{ public int Read{index}() => 0; }}"
+            );
+            source.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"internal sealed partial class Consumer {{ private readonly Dependency{index} _dependency{index}; }}"
+            );
+        }
+
+        for (var index = 0; index < unrelatedTypeCount; index++)
+        {
+            source.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"internal sealed class Unrelated{index} {{ public int Read() => {index}; }}"
+            );
+        }
+
+        source.AppendLine("internal sealed partial class Consumer");
+        source.AppendLine("{");
+        source.AppendLine(
+            CultureInfo.InvariantCulture,
+            $"    public Consumer({string.Join(", ", Enumerable.Range(0, dependencyCount).Select(index => string.Create(CultureInfo.InvariantCulture, $"Dependency{index} dependency{index}")))})"
+        );
+        source.AppendLine("    {");
+        for (var index = 0; index < dependencyCount; index++)
+        {
+            source.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"        _dependency{index} = dependency{index};"
+            );
+        }
+
+        source.AppendLine("    }");
+        for (var index = 0; index < dependencyCount; index++)
+        {
+            source.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"    public int Use{index}() => _dependency{index}.Read{index}();"
+            );
+        }
+
+        source.AppendLine("}");
+
+        var diagnostics = new ConcreteTypeDependencyRule()
+            .Analyze(TestProjectFactory.Create(source.ToString()))
+            .Where(diagnostic => diagnostic.Rule.Id == "OOP305")
+            .ToArray();
+
+        if (diagnostics.Length != dependencyCount)
+        {
+            throw new InvalidOperationException(
+                $"Expected {dependencyCount} OOP305 diagnostics for a partial consumer with multiple constructor parameters, found {diagnostics.Length}."
+            );
+        }
     }
 
     private static void MarkerInterfaceDoesNotCreateConstructionWarning()
