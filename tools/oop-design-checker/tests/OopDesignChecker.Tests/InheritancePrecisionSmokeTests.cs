@@ -1,3 +1,4 @@
+using System.Globalization;
 using OopDesignChecker.Core;
 using OopDesignChecker.Rules;
 
@@ -120,11 +121,16 @@ internal static class InheritancePrecisionSmokeTests
 
         for (var index = 0; index < dependencyCount; index++)
         {
-            source.AppendLine($"internal interface IContract{index} {{ int Read{index}(); }}");
             source.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"internal interface IContract{index} {{ int Read{index}(); }}"
+            );
+            source.AppendLine(
+                CultureInfo.InvariantCulture,
                 $"internal sealed class Dependency{index} : IContract{index} {{ public int Read{index}() => 0; }}"
             );
             source.AppendLine(
+                CultureInfo.InvariantCulture,
                 $"internal sealed partial class Consumer {{ private readonly Dependency{index} _dependency{index}; }}"
             );
         }
@@ -132,6 +138,7 @@ internal static class InheritancePrecisionSmokeTests
         for (var index = 0; index < unrelatedTypeCount; index++)
         {
             source.AppendLine(
+                CultureInfo.InvariantCulture,
                 $"internal sealed class Unrelated{index} {{ public int Read() => {index}; }}"
             );
         }
@@ -139,18 +146,25 @@ internal static class InheritancePrecisionSmokeTests
         source.AppendLine("internal sealed partial class Consumer");
         source.AppendLine("{");
         source.AppendLine(
-            $"    public Consumer({string.Join(", ", Enumerable.Range(0, dependencyCount).Select(index => $"Dependency{index} dependency{index}"))})"
+            CultureInfo.InvariantCulture,
+            $"    public Consumer({string.Join(", ", Enumerable.Range(0, dependencyCount).Select(index => string.Create(CultureInfo.InvariantCulture, $"Dependency{index} dependency{index}")))})"
         );
         source.AppendLine("    {");
         for (var index = 0; index < dependencyCount; index++)
         {
-            source.AppendLine($"        _dependency{index} = dependency{index};");
+            source.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"        _dependency{index} = dependency{index};"
+            );
         }
 
         source.AppendLine("    }");
         for (var index = 0; index < dependencyCount; index++)
         {
-            source.AppendLine($"    public int Use{index}() => _dependency{index}.Read{index}();");
+            source.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"    public int Use{index}() => _dependency{index}.Read{index}();"
+            );
         }
 
         source.AppendLine("}");
