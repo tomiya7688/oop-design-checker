@@ -37,7 +37,7 @@ public static class LocalizedText
         language switch
         {
             UserInterfaceLanguage.Japanese =>
-                "使用方法: oop-design-checker [path] [--config file] [--fail-on danger|warning|attention] [--format text|json|sarif|github] [--output file] [--language ja|en] [--verbose] [--version]",
+                "使用方法: oop-design-checker [対象のファイル/プロジェクト/フォルダー] [--config 設定ファイル] [--fail-on danger|warning|attention] [--format text|json|sarif|github] [--output 出力ファイル] [--language ja|en] [--verbose] [--version]",
             UserInterfaceLanguage.English =>
                 "Usage: oop-design-checker [path] [--config file] [--fail-on danger|warning|attention] [--format text|json|sarif|github] [--output file] [--language ja|en] [--verbose] [--version]",
             _ => throw new ArgumentOutOfRangeException(nameof(language), language, null),
@@ -46,7 +46,7 @@ public static class LocalizedText
     public static string ConfigRequiresPath(UserInterfaceLanguage language) =>
         Select(
             language,
-            "--config には設定ファイルのpathが必要です。",
+            "--config には設定ファイルの場所を指定してください。",
             "--config requires a file path."
         );
 
@@ -67,7 +67,7 @@ public static class LocalizedText
     public static string OutputRequiresPath(UserInterfaceLanguage language) =>
         Select(
             language,
-            "--output には出力ファイルのpathが必要です。",
+            "--output には出力ファイルの場所を指定してください。",
             "--output requires a file path."
         );
 
@@ -81,22 +81,26 @@ public static class LocalizedText
     public static string GitHubOutputCannotUseFile(UserInterfaceLanguage language) =>
         Select(
             language,
-            "--format github はworkflow annotationをstdoutへ出力するため、--outputは併用できません。",
+            "--format github ではGitHub Actions向けの注釈を標準出力へ表示するため、--outputは使えません。",
             "--output cannot be used with --format github because workflow annotations must be written to stdout."
         );
 
     public static string UnknownOption(UserInterfaceLanguage language, string option) =>
-        Select(language, $"不明なoptionです: {option}", $"Unknown option: {option}");
+        Select(language, $"知らないオプションです: {option}", $"Unknown option: {option}");
 
     public static string OnlyOneTarget(UserInterfaceLanguage language) =>
         Select(
             language,
-            "target pathは1つだけ指定できます。",
+            "解析するファイル、プロジェクト、またはフォルダーは1つだけ指定してください。",
             "Only one target path can be specified."
         );
 
     public static string AnalysisFailed(UserInterfaceLanguage language, string message) =>
-        Select(language, $"解析に失敗しました: {message}", $"Analysis failed: {message}");
+        Select(
+            language,
+            "解析できませんでした。対象や設定ファイルが存在し、読み込める状態か確認してください。",
+            $"Analysis failed: {message}"
+        );
 
     public static string LoadedConfig(UserInterfaceLanguage language, string path) =>
         Select(language, $"設定: {path}", $"Config: {path}");
@@ -109,7 +113,7 @@ public static class LocalizedText
     ) =>
         Select(
             language,
-            $"診断: 危険 {dangerCount}件、警告 {warningCount}件、注意 {attentionCount}件。",
+            $"結果: 危険 {dangerCount}件、警告 {warningCount}件、注意 {attentionCount}件。",
             $"Diagnostics: {dangerCount} danger, {warningCount} warning(s), {attentionCount} attention."
         );
 

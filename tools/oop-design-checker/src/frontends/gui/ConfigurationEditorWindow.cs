@@ -104,9 +104,9 @@ internal sealed class ConfigurationEditorWindow : Window
             _ = CheckerConfigurationJson.Parse(_editor.Text ?? string.Empty);
             _status.Text = GuiText.Get(GuiTextKey.ConfigurationValid, _language);
         }
-        catch (InvalidOperationException exception)
+        catch (InvalidOperationException)
         {
-            _status.Text = exception.Message;
+            _status.Text = GuiText.Get(GuiTextKey.OperationFailed, _language);
         }
     }
 
@@ -118,9 +118,9 @@ internal sealed class ConfigurationEditorWindow : Window
             _ = CheckerConfigurationJson.Parse(json);
             Close(json);
         }
-        catch (InvalidOperationException exception)
+        catch (InvalidOperationException)
         {
-            _status.Text = exception.Message;
+            _status.Text = GuiText.Get(GuiTextKey.OperationFailed, _language);
         }
     }
 

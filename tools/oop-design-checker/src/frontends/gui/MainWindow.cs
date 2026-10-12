@@ -207,7 +207,7 @@ internal sealed class MainWindow : Window
                         or InvalidOperationException
             )
         {
-            ShowError(exception.Message);
+            ShowError(LocalizedText.AnalysisFailed(_language, exception.Message));
         }
         finally
         {
@@ -426,7 +426,7 @@ internal sealed class MainWindow : Window
                         or InvalidOperationException
             )
         {
-            _view.Status.Text = exception.Message;
+            _view.Status.Text = GuiText.Get(GuiTextKey.OperationFailed, _language);
         }
     }
 
@@ -520,7 +520,7 @@ internal sealed class MainWindow : Window
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            _view.Status.Text = exception.Message;
+            _view.Status.Text = GuiText.Get(GuiTextKey.OperationFailed, _language);
         }
     }
 
