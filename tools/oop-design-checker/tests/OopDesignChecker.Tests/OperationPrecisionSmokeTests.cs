@@ -11,6 +11,9 @@ internal static class OperationPrecisionSmokeTests
         ComplexNestedPrimaryOperationIsWarning();
         CommentHeavySimpleOperationIsAllowed();
         ExternalFrameworkTypeOperationIsAllowed();
+        OrdinaryExternalMethodAttributeDoesNotSuppressLargeOperation();
+        SerializationCallbackIsNotAnOversizedPrimaryOperation();
+        ModuleInitializerIsNotAnOversizedPrimaryOperation();
         CalledPrivateHelperIsAllowed();
         NestedLocalFunctionDoesNotInflateOuterOperation();
     }
@@ -101,6 +104,67 @@ internal static class OperationPrecisionSmokeTests
                     var value = 0;
             {{Indent(statements)}}
                     return value;
+                }
+            }
+            """;
+
+        AssertNone(source);
+    }
+
+    private static void OrdinaryExternalMethodAttributeDoesNotSuppressLargeOperation()
+    {
+        var statements = CreateRepeatedStatements(130, "value += 1;");
+        var source = $$"""
+            internal sealed class Processor
+            {
+                [System.Obsolete]
+                public int Run()
+                {
+                    var value = 0;
+            {{Indent(statements)}}
+                    return value;
+                }
+            }
+            """;
+
+        AssertSingle(source);
+    }
+
+    private static void SerializationCallbackIsNotAnOversizedPrimaryOperation()
+    {
+        var statements = CreateRepeatedStatements(130, "value += 1;");
+        var source = $$"""
+            using System.Runtime.Serialization;
+
+            internal sealed class Processor
+            {
+                [OnDeserialized]
+                public void Restore(StreamingContext context)
+                {
+                    var value = 0;
+            {{Indent(statements)}}
+                    _ = value;
+                }
+            }
+            """;
+
+        AssertNone(source);
+    }
+
+    private static void ModuleInitializerIsNotAnOversizedPrimaryOperation()
+    {
+        var statements = CreateRepeatedStatements(130, "value += 1;");
+        var source = $$"""
+            using System.Runtime.CompilerServices;
+
+            internal static class Processor
+            {
+                [ModuleInitializer]
+                internal static void Initialize()
+                {
+                    var value = 0;
+            {{Indent(statements)}}
+                    _ = value;
                 }
             }
             """;

@@ -66,7 +66,7 @@ internal sealed class StaticMemberCandidateRule : IAnalysisRule
             semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol classSymbol
             || HasUnresolvedBaseContract(declaration, semanticModel)
             || FrameworkContractClassifier.HasExternalBaseTypeContract(classSymbol)
-            || FrameworkContractClassifier.HasExternalFrameworkAttribute(classSymbol)
+            || FrameworkContractClassifier.HasFrameworkContractAttribute(classSymbol)
         )
         {
             return false;
@@ -92,7 +92,7 @@ internal sealed class StaticMemberCandidateRule : IAnalysisRule
             || methodSymbol.IsVirtual
             || methodSymbol.IsOverride
             || method.ExplicitInterfaceSpecifier is not null
-            || FrameworkContractClassifier.HasExternalFrameworkAttribute(methodSymbol)
+            || FrameworkContractClassifier.HasFrameworkContractAttribute(methodSymbol)
             || SymbolUtilities.ImplementsInterfaceMember(methodSymbol, declaration, semanticModel)
             || InstanceUsageInspector.UsesInstanceState(method, methodSymbol, semanticModel)
         )
