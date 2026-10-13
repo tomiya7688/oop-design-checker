@@ -7,13 +7,33 @@ internal static class StaticPrecisionSmokeTests
 {
     public static void Run()
     {
+        OrdinaryExternalTypeAttributeDoesNotSuppressVisibilityDiagnostic();
         ExternalContractIsNotSealingCandidate();
         ExternalBaseContractMethodsAreNotStaticCandidates();
-        AttributedInstanceMethodIsNotStaticCandidate();
+        OrdinaryExternalTypeAttributeDoesNotSuppressStaticClassCandidate();
+        OrdinaryExternalMethodAttributeDoesNotSuppressStaticMemberCandidate();
+        FrameworkCallbackMethodIsNotStaticCandidate();
         AttributedTypeIsNotStaticClassCandidate();
+        SerializableTypeRemainsSealingCandidate();
         MutableStaticPropertyIsWarning();
         ReadonlyMutableCollectionIsWarning();
         ThreadStaticFieldIsAllowed();
+    }
+
+    private static void OrdinaryExternalTypeAttributeDoesNotSuppressVisibilityDiagnostic()
+    {
+        const string source = """
+            [System.Obsolete]
+            public class Base
+            {
+            }
+
+            internal class Child : Base
+            {
+            }
+            """;
+
+        AssertSingleRule(new ExcessiveVisibilityRule(), source, "OOP101");
     }
 
     private static void ExternalContractIsNotSealingCandidate()
@@ -42,7 +62,41 @@ internal static class StaticPrecisionSmokeTests
         AssertNone(new StaticMemberCandidateRule(), source, "OOP103");
     }
 
-    private static void AttributedInstanceMethodIsNotStaticCandidate()
+    private static void FrameworkCallbackMethodIsNotStaticCandidate()
+    {
+        const string source = """
+            using System.Runtime.Serialization;
+
+            internal sealed class Worker
+            {
+                private int _count;
+
+                public void Touch() => _count++;
+
+                [OnDeserialized]
+                public void Callback(StreamingContext context)
+                {
+                }
+            }
+            """;
+
+        AssertNone(new StaticMemberCandidateRule(), source, "OOP103");
+    }
+
+    private static void OrdinaryExternalTypeAttributeDoesNotSuppressStaticClassCandidate()
+    {
+        const string source = """
+            [System.Obsolete]
+            internal class Formatter
+            {
+                public int Version() => 1;
+            }
+            """;
+
+        AssertSingleRule(new StaticClassCandidateRule(), source, "OOP104");
+    }
+
+    private static void OrdinaryExternalMethodAttributeDoesNotSuppressStaticMemberCandidate()
     {
         const string source = """
             internal sealed class Worker
@@ -52,13 +106,11 @@ internal static class StaticPrecisionSmokeTests
                 public void Touch() => _count++;
 
                 [System.Obsolete]
-                public void Callback()
-                {
-                }
+                public int Version() => 1;
             }
             """;
 
-        AssertNone(new StaticMemberCandidateRule(), source, "OOP103");
+        AssertSingleRule(new StaticMemberCandidateRule(), source, "OOP103");
     }
 
     private static void AttributedTypeIsNotStaticClassCandidate()
@@ -72,6 +124,18 @@ internal static class StaticPrecisionSmokeTests
             """;
 
         AssertNone(new StaticClassCandidateRule(), source, "OOP104");
+    }
+
+    private static void SerializableTypeRemainsSealingCandidate()
+    {
+        const string source = """
+            [System.Serializable]
+            internal class Snapshot
+            {
+            }
+            """;
+
+        AssertSingleRule(new SealingCandidateRule(), source, "OOP102");
     }
 
     private static void MutableStaticPropertyIsWarning()
@@ -137,6 +201,18 @@ internal static class StaticPrecisionSmokeTests
 
         var found = string.Join(", ", diagnostics.Select(item => item.Rule.Id));
         throw new InvalidOperationException($"Expected no {ruleId} diagnostic, found [{found}].");
+    }
+
+    private static void AssertSingleRule(IAnalysisRule rule, string source, string ruleId)
+    {
+        var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+        if (diagnostics.Length == 1 && diagnostics[0].Rule.Id == ruleId)
+        {
+            return;
+        }
+
+        var found = string.Join(", ", diagnostics.Select(item => item.Rule.Id));
+        throw new InvalidOperationException($"Expected one {ruleId} diagnostic, found [{found}].");
     }
 
     private static void AssertSingle(

@@ -56,8 +56,8 @@ internal sealed class OversizedMainOperationRule : IAnalysisRule
 
     private static bool IsFrameworkManaged(IMethodSymbol method) =>
         FrameworkContractClassifier.HasExternalBaseTypeContract(method.ContainingType)
-        || FrameworkContractClassifier.HasExternalFrameworkAttribute(method.ContainingType)
-        || FrameworkContractClassifier.HasExternalFrameworkAttribute(method);
+        || FrameworkContractClassifier.HasFrameworkContractAttribute(method.ContainingType)
+        || FrameworkContractClassifier.HasFrameworkContractAttribute(method);
 
     private static int CalculateOversizeScore(OperationMetrics metrics)
     {

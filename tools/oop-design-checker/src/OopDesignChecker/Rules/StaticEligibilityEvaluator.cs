@@ -16,7 +16,7 @@ internal static class StaticEligibilityEvaluator
             symbol.IsStatic
             || symbol.IsAbstract
             || symbol.Interfaces.Length > 0
-            || FrameworkContractClassifier.HasExternalFrameworkAttribute(symbol)
+            || FrameworkContractClassifier.HasFrameworkContractAttribute(symbol)
         )
         {
             return false;
@@ -73,7 +73,7 @@ internal static class StaticEligibilityEvaluator
                 methodSymbol.IsAbstract
                 || methodSymbol.IsVirtual
                 || methodSymbol.IsOverride
-                || FrameworkContractClassifier.HasExternalFrameworkAttribute(methodSymbol)
+                || FrameworkContractClassifier.HasFrameworkContractAttribute(methodSymbol)
             )
             {
                 return false;
