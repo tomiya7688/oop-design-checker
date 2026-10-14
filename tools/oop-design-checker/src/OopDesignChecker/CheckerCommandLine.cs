@@ -1,4 +1,3 @@
-using System.Reflection;
 using OopDesignChecker.Application;
 using OopDesignChecker.Output;
 
@@ -10,7 +9,7 @@ public static class CheckerCommandLine
     {
         if (args.Count == 1 && args[0] is "--version" or "-V")
         {
-            Console.WriteLine(GetVersion());
+            Console.WriteLine(ProductVersionResolver.Resolve(typeof(CheckerCommandLine).Assembly));
             return 0;
         }
 
@@ -31,20 +30,5 @@ public static class CheckerCommandLine
         );
         var application = new CheckerApplication(diagnosticWriter);
         return application.Run(options);
-    }
-
-    private static string GetVersion()
-    {
-        var assembly = typeof(CheckerCommandLine).Assembly;
-        var informationalVersion = assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-            ?.InformationalVersion;
-
-        if (!string.IsNullOrWhiteSpace(informationalVersion))
-        {
-            return informationalVersion.Split('+', 2)[0];
-        }
-
-        return assembly.GetName().Version?.ToString(3) ?? "unknown";
     }
 }
