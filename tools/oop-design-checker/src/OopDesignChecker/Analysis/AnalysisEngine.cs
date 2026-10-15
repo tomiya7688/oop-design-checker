@@ -32,7 +32,10 @@ internal sealed class AnalysisEngine
 
         return DiagnosticCoordinator
             .Reduce(diagnostics)
-            .OrderBy(diagnostic => diagnostic.Location.FilePath, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(
+                diagnostic => DiagnosticPath.Normalize(diagnostic.Location.FilePath),
+                PathSemantics.Comparer
+            )
             .ThenBy(diagnostic => diagnostic.Location.Line)
             .ThenBy(diagnostic => diagnostic.Location.Column)
             .ThenBy(diagnostic => diagnostic.Rule.Id, StringComparer.Ordinal)
