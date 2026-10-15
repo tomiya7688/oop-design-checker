@@ -21,7 +21,7 @@ internal static class DiagnosticCoordinator
         var diagnosticKeys = diagnostics
             .Where(diagnostic => diagnostic.SymbolName is not null)
             .Select(CreateRuleSymbolKey)
-            .ToHashSet();
+            .ToHashSet(RuleSymbolKeyComparer.Instance);
 
         return diagnostics.Where(diagnostic => !IsSubsumed(diagnostic, diagnosticKeys)).ToArray();
     }
@@ -48,8 +48,26 @@ internal static class DiagnosticCoordinator
     private static RuleSymbolKey CreateRuleSymbolKey(DesignDiagnostic diagnostic, string ruleId) =>
         new(NormalizePath(diagnostic.Location.FilePath), diagnostic.SymbolName!, ruleId);
 
-    private static string NormalizePath(string path) =>
-        DiagnosticPath.Normalize(path).ToUpperInvariant();
+    private static string NormalizePath(string path) => DiagnosticPath.Normalize(path);
 
     private readonly record struct RuleSymbolKey(string FilePath, string SymbolName, string RuleId);
+
+    private sealed class RuleSymbolKeyComparer : IEqualityComparer<RuleSymbolKey>
+    {
+        public static RuleSymbolKeyComparer Instance { get; } = new();
+
+        public bool Equals(RuleSymbolKey left, RuleSymbolKey right) =>
+            PathSemantics.Comparer.Equals(left.FilePath, right.FilePath)
+            && string.Equals(left.SymbolName, right.SymbolName, StringComparison.Ordinal)
+            && string.Equals(left.RuleId, right.RuleId, StringComparison.Ordinal);
+
+        public int GetHashCode(RuleSymbolKey key)
+        {
+            var hash = new HashCode();
+            hash.Add(key.FilePath, PathSemantics.Comparer);
+            hash.Add(key.SymbolName, StringComparer.Ordinal);
+            hash.Add(key.RuleId, StringComparer.Ordinal);
+            return hash.ToHashCode();
+        }
+    }
 }

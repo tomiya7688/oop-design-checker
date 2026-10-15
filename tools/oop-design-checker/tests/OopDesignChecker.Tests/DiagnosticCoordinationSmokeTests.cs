@@ -18,6 +18,9 @@ internal static class DiagnosticCoordinationSmokeTests
         MessageChangesDoNotCreateDuplicateDiagnostics();
         DifferentSymbolsAtSameLocationRemainDistinct();
         UnknownDiagnosticPathsRemainStable();
+        PathCaseIdentityFollowsOperatingSystemSemantics();
+        DominanceUsesPathSemanticsAndKeepsSymbolNamesOrdinal();
+        DiagnosticSortUsesPathSemantics();
     }
 
     private static void InvariantBypassSuppressesEncapsulationLeakForSameSymbol()
@@ -129,6 +132,97 @@ internal static class DiagnosticCoordinationSmokeTests
         }
     }
 
+    private static void PathCaseIdentityFollowsOperatingSystemSemantics()
+    {
+        var diagnostics = AnalyzeThroughEngine(
+            Create(
+                "OOP999",
+                DesignDiagnosticSeverity.Warning,
+                "Order",
+                filePath: "CaseSensitive.cs"
+            ),
+            Create(
+                "OOP999",
+                DesignDiagnosticSeverity.Warning,
+                "Order",
+                filePath: "casesensitive.cs"
+            )
+        );
+
+        var expectedCount = OperatingSystem.IsWindows() ? 1 : 2;
+        if (diagnostics.Count == expectedCount)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"Expected {expectedCount} diagnostic(s) for path casing on {Environment.OSVersion.Platform}, found {diagnostics.Count}."
+        );
+    }
+
+    private static void DominanceUsesPathSemanticsAndKeepsSymbolNamesOrdinal()
+    {
+        var samePathWithDifferentCasing = DiagnosticCoordinator.Reduce([
+            Create(
+                "OOP106",
+                DesignDiagnosticSeverity.Warning,
+                "Account.Balance",
+                filePath: "CaseSensitive.cs"
+            ),
+            Create(
+                "OOP107",
+                DesignDiagnosticSeverity.Danger,
+                "Account.Balance",
+                filePath: "casesensitive.cs"
+            ),
+        ]);
+        var expectedSamePathCount = OperatingSystem.IsWindows() ? 1 : 2;
+        if (samePathWithDifferentCasing.Count != expectedSamePathCount)
+        {
+            throw new InvalidOperationException(
+                $"Expected {expectedSamePathCount} diagnostic(s) for path case comparison, found {samePathWithDifferentCasing.Count}."
+            );
+        }
+
+        var differentSymbolCasing = DiagnosticCoordinator.Reduce([
+            Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Balance"),
+            Create("OOP107", DesignDiagnosticSeverity.Danger, "account.balance"),
+        ]);
+        AssertRuleIds(differentSymbolCasing, "OOP106", "OOP107");
+    }
+
+    private static void DiagnosticSortUsesPathSemantics()
+    {
+        var diagnostics = AnalyzeThroughEngine(
+            Create(
+                "OOP999",
+                DesignDiagnosticSeverity.Warning,
+                "Order",
+                filePath: "CaseSensitive.cs",
+                line: 2
+            ),
+            Create(
+                "OOP998",
+                DesignDiagnosticSeverity.Warning,
+                "Order",
+                filePath: "casesensitive.cs",
+                line: 1
+            )
+        );
+
+        var expectedFirstPath = OperatingSystem.IsWindows()
+            ? "casesensitive.cs"
+            : "CaseSensitive.cs";
+        if (Path.GetFileName(diagnostics[0].Location.FilePath) == expectedFirstPath)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"Expected {expectedFirstPath} first under {Environment.OSVersion.Platform} path ordering, found {diagnostics[0].Location.FilePath}."
+        );
+    }
+
     private static IReadOnlyList<DesignDiagnostic> AnalyzeThroughEngine(
         params DesignDiagnostic[] diagnostics
     )
@@ -149,14 +243,15 @@ internal static class DiagnosticCoordinationSmokeTests
         DesignDiagnosticSeverity severity,
         string? symbolName,
         string? message = null,
-        string filePath = "sample.cs"
+        string filePath = "sample.cs",
+        int line = 1
     ) =>
         new(
             new RuleDescriptor(ruleId, ruleId, severity),
             severity,
             message ?? ruleId,
             symbolName,
-            new SourceLocation(filePath, 1, 1)
+            new SourceLocation(filePath, line, 1)
         );
 
     private static void AssertRuleIds(
