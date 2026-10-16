@@ -51,9 +51,9 @@ internal sealed class OversizedMainOperationRule : I解析規則
     }
 
     private static bool IsFrameworkManaged(IMethodSymbol method) =>
-        FrameworkContractClassifier.HasExternalBaseTypeContract(method.ContainingType)
-        || FrameworkContractClassifier.HasFrameworkContractAttribute(method.ContainingType)
-        || FrameworkContractClassifier.HasFrameworkContractAttribute(method);
+        フレームワーク契約判定器.外部基底型契約を持つ(method.ContainingType)
+        || フレームワーク契約判定器.フレームワーク契約属性を持つ(method.ContainingType)
+        || フレームワーク契約判定器.フレームワーク契約属性を持つ(method);
 
     private static int 過大スコアを計算する(処理量指標 metrics)
     {

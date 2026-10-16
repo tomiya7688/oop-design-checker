@@ -19,7 +19,7 @@ internal sealed class UnnecessaryAbstractionRule : I解析規則
         {
             if (
                 IsExternalExtensionPoint(interfaceEntry.Symbol)
-                || !ProjectAbstractionClassifier.IsMeaningfulAbstraction(interfaceEntry.Symbol)
+                || !プロジェクト抽象判定器.意味のある抽象である(interfaceEntry.Symbol)
             )
             {
                 continue;

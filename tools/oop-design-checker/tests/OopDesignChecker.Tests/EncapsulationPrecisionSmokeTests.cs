@@ -29,7 +29,7 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new ExcessiveVisibilityRule(), source, "OOP101");
+        AssertNone(new 過剰可視性規則(), source, "OOP101");
     }
 
     private static void SerializableCarrierIsAllowedByEncapsulationRule()

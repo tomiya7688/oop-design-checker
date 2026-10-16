@@ -338,7 +338,7 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new ExcessiveVisibilityRule(), source);
+        var diagnostics = Run(new 過剰可視性規則(), source);
         AssertSingleRule(diagnostics, "OOP101", DesignDiagnosticSeverity.Warning);
     }
 
@@ -492,7 +492,7 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new TypeBranchPolymorphismRule(), source);
+        var diagnostics = Run(new 型分岐ポリモーフィズム規則(), source);
         AssertSingleRule(diagnostics, "OOP002", DesignDiagnosticSeverity.Warning);
     }
 
@@ -512,7 +512,7 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new ChildDisablesParentBehaviorRule(), source);
+        var diagnostics = Run(new 子型による親動作無効化規則(), source);
         AssertSingleRule(diagnostics, "OOP303", DesignDiagnosticSeverity.Danger);
     }
 
@@ -540,7 +540,7 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new ExcessiveInheritanceDepthRule(), source);
+        var diagnostics = Run(new 継承深度過剰規則(), source);
         AssertSingleRule(diagnostics, "OOP304", DesignDiagnosticSeverity.Attention);
     }
 

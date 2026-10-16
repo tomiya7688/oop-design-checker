@@ -5,48 +5,47 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class SealingCandidateRule : I解析規則
+internal sealed class 封止候補規則 : I解析規則
 {
     public RuleDescriptor 規則情報 { get; } =
         new("OOP102", "Sealing candidate", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 解析文脈)
     {
-        if (!context.対象プロジェクト.アプリケーションである)
+        if (!解析文脈.対象プロジェクト.アプリケーションである)
         {
             yield break;
         }
 
-        var declarations = context
+        var 型宣言情報群 = 解析文脈
             .対象プロジェクト.構文木群.SelectMany(tree =>
                 tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>()
             )
-            .Select(declaration => new TypeDeclaration(
-                declaration,
-                context
-                    .対象プロジェクト.意味モデルを取得する(declaration.SyntaxTree)
-                    .GetDeclaredSymbol(declaration) as INamedTypeSymbol
+            .Select(宣言 => new 型宣言情報(
+                宣言,
+                解析文脈.対象プロジェクト.意味モデルを取得する(宣言.SyntaxTree)
+                    .GetDeclaredSymbol(宣言) as INamedTypeSymbol
             ))
-            .Where(item => item.Symbol is not null)
+            .Where(型宣言情報 => 型宣言情報.シンボル is not null)
             .ToArray();
 
-        var inheritedTypes = declarations
-            .Select(item => item.Symbol!.BaseType)
-            .Where(baseType => baseType is not null)
+        var 継承先型群 = 型宣言情報群
+            .Select(型宣言情報 => 型宣言情報.シンボル!.BaseType)
+            .Where(基底型 => 基底型 is not null)
             .ToHashSet(SymbolEqualityComparer.Default);
 
-        foreach (var item in declarations)
+        foreach (var 型宣言情報 in 型宣言情報群)
         {
-            var symbol = item.Symbol!;
+            var シンボル = 型宣言情報.シンボル!;
             if (
-                !シンボル操作器.主宣言である(symbol, item.Declaration)
-                || symbol.IsAbstract
-                || symbol.IsStatic
-                || symbol.IsSealed
-                || symbol.DeclaredAccessibility == Accessibility.Public
-                || inheritedTypes.Contains(symbol)
-                || HasInheritanceIntent(symbol)
-                || FrameworkContractClassifier.HasExternalTypeContract(symbol)
+                !シンボル操作器.主宣言である(シンボル, 型宣言情報.宣言)
+                || シンボル.IsAbstract
+                || シンボル.IsStatic
+                || シンボル.IsSealed
+                || シンボル.DeclaredAccessibility == Accessibility.Public
+                || 継承先型群.Contains(シンボル)
+                || 継承の意図を持つ(シンボル)
+                || フレームワーク契約判定器.外部型契約を持つ(シンボル)
             )
             {
                 continue;
@@ -54,25 +53,21 @@ internal sealed class SealingCandidateRule : I解析規則
 
             yield return 診断生成器.生成する(
                 規則情報,
-                item.Declaration.Identifier.GetLocation(),
+                型宣言情報.宣言.Identifier.GetLocation(),
                 "This application class has no known derived type or inheritance contract. Consider sealing it to make the design intent explicit.",
-                symbol.ToDisplayString()
+                シンボル.ToDisplayString()
             );
         }
     }
 
-    private static bool HasInheritanceIntent(INamedTypeSymbol symbol) =>
-        symbol
-            .GetMembers()
-            .Any(member =>
-                member.DeclaredAccessibility
+    private static bool 継承の意図を持つ(INamedTypeSymbol シンボル) =>
+        シンボル.GetMembers()
+            .Any(メンバー =>
+                メンバー.DeclaredAccessibility
                     is Accessibility.Protected
                         or Accessibility.ProtectedOrInternal
-                || member is IMethodSymbol { IsVirtual: true }
+                || メンバー is IMethodSymbol { IsVirtual: true }
             );
 
-    private sealed record TypeDeclaration(
-        ClassDeclarationSyntax Declaration,
-        INamedTypeSymbol? Symbol
-    );
+    private sealed record 型宣言情報(ClassDeclarationSyntax 宣言, INamedTypeSymbol? シンボル);
 }

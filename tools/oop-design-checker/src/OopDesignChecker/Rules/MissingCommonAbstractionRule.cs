@@ -5,143 +5,131 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class MissingCommonAbstractionRule : I解析規則
+internal sealed class 共通抽象不足規則 : I解析規則
 {
-    private const int MinimumRelatedTypes = 3;
-    private const int MinimumSharedOperations = 2;
+    private const int 最小関連型数 = 3;
+    private const int 最小共通操作数 = 2;
 
     public RuleDescriptor 規則情報 { get; } =
         new("OOP001", "Missing common abstraction", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 解析文脈)
     {
-        var candidates = context
-            .対象プロジェクト.構文木群.SelectMany(tree => FindCandidates(context, tree))
+        var 候補群 = 解析文脈
+            .対象プロジェクト.構文木群.SelectMany(tree => 候補群を探す(解析文脈, tree))
             .ToArray();
 
-        foreach (
-            var group in candidates.GroupBy(
-                candidate => candidate.SignatureKey,
-                StringComparer.Ordinal
-            )
-        )
+        foreach (var 同一対象群 in 候補群.GroupBy(候補 => 候補.署名キー, StringComparer.Ordinal))
         {
-            var related = group.ToArray();
-            if (related.Length < MinimumRelatedTypes || !HasSharedUsageContext(context, related))
+            var 関連型群 = 同一対象群.ToArray();
+            if (関連型群.Length < 最小関連型数 || !共通利用文脈を持つ(解析文脈, 関連型群))
             {
                 continue;
             }
 
-            var names = string.Join(", ", related.Select(candidate => candidate.Symbol.Name));
+            var 型名群 = string.Join(", ", 関連型群.Select(候補 => 候補.シンボル.Name));
             yield return 診断生成器.生成する(
                 規則情報,
-                related[0].Declaration.Identifier.GetLocation(),
-                $"Types {names} expose the same {related[0].OperationCount} public instance operations and are used in the same call-site role, but share no project abstraction. Consider an interface or meaningful base abstraction."
+                関連型群[0].宣言.Identifier.GetLocation(),
+                $"Types {型名群} expose the same {関連型群[0].操作数} public instance operations and are used in the same call-site role, but share no project abstraction. Consider an interface or meaningful base abstraction."
             );
         }
     }
 
-    private static IEnumerable<AbstractionCandidate> FindCandidates(
-        解析文脈 context,
-        SyntaxTree syntaxTree
-    )
+    private static IEnumerable<抽象候補情報> 候補群を探す(解析文脈 解析文脈, SyntaxTree 構文木)
     {
-        var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
-        var root = syntaxTree.GetRoot();
+        var 意味モデル = 解析文脈.対象プロジェクト.意味モデルを取得する(構文木);
+        var 構文根 = 構文木.GetRoot();
 
-        foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
+        foreach (var 宣言 in 構文根.DescendantNodes().OfType<ClassDeclarationSyntax>())
         {
             if (
-                semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                || !シンボル操作器.主宣言である(symbol, declaration)
-                || HasProjectAbstraction(symbol)
+                意味モデル.GetDeclaredSymbol(宣言) is not INamedTypeSymbol シンボル
+                || !シンボル操作器.主宣言である(シンボル, 宣言)
+                || プロジェクト内の抽象を持つ(シンボル)
             )
             {
                 continue;
             }
 
-            var signatures = symbol
-                .GetMembers()
+            var signatures = シンボル.GetMembers()
                 .OfType<IMethodSymbol>()
-                .Where(method =>
-                    method.MethodKind == MethodKind.Ordinary
-                    && !method.IsStatic
-                    && method.DeclaredAccessibility == Accessibility.Public
+                .Where(メソッド =>
+                    メソッド.MethodKind == MethodKind.Ordinary
+                    && !メソッド.IsStatic
+                    && メソッド.DeclaredAccessibility == Accessibility.Public
                 )
-                .Select(CreateSignature)
+                .Select(シグネチャを作る)
                 .OrderBy(signature => signature, StringComparer.Ordinal)
                 .ToArray();
 
-            if (signatures.Length < MinimumSharedOperations)
+            if (signatures.Length < 最小共通操作数)
             {
                 continue;
             }
 
-            yield return new AbstractionCandidate(
-                declaration,
-                symbol,
+            yield return new 抽象候補情報(
+                宣言,
+                シンボル,
                 string.Join("|", signatures),
                 signatures.Length
             );
         }
     }
 
-    private static bool HasSharedUsageContext(
-        解析文脈 context,
-        IReadOnlyList<AbstractionCandidate> related
-    )
+    private static bool 共通利用文脈を持つ(解析文脈 解析文脈, IReadOnlyList<抽象候補情報> 関連型群)
     {
         var methods = new List<IMethodSymbol>();
 
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 解析文脈.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
+            var 意味モデル = 解析文脈.対象プロジェクト.意味モデルを取得する(構文木);
             foreach (
-                var declaration in syntaxTree
-                    .GetRoot()
-                    .DescendantNodes()
-                    .OfType<MethodDeclarationSyntax>()
+                var 宣言 in 構文木.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>()
             )
             {
-                if (semanticModel.GetDeclaredSymbol(declaration) is IMethodSymbol method)
+                if (意味モデル.GetDeclaredSymbol(宣言) is IMethodSymbol メソッド)
                 {
-                    methods.Add(method);
+                    methods.Add(メソッド);
                 }
             }
         }
 
         foreach (
-            var overloadGroup in methods.GroupBy(method =>
-                $"{method.ContainingType.ToDisplayString()}|{method.Name}|{method.Parameters.Length}"
+            var 同一シグネチャ群 in methods.GroupBy(メソッド =>
+                $"{メソッド.ContainingType.ToDisplayString()}|{メソッド.Name}|{メソッド.Parameters.Length}"
             )
         )
         {
-            var overloads = overloadGroup.ToArray();
-            if (overloads.Length < MinimumRelatedTypes || overloads[0].Parameters.Length == 0)
+            var オーバーロード群 = 同一シグネチャ群.ToArray();
+            if (
+                オーバーロード群.Length < 最小関連型数
+                || オーバーロード群[0].Parameters.Length == 0
+            )
             {
                 continue;
             }
 
-            for (var index = 0; index < overloads[0].Parameters.Length; index++)
+            for (var 引数位置 = 0; 引数位置 < オーバーロード群[0].Parameters.Length; 引数位置++)
             {
-                var matchedTypes = new List<INamedTypeSymbol>();
-                foreach (var overload in overloads)
+                var 一致型群 = new List<INamedTypeSymbol>();
+                foreach (var オーバーロード in オーバーロード群)
                 {
                     if (
-                        overload.Parameters[index].Type is not INamedTypeSymbol parameterType
-                        || !TryMatchRelated(parameterType, related, out var matched)
-                        || matchedTypes.Any(existing =>
-                            SymbolEqualityComparer.Default.Equals(existing, matched)
+                        オーバーロード.Parameters[引数位置].Type is not INamedTypeSymbol 引数型
+                        || !関連型に一致する(引数型, 関連型群, out var 一致型)
+                        || 一致型群.Any(既存型 =>
+                            SymbolEqualityComparer.Default.Equals(既存型, 一致型)
                         )
                     )
                     {
                         continue;
                     }
 
-                    matchedTypes.Add(matched);
+                    一致型群.Add(一致型);
                 }
 
-                if (matchedTypes.Count >= MinimumRelatedTypes)
+                if (一致型群.Count >= 最小関連型数)
                 {
                     return true;
                 }
@@ -151,44 +139,44 @@ internal sealed class MissingCommonAbstractionRule : I解析規則
         return false;
     }
 
-    private static bool TryMatchRelated(
-        INamedTypeSymbol type,
-        IReadOnlyList<AbstractionCandidate> related,
-        out INamedTypeSymbol matched
+    private static bool 関連型に一致する(
+        INamedTypeSymbol 型,
+        IReadOnlyList<抽象候補情報> 関連型群,
+        out INamedTypeSymbol 一致型
     )
     {
-        foreach (var candidate in related)
+        foreach (var 候補 in 関連型群)
         {
-            if (SymbolEqualityComparer.Default.Equals(type, candidate.Symbol))
+            if (SymbolEqualityComparer.Default.Equals(型, 候補.シンボル))
             {
-                matched = candidate.Symbol;
+                一致型 = 候補.シンボル;
                 return true;
             }
         }
 
-        matched = null!;
+        一致型 = null!;
         return false;
     }
 
-    private static bool HasProjectAbstraction(INamedTypeSymbol symbol) =>
-        symbol.BaseType is { SpecialType: not SpecialType.System_Object }
-        || symbol.AllInterfaces.Any(interfaceType =>
-            interfaceType.Locations.Any(location => location.IsInSource)
+    private static bool プロジェクト内の抽象を持つ(INamedTypeSymbol シンボル) =>
+        シンボル.BaseType is { SpecialType: not SpecialType.System_Object }
+        || シンボル.AllInterfaces.Any(インターフェース型 =>
+            インターフェース型.Locations.Any(location => location.IsInSource)
         );
 
-    private static string CreateSignature(IMethodSymbol method)
+    private static string シグネチャを作る(IMethodSymbol メソッド)
     {
         var parameters = string.Join(
             ",",
-            method.Parameters.Select(parameter => parameter.Type.ToDisplayString())
+            メソッド.Parameters.Select(parameter => parameter.Type.ToDisplayString())
         );
-        return $"{method.Name}({parameters}):{method.ReturnType.ToDisplayString()}";
+        return $"{メソッド.Name}({parameters}):{メソッド.ReturnType.ToDisplayString()}";
     }
 
-    private sealed record AbstractionCandidate(
-        ClassDeclarationSyntax Declaration,
-        INamedTypeSymbol Symbol,
-        string SignatureKey,
-        int OperationCount
+    private sealed record 抽象候補情報(
+        ClassDeclarationSyntax 宣言,
+        INamedTypeSymbol シンボル,
+        string 署名キー,
+        int 操作数
     );
 }

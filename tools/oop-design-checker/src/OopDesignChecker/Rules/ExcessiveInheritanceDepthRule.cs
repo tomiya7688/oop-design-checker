@@ -5,55 +5,58 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ExcessiveInheritanceDepthRule : I解析規則
+internal sealed class 継承深度過剰規則 : I解析規則
 {
-    private readonly int _warningDepth;
+    private readonly int _警告深度;
 
-    public ExcessiveInheritanceDepthRule(int warningDepth = 4)
+    public 継承深度過剰規則(int 警告深度 = 4)
     {
-        if (warningDepth < 1)
+        if (警告深度 < 1)
         {
             throw new ArgumentOutOfRangeException(
-                nameof(warningDepth),
-                warningDepth,
+                nameof(警告深度),
+                警告深度,
                 "Inheritance warning depth must be at least 1."
             );
         }
 
-        _warningDepth = warningDepth;
+        _警告深度 = 警告深度;
     }
 
     public RuleDescriptor 規則情報 { get; } =
         new("OOP304", "Excessive inheritance depth", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 解析文脈)
     {
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 解析文脈.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            var 意味モデル = 解析文脈.対象プロジェクト.意味モデルを取得する(構文木);
+            var 構文根 = 構文木.GetRoot();
 
-            foreach (var declaration in root.DescendantNodes().OfType<TypeDeclarationSyntax>())
+            foreach (var 宣言 in 構文根.DescendantNodes().OfType<TypeDeclarationSyntax>())
             {
                 if (
-                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || !シンボル操作器.主宣言である(symbol, declaration)
+                    意味モデル.GetDeclaredSymbol(宣言) is not INamedTypeSymbol シンボル
+                    || !シンボル操作器.主宣言である(シンボル, 宣言)
                 )
                 {
                     continue;
                 }
 
-                var depth = シンボル操作器.継承深度を取得する(symbol, context.対象プロジェクト群);
-                if (depth < _warningDepth)
+                var 継承深度 = シンボル操作器.継承深度を取得する(
+                    シンボル,
+                    解析文脈.対象プロジェクト群
+                );
+                if (継承深度 < _警告深度)
                 {
                     continue;
                 }
 
                 yield return 診断生成器.生成する(
                     規則情報,
-                    declaration.Identifier.GetLocation(),
-                    $"Project-owned inheritance depth is {depth} (configured attention threshold: {_warningDepth}). Deep inheritance can make behavior harder to reason about.",
-                    symbol.ToDisplayString()
+                    宣言.Identifier.GetLocation(),
+                    $"Project-owned inheritance depth is {継承深度} (configured attention threshold: {_警告深度}). Deep inheritance can make behavior harder to reason about.",
+                    シンボル.ToDisplayString()
                 );
             }
         }

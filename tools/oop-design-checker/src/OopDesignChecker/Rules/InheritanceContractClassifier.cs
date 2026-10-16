@@ -4,112 +4,111 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace OopDesignChecker.Rules;
 
-internal enum ParentOperationContract
+internal enum 親操作契約
 {
-    Unknown,
-    Required,
-    Supported,
-    OptionalNoOp,
-    Rejected,
+    不明,
+    必須,
+    実装済み,
+    任意の空実装,
+    拒否済み,
 }
 
-internal static class InheritanceContractClassifier
+internal static class 継承契約判定器
 {
-    public static ParentOperationContract ClassifyParentOperation(IMethodSymbol overrideMethod)
+    public static 親操作契約 親操作契約を分類する(IMethodSymbol overrideMethod)
     {
-        var parentMethod = overrideMethod.OverriddenMethod;
-        if (parentMethod is null)
+        var 親メソッド = overrideMethod.OverriddenMethod;
+        if (親メソッド is null)
         {
-            return ParentOperationContract.Unknown;
+            return 親操作契約.不明;
         }
 
-        if (parentMethod.IsAbstract)
+        if (親メソッド.IsAbstract)
         {
-            return ParentOperationContract.Required;
+            return 親操作契約.必須;
         }
 
-        if (!parentMethod.Locations.Any(location => location.IsInSource))
+        if (!親メソッド.Locations.Any(location => location.IsInSource))
         {
-            return ParentOperationContract.Unknown;
+            return 親操作契約.不明;
         }
 
-        var declaration = parentMethod
+        var 宣言 = 親メソッド
             .DeclaringSyntaxReferences.Select(reference => reference.GetSyntax())
             .OfType<MethodDeclarationSyntax>()
             .FirstOrDefault();
-        if (declaration is null || declaration.Body is null && declaration.ExpressionBody is null)
+        if (宣言 is null || 宣言.Body is null && 宣言.ExpressionBody is null)
         {
-            return ParentOperationContract.Unknown;
+            return 親操作契約.不明;
         }
 
-        if (GetSoleRejectionException(declaration) is not null)
+        if (単独の拒否例外を取得する(宣言) is not null)
         {
-            return ParentOperationContract.Rejected;
+            return 親操作契約.拒否済み;
         }
 
-        return IsNoOpOrDefaultImplementation(declaration, parentMethod)
-            ? ParentOperationContract.OptionalNoOp
-            : ParentOperationContract.Supported;
+        return 空実装または既定実装である(宣言, 親メソッド)
+            ? 親操作契約.任意の空実装
+            : 親操作契約.実装済み;
     }
 
-    public static bool IsNoOpOrDefaultImplementation(
-        MethodDeclarationSyntax declaration,
-        IMethodSymbol method
+    public static bool 空実装または既定実装である(
+        MethodDeclarationSyntax 宣言,
+        IMethodSymbol メソッド
     )
     {
-        if (method.ReturnsVoid)
+        if (メソッド.ReturnsVoid)
         {
-            return declaration.Body is { Statements.Count: 0 }
-                || declaration.Body?.Statements is [ReturnStatementSyntax { Expression: null }];
+            return 宣言.Body is { Statements.Count: 0 }
+                || 宣言.Body?.Statements is [ReturnStatementSyntax { Expression: null }];
         }
 
-        if (declaration.ExpressionBody is { Expression: { } expression })
+        if (宣言.ExpressionBody is { Expression: { } 式 })
         {
-            return IsDefaultValueExpression(expression);
+            return 既定値式である(式);
         }
 
-        return declaration.Body?.Statements
-                is [ReturnStatementSyntax { Expression: { } returnExpression }]
-            && IsDefaultValueExpression(returnExpression);
+        return 宣言.Body?.Statements is [ReturnStatementSyntax { Expression: { } returnExpression }]
+            && 既定値式である(returnExpression);
     }
 
-    public static string? GetSoleRejectionException(MethodDeclarationSyntax method)
+    public static string? 単独の拒否例外を取得する(MethodDeclarationSyntax メソッド)
     {
-        if (method.ExpressionBody?.Expression is ThrowExpressionSyntax throwExpression)
+        if (メソッド.ExpressionBody?.Expression is ThrowExpressionSyntax throwExpression)
         {
-            return GetRejectionExceptionName(throwExpression.Expression);
+            return 拒否例外名を取得する(throwExpression.Expression);
         }
 
-        if (method.Body?.Statements is [ThrowStatementSyntax throwStatement])
+        if (メソッド.Body?.Statements is [ThrowStatementSyntax throwStatement])
         {
-            return GetRejectionExceptionName(throwStatement.Expression);
+            return 拒否例外名を取得する(throwStatement.Expression);
         }
 
         return null;
     }
 
-    private static bool IsDefaultValueExpression(ExpressionSyntax expression) =>
-        expression is DefaultExpressionSyntax
-        || expression.IsKind(SyntaxKind.NullLiteralExpression)
-        || expression.IsKind(SyntaxKind.DefaultLiteralExpression);
+    private static bool 既定値式である(ExpressionSyntax 式) =>
+        式 is DefaultExpressionSyntax
+        || 式.IsKind(SyntaxKind.NullLiteralExpression)
+        || 式.IsKind(SyntaxKind.DefaultLiteralExpression);
 
-    private static string? GetRejectionExceptionName(ExpressionSyntax? expression)
+    private static string? 拒否例外名を取得する(ExpressionSyntax? 式)
     {
-        if (expression is not ObjectCreationExpressionSyntax creation)
+        if (式 is not ObjectCreationExpressionSyntax 生成式)
         {
             return null;
         }
 
-        var typeName = creation.Type.ToString();
+        var 型名 = 生成式.Type.ToString();
         return
-            typeName
+            型名
                 is "NotSupportedException"
                     or "System.NotSupportedException"
                     or "global::System.NotSupportedException"
                     or "NotImplementedException"
                     or "System.NotImplementedException"
                     or "global::System.NotImplementedException"
-            ? typeName
+            ? 型名
             : null;
     }
 }

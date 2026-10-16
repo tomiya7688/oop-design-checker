@@ -33,7 +33,7 @@ internal static class StaticPrecisionSmokeTests
             }
             """;
 
-        AssertSingleRule(new ExcessiveVisibilityRule(), source, "OOP101");
+        AssertSingleRule(new 過剰可視性規則(), source, "OOP101");
     }
 
     private static void ExternalContractIsNotSealingCandidate()
@@ -44,7 +44,7 @@ internal static class StaticPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new SealingCandidateRule(), source, "OOP102");
+        AssertNone(new 封止候補規則(), source, "OOP102");
     }
 
     private static void ExternalBaseContractMethodsAreNotStaticCandidates()
@@ -135,7 +135,7 @@ internal static class StaticPrecisionSmokeTests
             }
             """;
 
-        AssertSingleRule(new SealingCandidateRule(), source, "OOP102");
+        AssertSingleRule(new 封止候補規則(), source, "OOP102");
     }
 
     private static void MutableStaticPropertyIsWarning()
