@@ -6,18 +6,18 @@ using OopDesignChecker.Output;
 
 namespace OopDesignChecker.Tests;
 
-internal static class GuiWorkflowPhase2SmokeTests
+internal static class GUIワークフロー第2段階スモークテスト
 {
-    public static void Run()
+    public static void 実行する()
     {
-        ConfigurationJsonRoundTripsAndValidates();
-        DiagnosticExportServiceWritesJsonAndSarif();
-        CheckerServiceHonorsPreCancelledToken();
-        ClipboardFailureIsContained();
-        UiAutomationSettingsAreOptIn();
+        設定JSONを往復変換して検証する();
+        診断出力サービスがJSONとSARIFを書き出す();
+        チェッカーが事前キャンセルを反映する();
+        クリップボード失敗を捕捉する();
+        UI自動化設定は明示時のみ有効になる();
     }
 
-    private static void ConfigurationJsonRoundTripsAndValidates()
+    private static void 設定JSONを往復変換して検証する()
     {
         var configuration = new CheckerConfiguration
         {
@@ -69,7 +69,7 @@ internal static class GuiWorkflowPhase2SmokeTests
         );
     }
 
-    private static void DiagnosticExportServiceWritesJsonAndSarif()
+    private static void 診断出力サービスがJSONとSARIFを書き出す()
     {
         var temporaryDirectory = Path.Combine(
             Path.GetTempPath(),
@@ -89,7 +89,7 @@ internal static class GuiWorkflowPhase2SmokeTests
                     ),
                     DesignDiagnosticSeverity.Warning,
                     "Export smoke diagnostic.",
-                    "Sample.Run",
+                    "Sample.実行する",
                     new SourceLocation(Path.Combine(temporaryDirectory, "Sample.cs"), 3, 5)
                 ),
             };
@@ -119,7 +119,7 @@ internal static class GuiWorkflowPhase2SmokeTests
         }
     }
 
-    private static void UiAutomationSettingsAreOptIn()
+    private static void UI自動化設定は明示時のみ有効になる()
     {
         const string delayVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS";
         const string exportVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR";
@@ -135,8 +135,8 @@ internal static class GuiWorkflowPhase2SmokeTests
             Environment.SetEnvironmentVariable(delayVariable, null);
             Environment.SetEnvironmentVariable(exportVariable, null);
             if (
-                UiAutomationSettings.AnalysisDelayMilliseconds != 0
-                || UiAutomationSettings.ExportPath(DiagnosticExportFormat.Json) is not null
+                UI自動化設定.解析遅延ミリ秒 != 0
+                || UI自動化設定.出力先パス(DiagnosticExportFormat.Json) is not null
             )
             {
                 throw new InvalidOperationException(
@@ -146,10 +146,10 @@ internal static class GuiWorkflowPhase2SmokeTests
 
             Environment.SetEnvironmentVariable(delayVariable, "2500");
             Environment.SetEnvironmentVariable(exportVariable, temporaryDirectory);
-            var jsonPath = UiAutomationSettings.ExportPath(DiagnosticExportFormat.Json);
-            var sarifPath = UiAutomationSettings.ExportPath(DiagnosticExportFormat.Sarif);
+            var jsonPath = UI自動化設定.出力先パス(DiagnosticExportFormat.Json);
+            var sarifPath = UI自動化設定.出力先パス(DiagnosticExportFormat.Sarif);
             if (
-                UiAutomationSettings.AnalysisDelayMilliseconds != 2500
+                UI自動化設定.解析遅延ミリ秒 != 2500
                 || jsonPath != Path.Combine(temporaryDirectory, "actual-diagnostics.json")
                 || sarifPath != Path.Combine(temporaryDirectory, "actual-diagnostics.sarif")
             )
@@ -160,7 +160,7 @@ internal static class GuiWorkflowPhase2SmokeTests
             }
 
             Environment.SetEnvironmentVariable(delayVariable, "30001");
-            if (UiAutomationSettings.AnalysisDelayMilliseconds != 0)
+            if (UI自動化設定.解析遅延ミリ秒 != 0)
             {
                 throw new InvalidOperationException(
                     "GUI automation delay accepted an out-of-range value."
@@ -174,10 +174,10 @@ internal static class GuiWorkflowPhase2SmokeTests
         }
     }
 
-    private static void ClipboardFailureIsContained()
+    private static void クリップボード失敗を捕捉する()
     {
-        var copied = ClipboardOperation
-            .TrySetTextAsync(() =>
+        var copied = クリップボード操作
+            .テキスト設定を試す非同期(() =>
                 Task.FromException(new InvalidOperationException("clipboard failed"))
             )
             .GetAwaiter()
@@ -191,7 +191,7 @@ internal static class GuiWorkflowPhase2SmokeTests
         }
     }
 
-    private static void CheckerServiceHonorsPreCancelledToken()
+    private static void チェッカーが事前キャンセルを反映する()
     {
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();

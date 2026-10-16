@@ -1,10 +1,10 @@
-"""Pure helpers for reporting native Appium E2E failures."""
+"""Appiumの実ウィンドウE2E失敗を報告する純粋な補助処理。"""
 
 import json
 from pathlib import Path
 
 
-def build_wait_context(active_context, condition, automation_id, timeout, source):
+def 待機状況を組み立てる(active_context, condition, automation_id, timeout, source):
     return {
         **active_context,
         "action": f"wait until: {condition}",
@@ -15,7 +15,7 @@ def build_wait_context(active_context, condition, automation_id, timeout, source
     }
 
 
-def build_failure_report(
+def 失敗報告を組み立てる(
     exception,
     traceback_text,
     *,
@@ -43,7 +43,7 @@ def build_failure_report(
     }
 
 
-def format_failure_report(report):
+def 失敗報告を書式化する(report):
     message = report["message"]
     lines = [
         "Appium UI E2E failed.",
@@ -69,13 +69,13 @@ def format_failure_report(report):
     return "\n".join(lines)
 
 
-def write_failure_report(path, report):
+def 失敗報告を書き出す(path, report):
     Path(path).write_text(
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
 
-def capture_evidence(name, callback):
+def 証跡を取得する(name, callback):
     try:
         callback()
     except Exception as error:

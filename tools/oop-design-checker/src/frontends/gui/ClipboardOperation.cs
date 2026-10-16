@@ -1,8 +1,8 @@
 namespace OopDesignChecker.Gui;
 
-internal static class ClipboardOperation
+internal static class クリップボード操作
 {
-    public static async Task<bool> TrySetTextAsync(Func<Task> setTextAsync)
+    public static async Task<bool> テキスト設定を試す非同期(Func<Task> setTextAsync)
     {
         try
         {

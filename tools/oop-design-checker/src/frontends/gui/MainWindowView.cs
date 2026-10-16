@@ -8,42 +8,42 @@ using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Gui;
 
-internal sealed class MainWindowView : Grid
+internal sealed class メイン画面 : Grid
 {
-    internal MainWindowMenu MainMenu { get; } = new();
-    internal TextBox TargetPath { get; } = new();
-    internal TextBox ConfigurationPath { get; } = new();
-    internal Button TargetFileButton { get; } = new();
-    internal Button TargetFolderButton { get; } = new();
-    internal Button ConfigurationButton { get; } = new();
-    internal Button EditConfigurationButton { get; } = new();
-    internal Button ClearConfigurationButton { get; } = new();
-    internal Button AnalyzeButton { get; } = new();
-    internal Button CancelButton { get; } = new();
-    internal ProgressBar Progress { get; } = new();
-    internal TextBlock Status { get; } = new();
-    internal TextBlock DangerCount { get; } = new();
-    internal TextBlock WarningCount { get; } = new();
-    internal TextBlock AttentionCount { get; } = new();
-    internal CheckBox DangerFilter { get; } = new();
-    internal CheckBox WarningFilter { get; } = new();
-    internal CheckBox AttentionFilter { get; } = new();
-    internal TextBox SearchFilter { get; } = new();
-    internal TextBlock ShortcutHints { get; } = new();
-    internal ComboBox LanguageSelector { get; } = new();
-    internal ComboBox ThemeSelector { get; } = new();
-    internal DataGrid DiagnosticsGrid { get; } = new();
-    internal TextBlock DetailSeverity { get; } = new();
-    internal TextBlock DetailRule { get; } = new();
-    internal TextBlock DetailSymbol { get; } = new();
-    internal TextBlock DetailLocation { get; } = new();
-    internal TextBlock DetailMessage { get; } = new();
-    internal TextBlock ConfigurationSummary { get; } = new();
-    internal Button CopySelectedButton { get; } = new();
-    internal Button CopyAllButton { get; } = new();
-    internal Button OpenSourceButton { get; } = new();
-    internal Button ExportJsonButton { get; } = new();
-    internal Button ExportSarifButton { get; } = new();
+    internal メインメニュー メインメニュー部品 { get; } = new();
+    internal TextBox 対象パス欄 { get; } = new();
+    internal TextBox 設定パス欄 { get; } = new();
+    internal Button 対象ファイルボタン { get; } = new();
+    internal Button 対象フォルダーボタン { get; } = new();
+    internal Button 設定選択ボタン { get; } = new();
+    internal Button 設定編集ボタン { get; } = new();
+    internal Button 設定消去ボタン { get; } = new();
+    internal Button 解析ボタン { get; } = new();
+    internal Button キャンセルボタン { get; } = new();
+    internal ProgressBar 進捗表示 { get; } = new();
+    internal TextBlock 状態表示 { get; } = new();
+    internal TextBlock 危険件数表示 { get; } = new();
+    internal TextBlock 警告件数表示 { get; } = new();
+    internal TextBlock 注意件数表示 { get; } = new();
+    internal CheckBox 危険絞り込み { get; } = new();
+    internal CheckBox 警告絞り込み { get; } = new();
+    internal CheckBox 注意絞り込み { get; } = new();
+    internal TextBox 検索絞り込み { get; } = new();
+    internal TextBlock ショートカット案内 { get; } = new();
+    internal ComboBox 表示言語選択 { get; } = new();
+    internal ComboBox テーマ選択 { get; } = new();
+    internal DataGrid 診断一覧 { get; } = new();
+    internal TextBlock 詳細重要度 { get; } = new();
+    internal TextBlock 詳細規則 { get; } = new();
+    internal TextBlock 詳細シンボル { get; } = new();
+    internal TextBlock 詳細位置 { get; } = new();
+    internal TextBlock 詳細メッセージ { get; } = new();
+    internal TextBlock 設定概要 { get; } = new();
+    internal Button 選択項目コピー { get; } = new();
+    internal Button 全件コピー { get; } = new();
+    internal Button ソースを開くボタン { get; } = new();
+    internal Button JSON出力ボタン { get; } = new();
+    internal Button SARIF出力ボタン { get; } = new();
 
     private readonly Label _targetLabel = new();
     private readonly Label _configurationLabel = new();
@@ -52,7 +52,7 @@ internal sealed class MainWindowView : Grid
     private readonly TextBlock _themeLabel = new();
     private readonly TextBlock _detailHeading = new();
 
-    public MainWindowView()
+    public メイン画面()
     {
         Margin = new Thickness(16);
         RowDefinitions.Add(new RowDefinition(GridLength.Auto));
@@ -63,114 +63,111 @@ internal sealed class MainWindowView : Grid
         RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         RowSpacing = 10;
 
-        ConfigureControls();
-        ConfigureAutomation();
-        AddSection(MainMenu, 0);
-        AddSection(BuildTargetSection(), 1);
-        AddSection(BuildFilterSection(), 2);
-        AddSection(BuildSummarySection(), 3);
-        AddSection(BuildDiagnosticsSection(), 4);
-        AddSection(BuildStatusSection(), 5);
-        ApplyLanguage(UserInterfaceLanguage.Japanese);
+        コントロールを設定する();
+        自動化設定を適用する();
+        欄を追加する(メインメニュー部品, 0);
+        欄を追加する(対象欄を構築する(), 1);
+        欄を追加する(絞り込み欄を構築する(), 2);
+        欄を追加する(集計欄を構築する(), 3);
+        欄を追加する(診断一覧欄を構築する(), 4);
+        欄を追加する(状態欄を構築する(), 5);
+        表示言語を適用する(UserInterfaceLanguage.Japanese);
     }
 
-    internal void ApplyLanguage(UserInterfaceLanguage language)
+    internal void 表示言語を適用する(UserInterfaceLanguage language)
     {
-        MainMenu.ApplyLanguage(language);
+        メインメニュー部品.表示言語を適用する(language);
         _targetLabel.Content =
-            $"{GuiText.Get(GuiTextKey.TargetLabel, language)} (_{GuiShortcut.FormatKey(GuiCommands.TargetFocus.PrimaryShortcut!.Value.Key)})  {GuiCommands.TargetFocus.PrimaryHint}:";
+            $"{GUI文言.取得する(GUI文言キー.対象ラベル, language)} (_{GUIショートカット.キー名を整形する(GUIコマンド.対象欄フォーカス.主ショートカット!.Value.Key)})  {GUIコマンド.対象欄フォーカス.主操作の案内}:";
         _configurationLabel.Content =
-            $"{GuiText.Get(GuiTextKey.ConfigurationLabel, language)} (_{GuiShortcut.FormatKey(GuiCommands.ConfigurationFocus.PrimaryShortcut!.Value.Key)})  {GuiCommands.ConfigurationFocus.PrimaryHint}:";
-        TargetPath.PlaceholderText = GuiText.Get(GuiTextKey.TargetPlaceholder, language);
-        ConfigurationPath.PlaceholderText = GuiText.Get(
-            GuiTextKey.ConfigurationPlaceholder,
-            language
-        );
+            $"{GUI文言.取得する(GUI文言キー.設定ラベル, language)} (_{GUIショートカット.キー名を整形する(GUIコマンド.設定欄フォーカス.主ショートカット!.Value.Key)})  {GUIコマンド.設定欄フォーカス.主操作の案内}:";
+        対象パス欄.PlaceholderText = GUI文言.取得する(GUI文言キー.対象入力案内, language);
+        設定パス欄.PlaceholderText = GUI文言.取得する(GUI文言キー.設定入力案内, language);
 
-        TargetFileButton.Content = GuiText.Get(GuiTextKey.FileButton, language);
-        TargetFolderButton.Content = GuiText.Get(GuiTextKey.FolderButton, language);
-        ConfigurationButton.Content = GuiText.Get(GuiTextKey.ConfigurationButton, language);
-        EditConfigurationButton.Content = GuiText.Get(GuiTextKey.EditButton, language);
-        ClearConfigurationButton.Content = GuiText.Get(GuiTextKey.ClearButton, language);
-        AnalyzeButton.Content = GuiText.Get(GuiTextKey.AnalyzeButton, language);
-        CancelButton.Content = GuiText.Get(GuiTextKey.CancelButton, language);
+        対象ファイルボタン.Content = GUI文言.取得する(GUI文言キー.ファイルボタン, language);
+        対象フォルダーボタン.Content = GUI文言.取得する(GUI文言キー.フォルダーボタン, language);
+        設定選択ボタン.Content = GUI文言.取得する(GUI文言キー.設定ボタン文言, language);
+        設定編集ボタン.Content = GUI文言.取得する(GUI文言キー.編集ボタン, language);
+        設定消去ボタン.Content = GUI文言.取得する(GUI文言キー.消去ボタン, language);
+        解析ボタン.Content = GUI文言.取得する(GUI文言キー.解析ボタン, language);
+        キャンセルボタン.Content = GUI文言.取得する(GUI文言キー.キャンセルボタン, language);
 
-        _showLabel.Text = GuiText.Get(GuiTextKey.ShowLabel, language);
-        _languageLabel.Text = GuiText.Get(GuiTextKey.LanguageLabel, language);
-        _themeLabel.Text = GuiText.Get(GuiTextKey.ThemeLabel, language);
-        var selectedTheme = Math.Max(ThemeSelector.SelectedIndex, 0);
-        ThemeSelector.ItemsSource = new[]
+        _showLabel.Text = GUI文言.取得する(GUI文言キー.表示ラベル, language);
+        _languageLabel.Text = GUI文言.取得する(GUI文言キー.言語ラベル, language);
+        _themeLabel.Text = GUI文言.取得する(GUI文言キー.テーマラベル, language);
+        var selectedTheme = Math.Max(テーマ選択.SelectedIndex, 0);
+        テーマ選択.ItemsSource = new[]
         {
-            GuiText.Get(GuiTextKey.DarkTheme, language),
-            GuiText.Get(GuiTextKey.LightTheme, language),
+            GUI文言.取得する(GUI文言キー.ダークテーマ, language),
+            GUI文言.取得する(GUI文言キー.ライトテーマ, language),
         };
-        ThemeSelector.SelectedIndex = selectedTheme;
-        DangerFilter.Content = GuiText.Get(GuiTextKey.Danger, language);
-        WarningFilter.Content = GuiText.Get(GuiTextKey.Warning, language);
-        AttentionFilter.Content = GuiText.Get(GuiTextKey.Attention, language);
-        SearchFilter.PlaceholderText = GuiText.Get(GuiTextKey.SearchPlaceholder, language);
-        ShortcutHints.Text =
-            $"{GuiText.Get(GuiTextKey.AnalyzeButton, language)}: {GuiCommands.Analyze.PrimaryHint}  ·  "
-            + $"{GuiText.Get(GuiTextKey.CancelButton, language)}: {GuiCommands.Cancel.PrimaryHint}  ·  "
-            + $"{GuiText.Get(GuiTextKey.SearchMenu, language)}: {GuiCommands.Search.PrimaryHint}";
+        テーマ選択.SelectedIndex = selectedTheme;
+        危険絞り込み.Content = GUI文言.取得する(GUI文言キー.危険, language);
+        警告絞り込み.Content = GUI文言.取得する(GUI文言キー.警告, language);
+        注意絞り込み.Content = GUI文言.取得する(GUI文言キー.注意, language);
+        検索絞り込み.PlaceholderText = GUI文言.取得する(GUI文言キー.検索入力案内, language);
+        ショートカット案内.Text =
+            $"{GUI文言.取得する(GUI文言キー.解析ボタン, language)}: {GUIコマンド.解析開始.主操作の案内}  ·  "
+            + $"{GUI文言.取得する(GUI文言キー.キャンセルボタン, language)}: {GUIコマンド.解析キャンセル.主操作の案内}  ·  "
+            + $"{GUI文言.取得する(GUI文言キー.検索メニュー, language)}: {GUIコマンド.診断検索.主操作の案内}";
 
-        CopySelectedButton.Content = GuiText.Get(GuiTextKey.CopySelectedButton, language);
-        CopyAllButton.Content = GuiText.Get(GuiTextKey.CopyAllButton, language);
-        OpenSourceButton.Content = GuiText.Get(GuiTextKey.OpenSourceButton, language);
-        ExportJsonButton.Content = GuiText.Get(GuiTextKey.ExportJsonButton, language);
-        ExportSarifButton.Content = GuiText.Get(GuiTextKey.ExportSarifButton, language);
-        _detailHeading.Text = GuiText.Get(GuiTextKey.DiagnosticDetails, language);
+        選択項目コピー.Content = GUI文言.取得する(GUI文言キー.選択項目コピー, language);
+        全件コピー.Content = GUI文言.取得する(GUI文言キー.全件コピー, language);
+        ソースを開くボタン.Content = GUI文言.取得する(GUI文言キー.ソースを開くボタン, language);
+        JSON出力ボタン.Content = GUI文言.取得する(GUI文言キー.JSON出力ボタン, language);
+        SARIF出力ボタン.Content = GUI文言.取得する(GUI文言キー.SARIF出力ボタン, language);
+        _detailHeading.Text = GUI文言.取得する(GUI文言キー.診断詳細, language);
 
-        DiagnosticsGrid.Columns[0].Header = GuiText.Get(GuiTextKey.SeverityColumn, language);
-        DiagnosticsGrid.Columns[1].Header = GuiText.Get(GuiTextKey.RuleColumn, language);
-        DiagnosticsGrid.Columns[2].Header = GuiText.Get(GuiTextKey.FileColumn, language);
-        DiagnosticsGrid.Columns[3].Header = GuiText.Get(GuiTextKey.LineColumn, language);
-        DiagnosticsGrid.Columns[4].Header = GuiText.Get(GuiTextKey.ColumnColumn, language);
-        DiagnosticsGrid.Columns[5].Header = GuiText.Get(GuiTextKey.MessageColumn, language);
+        診断一覧.Columns[0].Header = GUI文言.取得する(GUI文言キー.重要度列, language);
+        診断一覧.Columns[1].Header = GUI文言.取得する(GUI文言キー.規則列, language);
+        診断一覧.Columns[2].Header = GUI文言.取得する(GUI文言キー.ファイル列, language);
+        診断一覧.Columns[3].Header = GUI文言.取得する(GUI文言キー.行列, language);
+        診断一覧.Columns[4].Header = GUI文言.取得する(GUI文言キー.列列, language);
+        診断一覧.Columns[5].Header = GUI文言.取得する(GUI文言キー.メッセージ列, language);
 
-        ApplyCommandHelp(language);
-        ClearDetails(language);
+        コマンドヘルプを適用する(language);
+        詳細を消去する(language);
     }
 
-    private void ConfigureAutomation()
+    private void 自動化設定を適用する()
     {
-        var controls = new (StyledElement Element, string Id)[]
+        var controls = new (StyledElement Element, string 識別子)[]
         {
             (_targetLabel, "TargetPathLabel"),
             (_configurationLabel, "ConfigurationPathLabel"),
-            (TargetPath, "TargetPath"),
-            (ConfigurationPath, "ConfigurationPath"),
-            (TargetFileButton, "TargetFileButton"),
-            (TargetFolderButton, "TargetFolderButton"),
-            (ConfigurationButton, "ConfigurationButton"),
-            (EditConfigurationButton, "EditConfigurationButton"),
-            (ClearConfigurationButton, "ClearConfigurationButton"),
-            (AnalyzeButton, "AnalyzeButton"),
-            (CancelButton, "CancelButton"),
-            (Progress, "AnalysisProgress"),
-            (Status, "Status"),
-            (DangerCount, "DangerCount"),
-            (WarningCount, "WarningCount"),
-            (AttentionCount, "AttentionCount"),
-            (DangerFilter, "DangerFilter"),
-            (WarningFilter, "WarningFilter"),
-            (AttentionFilter, "AttentionFilter"),
-            (SearchFilter, "SearchFilter"),
-            (ShortcutHints, "ShortcutHints"),
-            (LanguageSelector, "LanguageSelector"),
-            (ThemeSelector, "ThemeSelector"),
-            (DiagnosticsGrid, "DiagnosticsGrid"),
-            (DetailSeverity, "DetailSeverity"),
-            (DetailRule, "DetailRule"),
-            (DetailSymbol, "DetailSymbol"),
-            (DetailLocation, "DetailLocation"),
-            (DetailMessage, "DetailMessage"),
-            (ConfigurationSummary, "ConfigurationSummary"),
-            (CopySelectedButton, "CopySelectedButton"),
-            (CopyAllButton, "CopyAllButton"),
-            (OpenSourceButton, "OpenSourceButton"),
-            (ExportJsonButton, "ExportJsonButton"),
-            (ExportSarifButton, "ExportSarifButton"),
+            (対象パス欄, "TargetPath"),
+            (設定パス欄, "ConfigurationPath"),
+            (対象ファイルボタン, "TargetFileButton"),
+            (対象フォルダーボタン, "TargetFolderButton"),
+            (設定選択ボタン, "ConfigurationButton"),
+            (設定編集ボタン, "EditConfigurationButton"),
+            (設定消去ボタン, "ClearConfigurationButton"),
+            (解析ボタン, "AnalyzeButton"),
+            (キャンセルボタン, "CancelButton"),
+            (進捗表示, "AnalysisProgress"),
+            (状態表示, "Status"),
+            (危険件数表示, "DangerCount"),
+            (警告件数表示, "WarningCount"),
+            (注意件数表示, "AttentionCount"),
+            (危険絞り込み, "DangerFilter"),
+            (警告絞り込み, "WarningFilter"),
+            (注意絞り込み, "AttentionFilter"),
+            (検索絞り込み, "SearchFilter"),
+            (ショートカット案内, "ShortcutHints"),
+            (表示言語選択, "LanguageSelector"),
+            (テーマ選択, "ThemeSelector"),
+            (診断一覧, "DiagnosticsGrid"),
+            (詳細重要度, "DetailSeverity"),
+            (詳細規則, "DetailRule"),
+            (詳細シンボル, "DetailSymbol"),
+            (詳細位置, "DetailLocation"),
+            (詳細メッセージ, "DetailMessage"),
+            (設定概要, "ConfigurationSummary"),
+            (選択項目コピー, "CopySelectedButton"),
+            (全件コピー, "CopyAllButton"),
+            (ソースを開くボタン, "OpenSourceButton"),
+            (JSON出力ボタン, "ExportJsonButton"),
+            (SARIF出力ボタン, "ExportSarifButton"),
         };
 
         foreach (var (element, id) in controls)
@@ -179,131 +176,129 @@ internal sealed class MainWindowView : Grid
         }
     }
 
-    private void ConfigureControls()
+    private void コントロールを設定する()
     {
-        TargetPath.Text = Directory.GetCurrentDirectory();
+        対象パス欄.Text = Directory.GetCurrentDirectory();
 
-        _targetLabel.Target = TargetPath;
+        _targetLabel.Target = 対象パス欄;
         _targetLabel.VerticalAlignment = VerticalAlignment.Center;
-        _configurationLabel.Target = ConfigurationPath;
+        _configurationLabel.Target = 設定パス欄;
         _configurationLabel.VerticalAlignment = VerticalAlignment.Center;
-        ShortcutHints.FontSize = 11;
-        ShortcutHints.Opacity = 0.75;
-        ShortcutHints.TextWrapping = TextWrapping.Wrap;
+        ショートカット案内.FontSize = 11;
+        ショートカット案内.Opacity = 0.75;
+        ショートカット案内.TextWrapping = TextWrapping.Wrap;
 
-        ConfigureTabOrder();
+        タブ順を設定する();
 
-        CancelButton.IsEnabled = false;
-        DangerFilter.IsChecked = true;
-        WarningFilter.IsChecked = true;
-        AttentionFilter.IsChecked = true;
+        キャンセルボタン.IsEnabled = false;
+        危険絞り込み.IsChecked = true;
+        警告絞り込み.IsChecked = true;
+        注意絞り込み.IsChecked = true;
 
-        LanguageSelector.ItemsSource = new[] { "日本語", "English" };
-        LanguageSelector.SelectedIndex = 0;
-        LanguageSelector.MinWidth = 100;
+        表示言語選択.ItemsSource = new[] { "日本語", "English" };
+        表示言語選択.SelectedIndex = 0;
+        表示言語選択.MinWidth = 100;
 
-        ThemeSelector.ItemsSource = new[] { "ダーク", "ライト" };
-        ThemeSelector.SelectedIndex = 0;
-        ThemeSelector.MinWidth = 100;
+        テーマ選択.ItemsSource = new[] { "ダーク", "ライト" };
+        テーマ選択.SelectedIndex = 0;
+        テーマ選択.MinWidth = 100;
 
-        Progress.IsIndeterminate = true;
-        Progress.IsVisible = false;
-        DetailMessage.TextWrapping = TextWrapping.Wrap;
-        DetailLocation.TextWrapping = TextWrapping.Wrap;
-        ConfigurationSummary.TextWrapping = TextWrapping.Wrap;
+        進捗表示.IsIndeterminate = true;
+        進捗表示.IsVisible = false;
+        詳細メッセージ.TextWrapping = TextWrapping.Wrap;
+        詳細位置.TextWrapping = TextWrapping.Wrap;
+        設定概要.TextWrapping = TextWrapping.Wrap;
 
-        ConfigureDiagnosticsGrid();
+        診断一覧を設定する();
     }
 
-    private void ApplyCommandHelp(UserInterfaceLanguage language)
+    private void コマンドヘルプを適用する(UserInterfaceLanguage language)
     {
-        ApplyCommandHelp(_targetLabel, GuiCommands.TargetFocus, language);
-        ApplyCommandHelp(TargetPath, GuiCommands.TargetFocus, language);
-        ApplyCommandHelp(_configurationLabel, GuiCommands.ConfigurationFocus, language);
-        ApplyCommandHelp(ConfigurationPath, GuiCommands.ConfigurationFocus, language);
+        コマンドヘルプを適用する(_targetLabel, GUIコマンド.対象欄フォーカス, language);
+        コマンドヘルプを適用する(対象パス欄, GUIコマンド.対象欄フォーカス, language);
+        コマンドヘルプを適用する(_configurationLabel, GUIコマンド.設定欄フォーカス, language);
+        コマンドヘルプを適用する(設定パス欄, GUIコマンド.設定欄フォーカス, language);
 
-        ApplyCommandHelp(TargetFileButton, GuiCommands.TargetFile, language);
-        ApplyCommandHelp(TargetFolderButton, GuiCommands.TargetFolder, language);
-        ApplyCommandHelp(ConfigurationButton, GuiCommands.PickConfiguration, language);
-        ApplyCommandHelp(EditConfigurationButton, GuiCommands.EditConfiguration, language);
-        ApplyCommandHelp(ClearConfigurationButton, GuiCommands.ClearConfiguration, language);
-        ApplyCommandHelp(AnalyzeButton, GuiCommands.Analyze, language);
-        ApplyCommandHelp(CancelButton, GuiCommands.Cancel, language);
-        ApplyCommandHelp(SearchFilter, GuiCommands.Search, language);
+        コマンドヘルプを適用する(対象ファイルボタン, GUIコマンド.対象ファイル選択, language);
+        コマンドヘルプを適用する(対象フォルダーボタン, GUIコマンド.対象フォルダー選択, language);
+        コマンドヘルプを適用する(設定選択ボタン, GUIコマンド.設定選択, language);
+        コマンドヘルプを適用する(設定編集ボタン, GUIコマンド.設定編集, language);
+        コマンドヘルプを適用する(設定消去ボタン, GUIコマンド.設定消去, language);
+        コマンドヘルプを適用する(解析ボタン, GUIコマンド.解析開始, language);
+        コマンドヘルプを適用する(キャンセルボタン, GUIコマンド.解析キャンセル, language);
+        コマンドヘルプを適用する(検索絞り込み, GUIコマンド.診断検索, language);
 
-        ApplyCommandHelp(DangerFilter, GuiCommands.DangerFilter, language);
-        ApplyCommandHelp(WarningFilter, GuiCommands.WarningFilter, language);
-        ApplyCommandHelp(AttentionFilter, GuiCommands.AttentionFilter, language);
-        ApplyCommandHelp(LanguageSelector, GuiCommands.LanguageMenu, language);
-        ApplyCommandHelp(ThemeSelector, GuiCommands.ThemeMenu, language);
+        コマンドヘルプを適用する(危険絞り込み, GUIコマンド.危険絞り込み, language);
+        コマンドヘルプを適用する(警告絞り込み, GUIコマンド.警告絞り込み, language);
+        コマンドヘルプを適用する(注意絞り込み, GUIコマンド.注意絞り込み, language);
+        コマンドヘルプを適用する(表示言語選択, GUIコマンド.言語メニュー, language);
+        コマンドヘルプを適用する(テーマ選択, GUIコマンド.テーマメニュー, language);
 
-        ApplyCommandHelp(CopySelectedButton, GuiCommands.CopySelected, language);
-        ApplyCommandHelp(CopyAllButton, GuiCommands.CopyAll, language);
-        ApplyCommandHelp(OpenSourceButton, GuiCommands.OpenSource, language);
-        ApplyCommandHelp(ExportJsonButton, GuiCommands.ExportJson, language);
-        ApplyCommandHelp(ExportSarifButton, GuiCommands.ExportSarif, language);
+        コマンドヘルプを適用する(選択項目コピー, GUIコマンド.選択項目コピー, language);
+        コマンドヘルプを適用する(全件コピー, GUIコマンド.全件コピー, language);
+        コマンドヘルプを適用する(ソースを開くボタン, GUIコマンド.ソースを開く, language);
+        コマンドヘルプを適用する(JSON出力ボタン, GUIコマンド.JSON出力, language);
+        コマンドヘルプを適用する(SARIF出力ボタン, GUIコマンド.SARIF出力, language);
 
         AutomationProperties.SetHelpText(
-            ShortcutHints,
+            ショートカット案内,
             language == UserInterfaceLanguage.Japanese
                 ? "主要shortcut。詳細は各controlのtooltipまたはメニューで確認できます。"
                 : "Primary shortcuts. More shortcuts are available in control tooltips and menus."
         );
     }
 
-    private static void ApplyCommandHelp(
+    private static void コマンドヘルプを適用する(
         Control control,
-        GuiCommandDefinition command,
+        GUIコマンド定義 command,
         UserInterfaceLanguage language
-    ) => command.ApplyHelp(control, language);
+    ) => command.ヘルプを適用する(control, language);
 
-    private void ConfigureTabOrder()
+    private void タブ順を設定する()
     {
-        TargetPath.TabIndex = 0;
-        TargetFileButton.TabIndex = 1;
-        TargetFolderButton.TabIndex = 2;
-        ConfigurationPath.TabIndex = 3;
-        ConfigurationButton.TabIndex = 4;
-        EditConfigurationButton.TabIndex = 5;
-        ClearConfigurationButton.TabIndex = 6;
-        DangerFilter.TabIndex = 7;
-        WarningFilter.TabIndex = 8;
-        AttentionFilter.TabIndex = 9;
-        SearchFilter.TabIndex = 10;
-        AnalyzeButton.TabIndex = 11;
-        CancelButton.TabIndex = 12;
-        LanguageSelector.TabIndex = 13;
-        ThemeSelector.TabIndex = 14;
-        DiagnosticsGrid.TabIndex = 15;
-        CopySelectedButton.TabIndex = 16;
-        OpenSourceButton.TabIndex = 17;
-        CopyAllButton.TabIndex = 18;
-        ExportJsonButton.TabIndex = 19;
-        ExportSarifButton.TabIndex = 20;
+        対象パス欄.TabIndex = 0;
+        対象ファイルボタン.TabIndex = 1;
+        対象フォルダーボタン.TabIndex = 2;
+        設定パス欄.TabIndex = 3;
+        設定選択ボタン.TabIndex = 4;
+        設定編集ボタン.TabIndex = 5;
+        設定消去ボタン.TabIndex = 6;
+        危険絞り込み.TabIndex = 7;
+        警告絞り込み.TabIndex = 8;
+        注意絞り込み.TabIndex = 9;
+        検索絞り込み.TabIndex = 10;
+        解析ボタン.TabIndex = 11;
+        キャンセルボタン.TabIndex = 12;
+        表示言語選択.TabIndex = 13;
+        テーマ選択.TabIndex = 14;
+        診断一覧.TabIndex = 15;
+        選択項目コピー.TabIndex = 16;
+        ソースを開くボタン.TabIndex = 17;
+        全件コピー.TabIndex = 18;
+        JSON出力ボタン.TabIndex = 19;
+        SARIF出力ボタン.TabIndex = 20;
     }
 
-    private void ConfigureDiagnosticsGrid()
+    private void 診断一覧を設定する()
     {
-        DiagnosticsGrid.AutoGenerateColumns = false;
-        DiagnosticsGrid.IsReadOnly = true;
-        DiagnosticsGrid.CanUserReorderColumns = true;
-        DiagnosticsGrid.CanUserResizeColumns = true;
-        DiagnosticsGrid.CanUserSortColumns = true;
-        DiagnosticsGrid.GridLinesVisibility = DataGridGridLinesVisibility.Horizontal;
-        DiagnosticsGrid.SelectionMode = DataGridSelectionMode.Single;
-        DiagnosticsGrid.MinHeight = 260;
+        診断一覧.AutoGenerateColumns = false;
+        診断一覧.IsReadOnly = true;
+        診断一覧.CanUserReorderColumns = true;
+        診断一覧.CanUserResizeColumns = true;
+        診断一覧.CanUserSortColumns = true;
+        診断一覧.GridLinesVisibility = DataGridGridLinesVisibility.Horizontal;
+        診断一覧.SelectionMode = DataGridSelectionMode.Single;
+        診断一覧.MinHeight = 260;
 
-        DiagnosticsGrid.Columns.Add(
-            CreateTextColumn(string.Empty, nameof(DiagnosticRow.SeverityText))
-        );
-        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.RuleId)));
-        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.FileName)));
-        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.Line)));
-        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.Column)));
-        DiagnosticsGrid.Columns.Add(CreateTextColumn(string.Empty, nameof(DiagnosticRow.Message)));
+        診断一覧.Columns.Add(文字列列を作成する(string.Empty, nameof(DiagnosticRow.SeverityText)));
+        診断一覧.Columns.Add(文字列列を作成する(string.Empty, nameof(DiagnosticRow.RuleId)));
+        診断一覧.Columns.Add(文字列列を作成する(string.Empty, nameof(DiagnosticRow.FileName)));
+        診断一覧.Columns.Add(文字列列を作成する(string.Empty, nameof(DiagnosticRow.Line)));
+        診断一覧.Columns.Add(文字列列を作成する(string.Empty, nameof(DiagnosticRow.Column)));
+        診断一覧.Columns.Add(文字列列を作成する(string.Empty, nameof(DiagnosticRow.Message)));
     }
 
-    private Grid BuildTargetSection()
+    private Grid 対象欄を構築する()
     {
         var section = new Grid { ColumnSpacing = 8, RowSpacing = 8 };
         section.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
@@ -314,19 +309,19 @@ internal sealed class MainWindowView : Grid
         section.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         section.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
-        AddToGrid(section, _targetLabel, 0, 0);
-        AddToGrid(section, TargetPath, 0, 1);
-        AddToGrid(section, TargetFileButton, 0, 2);
-        AddToGrid(section, TargetFolderButton, 0, 3);
-        AddToGrid(section, _configurationLabel, 1, 0);
-        AddToGrid(section, ConfigurationPath, 1, 1);
-        AddToGrid(section, ConfigurationButton, 1, 2);
-        AddToGrid(section, EditConfigurationButton, 1, 3);
-        AddToGrid(section, ClearConfigurationButton, 1, 4);
+        一覧へ追加する(section, _targetLabel, 0, 0);
+        一覧へ追加する(section, 対象パス欄, 0, 1);
+        一覧へ追加する(section, 対象ファイルボタン, 0, 2);
+        一覧へ追加する(section, 対象フォルダーボタン, 0, 3);
+        一覧へ追加する(section, _configurationLabel, 1, 0);
+        一覧へ追加する(section, 設定パス欄, 1, 1);
+        一覧へ追加する(section, 設定選択ボタン, 1, 2);
+        一覧へ追加する(section, 設定編集ボタン, 1, 3);
+        一覧へ追加する(section, 設定消去ボタン, 1, 4);
         return section;
     }
 
-    private Grid BuildFilterSection()
+    private Grid 絞り込み欄を構築する()
     {
         var grid = new Grid { RowSpacing = 8 };
         grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
@@ -341,12 +336,12 @@ internal sealed class MainWindowView : Grid
         };
         _showLabel.VerticalAlignment = VerticalAlignment.Center;
         filters.Children.Add(_showLabel);
-        filters.Children.Add(DangerFilter);
-        filters.Children.Add(WarningFilter);
-        filters.Children.Add(AttentionFilter);
-        filters.Children.Add(SearchFilter);
-        filters.Children.Add(AnalyzeButton);
-        filters.Children.Add(CancelButton);
+        filters.Children.Add(危険絞り込み);
+        filters.Children.Add(警告絞り込み);
+        filters.Children.Add(注意絞り込み);
+        filters.Children.Add(検索絞り込み);
+        filters.Children.Add(解析ボタン);
+        filters.Children.Add(キャンセルボタン);
 
         var preferences = new StackPanel
         {
@@ -357,61 +352,61 @@ internal sealed class MainWindowView : Grid
         _languageLabel.VerticalAlignment = VerticalAlignment.Center;
         _themeLabel.VerticalAlignment = VerticalAlignment.Center;
         preferences.Children.Add(_languageLabel);
-        preferences.Children.Add(LanguageSelector);
+        preferences.Children.Add(表示言語選択);
         preferences.Children.Add(_themeLabel);
-        preferences.Children.Add(ThemeSelector);
+        preferences.Children.Add(テーマ選択);
 
-        AddToGrid(grid, filters, 0, 0);
-        AddToGrid(grid, preferences, 1, 0);
-        AddToGrid(grid, ShortcutHints, 2, 0);
+        一覧へ追加する(grid, filters, 0, 0);
+        一覧へ追加する(grid, preferences, 1, 0);
+        一覧へ追加する(grid, ショートカット案内, 2, 0);
         return grid;
     }
 
-    private StackPanel BuildSummarySection()
+    private StackPanel 集計欄を構築する()
     {
         var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16 };
-        panel.Children.Add(DangerCount);
-        panel.Children.Add(WarningCount);
-        panel.Children.Add(AttentionCount);
-        panel.Children.Add(ConfigurationSummary);
+        panel.Children.Add(危険件数表示);
+        panel.Children.Add(警告件数表示);
+        panel.Children.Add(注意件数表示);
+        panel.Children.Add(設定概要);
         return panel;
     }
 
-    private Grid BuildDiagnosticsSection()
+    private Grid 診断一覧欄を構築する()
     {
         var grid = new Grid { ColumnSpacing = 12 };
         grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(3, GridUnitType.Star)));
         grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(2, GridUnitType.Star)));
 
-        AddToGrid(grid, DiagnosticsGrid, 0, 0);
-        AddToGrid(grid, BuildDetailPane(), 0, 1);
+        一覧へ追加する(grid, 診断一覧, 0, 0);
+        一覧へ追加する(grid, 詳細欄を構築する(), 0, 1);
         return grid;
     }
 
-    private Border BuildDetailPane()
+    private Border 詳細欄を構築する()
     {
         var panel = new StackPanel { Spacing = 8, Margin = new Thickness(8) };
         _detailHeading.FontSize = 18;
         panel.Children.Add(_detailHeading);
-        panel.Children.Add(DetailSeverity);
-        panel.Children.Add(DetailRule);
-        panel.Children.Add(DetailSymbol);
-        panel.Children.Add(DetailLocation);
-        panel.Children.Add(DetailMessage);
+        panel.Children.Add(詳細重要度);
+        panel.Children.Add(詳細規則);
+        panel.Children.Add(詳細シンボル);
+        panel.Children.Add(詳細位置);
+        panel.Children.Add(詳細メッセージ);
 
         var diagnosticActions = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
         };
-        diagnosticActions.Children.Add(CopySelectedButton);
-        diagnosticActions.Children.Add(OpenSourceButton);
+        diagnosticActions.Children.Add(選択項目コピー);
+        diagnosticActions.Children.Add(ソースを開くボタン);
         panel.Children.Add(diagnosticActions);
 
         var resultActions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        resultActions.Children.Add(CopyAllButton);
-        resultActions.Children.Add(ExportJsonButton);
-        resultActions.Children.Add(ExportSarifButton);
+        resultActions.Children.Add(全件コピー);
+        resultActions.Children.Add(JSON出力ボタン);
+        resultActions.Children.Add(SARIF出力ボタン);
         panel.Children.Add(resultActions);
 
         return new Border
@@ -422,35 +417,35 @@ internal sealed class MainWindowView : Grid
         };
     }
 
-    private Grid BuildStatusSection()
+    private Grid 状態欄を構築する()
     {
         var grid = new Grid { ColumnSpacing = 12 };
         grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
         grid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(180)));
-        AddToGrid(grid, Status, 0, 0);
-        AddToGrid(grid, Progress, 0, 1);
+        一覧へ追加する(grid, 状態表示, 0, 0);
+        一覧へ追加する(grid, 進捗表示, 0, 1);
         return grid;
     }
 
-    internal void ClearDetails(UserInterfaceLanguage language)
+    internal void 詳細を消去する(UserInterfaceLanguage language)
     {
-        DetailSeverity.Text = GuiText.Format(GuiTextKey.SeverityDetail, language, "-");
-        DetailRule.Text = GuiText.Format(GuiTextKey.RuleDetail, language, "-");
-        DetailSymbol.Text = GuiText.Format(GuiTextKey.SymbolDetail, language, "-");
-        DetailLocation.Text = GuiText.Format(GuiTextKey.LocationDetail, language, "-");
-        DetailMessage.Text = GuiText.Get(GuiTextKey.SelectDiagnostic, language);
+        詳細重要度.Text = GUI文言.書式化する(GUI文言キー.重要度詳細, language, "-");
+        詳細規則.Text = GUI文言.書式化する(GUI文言キー.規則詳細, language, "-");
+        詳細シンボル.Text = GUI文言.書式化する(GUI文言キー.シンボル詳細, language, "-");
+        詳細位置.Text = GUI文言.書式化する(GUI文言キー.位置詳細, language, "-");
+        詳細メッセージ.Text = GUI文言.取得する(GUI文言キー.診断選択案内, language);
     }
 
-    private void AddSection(Control control, int row)
+    private void 欄を追加する(Control control, int row)
     {
         Grid.SetRow(control, row);
         Children.Add(control);
     }
 
-    private static DataGridTextColumn CreateTextColumn(string header, string propertyName) =>
+    private static DataGridTextColumn 文字列列を作成する(string header, string propertyName) =>
         new() { Header = header, Binding = new Binding(propertyName) };
 
-    private static void AddToGrid(Grid grid, Control control, int row, int column)
+    private static void 一覧へ追加する(Grid grid, Control control, int row, int column)
     {
         Grid.SetRow(control, row);
         Grid.SetColumn(control, column);

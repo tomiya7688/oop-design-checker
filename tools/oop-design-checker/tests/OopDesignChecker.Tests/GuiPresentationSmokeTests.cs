@@ -4,16 +4,16 @@ using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Tests;
 
-internal static class GuiPresentationSmokeTests
+internal static class GUI表示スモークテスト
 {
-    public static void Run()
+    public static void 実行する()
     {
-        FiltersBySeverity();
-        FiltersByRuleFileSymbolAndMessage();
-        DiagnosticRowsFollowSelectedLanguage();
+        重要度で絞り込む();
+        規則とファイルとシンボルと説明で絞り込む();
+        診断行へ選択言語を適用する();
     }
 
-    private static void FiltersBySeverity()
+    private static void 重要度で絞り込む()
     {
         var rows = new[]
         {
@@ -56,7 +56,7 @@ internal static class GuiPresentationSmokeTests
         }
     }
 
-    private static void FiltersByRuleFileSymbolAndMessage()
+    private static void 規則とファイルとシンボルと説明で絞り込む()
     {
         var rows = new[]
         {
@@ -86,7 +86,7 @@ internal static class GuiPresentationSmokeTests
         }
     }
 
-    private static void DiagnosticRowsFollowSelectedLanguage()
+    private static void 診断行へ選択言語を適用する()
     {
         var diagnostic = new DesignDiagnostic(
             new RuleDescriptor(
