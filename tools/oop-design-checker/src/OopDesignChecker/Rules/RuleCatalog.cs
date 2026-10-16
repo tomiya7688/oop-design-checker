@@ -19,9 +19,9 @@ internal static class RuleCatalog
             new StaticMemberCandidateRule(),
             new StaticClassCandidateRule(),
             new StatefulStaticDesignRule(),
-            new EncapsulationLeakRule(),
-            new ObjectInvariantBypassRule(),
-            new ExcessiveExternalStateManipulationRule(),
+            new カプセル化漏出規則(),
+            new 不変条件迂回規則(),
+            new 外部状態操作過剰規則(),
             new OversizedMainOperationRule(),
             new 疑わしい継承関係規則(),
             new 親契約未使用規則(),
@@ -30,11 +30,11 @@ internal static class RuleCatalog
             new ConcreteTypeDependencyRule(),
             new AvoidableConcreteConstructionRule(),
             new CompositionCandidateRule(),
-            new MultipleObjectsInClassRule(),
-            new AnemicObjectRule(),
+            new 複数オブジェクト混在規則(),
+            new 貧血オブジェクト規則(),
             new ExcessiveUnrelatedDependenciesRule(),
             new ExcessiveObjectNavigationRule(),
-            new GetterSetterOnlyObjectRule(),
+            new 取得設定のみオブジェクト規則(),
         ];
     }
 }

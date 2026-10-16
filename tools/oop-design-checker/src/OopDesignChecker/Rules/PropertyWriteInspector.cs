@@ -4,94 +4,106 @@ using OopDesignChecker.Analysis;
 
 namespace OopDesignChecker.Rules;
 
-internal static class PropertyWriteInspector
+internal static class プロパティ書き込み検査器
 {
-    public static PropertyWriteScope GetWriteScope(解析文脈 context, IPropertySymbol property)
+    public static プロパティ書き込み範囲 書き込み範囲を調べる(
+        解析文脈 文脈,
+        IPropertySymbol プロパティ
+    )
     {
-        var hasInternalWrite = false;
-        var hasExternalWrite = false;
+        var 内部書き込みがある = false;
+        var 外部書き込みがある = false;
 
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 文脈.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            var 意味モデル = 文脈.対象プロジェクト.意味モデルを取得する(構文木);
+            var 構文ルート = 構文木.GetRoot();
 
-            foreach (var assignment in root.DescendantNodes().OfType<AssignmentExpressionSyntax>())
+            foreach (
+                var 代入式 in 構文ルート.DescendantNodes().OfType<AssignmentExpressionSyntax>()
+            )
             {
-                if (!IsTargetProperty(semanticModel, assignment.Left, property))
+                if (!対象プロパティである(意味モデル, 代入式.Left, プロパティ))
                 {
                     continue;
                 }
 
-                ClassifyWrite(
-                    semanticModel,
-                    assignment.SpanStart,
-                    property,
-                    ref hasInternalWrite,
-                    ref hasExternalWrite
+                書き込みを分類する(
+                    意味モデル,
+                    代入式.SpanStart,
+                    プロパティ,
+                    ref 内部書き込みがある,
+                    ref 外部書き込みがある
                 );
             }
 
-            foreach (var unary in root.DescendantNodes().OfType<PrefixUnaryExpressionSyntax>())
+            foreach (
+                var 単項式 in 構文ルート.DescendantNodes().OfType<PrefixUnaryExpressionSyntax>()
+            )
             {
-                if (IsTargetProperty(semanticModel, unary.Operand, property))
+                if (対象プロパティである(意味モデル, 単項式.Operand, プロパティ))
                 {
-                    ClassifyWrite(
-                        semanticModel,
-                        unary.SpanStart,
-                        property,
-                        ref hasInternalWrite,
-                        ref hasExternalWrite
+                    書き込みを分類する(
+                        意味モデル,
+                        単項式.SpanStart,
+                        プロパティ,
+                        ref 内部書き込みがある,
+                        ref 外部書き込みがある
                     );
                 }
             }
 
-            foreach (var unary in root.DescendantNodes().OfType<PostfixUnaryExpressionSyntax>())
+            foreach (
+                var 単項式 in 構文ルート.DescendantNodes().OfType<PostfixUnaryExpressionSyntax>()
+            )
             {
-                if (IsTargetProperty(semanticModel, unary.Operand, property))
+                if (対象プロパティである(意味モデル, 単項式.Operand, プロパティ))
                 {
-                    ClassifyWrite(
-                        semanticModel,
-                        unary.SpanStart,
-                        property,
-                        ref hasInternalWrite,
-                        ref hasExternalWrite
+                    書き込みを分類する(
+                        意味モデル,
+                        単項式.SpanStart,
+                        プロパティ,
+                        ref 内部書き込みがある,
+                        ref 外部書き込みがある
                     );
                 }
             }
         }
 
-        return new PropertyWriteScope(hasInternalWrite, hasExternalWrite);
+        return new プロパティ書き込み範囲(内部書き込みがある, 外部書き込みがある);
     }
 
-    private static bool IsTargetProperty(
-        SemanticModel semanticModel,
+    private static bool 対象プロパティである(
+        SemanticModel 意味モデル,
         ExpressionSyntax expression,
-        IPropertySymbol property
+        IPropertySymbol プロパティ
     ) =>
         SymbolEqualityComparer.Default.Equals(
-            semanticModel.GetSymbolInfo(expression).Symbol,
-            property
+            意味モデル.GetSymbolInfo(expression).Symbol,
+            プロパティ
         );
 
-    private static void ClassifyWrite(
-        SemanticModel semanticModel,
-        int position,
-        IPropertySymbol property,
-        ref bool hasInternalWrite,
-        ref bool hasExternalWrite
+    private static void 書き込みを分類する(
+        SemanticModel 意味モデル,
+        int 位置,
+        IPropertySymbol プロパティ,
+        ref bool 内部書き込みがある,
+        ref bool 外部書き込みがある
     )
     {
-        var writingType = semanticModel.GetEnclosingSymbol(position)?.ContainingType;
-        if (SymbolEqualityComparer.Default.Equals(writingType, property.ContainingType))
+        var 書き込み型 = 意味モデル.GetEnclosingSymbol(位置)?.ContainingType;
+        if (SymbolEqualityComparer.Default.Equals(書き込み型, プロパティ.ContainingType))
         {
-            hasInternalWrite = true;
+            内部書き込みがある = true;
         }
         else
         {
-            hasExternalWrite = true;
+            外部書き込みがある = true;
         }
     }
 }
 
-internal readonly record struct PropertyWriteScope(bool HasInternalWrite, bool HasExternalWrite);
+internal readonly record struct プロパティ書き込み範囲(
+    bool 内部書き込みがある,
+    bool 外部書き込みがある
+);

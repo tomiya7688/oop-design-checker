@@ -38,7 +38,7 @@ internal sealed class StatefulStaticDesignRule : I解析規則
                         && !IsThreadLocal(field)
                         && (
                             !field.IsReadOnly
-                            || MutableCollectionInspector.IsMutableCollection(field.Type)
+                            || 可変コレクション検査器.可変コレクションである(field.Type)
                         )
                     )
                     .Cast<ISymbol>();
@@ -51,7 +51,7 @@ internal sealed class StatefulStaticDesignRule : I解析規則
                         && !property.IsImplicitlyDeclared
                         && (
                             property.SetMethod is not null
-                            || MutableCollectionInspector.IsMutableCollection(property.Type)
+                            || 可変コレクション検査器.可変コレクションである(property.Type)
                         )
                     )
                     .Cast<ISymbol>();

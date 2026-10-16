@@ -66,8 +66,8 @@ internal sealed class ExcessiveObjectNavigationRule : I解析規則
                 containingType is not null
                 && memberType is not null
                 && (
-                    DataCarrierClassifier.IsExplicitDataCarrier(containingType)
-                    || DataCarrierClassifier.IsExplicitDataCarrier(memberType)
+                    データ保持型判定器.明示的データ保持型である(containingType)
+                    || データ保持型判定器.明示的データ保持型である(memberType)
                 )
             )
             {

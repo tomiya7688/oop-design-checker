@@ -8,17 +8,17 @@ internal static class EncapsulationPrecisionSmokeTests
     public static void Run()
     {
         FrameworkFacingPublicTypeIsAllowed();
-        SerializableCarrierIsAllowedByEncapsulationRule();
-        PrivateNestedMutableFieldsAreNotExposed();
-        PrivateNestedCollectionAndSetterAreNotExposed();
-        PrivateNestedInsidePrivateNestedIsNotExposed();
-        PublicMutableFieldRemainsDanger();
-        InternalMutableFieldRemainsDanger();
-        ProtectedNestedMutableFieldRemainsDanger();
-        PrivateProtectedNestedMutableFieldRemainsDanger();
-        MessageCarrierExternalWritesAreAllowed();
-        ValidatingPublicSetterDoesNotBypassInvariant();
-        UnguardedPublicSetterStillBypassesInvariant();
+        カプセル化規則でシリアル化データ保持型を許可する();
+        非公開入れ子型の可変フィールドを公開扱いにしない();
+        非公開入れ子型のコレクションと設定子を公開扱いにしない();
+        非公開型内の非公開入れ子型を公開扱いにしない();
+        公開可変フィールドを危険として検出する();
+        内部可変フィールドを危険として検出する();
+        保護された入れ子型の可変フィールドを危険として検出する();
+        非公開保護入れ子型の可変フィールドを危険として検出する();
+        メッセージ型への外部書き込みを許可する();
+        検証付き公開設定子で不変条件を迂回しない();
+        未検証の公開設定子による不変条件迂回を検出する();
     }
 
     private static void FrameworkFacingPublicTypeIsAllowed()
@@ -32,7 +32,7 @@ internal static class EncapsulationPrecisionSmokeTests
         AssertNone(new 過剰可視性規則(), source, "OOP101");
     }
 
-    private static void SerializableCarrierIsAllowedByEncapsulationRule()
+    private static void カプセル化規則でシリアル化データ保持型を許可する()
     {
         const string source = """
             using System.Collections.Generic;
@@ -45,10 +45,10 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new EncapsulationLeakRule(), source, "OOP106");
+        AssertNone(new カプセル化漏出規則(), source, "OOP106");
     }
 
-    private static void PrivateNestedMutableFieldsAreNotExposed()
+    private static void 非公開入れ子型の可変フィールドを公開扱いにしない()
     {
         const string source = """
             public sealed class Owner
@@ -70,10 +70,10 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new EncapsulationLeakRule(), source, "OOP106");
+        AssertNone(new カプセル化漏出規則(), source, "OOP106");
     }
 
-    private static void PrivateNestedCollectionAndSetterAreNotExposed()
+    private static void 非公開入れ子型のコレクションと設定子を公開扱いにしない()
     {
         const string source = """
             using System.Collections.Generic;
@@ -95,10 +95,10 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new EncapsulationLeakRule(), source, "OOP106");
+        AssertNone(new カプセル化漏出規則(), source, "OOP106");
     }
 
-    private static void PrivateNestedInsidePrivateNestedIsNotExposed()
+    private static void 非公開型内の非公開入れ子型を公開扱いにしない()
     {
         const string source = """
             public sealed class Owner
@@ -121,10 +121,10 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new EncapsulationLeakRule(), source, "OOP106");
+        AssertNone(new カプセル化漏出規則(), source, "OOP106");
     }
 
-    private static void PublicMutableFieldRemainsDanger()
+    private static void 公開可変フィールドを危険として検出する()
     {
         const string source = """
             public struct PublicState
@@ -133,15 +133,10 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
-            new EncapsulationLeakRule(),
-            source,
-            "OOP106",
-            DesignDiagnosticSeverity.Danger
-        );
+        AssertSingle(new カプセル化漏出規則(), source, "OOP106", DesignDiagnosticSeverity.Danger);
     }
 
-    private static void InternalMutableFieldRemainsDanger()
+    private static void 内部可変フィールドを危険として検出する()
     {
         const string source = """
             internal struct InternalState
@@ -150,15 +145,10 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
-            new EncapsulationLeakRule(),
-            source,
-            "OOP106",
-            DesignDiagnosticSeverity.Danger
-        );
+        AssertSingle(new カプセル化漏出規則(), source, "OOP106", DesignDiagnosticSeverity.Danger);
     }
 
-    private static void ProtectedNestedMutableFieldRemainsDanger()
+    private static void 保護された入れ子型の可変フィールドを危険として検出する()
     {
         const string source = """
             public class Owner
@@ -172,15 +162,10 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
-            new EncapsulationLeakRule(),
-            source,
-            "OOP106",
-            DesignDiagnosticSeverity.Danger
-        );
+        AssertSingle(new カプセル化漏出規則(), source, "OOP106", DesignDiagnosticSeverity.Danger);
     }
 
-    private static void PrivateProtectedNestedMutableFieldRemainsDanger()
+    private static void 非公開保護入れ子型の可変フィールドを危険として検出する()
     {
         const string source = """
             public class Owner
@@ -194,15 +179,10 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
-            new EncapsulationLeakRule(),
-            source,
-            "OOP106",
-            DesignDiagnosticSeverity.Danger
-        );
+        AssertSingle(new カプセル化漏出規則(), source, "OOP106", DesignDiagnosticSeverity.Danger);
     }
 
-    private static void MessageCarrierExternalWritesAreAllowed()
+    private static void メッセージ型への外部書き込みを許可する()
     {
         const string source = """
             internal sealed class UserCreatedMessage
@@ -223,10 +203,10 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new ExcessiveExternalStateManipulationRule(), source, "OOP108");
+        AssertNone(new 外部状態操作過剰規則(), source, "OOP108");
     }
 
-    private static void ValidatingPublicSetterDoesNotBypassInvariant()
+    private static void 検証付き公開設定子で不変条件を迂回しない()
     {
         const string source = """
             using System;
@@ -261,10 +241,10 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new ObjectInvariantBypassRule(), source, "OOP107");
+        AssertNone(new 不変条件迂回規則(), source, "OOP107");
     }
 
-    private static void UnguardedPublicSetterStillBypassesInvariant()
+    private static void 未検証の公開設定子による不変条件迂回を検出する()
     {
         const string source = """
             using System;
@@ -285,12 +265,7 @@ internal static class EncapsulationPrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
-            new ObjectInvariantBypassRule(),
-            source,
-            "OOP107",
-            DesignDiagnosticSeverity.Danger
-        );
+        AssertSingle(new 不変条件迂回規則(), source, "OOP107", DesignDiagnosticSeverity.Danger);
     }
 
     private static void AssertNone(I解析規則 rule, string source, string ruleId)

@@ -6,44 +6,44 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class GetterSetterOnlyObjectRule : I解析規則
+internal sealed class 取得設定のみオブジェクト規則 : I解析規則
 {
-    private const int MinimumStateProperties = 4;
-    private const int MaximumBehaviorMethods = 1;
+    private const int 最小状態プロパティ数 = 4;
+    private const int 最大振る舞いメソッド数 = 1;
 
     public RuleDescriptor 規則情報 { get; } =
         new("OOP405", "Getter/setter-only object candidate", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 文脈)
     {
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 文脈.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            var 意味モデル = 文脈.対象プロジェクト.意味モデルを取得する(構文木);
+            var 構文ルート = 構文木.GetRoot();
 
-            foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
+            foreach (var 宣言 in 構文ルート.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
                 if (
-                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || DataCarrierClassifier.IsExplicitDataCarrier(symbol)
+                    意味モデル.GetDeclaredSymbol(宣言) is not INamedTypeSymbol 記号
+                    || データ保持型判定器.明示的データ保持型である(記号)
                 )
                 {
                     continue;
                 }
 
-                var stateProperties = declaration
+                var 状態プロパティ群 = 宣言
                     .Members.OfType<PropertyDeclarationSyntax>()
-                    .Where(IsTrivialPublicStateProperty)
+                    .Where(単純な公開状態プロパティである)
                     .ToArray();
-                if (stateProperties.Length < MinimumStateProperties)
+                if (状態プロパティ群.Length < 最小状態プロパティ数)
                 {
                     continue;
                 }
 
-                var behaviorCount = declaration
+                var 振る舞い数 = 宣言
                     .Members.OfType<MethodDeclarationSyntax>()
-                    .Count(method =>
-                        semanticModel.GetDeclaredSymbol(method)
+                    .Count(メソッド =>
+                        意味モデル.GetDeclaredSymbol(メソッド)
                             is IMethodSymbol
                             {
                                 IsStatic: false,
@@ -51,30 +51,30 @@ internal sealed class GetterSetterOnlyObjectRule : I解析規則
                                 MethodKind: MethodKind.Ordinary,
                             }
                     );
-                if (behaviorCount > MaximumBehaviorMethods)
+                if (振る舞い数 > 最大振る舞いメソッド数)
                 {
                     continue;
                 }
 
                 yield return 診断生成器.生成する(
                     規則情報,
-                    declaration.Identifier.GetLocation(),
-                    $"This object exposes {stateProperties.Length} trivial public state properties but only {behaviorCount} public behavior method(s). If it is a domain object rather than an explicit data carrier, move behavior that owns this state into the object.",
-                    symbol.ToDisplayString()
+                    宣言.Identifier.GetLocation(),
+                    $"This object exposes {状態プロパティ群.Length} trivial public state properties but only {振る舞い数} public behavior method(s). If it is a domain object rather than an explicit data carrier, move behavior that owns this state into the object.",
+                    記号.ToDisplayString()
                 );
             }
         }
     }
 
-    private static bool IsTrivialPublicStateProperty(PropertyDeclarationSyntax property)
+    private static bool 単純な公開状態プロパティである(PropertyDeclarationSyntax プロパティ)
     {
-        if (!property.Modifiers.Any(SyntaxKind.PublicKeyword) || property.AccessorList is null)
+        if (!プロパティ.Modifiers.Any(SyntaxKind.PublicKeyword) || プロパティ.AccessorList is null)
         {
             return false;
         }
 
-        var accessors = property.AccessorList.Accessors;
-        return accessors.Count >= 1
-            && accessors.All(accessor => accessor.Body is null && accessor.ExpressionBody is null);
+        var アクセサ群 = プロパティ.AccessorList.Accessors;
+        return アクセサ群.Count >= 1
+            && アクセサ群.All(アクセサ => アクセサ.Body is null && アクセサ.ExpressionBody is null);
     }
 }

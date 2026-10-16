@@ -6,52 +6,54 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class EncapsulationLeakRule : I解析規則
+internal sealed class カプセル化漏出規則 : I解析規則
 {
     public RuleDescriptor 規則情報 { get; } =
         new("OOP106", "Encapsulation leak", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 文脈)
     {
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 文脈.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            var 意味モデル = 文脈.対象プロジェクト.意味モデルを取得する(構文木);
+            var 構文ルート = 構文木.GetRoot();
 
-            foreach (var diagnostic in フィールドを解析する(root, semanticModel))
+            foreach (var 診断 in フィールドを解析する(構文ルート, 意味モデル))
             {
-                yield return diagnostic;
+                yield return 診断;
             }
 
-            foreach (var property in root.DescendantNodes().OfType<PropertyDeclarationSyntax>())
+            foreach (
+                var プロパティ in 構文ルート.DescendantNodes().OfType<PropertyDeclarationSyntax>()
+            )
             {
                 if (
-                    semanticModel.GetDeclaredSymbol(property) is not IPropertySymbol propertySymbol
-                    || !IsExposedBeyondDeclaringType(propertySymbol.ContainingType)
-                    || DataCarrierClassifier.IsExplicitDataCarrier(propertySymbol.ContainingType)
+                    意味モデル.GetDeclaredSymbol(プロパティ) is not IPropertySymbol プロパティ記号
+                    || !宣言型の外部に公開される(プロパティ記号.ContainingType)
+                    || データ保持型判定器.明示的データ保持型である(プロパティ記号.ContainingType)
                 )
                 {
                     continue;
                 }
 
-                if (ExposesMutableStoredValue(property, propertySymbol, semanticModel))
+                if (可変な保持値を公開する(プロパティ, プロパティ記号, 意味モデル))
                 {
                     yield return 診断生成器.生成する(
                         規則情報,
-                        property.Identifier.GetLocation(),
+                        プロパティ.Identifier.GetLocation(),
                         "This property exposes mutable internal storage directly. Prefer a read-only view, copy, or behavior-oriented API.",
-                        propertySymbol.ToDisplayString(),
+                        プロパティ記号.ToDisplayString(),
                         DesignDiagnosticSeverity.Danger
                     );
                 }
 
-                if (HasUnnecessarilyPublicSetter(context, property, propertySymbol))
+                if (不要に公開された設定子がある(文脈, プロパティ, プロパティ記号))
                 {
                     yield return 診断生成器.生成する(
                         規則情報,
-                        property.Identifier.GetLocation(),
+                        プロパティ.Identifier.GetLocation(),
                         "This public setter is only used by the declaring object. Narrow the setter visibility.",
-                        propertySymbol.ToDisplayString()
+                        プロパティ記号.ToDisplayString()
                     );
                 }
             }
@@ -59,50 +61,50 @@ internal sealed class EncapsulationLeakRule : I解析規則
     }
 
     private IEnumerable<DesignDiagnostic> フィールドを解析する(
-        SyntaxNode root,
-        SemanticModel semanticModel
+        SyntaxNode 構文ルート,
+        SemanticModel 意味モデル
     )
     {
-        foreach (var variable in root.DescendantNodes().OfType<VariableDeclaratorSyntax>())
+        foreach (var 変数 in 構文ルート.DescendantNodes().OfType<VariableDeclaratorSyntax>())
         {
-            if (variable.Parent?.Parent is not FieldDeclarationSyntax)
+            if (変数.Parent?.Parent is not FieldDeclarationSyntax)
             {
                 continue;
             }
 
             if (
-                semanticModel.GetDeclaredSymbol(variable) is not IFieldSymbol field
-                || field.DeclaredAccessibility != Accessibility.Public
-                || field.IsConst
-                || !IsExposedBeyondDeclaringType(field.ContainingType)
-                || DataCarrierClassifier.IsExplicitDataCarrier(field.ContainingType)
+                意味モデル.GetDeclaredSymbol(変数) is not IFieldSymbol フィールド
+                || フィールド.DeclaredAccessibility != Accessibility.Public
+                || フィールド.IsConst
+                || !宣言型の外部に公開される(フィールド.ContainingType)
+                || データ保持型判定器.明示的データ保持型である(フィールド.ContainingType)
             )
             {
                 continue;
             }
 
-            var severity = field.IsReadOnly
+            var 重要度 = フィールド.IsReadOnly
                 ? DesignDiagnosticSeverity.Warning
                 : DesignDiagnosticSeverity.Danger;
-            var message = field.IsReadOnly
+            var 診断文 = フィールド.IsReadOnly
                 ? "A public field exposes the object's representation. Prefer a property or behavior-oriented API."
                 : "A public mutable field allows callers to bypass encapsulation.";
 
             yield return 診断生成器.生成する(
                 規則情報,
-                variable.GetLocation(),
-                message,
-                field.ToDisplayString(),
-                severity
+                変数.GetLocation(),
+                診断文,
+                フィールド.ToDisplayString(),
+                重要度
             );
         }
     }
 
-    private static bool IsExposedBeyondDeclaringType(INamedTypeSymbol type)
+    private static bool 宣言型の外部に公開される(INamedTypeSymbol 型)
     {
-        for (var current = type; current is not null; current = current.ContainingType)
+        for (var 現在の項目 = 型; 現在の項目 is not null; 現在の項目 = 現在の項目.ContainingType)
         {
-            if (current.DeclaredAccessibility == Accessibility.Private)
+            if (現在の項目.DeclaredAccessibility == Accessibility.Private)
             {
                 return false;
             }
@@ -111,98 +113,99 @@ internal sealed class EncapsulationLeakRule : I解析規則
         return true;
     }
 
-    private static bool ExposesMutableStoredValue(
-        PropertyDeclarationSyntax declaration,
-        IPropertySymbol property,
-        SemanticModel semanticModel
+    private static bool 可変な保持値を公開する(
+        PropertyDeclarationSyntax 宣言,
+        IPropertySymbol プロパティ,
+        SemanticModel 意味モデル
     )
     {
         if (
-            property.GetMethod?.DeclaredAccessibility != Accessibility.Public
-            || !MutableCollectionInspector.IsMutableCollection(property.Type)
+            プロパティ.GetMethod?.DeclaredAccessibility != Accessibility.Public
+            || !可変コレクション検査器.可変コレクションである(プロパティ.Type)
         )
         {
             return false;
         }
 
-        if (declaration.ExpressionBody is not null)
+        if (宣言.ExpressionBody is not null)
         {
-            return ReferencesStoredValue(declaration.ExpressionBody.Expression, semanticModel);
+            return 保持値を参照する(宣言.ExpressionBody.Expression, 意味モデル);
         }
 
-        var getter = declaration.AccessorList?.Accessors.FirstOrDefault(accessor =>
-            accessor.IsKind(SyntaxKind.GetAccessorDeclaration)
+        var 取得子 = 宣言.AccessorList?.Accessors.FirstOrDefault(アクセサ =>
+            アクセサ.IsKind(SyntaxKind.GetAccessorDeclaration)
         );
-        if (getter is null)
+        if (取得子 is null)
         {
             return false;
         }
 
-        if (getter.Body is null && getter.ExpressionBody is null)
+        if (取得子.Body is null && 取得子.ExpressionBody is null)
         {
             return true;
         }
 
-        if (getter.ExpressionBody is not null)
+        if (取得子.ExpressionBody is not null)
         {
-            return ReferencesStoredValue(getter.ExpressionBody.Expression, semanticModel);
+            return 保持値を参照する(取得子.ExpressionBody.Expression, 意味モデル);
         }
 
         if (
-            getter.Body?.Statements
+            取得子.Body?.Statements
             is [ReturnStatementSyntax { Expression: not null } returnStatement]
         )
         {
-            return ReferencesStoredValue(returnStatement.Expression, semanticModel);
+            return 保持値を参照する(returnStatement.Expression, 意味モデル);
         }
 
         return false;
     }
 
-    private static bool ReferencesStoredValue(
-        ExpressionSyntax expression,
-        SemanticModel semanticModel
-    ) =>
-        semanticModel.GetSymbolInfo(expression).Symbol
+    private static bool 保持値を参照する(ExpressionSyntax expression, SemanticModel 意味モデル) =>
+        意味モデル.GetSymbolInfo(expression).Symbol
             is IFieldSymbol { IsStatic: false }
                 or IPropertySymbol { IsStatic: false };
 
-    private static bool HasUnnecessarilyPublicSetter(
-        解析文脈 context,
-        PropertyDeclarationSyntax declaration,
-        IPropertySymbol property
+    private static bool 不要に公開された設定子がある(
+        解析文脈 文脈,
+        PropertyDeclarationSyntax 宣言,
+        IPropertySymbol プロパティ
     )
     {
         if (
-            !context.対象プロジェクト.アプリケーションである
-            || property.SetMethod?.DeclaredAccessibility != Accessibility.Public
-            || property.IsAbstract
-            || property.IsVirtual
-            || property.IsOverride
-            || property.ContainingType.TypeKind == TypeKind.Interface
-            || ImplementsInterfaceProperty(property)
-            || declaration.AccessorList?.Accessors.Any(accessor =>
-                accessor.IsKind(SyntaxKind.InitAccessorDeclaration)
+            !文脈.対象プロジェクト.アプリケーションである
+            || プロパティ.SetMethod?.DeclaredAccessibility != Accessibility.Public
+            || プロパティ.IsAbstract
+            || プロパティ.IsVirtual
+            || プロパティ.IsOverride
+            || プロパティ.ContainingType.TypeKind == TypeKind.Interface
+            || インターフェースプロパティを実装する(プロパティ)
+            || 宣言.AccessorList?.Accessors.Any(アクセサ =>
+                アクセサ.IsKind(SyntaxKind.InitAccessorDeclaration)
             ) == true
         )
         {
             return false;
         }
 
-        var writeScope = PropertyWriteInspector.GetWriteScope(context, property);
-        return writeScope.HasInternalWrite && !writeScope.HasExternalWrite;
+        var 書き込み範囲 = プロパティ書き込み検査器.書き込み範囲を調べる(文脈, プロパティ);
+        return 書き込み範囲.内部書き込みがある && !書き込み範囲.外部書き込みがある;
     }
 
-    private static bool ImplementsInterfaceProperty(IPropertySymbol property)
+    private static bool インターフェースプロパティを実装する(IPropertySymbol プロパティ)
     {
-        foreach (var interfaceType in property.ContainingType.AllInterfaces)
+        foreach (var インターフェース型 in プロパティ.ContainingType.AllInterfaces)
         {
-            foreach (var interfaceProperty in interfaceType.GetMembers().OfType<IPropertySymbol>())
+            foreach (
+                var インターフェースプロパティ in インターフェース型
+                    .GetMembers()
+                    .OfType<IPropertySymbol>()
+            )
             {
-                var implementation = property.ContainingType.FindImplementationForInterfaceMember(
-                    interfaceProperty
+                var 実装記号 = プロパティ.ContainingType.FindImplementationForInterfaceMember(
+                    インターフェースプロパティ
                 );
-                if (SymbolEqualityComparer.Default.Equals(implementation, property))
+                if (SymbolEqualityComparer.Default.Equals(実装記号, プロパティ))
                 {
                     return true;
                 }
