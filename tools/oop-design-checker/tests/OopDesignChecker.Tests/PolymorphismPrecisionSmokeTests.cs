@@ -98,9 +98,9 @@ internal static class PolymorphismPrecisionSmokeTests
         AssertNone(new UnnecessaryAbstractionRule(), source, "OOP003");
     }
 
-    private static void AssertNone(IAnalysisRule rule, string source, string ruleId)
+    private static void AssertNone(I解析規則 rule, string source, string ruleId)
     {
-        var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+        var diagnostics = rule.解析する(TestProjectFactory.Create(source)).ToArray();
         if (diagnostics.Length == 0)
         {
             return;

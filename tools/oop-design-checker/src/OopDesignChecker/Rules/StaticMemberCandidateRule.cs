@@ -5,12 +5,12 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class StaticMemberCandidateRule : IAnalysisRule
+internal sealed class StaticMemberCandidateRule : I解析規則
 {
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP103", "Static member candidate", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -48,8 +48,8 @@ internal sealed class StaticMemberCandidateRule : IAnalysisRule
                 continue;
             }
 
-            yield return DiagnosticFactory.Create(
-                Descriptor,
+            yield return 診断生成器.生成する(
+                規則情報,
                 method.Identifier.GetLocation(),
                 "This method does not use instance state and can be static.",
                 methodSymbol.ToDisplayString()

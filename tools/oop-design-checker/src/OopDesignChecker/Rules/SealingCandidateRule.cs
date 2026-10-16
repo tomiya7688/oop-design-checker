@@ -5,12 +5,12 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class SealingCandidateRule : IAnalysisRule
+internal sealed class SealingCandidateRule : I解析規則
 {
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP102", "Sealing candidate", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         if (!context.Project.IsApplication)
         {
@@ -52,8 +52,8 @@ internal sealed class SealingCandidateRule : IAnalysisRule
                 continue;
             }
 
-            yield return DiagnosticFactory.Create(
-                Descriptor,
+            yield return 診断生成器.生成する(
+                規則情報,
                 item.Declaration.Identifier.GetLocation(),
                 "This application class has no known derived type or inheritance contract. Consider sealing it to make the design intent explicit.",
                 symbol.ToDisplayString()

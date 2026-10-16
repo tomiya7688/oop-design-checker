@@ -5,15 +5,15 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class MultipleObjectsInClassRule : IAnalysisRule
+internal sealed class MultipleObjectsInClassRule : I解析規則
 {
     private const int MinimumStateMembersPerCluster = 3;
     private const int MinimumMethodsPerCluster = 3;
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP401", "Possible multiple objects in one class", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -38,8 +38,8 @@ internal sealed class MultipleObjectsInClassRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     declaration.Identifier.GetLocation(),
                     $"This class contains {clusters.Length} independent state/behavior clusters. The clusters do not share instance state and each has multiple state members and operations, which suggests more than one object may be represented here.",
                     symbol.ToDisplayString()

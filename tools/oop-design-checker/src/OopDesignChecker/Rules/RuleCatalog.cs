@@ -5,9 +5,7 @@ namespace OopDesignChecker.Rules;
 
 internal static class RuleCatalog
 {
-    public static IReadOnlyList<IAnalysisRule> CreateDefault(
-        CheckerConfiguration? configuration = null
-    )
+    public static IReadOnlyList<I解析規則> CreateDefault(CheckerConfiguration? configuration = null)
     {
         configuration ??= new CheckerConfiguration();
 

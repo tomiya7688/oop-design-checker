@@ -5,12 +5,12 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class UnnecessaryAbstractionRule : IAnalysisRule
+internal sealed class UnnecessaryAbstractionRule : I解析規則
 {
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP003", "Unnecessary abstraction candidate", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         var interfaces = ReadSourceInterfaces(context).ToArray();
         var classes = ReadSourceClasses(context).ToArray();
@@ -44,8 +44,8 @@ internal sealed class UnnecessaryAbstractionRule : IAnalysisRule
                 continue;
             }
 
-            yield return DiagnosticFactory.Create(
-                Descriptor,
+            yield return 診断生成器.生成する(
+                規則情報,
                 interfaceEntry.Declaration.Identifier.GetLocation(),
                 $"Internal abstraction {interfaceEntry.Symbol.Name} has one implementation and is not used as a declared type outside that implementation. The abstraction currently adds ceremony without enabling polymorphic use.",
                 interfaceEntry.Symbol.ToDisplayString()

@@ -191,9 +191,9 @@ internal static class StaticPrecisionSmokeTests
         AssertNone(new StatefulStaticDesignRule(), source, "OOP105");
     }
 
-    private static void AssertNone(IAnalysisRule rule, string source, string ruleId)
+    private static void AssertNone(I解析規則 rule, string source, string ruleId)
     {
-        var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+        var diagnostics = rule.解析する(TestProjectFactory.Create(source)).ToArray();
         if (diagnostics.Length == 0)
         {
             return;
@@ -203,9 +203,9 @@ internal static class StaticPrecisionSmokeTests
         throw new InvalidOperationException($"Expected no {ruleId} diagnostic, found [{found}].");
     }
 
-    private static void AssertSingleRule(IAnalysisRule rule, string source, string ruleId)
+    private static void AssertSingleRule(I解析規則 rule, string source, string ruleId)
     {
-        var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+        var diagnostics = rule.解析する(TestProjectFactory.Create(source)).ToArray();
         if (diagnostics.Length == 1 && diagnostics[0].Rule.Id == ruleId)
         {
             return;
@@ -222,7 +222,7 @@ internal static class StaticPrecisionSmokeTests
         DesignDiagnosticSeverity severity
     )
     {
-        var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+        var diagnostics = rule.解析する(TestProjectFactory.Create(source)).ToArray();
         if (
             diagnostics.Length != 1
             || diagnostics[0].Rule.Id != ruleId

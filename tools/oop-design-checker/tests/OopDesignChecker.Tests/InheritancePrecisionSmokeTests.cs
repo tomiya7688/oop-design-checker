@@ -292,7 +292,7 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         var diagnostic = new ConcreteTypeDependencyRule()
-            .Analyze(TestProjectFactory.Create(source))
+            .解析する(TestProjectFactory.Create(source))
             .Single(item => item.Rule.Id == "OOP305");
         if (!diagnostic.Message.Contains("project abstraction IAlpha", StringComparison.Ordinal))
         {
@@ -395,7 +395,7 @@ internal static class InheritancePrecisionSmokeTests
         source.AppendLine("}");
 
         var diagnostics = new ConcreteTypeDependencyRule()
-            .Analyze(TestProjectFactory.Create(source.ToString()))
+            .解析する(TestProjectFactory.Create(source.ToString()))
             .Where(diagnostic => diagnostic.Rule.Id == "OOP305")
             .ToArray();
 
@@ -713,13 +713,13 @@ internal static class InheritancePrecisionSmokeTests
     }
 
     private static void AssertSingle(
-        IAnalysisRule rule,
+        I解析規則 rule,
         string source,
         string ruleId,
         DesignDiagnosticSeverity severity
     )
     {
-        var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+        var diagnostics = rule.解析する(TestProjectFactory.Create(source)).ToArray();
         if (
             diagnostics.Length == 1
             && diagnostics[0].Rule.Id == ruleId
@@ -738,9 +738,9 @@ internal static class InheritancePrecisionSmokeTests
         );
     }
 
-    private static void AssertNone(IAnalysisRule rule, string source, string ruleId)
+    private static void AssertNone(I解析規則 rule, string source, string ruleId)
     {
-        var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+        var diagnostics = rule.解析する(TestProjectFactory.Create(source)).ToArray();
         if (diagnostics.Length == 0)
         {
             return;

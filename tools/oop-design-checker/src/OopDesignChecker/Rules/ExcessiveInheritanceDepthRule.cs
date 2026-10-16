@@ -5,7 +5,7 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ExcessiveInheritanceDepthRule : IAnalysisRule
+internal sealed class ExcessiveInheritanceDepthRule : I解析規則
 {
     private readonly int _warningDepth;
 
@@ -23,10 +23,10 @@ internal sealed class ExcessiveInheritanceDepthRule : IAnalysisRule
         _warningDepth = warningDepth;
     }
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP304", "Excessive inheritance depth", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -49,8 +49,8 @@ internal sealed class ExcessiveInheritanceDepthRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     declaration.Identifier.GetLocation(),
                     $"Project-owned inheritance depth is {depth} (configured attention threshold: {_warningDepth}). Deep inheritance can make behavior harder to reason about.",
                     symbol.ToDisplayString()

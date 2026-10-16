@@ -21,7 +21,7 @@ namespace OopDesignChecker.Rules;
   ]
 }
 */
-internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
+internal sealed class AvoidableConcreteConstructionRule : I解析規則
 {
     // Startupや起動処理を表す一般的な型名をcomposition境界として扱う。
     private static readonly string[] CompositionTypeSuffixes =
@@ -47,7 +47,7 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
         "Wire",
     ];
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new(
             "OOP306",
             "Avoidable concrete construction dependency",
@@ -71,7 +71,7 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
       "戻り値": "検出したOOP306診断の列挙"
     }
     */
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -112,8 +112,8 @@ internal sealed class AvoidableConcreteConstructionRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     creation.NewKeyword.GetLocation(),
                     $"{containingType.Name} directly constructs replaceable collaborator {concreteType.Name}, while project abstraction {abstraction.Name} defines a behavioral contract. Prefer receiving the abstraction when the collaborator lifecycle is not owned here.",
                     containingType.ToDisplayString()

@@ -230,7 +230,7 @@ internal static class OperationPrecisionSmokeTests
     private static void AssertSingle(string source)
     {
         var diagnostics = new OversizedMainOperationRule()
-            .Analyze(TestProjectFactory.Create(source))
+            .解析する(TestProjectFactory.Create(source))
             .ToArray();
         if (
             diagnostics.Length != 1
@@ -251,7 +251,7 @@ internal static class OperationPrecisionSmokeTests
     private static void AssertNone(string source)
     {
         var diagnostics = new OversizedMainOperationRule()
-            .Analyze(TestProjectFactory.Create(source))
+            .解析する(TestProjectFactory.Create(source))
             .ToArray();
         if (diagnostics.Length == 0)
         {

@@ -5,18 +5,18 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class CompositionCandidateRule : IAnalysisRule
+internal sealed class CompositionCandidateRule : I解析規則
 {
     private const int MinimumProtectedMembersUsed = 2;
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new(
             "OOP307",
             "Composition may be more appropriate than inheritance",
             DesignDiagnosticSeverity.Attention
         );
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -49,8 +49,8 @@ internal sealed class CompositionCandidateRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     declaration.Identifier.GetLocation(),
                     $"Child operation {reuseOperation.OperationName} builds new behavior from {reuseOperation.ProtectedMembersUsed} protected members of concrete base {baseType.Name} without specializing parent behavior. Composition may express the relationship more accurately.",
                     symbol.ToDisplayString()

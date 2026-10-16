@@ -4,9 +4,9 @@ namespace OopDesignChecker.Analysis;
 
 internal sealed class AnalysisEngine
 {
-    private readonly IReadOnlyList<IAnalysisRule> _rules;
+    private readonly IReadOnlyList<I解析規則> _rules;
 
-    public AnalysisEngine(IReadOnlyList<IAnalysisRule> rules)
+    public AnalysisEngine(IReadOnlyList<I解析規則> rules)
     {
         _rules = rules;
     }
@@ -52,7 +52,7 @@ internal sealed class AnalysisEngine
         foreach (var rule in _rules)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            foreach (var diagnostic in rule.Analyze(context))
+            foreach (var diagnostic in rule.解析する(context))
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 yield return diagnostic;

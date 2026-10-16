@@ -6,15 +6,15 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class GetterSetterOnlyObjectRule : IAnalysisRule
+internal sealed class GetterSetterOnlyObjectRule : I解析規則
 {
     private const int MinimumStateProperties = 4;
     private const int MaximumBehaviorMethods = 1;
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP405", "Getter/setter-only object candidate", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -56,8 +56,8 @@ internal sealed class GetterSetterOnlyObjectRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     declaration.Identifier.GetLocation(),
                     $"This object exposes {stateProperties.Length} trivial public state properties but only {behaviorCount} public behavior method(s). If it is a domain object rather than an explicit data carrier, move behavior that owns this state into the object.",
                     symbol.ToDisplayString()

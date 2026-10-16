@@ -32,7 +32,7 @@ public static class CheckerService
         var disabledRules = configuration.DisabledRules.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var rules = RuleCatalog
             .CreateDefault(configuration)
-            .Where(rule => !disabledRules.Contains(rule.Descriptor.Id))
+            .Where(rule => !disabledRules.Contains(rule.規則情報.Id))
             .ToArray();
 
         IProjectLoader loader = ProjectLoaderFactory.Create(configuration.IgnoredPaths);

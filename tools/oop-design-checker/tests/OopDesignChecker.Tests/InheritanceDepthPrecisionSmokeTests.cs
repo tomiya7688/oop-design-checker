@@ -378,7 +378,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
         string? expectedFileName = null
     )
     {
-        var diagnostics = rule.Analyze(context).ToArray();
+        var diagnostics = rule.解析する(context).ToArray();
         if (
             diagnostics.Length == 1
             && diagnostics[0].Rule.Id == "OOP304"
@@ -412,7 +412,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
     private static void AssertNone(ExcessiveInheritanceDepthRule rule, AnalysisContext context)
     {
-        var diagnostics = rule.Analyze(context).Where(item => item.Rule.Id == "OOP304").ToArray();
+        var diagnostics = rule.解析する(context).Where(item => item.Rule.Id == "OOP304").ToArray();
         if (diagnostics.Length == 0)
         {
             return;

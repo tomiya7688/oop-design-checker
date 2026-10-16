@@ -5,15 +5,15 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class MissingCommonAbstractionRule : IAnalysisRule
+internal sealed class MissingCommonAbstractionRule : I解析規則
 {
     private const int MinimumRelatedTypes = 3;
     private const int MinimumSharedOperations = 2;
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP001", "Missing common abstraction", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         var candidates = context
             .Project.SyntaxTrees.SelectMany(tree => FindCandidates(context, tree))
@@ -33,8 +33,8 @@ internal sealed class MissingCommonAbstractionRule : IAnalysisRule
             }
 
             var names = string.Join(", ", related.Select(candidate => candidate.Symbol.Name));
-            yield return DiagnosticFactory.Create(
-                Descriptor,
+            yield return 診断生成器.生成する(
+                規則情報,
                 related[0].Declaration.Identifier.GetLocation(),
                 $"Types {names} expose the same {related[0].OperationCount} public instance operations and are used in the same call-site role, but share no project abstraction. Consider an interface or meaningful base abstraction."
             );

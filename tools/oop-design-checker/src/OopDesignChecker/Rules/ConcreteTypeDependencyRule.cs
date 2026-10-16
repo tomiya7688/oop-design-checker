@@ -5,12 +5,12 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
+internal sealed class ConcreteTypeDependencyRule : I解析規則
 {
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP305", "Concrete dependency despite abstraction", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         var consumerTypeUsages = new Dictionary<ISymbol, ConsumerTypeUsage>(
             SymbolEqualityComparer.Default
@@ -66,8 +66,8 @@ internal sealed class ConcreteTypeDependencyRule : IAnalysisRule
                         continue;
                     }
 
-                    yield return DiagnosticFactory.Create(
-                        Descriptor,
+                    yield return 診断生成器.生成する(
+                        規則情報,
                         parameter.Identifier.GetLocation(),
                         $"This constructor depends on concrete type {concreteType.Name} even though project abstraction {abstraction.Name} covers the behavior this consumer uses. Depend on the abstraction when replacement is part of the design.",
                         parameterSymbol.ToDisplayString()
