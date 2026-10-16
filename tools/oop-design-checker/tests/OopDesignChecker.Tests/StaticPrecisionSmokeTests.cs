@@ -3,21 +3,21 @@ using OopDesignChecker.Rules;
 
 namespace OopDesignChecker.Tests;
 
-internal static class StaticPrecisionSmokeTests
+internal static class 静的設計精度スモークテスト
 {
     public static void Run()
     {
         OrdinaryExternalTypeAttributeDoesNotSuppressVisibilityDiagnostic();
         ExternalContractIsNotSealingCandidate();
-        ExternalBaseContractMethodsAreNotStaticCandidates();
-        OrdinaryExternalTypeAttributeDoesNotSuppressStaticClassCandidate();
-        OrdinaryExternalMethodAttributeDoesNotSuppressStaticMemberCandidate();
-        FrameworkCallbackMethodIsNotStaticCandidate();
-        AttributedTypeIsNotStaticClassCandidate();
+        外部基底型の契約メソッドを静的化候補にしない();
+        通常の外部型属性は静的クラス候補を抑制しない();
+        通常の外部メソッド属性は静的メンバー候補を抑制しない();
+        フレームワークのコールバックを静的化候補にしない();
+        属性付き型を静的クラス候補にしない();
         SerializableTypeRemainsSealingCandidate();
-        MutableStaticPropertyIsWarning();
-        ReadonlyMutableCollectionIsWarning();
-        ThreadStaticFieldIsAllowed();
+        変更可能な静的プロパティは警告になる();
+        読み取り専用宣言の可変コレクションは警告になる();
+        スレッドローカルフィールドは許可する();
     }
 
     private static void OrdinaryExternalTypeAttributeDoesNotSuppressVisibilityDiagnostic()
@@ -47,7 +47,7 @@ internal static class StaticPrecisionSmokeTests
         AssertNone(new 封止候補規則(), source, "OOP102");
     }
 
-    private static void ExternalBaseContractMethodsAreNotStaticCandidates()
+    private static void 外部基底型の契約メソッドを静的化候補にしない()
     {
         const string source = """
             internal class SampleException : System.Exception
@@ -59,10 +59,10 @@ internal static class StaticPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new StaticMemberCandidateRule(), source, "OOP103");
+        AssertNone(new 静的メンバー候補規則(), source, "OOP103");
     }
 
-    private static void FrameworkCallbackMethodIsNotStaticCandidate()
+    private static void フレームワークのコールバックを静的化候補にしない()
     {
         const string source = """
             using System.Runtime.Serialization;
@@ -80,10 +80,10 @@ internal static class StaticPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new StaticMemberCandidateRule(), source, "OOP103");
+        AssertNone(new 静的メンバー候補規則(), source, "OOP103");
     }
 
-    private static void OrdinaryExternalTypeAttributeDoesNotSuppressStaticClassCandidate()
+    private static void 通常の外部型属性は静的クラス候補を抑制しない()
     {
         const string source = """
             [System.Obsolete]
@@ -93,10 +93,10 @@ internal static class StaticPrecisionSmokeTests
             }
             """;
 
-        AssertSingleRule(new StaticClassCandidateRule(), source, "OOP104");
+        AssertSingleRule(new 静的クラス候補規則(), source, "OOP104");
     }
 
-    private static void OrdinaryExternalMethodAttributeDoesNotSuppressStaticMemberCandidate()
+    private static void 通常の外部メソッド属性は静的メンバー候補を抑制しない()
     {
         const string source = """
             internal sealed class Worker
@@ -110,10 +110,10 @@ internal static class StaticPrecisionSmokeTests
             }
             """;
 
-        AssertSingleRule(new StaticMemberCandidateRule(), source, "OOP103");
+        AssertSingleRule(new 静的メンバー候補規則(), source, "OOP103");
     }
 
-    private static void AttributedTypeIsNotStaticClassCandidate()
+    private static void 属性付き型を静的クラス候補にしない()
     {
         const string source = """
             [System.Serializable]
@@ -123,7 +123,7 @@ internal static class StaticPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new StaticClassCandidateRule(), source, "OOP104");
+        AssertNone(new 静的クラス候補規則(), source, "OOP104");
     }
 
     private static void SerializableTypeRemainsSealingCandidate()
@@ -138,7 +138,7 @@ internal static class StaticPrecisionSmokeTests
         AssertSingleRule(new 封止候補規則(), source, "OOP102");
     }
 
-    private static void MutableStaticPropertyIsWarning()
+    private static void 変更可能な静的プロパティは警告になる()
     {
         const string source = """
             internal static class GlobalState
@@ -148,14 +148,14 @@ internal static class StaticPrecisionSmokeTests
             """;
 
         AssertSingle(
-            new StatefulStaticDesignRule(),
+            new 状態保持静的設計規則(),
             source,
             "OOP105",
             DesignDiagnosticSeverity.Warning
         );
     }
 
-    private static void ReadonlyMutableCollectionIsWarning()
+    private static void 読み取り専用宣言の可変コレクションは警告になる()
     {
         const string source = """
             using System.Collections.Generic;
@@ -169,14 +169,14 @@ internal static class StaticPrecisionSmokeTests
             """;
 
         AssertSingle(
-            new StatefulStaticDesignRule(),
+            new 状態保持静的設計規則(),
             source,
             "OOP105",
             DesignDiagnosticSeverity.Warning
         );
     }
 
-    private static void ThreadStaticFieldIsAllowed()
+    private static void スレッドローカルフィールドは許可する()
     {
         const string source = """
             internal static class PerThreadState
@@ -188,7 +188,7 @@ internal static class StaticPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new StatefulStaticDesignRule(), source, "OOP105");
+        AssertNone(new 状態保持静的設計規則(), source, "OOP105");
     }
 
     private static void AssertNone(I解析規則 rule, string source, string ruleId)
@@ -216,7 +216,7 @@ internal static class StaticPrecisionSmokeTests
     }
 
     private static void AssertSingle(
-        StatefulStaticDesignRule rule,
+        状態保持静的設計規則 rule,
         string source,
         string ruleId,
         DesignDiagnosticSeverity severity

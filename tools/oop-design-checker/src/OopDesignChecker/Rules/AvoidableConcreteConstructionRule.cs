@@ -8,12 +8,12 @@ namespace OopDesignChecker.Rules;
 /*
 {
   "責務": {
-    "AvoidableConcreteConstructionRule": "所有範囲外で置換可能な具象型を生成する箇所を検出する"
+    "回避可能な具象生成規則": "所有範囲外で置換可能な具象型を生成する箇所を検出する"
   },
   "フィールド": {
-    "CompositionTypeSuffixes": "composition rootとして扱う型名の末尾",
-    "CompositionMethodPrefixes": "composition処理として扱うメソッド名の先頭",
-    "Descriptor": "OOP306の識別子、説明、severity"
+    "構成型名の末尾群": "composition rootとして扱う型名の末尾",
+    "構成メソッド名の接頭辞群": "composition処理として扱うメソッド名の先頭",
+    "規則情報": "OOP306の識別子、説明、重要度"
   },
   "処理": [
     "各構文木の生成式を調べ、所有constructionを除外する",
@@ -21,10 +21,10 @@ namespace OopDesignChecker.Rules;
   ]
 }
 */
-internal sealed class AvoidableConcreteConstructionRule : I解析規則
+internal sealed class 回避可能な具象生成規則 : I解析規則
 {
-    // Startupや起動処理を表す一般的な型名をcomposition境界として扱う。
-    private static readonly string[] CompositionTypeSuffixes =
+    // Startupや起動処理を表す一般的な型名を構成境界として扱う。
+    private static readonly string[] 構成型名の末尾群 =
     [
         "CompositionRoot",
         "Bootstrap",
@@ -34,8 +34,8 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
         "AppHost",
     ];
 
-    // Composition境界の型で、配線処理を表す一般的なメソッド名を受け入れる。
-    private static readonly string[] CompositionMethodPrefixes =
+    // 構成境界の型で、配線処理を表す一般的なメソッド名を受け入れる。
+    private static readonly string[] 構成メソッド名の接頭辞群 =
     [
         "Build",
         "Compose",
@@ -71,50 +71,45 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
       "戻り値": "検出したOOP306診断の列挙"
     }
     */
-    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 解析文脈)
     {
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 解析文脈.対象プロジェクト.構文木群)
         {
             // 構文木に対応する意味モデルを使い、生成式の型と所属を解決する。
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            var 意味モデル = 解析文脈.対象プロジェクト.意味モデルを取得する(構文木);
+            var 構文根 = 構文木.GetRoot();
 
             // new式ごとに具象型依存の候補かを判定する。
             foreach (
-                var creation in root.DescendantNodes().OfType<ObjectCreationExpressionSyntax>()
+                var 生成式 in 構文根.DescendantNodes().OfType<ObjectCreationExpressionSyntax>()
             )
             {
                 if (
-                    semanticModel.GetTypeInfo(creation).Type is not INamedTypeSymbol concreteType
-                    || concreteType.TypeKind != TypeKind.Class
-                    || IsOwnedConstruction(creation, semanticModel)
+                    意味モデル.GetTypeInfo(生成式).Type is not INamedTypeSymbol 具象型
+                    || 具象型.TypeKind != TypeKind.Class
+                    || 所有範囲内の生成である(生成式, 意味モデル)
                 )
                 {
                     continue;
                 }
 
-                var abstraction = プロジェクト抽象判定器.意味のある抽象候補を探す(concreteType);
-                if (abstraction is null || !HasBehavior(concreteType))
+                var 抽象 = プロジェクト抽象判定器.意味のある抽象候補を探す(具象型);
+                if (抽象 is null || !振る舞いを持つ(具象型))
                 {
                     continue;
                 }
 
-                var containingType = semanticModel
-                    .GetEnclosingSymbol(creation.SpanStart)
-                    ?.ContainingType;
-                if (
-                    containingType is null
-                    || SymbolEqualityComparer.Default.Equals(containingType, concreteType)
-                )
+                var 所属型 = 意味モデル.GetEnclosingSymbol(生成式.SpanStart)?.ContainingType;
+                if (所属型 is null || SymbolEqualityComparer.Default.Equals(所属型, 具象型))
                 {
                     continue;
                 }
 
                 yield return 診断生成器.生成する(
                     規則情報,
-                    creation.NewKeyword.GetLocation(),
-                    $"{containingType.Name} directly constructs replaceable collaborator {concreteType.Name}, while project abstraction {abstraction.Name} defines a behavioral contract. Prefer receiving the abstraction when the collaborator lifecycle is not owned here.",
-                    containingType.ToDisplayString()
+                    生成式.NewKeyword.GetLocation(),
+                    $"{所属型.Name} directly constructs replaceable collaborator {具象型.Name}, while project abstraction {抽象.Name} defines a behavioral contract. Prefer receiving the abstraction when the collaborator lifecycle is not owned here.",
+                    所属型.ToDisplayString()
                 );
             }
         }
@@ -123,7 +118,7 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
     /*
     {
       "責務": {
-        "HasBehavior": "型が宣言したinstanceの通常メソッドを持つか判定する"
+        "振る舞いを持つ": "型が宣言したinstanceの通常メソッドを持つか判定する"
       },
       "処理": [
         "型の宣言memberからinstanceの通常メソッドを探す"
@@ -134,15 +129,15 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
       "戻り値": "instanceの通常メソッドがあればtrue"
     }
     */
-    private static bool HasBehavior(INamedTypeSymbol type) =>
-        type.GetMembers()
+    private static bool 振る舞いを持つ(INamedTypeSymbol 型) =>
+        型.GetMembers()
             .OfType<IMethodSymbol>()
-            .Any(method => method.MethodKind == MethodKind.Ordinary && !method.IsStatic);
+            .Any(メソッド => メソッド.MethodKind == MethodKind.Ordinary && !メソッド.IsStatic);
 
     /*
     {
       "責務": {
-        "IsOwnedConstruction": "生成側がlifecycleを所有するconstructionを判定する"
+        "所有範囲内の生成である": "生成側がlifecycleを所有するconstructionを判定する"
       },
       "処理": [
         "返り値、nested object graph、collection expression、composition rootの配線を確認する"
@@ -154,19 +149,19 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
       "戻り値": "いずれかの所有条件を満たす場合はtrue"
     }
     */
-    private static bool IsOwnedConstruction(
-        ObjectCreationExpressionSyntax creation,
-        SemanticModel semanticModel
+    private static bool 所有範囲内の生成である(
+        ObjectCreationExpressionSyntax 生成式,
+        SemanticModel 意味モデル
     ) =>
-        IsDirectReturn(creation)
-        || IsNestedObjectGraphConstruction(creation)
-        || creation.Ancestors().OfType<CollectionExpressionSyntax>().Any()
-        || IsCompositionRootLocalWiring(creation, semanticModel);
+        直接返される生成である(生成式)
+        || 入れ子オブジェクト生成である(生成式)
+        || 生成式.Ancestors().OfType<CollectionExpressionSyntax>().Any()
+        || 構成ルートのローカル配線である(生成式, 意味モデル);
 
     /*
     {
       "責務": {
-        "IsDirectReturn": "生成式がmethodまたはpropertyの返り値になっているか判定する"
+        "直接返される生成である": "生成式がmethodまたはpropertyの返り値になっているか判定する"
       },
       "処理": [
         "括弧、cast、switch式、conditional式の結果部分をたどる",
@@ -178,52 +173,49 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
       "戻り値": "生成式が直接返される場合はtrue"
     }
     */
-    private static bool IsDirectReturn(ObjectCreationExpressionSyntax creation)
+    private static bool 直接返される生成である(ObjectCreationExpressionSyntax 生成式)
     {
-        SyntaxNode expression = creation;
+        SyntaxNode 式 = 生成式;
 
         while (true)
         {
             // 括弧とcastは返り値との直接性を変えないため、その外側を調べ続ける。
-            if (expression.Parent is ParenthesizedExpressionSyntax or CastExpressionSyntax)
+            if (式.Parent is ParenthesizedExpressionSyntax or CastExpressionSyntax)
             {
-                expression = expression.Parent;
+                式 = 式.Parent;
                 continue;
             }
 
             // Switch armやconditionalのbranchが返り値なら、その包含式をたどる。
-            if (expression.Parent is SwitchExpressionArmSyntax arm)
+            if (式.Parent is SwitchExpressionArmSyntax 分岐)
             {
-                expression = arm;
+                式 = 分岐;
+                continue;
+            }
+
+            if (式 is SwitchExpressionArmSyntax && 式.Parent is SwitchExpressionSyntax switch式)
+            {
+                式 = switch式;
                 continue;
             }
 
             if (
-                expression is SwitchExpressionArmSyntax
-                && expression.Parent is SwitchExpressionSyntax switchExpression
+                式.Parent is ConditionalExpressionSyntax 条件式
+                && (条件式.WhenTrue == 式 || 条件式.WhenFalse == 式)
             )
             {
-                expression = switchExpression;
+                式 = 条件式;
                 continue;
             }
 
-            if (
-                expression.Parent is ConditionalExpressionSyntax conditional
-                && (conditional.WhenTrue == expression || conditional.WhenFalse == expression)
-            )
-            {
-                expression = conditional;
-                continue;
-            }
-
-            return expression.Parent is ReturnStatementSyntax or ArrowExpressionClauseSyntax;
+            return 式.Parent is ReturnStatementSyntax or ArrowExpressionClauseSyntax;
         }
     }
 
     /*
     {
       "責務": {
-        "IsNestedObjectGraphConstruction": "別のobject creationへ直接渡す生成式を判定する"
+        "入れ子オブジェクト生成である": "別のobject creationへ直接渡す生成式を判定する"
       },
       "処理": [
         "生成式を含む最も近いargumentを探す",
@@ -235,16 +227,16 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
       "戻り値": "別のobject creationのargument内にある場合はtrue"
     }
     */
-    private static bool IsNestedObjectGraphConstruction(ObjectCreationExpressionSyntax creation)
+    private static bool 入れ子オブジェクト生成である(ObjectCreationExpressionSyntax 生成式)
     {
-        var argument = creation.Ancestors().OfType<ArgumentSyntax>().FirstOrDefault();
-        return argument?.Ancestors().OfType<ObjectCreationExpressionSyntax>().Any() == true;
+        var 引数構文 = 生成式.Ancestors().OfType<ArgumentSyntax>().FirstOrDefault();
+        return 引数構文?.Ancestors().OfType<ObjectCreationExpressionSyntax>().Any() == true;
     }
 
     /*
     {
       "責務": {
-        "IsCompositionRootLocalWiring": "composition contextで生成したlocalがconstructor注入だけに使われるか判定する"
+        "構成ルートのローカル配線である": "composition contextで生成したlocalがconstructor注入だけに使われるか判定する"
       },
       "処理": [
         "括弧やcastの外側にあるlocal initializerを確認する",
@@ -259,54 +251,52 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
       "戻り値": "composition contextで生成され、全参照がconstructor argumentならtrue"
     }
     */
-    private static bool IsCompositionRootLocalWiring(
-        ObjectCreationExpressionSyntax creation,
-        SemanticModel semanticModel
+    private static bool 構成ルートのローカル配線である(
+        ObjectCreationExpressionSyntax 生成式,
+        SemanticModel 意味モデル
     )
     {
         // 括弧とcastの違いを無視して、local initializerかを判定する。
-        SyntaxNode expression = creation;
-        while (expression.Parent is ParenthesizedExpressionSyntax or CastExpressionSyntax)
+        SyntaxNode 式 = 生成式;
+        while (式.Parent is ParenthesizedExpressionSyntax or CastExpressionSyntax)
         {
-            expression = expression.Parent;
+            式 = 式.Parent;
         }
 
         if (
-            expression.Parent
-                is not EqualsValueClauseSyntax { Parent: VariableDeclaratorSyntax variable }
-            || semanticModel.GetDeclaredSymbol(variable) is not ILocalSymbol local
-            || semanticModel.GetEnclosingSymbol(creation.SpanStart) is not IMethodSymbol method
-            || !IsCompositionContext(method)
+            式.Parent is not EqualsValueClauseSyntax { Parent: VariableDeclaratorSyntax 変数宣言 }
+            || 意味モデル.GetDeclaredSymbol(変数宣言) is not ILocalSymbol ローカル変数
+            || 意味モデル.GetEnclosingSymbol(生成式.SpanStart) is not IMethodSymbol メソッド
+            || !構成境界に属する(メソッド)
         )
         {
             return false;
         }
 
         // localの利用先を一つ残らず調べ、業務処理へ流出するlocalを誤って除外しない。
-        var scope = variable.Ancestors().OfType<BaseMethodDeclarationSyntax>().FirstOrDefault();
-        if (scope is null)
+        var 探索範囲 = 変数宣言.Ancestors().OfType<BaseMethodDeclarationSyntax>().FirstOrDefault();
+        if (探索範囲 is null)
         {
             return false;
         }
 
-        var references = scope
-            .DescendantNodes()
+        var 参照群 = 探索範囲.DescendantNodes()
             .OfType<IdentifierNameSyntax>()
             .Where(identifier =>
                 SymbolEqualityComparer.Default.Equals(
-                    semanticModel.GetSymbolInfo(identifier).Symbol,
-                    local
+                    意味モデル.GetSymbolInfo(identifier).Symbol,
+                    ローカル変数
                 )
             )
             .ToArray();
 
-        return references.Length > 0 && references.All(IsDirectConstructorArgument);
+        return 参照群.Length > 0 && 参照群.All(コンストラクター引数である);
     }
 
     /*
     {
       "責務": {
-        "IsDirectConstructorArgument": "local参照がobject creationのargumentとして使われるか判定する"
+        "コンストラクター引数である": "local参照がobject creationのargumentとして使われるか判定する"
       },
       "処理": [
         "括弧とcastを越えて参照の親を確認する",
@@ -318,23 +308,23 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
       "戻り値": "object creationのargument内にある場合はtrue"
     }
     */
-    private static bool IsDirectConstructorArgument(IdentifierNameSyntax reference)
+    private static bool コンストラクター引数である(IdentifierNameSyntax reference)
     {
         // 括弧やcastで包まれていてもconstructor argumentとして扱う。
-        SyntaxNode expression = reference;
-        while (expression.Parent is ParenthesizedExpressionSyntax or CastExpressionSyntax)
+        SyntaxNode 式 = reference;
+        while (式.Parent is ParenthesizedExpressionSyntax or CastExpressionSyntax)
         {
-            expression = expression.Parent;
+            式 = 式.Parent;
         }
 
-        return expression.Parent is ArgumentSyntax argument
-            && argument.Ancestors().OfType<ObjectCreationExpressionSyntax>().Any();
+        return 式.Parent is ArgumentSyntax 引数構文
+            && 引数構文.Ancestors().OfType<ObjectCreationExpressionSyntax>().Any();
     }
 
     /*
     {
       "責務": {
-        "IsCompositionContext": "methodがアプリケーションのcomposition境界に属するか判定する"
+        "構成境界に属する": "methodがアプリケーションのcomposition境界に属するか判定する"
       },
       "処理": [
         "static Mainをentry pointとして扱う",
@@ -346,35 +336,35 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
       "戻り値": "entry pointまたは慣例に合うcomposition methodならtrue"
     }
     */
-    private static bool IsCompositionContext(IMethodSymbol method)
+    private static bool 構成境界に属する(IMethodSymbol メソッド)
     {
         // Mainは型名に依存しないapplication entry pointとして扱う。
-        if (method.IsStatic && method.Name == "Main")
+        if (メソッド.IsStatic && メソッド.Name == "Main")
         {
             return true;
         }
 
-        var containingTypeName = method.ContainingType?.Name;
-        if (containingTypeName is null || !IsCompositionTypeName(containingTypeName))
+        var 所属型名 = メソッド.ContainingType?.Name;
+        if (所属型名 is null || !構成型名である(所属型名))
         {
             return false;
         }
 
         // Composition rootのconstructorは依存関係を組み立てる場所として扱う。
-        if (method.MethodKind == MethodKind.Constructor)
+        if (メソッド.MethodKind == MethodKind.Constructor)
         {
             return true;
         }
 
-        return CompositionMethodPrefixes.Any(prefix =>
-            method.Name.StartsWith(prefix, StringComparison.Ordinal)
+        return 構成メソッド名の接頭辞群.Any(接頭辞 =>
+            メソッド.Name.StartsWith(接頭辞, StringComparison.Ordinal)
         );
     }
 
     /*
     {
       "責務": {
-        "IsCompositionTypeName": "型名がcomposition rootの慣例に合うか判定する"
+        "構成型名である": "型名がcomposition rootの慣例に合うか判定する"
       },
       "処理": [
         "Programとの完全一致または登録済みsuffixとの一致を調べる"
@@ -385,9 +375,7 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
       "戻り値": "composition rootの慣例に合う場合はtrue"
     }
     */
-    private static bool IsCompositionTypeName(string typeName) =>
-        typeName == "Program"
-        || CompositionTypeSuffixes.Any(suffix =>
-            typeName.EndsWith(suffix, StringComparison.Ordinal)
-        );
+    private static bool 構成型名である(string 型名) =>
+        型名 == "Program"
+        || 構成型名の末尾群.Any(末尾 => 型名.EndsWith(末尾, StringComparison.Ordinal));
 }

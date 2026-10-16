@@ -5,36 +5,36 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class OversizedMainOperationRule : I解析規則
+internal sealed class 過大主処理規則 : I解析規則
 {
-    private const int Minimum文数 = 20;
-    private const int WarningScore = 4;
+    private const int 最低文数 = 20;
+    private const int 警告スコア = 4;
 
     public RuleDescriptor 規則情報 { get; } =
         new("OOP201", "Oversized main operation", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 解析文脈)
     {
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 解析文脈.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            var 意味モデル = 解析文脈.対象プロジェクト.意味モデルを取得する(構文木);
+            var 構文根 = 構文木.GetRoot();
 
-            foreach (var method in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
+            foreach (var メソッド in 構文根.DescendantNodes().OfType<MethodDeclarationSyntax>())
             {
                 if (
-                    semanticModel.GetDeclaredSymbol(method) is not IMethodSymbol methodSymbol
-                    || IsFrameworkManaged(methodSymbol)
+                    意味モデル.GetDeclaredSymbol(メソッド) is not IMethodSymbol メソッド記号
+                    || フレームワーク管理下である(メソッド記号)
                 )
                 {
                     continue;
                 }
 
-                var metrics = 処理量指標計算器.計算する(method, methodSymbol, semanticModel);
+                var 処理量指標 = 処理量指標計算器.計算する(メソッド, メソッド記号, 意味モデル);
                 if (
-                    metrics.文数 < Minimum文数
-                    || 過大スコアを計算する(metrics) < WarningScore
-                    || IsPrivateHelper(context, methodSymbol)
+                    処理量指標.文数 < 最低文数
+                    || 過大スコアを計算する(処理量指標) < 警告スコア
+                    || private補助メソッドである(解析文脈, メソッド記号)
                 )
                 {
                     continue;
@@ -42,104 +42,102 @@ internal sealed class OversizedMainOperationRule : I解析規則
 
                 yield return 診断生成器.生成する(
                     規則情報,
-                    method.Identifier.GetLocation(),
-                    $"This primary operation is structurally large: {metrics.行数} lines, {metrics.文数} statements, complexity {metrics.循環的複雑度}, nesting {metrics.最大ネスト深度}. Split meaningful processing phases into methods.",
-                    methodSymbol.ToDisplayString()
+                    メソッド.Identifier.GetLocation(),
+                    $"This primary operation is structurally large: {処理量指標.行数} lines, {処理量指標.文数} statements, complexity {処理量指標.循環的複雑度}, nesting {処理量指標.最大ネスト深度}. Split meaningful processing phases into methods.",
+                    メソッド記号.ToDisplayString()
                 );
             }
         }
     }
 
-    private static bool IsFrameworkManaged(IMethodSymbol method) =>
-        フレームワーク契約判定器.外部基底型契約を持つ(method.ContainingType)
-        || フレームワーク契約判定器.フレームワーク契約属性を持つ(method.ContainingType)
-        || フレームワーク契約判定器.フレームワーク契約属性を持つ(method);
+    private static bool フレームワーク管理下である(IMethodSymbol メソッド) =>
+        フレームワーク契約判定器.外部基底型契約を持つ(メソッド.ContainingType)
+        || フレームワーク契約判定器.フレームワーク契約属性を持つ(メソッド.ContainingType)
+        || フレームワーク契約判定器.フレームワーク契約属性を持つ(メソッド);
 
-    private static int 過大スコアを計算する(処理量指標 metrics)
+    private static int 過大スコアを計算する(処理量指標 処理量指標)
     {
-        var score = 0;
+        var 点数 = 0;
 
-        score += metrics.行数 switch
+        点数 += 処理量指標.行数 switch
         {
             >= 120 => 2,
             >= 70 => 1,
             _ => 0,
         };
-        score += metrics.循環的複雑度 switch
+        点数 += 処理量指標.循環的複雑度 switch
         {
             >= 18 => 2,
             >= 10 => 1,
             _ => 0,
         };
-        score += metrics.最大ネスト深度 switch
+        点数 += 処理量指標.最大ネスト深度 switch
         {
             >= 4 => 2,
             >= 3 => 1,
             _ => 0,
         };
 
-        if (metrics.文数 >= 40)
+        if (処理量指標.文数 >= 40)
         {
-            score++;
+            点数++;
         }
 
-        if (metrics.ローカル変数数 >= 10)
+        if (処理量指標.ローカル変数数 >= 10)
         {
-            score++;
+            点数++;
         }
 
-        if (metrics.状態メンバー数 >= 5)
+        if (処理量指標.状態メンバー数 >= 5)
         {
-            score++;
+            点数++;
         }
 
-        if (metrics.トップレベル文数 >= 15)
+        if (処理量指標.トップレベル文数 >= 15)
         {
-            score++;
+            点数++;
         }
 
-        return score;
+        return 点数;
     }
 
-    private static bool IsPrivateHelper(解析文脈 context, IMethodSymbol target)
+    private static bool private補助メソッドである(解析文脈 解析文脈, IMethodSymbol 対象メソッド)
     {
-        if (target.DeclaredAccessibility != Accessibility.Private)
+        if (対象メソッド.DeclaredAccessibility != Accessibility.Private)
         {
             return false;
         }
 
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 解析文脈.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
+            var 意味モデル = 解析文脈.対象プロジェクト.意味モデルを取得する(構文木);
             foreach (
-                var invocation in syntaxTree
-                    .GetRoot()
+                var 呼び出し in 構文木.GetRoot()
                     .DescendantNodes()
                     .OfType<InvocationExpressionSyntax>()
             )
             {
                 if (
-                    semanticModel.GetSymbolInfo(invocation).Symbol
-                        is not IMethodSymbol invokedMethod
+                    意味モデル.GetSymbolInfo(呼び出し).Symbol
+                        is not IMethodSymbol 呼び出されたメソッド
                     || !SymbolEqualityComparer.Default.Equals(
-                        invokedMethod.OriginalDefinition,
-                        target.OriginalDefinition
+                        呼び出されたメソッド.OriginalDefinition,
+                        対象メソッド.OriginalDefinition
                     )
                 )
                 {
                     continue;
                 }
 
-                var callerDeclaration = invocation
-                    .Ancestors()
+                var 呼び出し元宣言 = 呼び出し.Ancestors()
                     .OfType<MethodDeclarationSyntax>()
                     .FirstOrDefault();
                 if (
-                    callerDeclaration is not null
-                    && semanticModel.GetDeclaredSymbol(callerDeclaration) is IMethodSymbol caller
+                    呼び出し元宣言 is not null
+                    && 意味モデル.GetDeclaredSymbol(呼び出し元宣言) is IMethodSymbol 呼び出し元
                     && !SymbolEqualityComparer.Default.Equals(
-                        caller.OriginalDefinition,
-                        target.OriginalDefinition
+                        呼び出し元.OriginalDefinition,
+                        対象メソッド.OriginalDefinition
                     )
                 )
                 {

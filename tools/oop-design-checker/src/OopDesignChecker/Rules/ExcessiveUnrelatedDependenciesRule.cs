@@ -5,273 +5,279 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ExcessiveUnrelatedDependenciesRule : I解析規則
+internal sealed class 過剰無関係依存規則 : I解析規則
 {
-    private const int MinimumClusters = 3;
-    private const int MinimumDependenciesPerCluster = 2;
+    private const int 最低依存群数 = 3;
+    private const int 依存群ごとの最低依存数 = 2;
 
     public RuleDescriptor 規則情報 { get; } =
         new("OOP403", "Excessive unrelated dependencies", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 解析文脈)
     {
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 解析文脈.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            var 意味モデル = 解析文脈.対象プロジェクト.意味モデルを取得する(構文木);
+            var 構文根 = 構文木.GetRoot();
 
-            foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
+            foreach (var 宣言 in 構文根.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol)
+                if (意味モデル.GetDeclaredSymbol(宣言) is not INamedTypeSymbol シンボル)
                 {
                     continue;
                 }
 
-                var dependencies = ReadDependencyFields(symbol);
-                if (dependencies.Length < MinimumClusters * MinimumDependenciesPerCluster)
+                var 依存先群 = 依存フィールドを読む(シンボル);
+                if (依存先群.Length < 最低依存群数 * 依存群ごとの最低依存数)
                 {
                     continue;
                 }
 
-                var methodUsage = ReadMethodUsage(symbol, declaration, dependencies, semanticModel);
-                var effectiveUsage = BuildEffectiveDependencyUsage(methodUsage);
-                var clusters = CountDependencyClusters(dependencies, effectiveUsage);
-                if (clusters < MinimumClusters)
+                var メソッド使用状況 = メソッド使用状況を読む(シンボル, 宣言, 依存先群, 意味モデル);
+                var 実効使用状況 = 実効依存使用状況を作る(メソッド使用状況);
+                var 依存群数 = 依存群数を数える(依存先群, 実効使用状況);
+                if (依存群数 < 最低依存群数)
                 {
                     continue;
                 }
 
                 yield return 診断生成器.生成する(
                     規則情報,
-                    declaration.Identifier.GetLocation(),
-                    $"This object contains {clusters} independent groups of project dependencies. Distinct dependency clusters often indicate several separate object concerns are being coordinated inside one object.",
-                    symbol.ToDisplayString()
+                    宣言.Identifier.GetLocation(),
+                    $"This object contains {依存群数} independent groups of project dependencies. Distinct dependency clusters often indicate several separate object concerns are being coordinated inside one object.",
+                    シンボル.ToDisplayString()
                 );
             }
         }
     }
 
-    private static IFieldSymbol[] ReadDependencyFields(INamedTypeSymbol type) =>
-        type.GetMembers()
+    private static IFieldSymbol[] 依存フィールドを読む(INamedTypeSymbol 型) =>
+        型.GetMembers()
             .OfType<IFieldSymbol>()
-            .Where(field =>
-                !field.IsStatic
-                && field.Type is INamedTypeSymbol namedType
+            .Where(フィールド =>
+                !フィールド.IsStatic
+                && フィールド.Type is INamedTypeSymbol namedType
                 && namedType.SpecialType == SpecialType.None
                 && namedType.Locations.Any(location => location.IsInSource)
             )
             .ToArray();
 
-    private static Dictionary<IMethodSymbol, MethodUsage> ReadMethodUsage(
-        INamedTypeSymbol containingType,
-        ClassDeclarationSyntax declaration,
-        IReadOnlyCollection<IFieldSymbol> dependencies,
-        SemanticModel semanticModel
+    private static Dictionary<IMethodSymbol, メソッド使用状況> メソッド使用状況を読む(
+        INamedTypeSymbol 所属型,
+        ClassDeclarationSyntax 宣言,
+        IReadOnlyCollection<IFieldSymbol> 依存先群,
+        SemanticModel 意味モデル
     )
     {
-        var dependencySet = new HashSet<IFieldSymbol>(dependencies, SymbolEqualityComparer.Default);
-        var result = new Dictionary<IMethodSymbol, MethodUsage>(SymbolEqualityComparer.Default);
+        var 依存先集合 = new HashSet<IFieldSymbol>(依存先群, SymbolEqualityComparer.Default);
+        var 結果 = new Dictionary<IMethodSymbol, メソッド使用状況>(SymbolEqualityComparer.Default);
 
-        foreach (var methodDeclaration in declaration.Members.OfType<MethodDeclarationSyntax>())
+        foreach (var メソッド宣言 in 宣言.Members.OfType<MethodDeclarationSyntax>())
         {
             if (
-                semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol method
-                || method.IsStatic
-                || method.MethodKind != MethodKind.Ordinary
+                意味モデル.GetDeclaredSymbol(メソッド宣言) is not IMethodSymbol メソッド
+                || メソッド.IsStatic
+                || メソッド.MethodKind != MethodKind.Ordinary
             )
             {
                 continue;
             }
 
-            var usedDependencies = new HashSet<IFieldSymbol>(
-                methodDeclaration
+            var 使用依存先群 = new HashSet<IFieldSymbol>(
+                メソッド宣言
                     .DescendantNodes()
                     .OfType<IdentifierNameSyntax>()
-                    .Select(identifier => semanticModel.GetSymbolInfo(identifier).Symbol)
+                    .Select(identifier => 意味モデル.GetSymbolInfo(identifier).Symbol)
                     .OfType<IFieldSymbol>()
-                    .Where(dependencySet.Contains),
+                    .Where(依存先集合.Contains),
                 SymbolEqualityComparer.Default
             );
 
-            var calledMethods = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
+            var 呼び出し先メソッド群 = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
             foreach (
-                var invocation in methodDeclaration
-                    .DescendantNodes()
-                    .OfType<InvocationExpressionSyntax>()
+                var 呼び出し in メソッド宣言.DescendantNodes().OfType<InvocationExpressionSyntax>()
             )
             {
                 if (
-                    semanticModel.GetSymbolInfo(invocation).Symbol is IMethodSymbol calledMethod
-                    && !calledMethod.IsStatic
-                    && calledMethod.MethodKind == MethodKind.Ordinary
+                    意味モデル.GetSymbolInfo(呼び出し).Symbol is IMethodSymbol 呼び出し先メソッド
+                    && !呼び出し先メソッド.IsStatic
+                    && 呼び出し先メソッド.MethodKind == MethodKind.Ordinary
                     && SymbolEqualityComparer.Default.Equals(
-                        calledMethod.ContainingType,
-                        containingType
+                        呼び出し先メソッド.ContainingType,
+                        所属型
                     )
                 )
                 {
-                    calledMethods.Add(calledMethod);
+                    呼び出し先メソッド群.Add(呼び出し先メソッド);
                 }
             }
 
-            result[method] = new MethodUsage(usedDependencies, calledMethods);
+            結果[メソッド] = new メソッド使用状況(使用依存先群, 呼び出し先メソッド群);
         }
 
-        return result;
+        return 結果;
     }
 
-    private static Dictionary<IMethodSymbol, HashSet<IFieldSymbol>> BuildEffectiveDependencyUsage(
-        IReadOnlyDictionary<IMethodSymbol, MethodUsage> methodUsage
+    private static Dictionary<IMethodSymbol, HashSet<IFieldSymbol>> 実効依存使用状況を作る(
+        IReadOnlyDictionary<IMethodSymbol, メソッド使用状況> メソッド使用状況
     )
     {
-        var result = new Dictionary<IMethodSymbol, HashSet<IFieldSymbol>>(
+        var 結果 = new Dictionary<IMethodSymbol, HashSet<IFieldSymbol>>(
             SymbolEqualityComparer.Default
         );
 
-        foreach (var method in methodUsage.Keys)
+        foreach (var メソッド in メソッド使用状況.Keys)
         {
-            var dependencies = new HashSet<IFieldSymbol>(SymbolEqualityComparer.Default);
-            var visited = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
-            var queue = new Queue<IMethodSymbol>();
-            queue.Enqueue(method);
+            var 依存先群 = new HashSet<IFieldSymbol>(SymbolEqualityComparer.Default);
+            var 訪問済みメソッド群 = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
+            var 探索待ち行列 = new Queue<IMethodSymbol>();
+            探索待ち行列.Enqueue(メソッド);
 
-            while (queue.TryDequeue(out var current))
+            while (探索待ち行列.TryDequeue(out var 現在の要素))
             {
-                if (!visited.Add(current) || !methodUsage.TryGetValue(current, out var usage))
+                if (
+                    !訪問済みメソッド群.Add(現在の要素)
+                    || !メソッド使用状況.TryGetValue(現在の要素, out var 使用状況)
+                )
                 {
                     continue;
                 }
 
-                dependencies.UnionWith(usage.Dependencies);
-                foreach (var calledMethod in usage.CalledMethods)
+                依存先群.UnionWith(使用状況.依存先群);
+                foreach (var 呼び出し先メソッド in 使用状況.呼び出し先メソッド群)
                 {
-                    queue.Enqueue(calledMethod);
+                    探索待ち行列.Enqueue(呼び出し先メソッド);
                 }
             }
 
-            if (dependencies.Count > 0)
+            if (依存先群.Count > 0)
             {
-                result[method] = dependencies;
+                結果[メソッド] = 依存先群;
             }
         }
 
-        return result;
+        return 結果;
     }
 
-    private static int CountDependencyClusters(
-        IReadOnlyCollection<IFieldSymbol> dependencies,
-        IReadOnlyDictionary<IMethodSymbol, HashSet<IFieldSymbol>> usage
+    private static int 依存群数を数える(
+        IReadOnlyCollection<IFieldSymbol> 依存先群,
+        IReadOnlyDictionary<IMethodSymbol, HashSet<IFieldSymbol>> 使用状況
     )
     {
-        var remaining = new HashSet<IFieldSymbol>(dependencies, SymbolEqualityComparer.Default);
-        var qualifyingClusters = 0;
+        var 残り要素 = new HashSet<IFieldSymbol>(依存先群, SymbolEqualityComparer.Default);
+        var 条件を満たす依存群数 = 0;
 
-        while (remaining.Count > 0)
+        while (残り要素.Count > 0)
         {
-            var queue = new Queue<IFieldSymbol>();
-            var cluster = new HashSet<IFieldSymbol>(SymbolEqualityComparer.Default);
-            var first = remaining.First();
-            remaining.Remove(first);
-            queue.Enqueue(first);
+            var 探索待ち行列 = new Queue<IFieldSymbol>();
+            var 依存群 = new HashSet<IFieldSymbol>(SymbolEqualityComparer.Default);
+            var 先頭要素 = 残り要素.First();
+            残り要素.Remove(先頭要素);
+            探索待ち行列.Enqueue(先頭要素);
 
-            while (queue.TryDequeue(out var current))
+            while (探索待ち行列.TryDequeue(out var 現在の要素))
             {
-                cluster.Add(current);
-                ConnectByMethodUsage(current, usage, remaining, queue);
-                ConnectBySharedAbstraction(current, remaining, queue);
+                依存群.Add(現在の要素);
+                メソッド使用状況で連結する(現在の要素, 使用状況, 残り要素, 探索待ち行列);
+                共通抽象で連結する(現在の要素, 残り要素, 探索待ち行列);
             }
 
             if (
-                cluster.Count >= MinimumDependenciesPerCluster
-                && usage.Values.Any(fields => fields.Any(cluster.Contains))
+                依存群.Count >= 依存群ごとの最低依存数
+                && 使用状況.Values.Any(fields => fields.Any(依存群.Contains))
             )
             {
-                qualifyingClusters++;
+                条件を満たす依存群数++;
             }
         }
 
-        return qualifyingClusters;
+        return 条件を満たす依存群数;
     }
 
-    private static void ConnectByMethodUsage(
-        IFieldSymbol current,
-        IReadOnlyDictionary<IMethodSymbol, HashSet<IFieldSymbol>> usage,
-        HashSet<IFieldSymbol> remaining,
-        Queue<IFieldSymbol> queue
+    private static void メソッド使用状況で連結する(
+        IFieldSymbol 現在の要素,
+        IReadOnlyDictionary<IMethodSymbol, HashSet<IFieldSymbol>> 使用状況,
+        HashSet<IFieldSymbol> 残り要素,
+        Queue<IFieldSymbol> 探索待ち行列
     )
     {
-        foreach (var methodFields in usage.Values.Where(fields => fields.Contains(current)))
+        foreach (
+            var メソッド使用フィールド群 in 使用状況.Values.Where(fields =>
+                fields.Contains(現在の要素)
+            )
+        )
         {
-            foreach (var related in methodFields)
+            foreach (var 関連要素 in メソッド使用フィールド群)
             {
-                if (remaining.Remove(related))
+                if (残り要素.Remove(関連要素))
                 {
-                    queue.Enqueue(related);
+                    探索待ち行列.Enqueue(関連要素);
                 }
             }
         }
     }
 
-    private static void ConnectBySharedAbstraction(
-        IFieldSymbol current,
-        HashSet<IFieldSymbol> remaining,
-        Queue<IFieldSymbol> queue
+    private static void 共通抽象で連結する(
+        IFieldSymbol 現在の要素,
+        HashSet<IFieldSymbol> 残り要素,
+        Queue<IFieldSymbol> 探索待ち行列
     )
     {
-        var relatedFields = remaining
-            .Where(candidate => ShareMeaningfulProjectAbstraction(current.Type, candidate.Type))
+        var 関連フィールド群 = 残り要素.Where(候補 =>
+                意味のあるプロジェクト抽象を共有する(現在の要素.Type, 候補.Type)
+            )
             .ToArray();
 
-        foreach (var related in relatedFields)
+        foreach (var 関連要素 in 関連フィールド群)
         {
-            if (remaining.Remove(related))
+            if (残り要素.Remove(関連要素))
             {
-                queue.Enqueue(related);
+                探索待ち行列.Enqueue(関連要素);
             }
         }
     }
 
-    private static bool ShareMeaningfulProjectAbstraction(ITypeSymbol left, ITypeSymbol right)
+    private static bool 意味のあるプロジェクト抽象を共有する(ITypeSymbol 左辺, ITypeSymbol 右辺)
     {
-        if (left is not INamedTypeSymbol leftType || right is not INamedTypeSymbol rightType)
+        if (左辺 is not INamedTypeSymbol 左辺型 || 右辺 is not INamedTypeSymbol 右辺型)
         {
             return false;
         }
 
-        var leftHierarchy = ReadProjectTypeHierarchy(leftType);
-        return ReadProjectTypeHierarchy(rightType).Any(leftHierarchy.Contains);
+        var 左辺型階層 = プロジェクト型階層を読む(左辺型);
+        return プロジェクト型階層を読む(右辺型).Any(左辺型階層.Contains);
     }
 
-    private static HashSet<INamedTypeSymbol> ReadProjectTypeHierarchy(INamedTypeSymbol type)
+    private static HashSet<INamedTypeSymbol> プロジェクト型階層を読む(INamedTypeSymbol 型)
     {
-        var result = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+        var 結果 = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
 
         for (
-            INamedTypeSymbol? current = type;
-            current is not null && current.SpecialType != SpecialType.System_Object;
-            current = current.BaseType
+            INamedTypeSymbol? 現在の要素 = 型;
+            現在の要素 is not null && 現在の要素.SpecialType != SpecialType.System_Object;
+            現在の要素 = 現在の要素.BaseType
         )
         {
-            if (current.Locations.Any(location => location.IsInSource))
+            if (現在の要素.Locations.Any(location => location.IsInSource))
             {
-                result.Add(current);
+                結果.Add(現在の要素);
             }
         }
 
         foreach (
-            var abstraction in type.AllInterfaces.Where(candidate =>
-                candidate.Locations.Any(location => location.IsInSource)
+            var 抽象 in 型.AllInterfaces.Where(候補 =>
+                候補.Locations.Any(location => location.IsInSource)
             )
         )
         {
-            result.Add(abstraction);
+            結果.Add(抽象);
         }
 
-        return result;
+        return 結果;
     }
 
-    private sealed record MethodUsage(
-        HashSet<IFieldSymbol> Dependencies,
-        HashSet<IMethodSymbol> CalledMethods
+    private sealed record メソッド使用状況(
+        HashSet<IFieldSymbol> 依存先群,
+        HashSet<IMethodSymbol> 呼び出し先メソッド群
     );
 }

@@ -50,7 +50,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new ConcreteTypeDependencyRule(), source, "OOP305");
+        診断がないことを確認する(new 具象型依存規則(), source, "OOP305");
     }
 
     private static void アクセス不能なインターフェースメンバーを抽象候補にしない()
@@ -94,8 +94,8 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new ConcreteTypeDependencyRule(), source, "OOP305");
-        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new 具象型依存規則(), source, "OOP305");
+        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
     }
 
     private static void 継承したインスタンス契約を意味のある抽象とみなす()
@@ -140,13 +140,13 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         診断が1件であることを確認する(
-            new ConcreteTypeDependencyRule(),
+            new 具象型依存規則(),
             source,
             "OOP305",
             DesignDiagnosticSeverity.Warning
         );
         診断が1件であることを確認する(
-            new AvoidableConcreteConstructionRule(),
+            new 回避可能な具象生成規則(),
             source,
             "OOP306",
             DesignDiagnosticSeverity.Warning
@@ -178,7 +178,7 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         診断が1件であることを確認する(
-            new AvoidableConcreteConstructionRule(),
+            new 回避可能な具象生成規則(),
             source,
             "OOP306",
             DesignDiagnosticSeverity.Warning
@@ -213,7 +213,7 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         診断が1件であることを確認する(
-            new ConcreteTypeDependencyRule(),
+            new 具象型依存規則(),
             source,
             "OOP305",
             DesignDiagnosticSeverity.Warning
@@ -253,7 +253,7 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         診断が1件であることを確認する(
-            new ConcreteTypeDependencyRule(),
+            new 具象型依存規則(),
             source,
             "OOP305",
             DesignDiagnosticSeverity.Warning
@@ -291,7 +291,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        var diagnostic = new ConcreteTypeDependencyRule()
+        var diagnostic = new 具象型依存規則()
             .解析する(TestProjectFactory.解析文脈を作る(source))
             .Single(item => item.Rule.Id == "OOP305");
         if (!diagnostic.Message.Contains("project abstraction IAlpha", StringComparison.Ordinal))
@@ -335,7 +335,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new ConcreteTypeDependencyRule(), source, "OOP305");
+        診断がないことを確認する(new 具象型依存規則(), source, "OOP305");
     }
 
     private static void 多数のコンストラクター引数で利用状況を再利用する()
@@ -394,7 +394,7 @@ internal static class InheritancePrecisionSmokeTests
 
         source.AppendLine("}");
 
-        var diagnostics = new ConcreteTypeDependencyRule()
+        var diagnostics = new 具象型依存規則()
             .解析する(TestProjectFactory.解析文脈を作る(source.ToString()))
             .Where(diagnostic => diagnostic.Rule.Id == "OOP305")
             .ToArray();
@@ -425,7 +425,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
     }
 
     private static void 所有するファクトリーでの生成を許可する()
@@ -452,7 +452,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
     }
 
     private static void 入れ子のオブジェクト生成を許可する()
@@ -479,7 +479,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
     }
 
     private static void main内の依存構築を許可する()
@@ -510,7 +510,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
     }
 
     private static void コンポジションルート内の依存構築を許可する()
@@ -541,7 +541,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
     }
 
     private static void 業務メソッド内の依存構築を警告する()
@@ -573,7 +573,7 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         診断が1件であることを確認する(
-            new AvoidableConcreteConstructionRule(),
+            new 回避可能な具象生成規則(),
             source,
             "OOP306",
             DesignDiagnosticSeverity.Warning
@@ -600,7 +600,7 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         診断が1件であることを確認する(
-            new AvoidableConcreteConstructionRule(),
+            new 回避可能な具象生成規則(),
             source,
             "OOP306",
             DesignDiagnosticSeverity.Warning
@@ -664,7 +664,7 @@ internal static class InheritancePrecisionSmokeTests
             """;
 
         診断が1件であることを確認する(
-            new CompositionCandidateRule(),
+            new コンポジション候補規則(),
             source,
             "OOP307",
             DesignDiagnosticSeverity.Attention
@@ -690,7 +690,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new CompositionCandidateRule(), source, "OOP307");
+        診断がないことを確認する(new コンポジション候補規則(), source, "OOP307");
     }
 
     private static void 正当な特化をコンポジション候補にしない()
@@ -709,7 +709,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new CompositionCandidateRule(), source, "OOP307");
+        診断がないことを確認する(new コンポジション候補規則(), source, "OOP307");
     }
 
     private static void 診断が1件であることを確認する(
