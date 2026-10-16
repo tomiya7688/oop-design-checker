@@ -7,18 +7,18 @@ internal static class OperationPrecisionSmokeTests
 {
     public static void Run()
     {
-        LargeLinearPrimaryOperationIsWarning();
-        ComplexNestedPrimaryOperationIsWarning();
-        CommentHeavySimpleOperationIsAllowed();
-        ExternalFrameworkTypeOperationIsAllowed();
-        OrdinaryExternalMethodAttributeDoesNotSuppressLargeOperation();
-        SerializationCallbackIsNotAnOversizedPrimaryOperation();
-        ModuleInitializerIsNotAnOversizedPrimaryOperation();
-        CalledPrivateHelperIsAllowed();
-        NestedLocalFunctionDoesNotInflateOuterOperation();
+        大きな直線処理は警告になる();
+        複雑で深く入れ子の主処理は警告になる();
+        コメントが多くても単純な処理は許可する();
+        外部フレームワーク型の処理は許可する();
+        通常の外部属性は大きな処理の診断を抑制しない();
+        シリアライズコールバックを過大な主処理としない();
+        モジュール初期化子を過大な主処理としない();
+        呼び出されるprivate補助処理は許可する();
+        入れ子のローカル関数で外側処理を過大評価しない();
     }
 
-    private static void LargeLinearPrimaryOperationIsWarning()
+    private static void 大きな直線処理は警告になる()
     {
         var statements = CreateRepeatedStatements(130, "value += 1;");
         var source = $$"""
@@ -36,7 +36,7 @@ internal static class OperationPrecisionSmokeTests
         AssertSingle(source);
     }
 
-    private static void ComplexNestedPrimaryOperationIsWarning()
+    private static void 複雑で深く入れ子の主処理は警告になる()
     {
         var branches = string.Join(
             Environment.NewLine,
@@ -73,7 +73,7 @@ internal static class OperationPrecisionSmokeTests
         AssertSingle(source);
     }
 
-    private static void CommentHeavySimpleOperationIsAllowed()
+    private static void コメントが多くても単純な処理は許可する()
     {
         var comments = string.Join(
             Environment.NewLine,
@@ -93,7 +93,7 @@ internal static class OperationPrecisionSmokeTests
         AssertNone(source);
     }
 
-    private static void ExternalFrameworkTypeOperationIsAllowed()
+    private static void 外部フレームワーク型の処理は許可する()
     {
         var statements = CreateRepeatedStatements(130, "value += 1;");
         var source = $$"""
@@ -111,7 +111,7 @@ internal static class OperationPrecisionSmokeTests
         AssertNone(source);
     }
 
-    private static void OrdinaryExternalMethodAttributeDoesNotSuppressLargeOperation()
+    private static void 通常の外部属性は大きな処理の診断を抑制しない()
     {
         var statements = CreateRepeatedStatements(130, "value += 1;");
         var source = $$"""
@@ -130,7 +130,7 @@ internal static class OperationPrecisionSmokeTests
         AssertSingle(source);
     }
 
-    private static void SerializationCallbackIsNotAnOversizedPrimaryOperation()
+    private static void シリアライズコールバックを過大な主処理としない()
     {
         var statements = CreateRepeatedStatements(130, "value += 1;");
         var source = $$"""
@@ -151,7 +151,7 @@ internal static class OperationPrecisionSmokeTests
         AssertNone(source);
     }
 
-    private static void ModuleInitializerIsNotAnOversizedPrimaryOperation()
+    private static void モジュール初期化子を過大な主処理としない()
     {
         var statements = CreateRepeatedStatements(130, "value += 1;");
         var source = $$"""
@@ -172,7 +172,7 @@ internal static class OperationPrecisionSmokeTests
         AssertNone(source);
     }
 
-    private static void CalledPrivateHelperIsAllowed()
+    private static void 呼び出されるprivate補助処理は許可する()
     {
         var statements = CreateRepeatedStatements(130, "value += 1;");
         var source = $$"""
@@ -192,7 +192,7 @@ internal static class OperationPrecisionSmokeTests
         AssertNone(source);
     }
 
-    private static void NestedLocalFunctionDoesNotInflateOuterOperation()
+    private static void 入れ子のローカル関数で外側処理を過大評価しない()
     {
         var statements = CreateRepeatedStatements(130, "value += 1;");
         var source = $$"""
@@ -229,7 +229,7 @@ internal static class OperationPrecisionSmokeTests
 
     private static void AssertSingle(string source)
     {
-        var diagnostics = new OversizedMainOperationRule()
+        var diagnostics = new 過大主処理規則()
             .解析する(TestProjectFactory.解析文脈を作る(source))
             .ToArray();
         if (
@@ -250,7 +250,7 @@ internal static class OperationPrecisionSmokeTests
 
     private static void AssertNone(string source)
     {
-        var diagnostics = new OversizedMainOperationRule()
+        var diagnostics = new 過大主処理規則()
             .解析する(TestProjectFactory.解析文脈を作る(source))
             .ToArray();
         if (diagnostics.Length == 0)

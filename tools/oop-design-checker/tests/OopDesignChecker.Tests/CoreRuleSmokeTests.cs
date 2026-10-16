@@ -9,9 +9,9 @@ internal static class CoreRuleSmokeTests
     {
         MissingCommonAbstractionIsDetected();
         SealingCandidateIsAttention();
-        StatefulStaticDesignIsWarning();
-        ConcreteDependencyDespiteAbstractionIsWarning();
-        AvoidableConcreteConstructionIsWarning();
+        状態を持つ静的設計は警告になる();
+        抽象が足りない具象依存は警告になる();
+        回避可能な具象生成は警告になる();
         独立オブジェクトまとまりを警告する();
         プロパティ状態まとまりを警告する();
         補助処理で連結した状態は警告しない();
@@ -19,10 +19,10 @@ internal static class CoreRuleSmokeTests
         InheritanceDepthPrecisionSmokeTests.Run();
         PolymorphismPrecisionSmokeTests.Run();
         EncapsulationPrecisionSmokeTests.Run();
-        StaticPrecisionSmokeTests.Run();
+        静的設計精度スモークテスト.Run();
         OperationPrecisionSmokeTests.Run();
         DiagnosticCoordinationSmokeTests.Run();
-        ObjectNavigationRuleTests.Run();
+        オブジェクト辿り規則テスト.Run();
         ExtendedRuleSmokeTests.Run();
     }
 
@@ -71,7 +71,7 @@ internal static class CoreRuleSmokeTests
         AssertSingle(new 封止候補規則(), source, "OOP102", DesignDiagnosticSeverity.Attention);
     }
 
-    private static void StatefulStaticDesignIsWarning()
+    private static void 状態を持つ静的設計は警告になる()
     {
         const string source = """
             internal static class GlobalState
@@ -82,14 +82,14 @@ internal static class CoreRuleSmokeTests
             """;
 
         AssertSingle(
-            new StatefulStaticDesignRule(),
+            new 状態保持静的設計規則(),
             source,
             "OOP105",
             DesignDiagnosticSeverity.Warning
         );
     }
 
-    private static void ConcreteDependencyDespiteAbstractionIsWarning()
+    private static void 抽象が足りない具象依存は警告になる()
     {
         const string source = """
             internal interface IClock
@@ -110,15 +110,10 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(
-            new ConcreteTypeDependencyRule(),
-            source,
-            "OOP305",
-            DesignDiagnosticSeverity.Warning
-        );
+        AssertSingle(new 具象型依存規則(), source, "OOP305", DesignDiagnosticSeverity.Warning);
     }
 
-    private static void AvoidableConcreteConstructionIsWarning()
+    private static void 回避可能な具象生成は警告になる()
     {
         const string source = """
             internal interface IClock
@@ -139,7 +134,7 @@ internal static class CoreRuleSmokeTests
             """;
 
         AssertSingle(
-            new AvoidableConcreteConstructionRule(),
+            new 回避可能な具象生成規則(),
             source,
             "OOP306",
             DesignDiagnosticSeverity.Warning

@@ -18,10 +18,10 @@ internal static class ExtendedRuleSmokeTests
         データ契約型を許可する();
         命名だけでドメイン振る舞いを除外しない();
         マッパー投影を貧血オブジェクトと判定しない();
-        UnrelatedDependencyClustersAreWarning();
-        HelperConnectedDependenciesAreAllowed();
-        SharedAbstractionDependenciesAreAllowed();
-        DeepObjectNavigationIsAttention();
+        無関係な依存群は警告になる();
+        補助処理で結ばれた依存群は許可する();
+        共通抽象を持つ依存群は許可する();
+        オブジェクトを深く辿る処理は注意する();
         取得設定のみオブジェクトを注意として検出する();
         メッセージデータ保持型を許可する();
     }
@@ -160,7 +160,7 @@ internal static class ExtendedRuleSmokeTests
             """;
 
         AssertSingle(
-            new CompositionCandidateRule(),
+            new コンポジション候補規則(),
             source,
             "OOP307",
             DesignDiagnosticSeverity.Attention
@@ -291,7 +291,7 @@ internal static class ExtendedRuleSmokeTests
         AssertNone(new 貧血オブジェクト規則(), source, "OOP402");
     }
 
-    private static void UnrelatedDependencyClustersAreWarning()
+    private static void 無関係な依存群は警告になる()
     {
         const string source = """
             internal sealed class A { public int Read() => 1; }
@@ -316,15 +316,10 @@ internal static class ExtendedRuleSmokeTests
             }
             """;
 
-        AssertSingle(
-            new ExcessiveUnrelatedDependenciesRule(),
-            source,
-            "OOP403",
-            DesignDiagnosticSeverity.Warning
-        );
+        AssertSingle(new 過剰無関係依存規則(), source, "OOP403", DesignDiagnosticSeverity.Warning);
     }
 
-    private static void HelperConnectedDependenciesAreAllowed()
+    private static void 補助処理で結ばれた依存群は許可する()
     {
         const string source = """
             internal sealed class A { public int Read() => 1; }
@@ -351,10 +346,10 @@ internal static class ExtendedRuleSmokeTests
             }
             """;
 
-        AssertNone(new ExcessiveUnrelatedDependenciesRule(), source, "OOP403");
+        AssertNone(new 過剰無関係依存規則(), source, "OOP403");
     }
 
-    private static void SharedAbstractionDependenciesAreAllowed()
+    private static void 共通抽象を持つ依存群は許可する()
     {
         const string source = """
             internal interface IReader
@@ -384,10 +379,10 @@ internal static class ExtendedRuleSmokeTests
             }
             """;
 
-        AssertNone(new ExcessiveUnrelatedDependenciesRule(), source, "OOP403");
+        AssertNone(new 過剰無関係依存規則(), source, "OOP403");
     }
 
-    private static void DeepObjectNavigationIsAttention()
+    private static void オブジェクトを深く辿る処理は注意する()
     {
         const string source = """
             internal sealed class Country
@@ -420,7 +415,7 @@ internal static class ExtendedRuleSmokeTests
             """;
 
         AssertSingle(
-            new ExcessiveObjectNavigationRule(),
+            new 過剰オブジェクト辿り規則(),
             source,
             "OOP404",
             DesignDiagnosticSeverity.Attention

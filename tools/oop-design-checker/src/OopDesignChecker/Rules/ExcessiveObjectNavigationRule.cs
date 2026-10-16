@@ -5,9 +5,9 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ExcessiveObjectNavigationRule : I解析規則
+internal sealed class 過剰オブジェクト辿り規則 : I解析規則
 {
-    private const int MinimumNavigationDepth = 3;
+    private const int 最低辿り深度 = 3;
 
     public RuleDescriptor 規則情報 { get; } =
         new(
@@ -16,58 +16,58 @@ internal sealed class ExcessiveObjectNavigationRule : I解析規則
             DesignDiagnosticSeverity.Attention
         );
 
-    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 解析文脈)
     {
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 解析文脈.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            var 意味モデル = 解析文脈.対象プロジェクト.意味モデルを取得する(構文木);
+            var 構文根 = 構文木.GetRoot();
 
-            foreach (var invocation in root.DescendantNodes().OfType<InvocationExpressionSyntax>())
+            foreach (var 呼び出し in 構文根.DescendantNodes().OfType<InvocationExpressionSyntax>())
             {
-                if (invocation.Expression is not MemberAccessExpressionSyntax methodAccess)
+                if (呼び出し.Expression is not MemberAccessExpressionSyntax メソッドアクセス)
                 {
                     continue;
                 }
 
-                var navigationDepth = CountProjectObjectBoundaries(
-                    methodAccess.Expression,
-                    semanticModel
+                var 辿り深度 = プロジェクトオブジェクト境界数を数える(
+                    メソッドアクセス.Expression,
+                    意味モデル
                 );
-                if (navigationDepth < MinimumNavigationDepth)
+                if (辿り深度 < 最低辿り深度)
                 {
                     continue;
                 }
 
                 yield return 診断生成器.生成する(
                     規則情報,
-                    invocation.GetLocation(),
-                    $"This call traverses {navigationDepth} project object boundaries before invoking behavior. Repeated deep navigation couples the caller to another object's internal graph."
+                    呼び出し.GetLocation(),
+                    $"This call traverses {辿り深度} project object boundaries before invoking behavior. Repeated deep navigation couples the caller to another object's internal graph."
                 );
             }
         }
     }
 
-    private static int CountProjectObjectBoundaries(
-        ExpressionSyntax expression,
-        SemanticModel semanticModel
+    private static int プロジェクトオブジェクト境界数を数える(
+        ExpressionSyntax 式,
+        SemanticModel 意味モデル
     )
     {
-        var boundaries = 0;
-        var current = expression;
+        var 境界数 = 0;
+        var 現在の要素 = 式;
 
-        while (current is MemberAccessExpressionSyntax memberAccess)
+        while (現在の要素 is MemberAccessExpressionSyntax メンバーアクセス)
         {
-            var symbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
-            var memberType = ReadInstanceMemberType(symbol);
-            var containingType = symbol?.ContainingType;
+            var シンボル = 意味モデル.GetSymbolInfo(メンバーアクセス).Symbol;
+            var メンバー型 = インスタンスメンバー型を読む(シンボル);
+            var 所属型 = シンボル?.ContainingType;
 
             if (
-                containingType is not null
-                && memberType is not null
+                所属型 is not null
+                && メンバー型 is not null
                 && (
-                    データ保持型判定器.明示的データ保持型である(containingType)
-                    || データ保持型判定器.明示的データ保持型である(memberType)
+                    データ保持型判定器.明示的データ保持型である(所属型)
+                    || データ保持型判定器.明示的データ保持型である(メンバー型)
                 )
             )
             {
@@ -75,53 +75,53 @@ internal sealed class ExcessiveObjectNavigationRule : I解析規則
             }
 
             if (
-                containingType is not null
-                && memberType is not null
-                && IsProjectObjectType(containingType)
-                && IsProjectObjectType(memberType)
-                && !RepresentsSameObjectAbstraction(containingType, memberType)
+                所属型 is not null
+                && メンバー型 is not null
+                && プロジェクトオブジェクト型である(所属型)
+                && プロジェクトオブジェクト型である(メンバー型)
+                && !同じオブジェクト抽象を表す(所属型, メンバー型)
             )
             {
-                boundaries++;
+                境界数++;
             }
 
-            current = memberAccess.Expression;
+            現在の要素 = メンバーアクセス.Expression;
         }
 
-        return boundaries;
+        return 境界数;
     }
 
-    private static INamedTypeSymbol? ReadInstanceMemberType(ISymbol? symbol) =>
-        symbol switch
+    private static INamedTypeSymbol? インスタンスメンバー型を読む(ISymbol? シンボル) =>
+        シンボル switch
         {
-            IPropertySymbol { IsStatic: false, Type: INamedTypeSymbol type } => type,
-            IFieldSymbol { IsStatic: false, Type: INamedTypeSymbol type } => type,
+            IPropertySymbol { IsStatic: false, Type: INamedTypeSymbol 型 } => 型,
+            IFieldSymbol { IsStatic: false, Type: INamedTypeSymbol 型 } => 型,
             _ => null,
         };
 
-    private static bool IsProjectObjectType(INamedTypeSymbol type) =>
-        type.IsReferenceType
-        && type.SpecialType == SpecialType.None
-        && type.Locations.Any(location => location.IsInSource);
+    private static bool プロジェクトオブジェクト型である(INamedTypeSymbol 型) =>
+        型.IsReferenceType
+        && 型.SpecialType == SpecialType.None
+        && 型.Locations.Any(location => location.IsInSource);
 
-    private static bool RepresentsSameObjectAbstraction(
-        INamedTypeSymbol containingType,
-        INamedTypeSymbol memberType
+    private static bool 同じオブジェクト抽象を表す(
+        INamedTypeSymbol 所属型,
+        INamedTypeSymbol メンバー型
     ) =>
-        SymbolEqualityComparer.Default.Equals(containingType, memberType)
-        || ImplementsOrDerivesFrom(containingType, memberType)
-        || ImplementsOrDerivesFrom(memberType, containingType);
+        SymbolEqualityComparer.Default.Equals(所属型, メンバー型)
+        || 実装または継承している(所属型, メンバー型)
+        || 実装または継承している(メンバー型, 所属型);
 
-    private static bool ImplementsOrDerivesFrom(INamedTypeSymbol type, INamedTypeSymbol candidate)
+    private static bool 実装または継承している(INamedTypeSymbol 型, INamedTypeSymbol 候補)
     {
-        if (type.AllInterfaces.Any(item => SymbolEqualityComparer.Default.Equals(item, candidate)))
+        if (型.AllInterfaces.Any(item => SymbolEqualityComparer.Default.Equals(item, 候補)))
         {
             return true;
         }
 
-        for (var current = type.BaseType; current is not null; current = current.BaseType)
+        for (var 現在の要素 = 型.BaseType; 現在の要素 is not null; 現在の要素 = 現在の要素.BaseType)
         {
-            if (SymbolEqualityComparer.Default.Equals(current, candidate))
+            if (SymbolEqualityComparer.Default.Equals(現在の要素, 候補))
             {
                 return true;
             }

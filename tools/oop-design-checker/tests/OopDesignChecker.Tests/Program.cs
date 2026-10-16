@@ -425,7 +425,7 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new StaticMemberCandidateRule(), source);
+        var diagnostics = Run(new 静的メンバー候補規則(), source);
         AssertSingleRule(diagnostics, "OOP103", DesignDiagnosticSeverity.Attention);
     }
 
@@ -443,7 +443,7 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new StaticMemberCandidateRule(), source);
+        var diagnostics = Run(new 静的メンバー候補規則(), source);
         AssertRuleCount(diagnostics, "OOP103", 0);
     }
 
@@ -456,7 +456,7 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new StaticClassCandidateRule(), source);
+        var diagnostics = Run(new 静的クラス候補規則(), source);
         AssertSingleRule(diagnostics, "OOP104", DesignDiagnosticSeverity.Attention);
     }
 

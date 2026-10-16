@@ -4,32 +4,32 @@ using OopDesignChecker.Analysis;
 
 namespace OopDesignChecker.Rules;
 
-internal static class StaticEligibilityEvaluator
+internal static class 静的適格性判定器
 {
-    public static bool CanClassBeStatic(
-        ClassDeclarationSyntax declaration,
-        INamedTypeSymbol symbol,
-        SemanticModel semanticModel
+    public static bool クラスを静的化できる(
+        ClassDeclarationSyntax 宣言,
+        INamedTypeSymbol シンボル,
+        SemanticModel 意味モデル
     )
     {
         if (
-            symbol.IsStatic
-            || symbol.IsAbstract
-            || symbol.Interfaces.Length > 0
-            || フレームワーク契約判定器.フレームワーク契約属性を持つ(symbol)
+            シンボル.IsStatic
+            || シンボル.IsAbstract
+            || シンボル.Interfaces.Length > 0
+            || フレームワーク契約判定器.フレームワーク契約属性を持つ(シンボル)
         )
         {
             return false;
         }
 
-        if (symbol.BaseType is { SpecialType: not SpecialType.System_Object })
+        if (シンボル.BaseType is { SpecialType: not SpecialType.System_Object })
         {
             return false;
         }
 
         if (
-            symbol.InstanceConstructors.Any(constructor =>
-                !constructor.IsImplicitlyDeclared && constructor.Parameters.Length > 0
+            シンボル.InstanceConstructors.Any(コンストラクター =>
+                !コンストラクター.IsImplicitlyDeclared && コンストラクター.Parameters.Length > 0
             )
         )
         {
@@ -37,10 +37,9 @@ internal static class StaticEligibilityEvaluator
         }
 
         if (
-            symbol
-                .GetMembers()
-                .Any(member =>
-                    member switch
+            シンボル.GetMembers()
+                .Any(メンバー =>
+                    メンバー switch
                     {
                         IFieldSymbol { IsStatic: false } => true,
                         IPropertySymbol { IsStatic: false } => true,
@@ -53,38 +52,38 @@ internal static class StaticEligibilityEvaluator
             return false;
         }
 
-        var instanceMethods = declaration
+        var インスタンスメソッド群 = 宣言
             .Members.OfType<MethodDeclarationSyntax>()
-            .Select(method =>
-                (Syntax: method, Symbol: semanticModel.GetDeclaredSymbol(method) as IMethodSymbol)
+            .Select(メソッド =>
+                (Syntax: メソッド, Symbol: 意味モデル.GetDeclaredSymbol(メソッド) as IMethodSymbol)
             )
-            .Where(pair => pair.Symbol is { IsStatic: false })
+            .Where(組 => 組.Symbol is { IsStatic: false })
             .ToArray();
 
-        if (instanceMethods.Length == 0)
+        if (インスタンスメソッド群.Length == 0)
         {
-            return symbol.GetMembers().Any(member => member.IsStatic);
+            return シンボル.GetMembers().Any(メンバー => メンバー.IsStatic);
         }
 
-        foreach (var pair in instanceMethods)
+        foreach (var 組 in インスタンスメソッド群)
         {
-            var methodSymbol = pair.Symbol!;
+            var メソッド記号 = 組.Symbol!;
             if (
-                methodSymbol.IsAbstract
-                || methodSymbol.IsVirtual
-                || methodSymbol.IsOverride
-                || フレームワーク契約判定器.フレームワーク契約属性を持つ(methodSymbol)
+                メソッド記号.IsAbstract
+                || メソッド記号.IsVirtual
+                || メソッド記号.IsOverride
+                || フレームワーク契約判定器.フレームワーク契約属性を持つ(メソッド記号)
             )
             {
                 return false;
             }
 
             if (
-                pair.Syntax.ExplicitInterfaceSpecifier is not null
+                組.Syntax.ExplicitInterfaceSpecifier is not null
                 || インスタンス使用検査器.インスタンス状態を使う(
-                    pair.Syntax,
-                    methodSymbol,
-                    semanticModel
+                    組.Syntax,
+                    メソッド記号,
+                    意味モデル
                 )
             )
             {

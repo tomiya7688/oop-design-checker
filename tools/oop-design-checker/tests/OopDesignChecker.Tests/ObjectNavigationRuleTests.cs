@@ -3,17 +3,17 @@ using OopDesignChecker.Rules;
 
 namespace OopDesignChecker.Tests;
 
-internal static class ObjectNavigationRuleTests
+internal static class オブジェクト辿り規則テスト
 {
     public static void Run()
     {
-        DeepProjectObjectNavigationIsAttention();
-        FrameworkAndValueNavigationIsAllowed();
-        DataCarrierNavigationIsAllowed();
-        SameObjectAbstractionNavigationIsAllowed();
+        プロジェクトオブジェクトを深く辿る処理は注意する();
+        フレームワーク型と値型の辿りは許可する();
+        データ保持型の辿りは許可する();
+        同じオブジェクト抽象の辿りは許可する();
     }
 
-    private static void DeepProjectObjectNavigationIsAttention()
+    private static void プロジェクトオブジェクトを深く辿る処理は注意する()
     {
         const string source = """
             internal sealed class Country
@@ -48,7 +48,7 @@ internal static class ObjectNavigationRuleTests
         AssertSingle(source);
     }
 
-    private static void FrameworkAndValueNavigationIsAllowed()
+    private static void フレームワーク型と値型の辿りは許可する()
     {
         const string source = """
             internal sealed class Event
@@ -68,7 +68,7 @@ internal static class ObjectNavigationRuleTests
         AssertNone(source);
     }
 
-    private static void DataCarrierNavigationIsAllowed()
+    private static void データ保持型の辿りは許可する()
     {
         const string source = """
             internal sealed class Country
@@ -108,7 +108,7 @@ internal static class ObjectNavigationRuleTests
         AssertNone(source);
     }
 
-    private static void SameObjectAbstractionNavigationIsAllowed()
+    private static void 同じオブジェクト抽象の辿りは許可する()
     {
         const string source = """
             internal interface INode
@@ -162,7 +162,7 @@ internal static class ObjectNavigationRuleTests
     }
 
     private static DesignDiagnostic[] 解析する(string source) =>
-        new ExcessiveObjectNavigationRule()
+        new 過剰オブジェクト辿り規則()
             .解析する(TestProjectFactory.解析文脈を作る(source))
             .Where(diagnostic => diagnostic.Rule.Id == "OOP404")
             .ToArray();
