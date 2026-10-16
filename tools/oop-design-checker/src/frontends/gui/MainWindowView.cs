@@ -45,12 +45,12 @@ internal sealed class メイン画面 : Grid
     internal Button JSON出力ボタン { get; } = new();
     internal Button SARIF出力ボタン { get; } = new();
 
-    private readonly Label _targetLabel = new();
-    private readonly Label _configurationLabel = new();
-    private readonly TextBlock _showLabel = new();
-    private readonly TextBlock _languageLabel = new();
-    private readonly TextBlock _themeLabel = new();
-    private readonly TextBlock _detailHeading = new();
+    private readonly Label _対象ラベル = new();
+    private readonly Label _設定ラベル = new();
+    private readonly TextBlock _表示ラベル = new();
+    private readonly TextBlock _言語ラベル = new();
+    private readonly TextBlock _テーマラベル = new();
+    private readonly TextBlock _詳細見出し = new();
 
     public メイン画面()
     {
@@ -77,9 +77,9 @@ internal sealed class メイン画面 : Grid
     internal void 表示言語を適用する(UserInterfaceLanguage language)
     {
         メインメニュー部品.表示言語を適用する(language);
-        _targetLabel.Content =
+        _対象ラベル.Content =
             $"{GUI文言.取得する(GUI文言キー.対象ラベル, language)} (_{GUIショートカット.キー名を整形する(GUIコマンド.対象欄フォーカス.主ショートカット!.Value.Key)})  {GUIコマンド.対象欄フォーカス.主操作の案内}:";
-        _configurationLabel.Content =
+        _設定ラベル.Content =
             $"{GUI文言.取得する(GUI文言キー.設定ラベル, language)} (_{GUIショートカット.キー名を整形する(GUIコマンド.設定欄フォーカス.主ショートカット!.Value.Key)})  {GUIコマンド.設定欄フォーカス.主操作の案内}:";
         対象パス欄.PlaceholderText = GUI文言.取得する(GUI文言キー.対象入力案内, language);
         設定パス欄.PlaceholderText = GUI文言.取得する(GUI文言キー.設定入力案内, language);
@@ -92,9 +92,9 @@ internal sealed class メイン画面 : Grid
         解析ボタン.Content = GUI文言.取得する(GUI文言キー.解析ボタン, language);
         キャンセルボタン.Content = GUI文言.取得する(GUI文言キー.キャンセルボタン, language);
 
-        _showLabel.Text = GUI文言.取得する(GUI文言キー.表示ラベル, language);
-        _languageLabel.Text = GUI文言.取得する(GUI文言キー.言語ラベル, language);
-        _themeLabel.Text = GUI文言.取得する(GUI文言キー.テーマラベル, language);
+        _表示ラベル.Text = GUI文言.取得する(GUI文言キー.表示ラベル, language);
+        _言語ラベル.Text = GUI文言.取得する(GUI文言キー.言語ラベル, language);
+        _テーマラベル.Text = GUI文言.取得する(GUI文言キー.テーマラベル, language);
         var selectedTheme = Math.Max(テーマ選択.SelectedIndex, 0);
         テーマ選択.ItemsSource = new[]
         {
@@ -116,7 +116,7 @@ internal sealed class メイン画面 : Grid
         ソースを開くボタン.Content = GUI文言.取得する(GUI文言キー.ソースを開くボタン, language);
         JSON出力ボタン.Content = GUI文言.取得する(GUI文言キー.JSON出力ボタン, language);
         SARIF出力ボタン.Content = GUI文言.取得する(GUI文言キー.SARIF出力ボタン, language);
-        _detailHeading.Text = GUI文言.取得する(GUI文言キー.診断詳細, language);
+        _詳細見出し.Text = GUI文言.取得する(GUI文言キー.診断詳細, language);
 
         診断一覧.Columns[0].Header = GUI文言.取得する(GUI文言キー.重要度列, language);
         診断一覧.Columns[1].Header = GUI文言.取得する(GUI文言キー.規則列, language);
@@ -133,8 +133,8 @@ internal sealed class メイン画面 : Grid
     {
         var controls = new (StyledElement Element, string 識別子)[]
         {
-            (_targetLabel, "TargetPathLabel"),
-            (_configurationLabel, "ConfigurationPathLabel"),
+            (_対象ラベル, "TargetPathLabel"),
+            (_設定ラベル, "ConfigurationPathLabel"),
             (対象パス欄, "TargetPath"),
             (設定パス欄, "ConfigurationPath"),
             (対象ファイルボタン, "TargetFileButton"),
@@ -180,10 +180,10 @@ internal sealed class メイン画面 : Grid
     {
         対象パス欄.Text = Directory.GetCurrentDirectory();
 
-        _targetLabel.Target = 対象パス欄;
-        _targetLabel.VerticalAlignment = VerticalAlignment.Center;
-        _configurationLabel.Target = 設定パス欄;
-        _configurationLabel.VerticalAlignment = VerticalAlignment.Center;
+        _対象ラベル.Target = 対象パス欄;
+        _対象ラベル.VerticalAlignment = VerticalAlignment.Center;
+        _設定ラベル.Target = 設定パス欄;
+        _設定ラベル.VerticalAlignment = VerticalAlignment.Center;
         ショートカット案内.FontSize = 11;
         ショートカット案内.Opacity = 0.75;
         ショートカット案内.TextWrapping = TextWrapping.Wrap;
@@ -214,9 +214,9 @@ internal sealed class メイン画面 : Grid
 
     private void コマンドヘルプを適用する(UserInterfaceLanguage language)
     {
-        コマンドヘルプを適用する(_targetLabel, GUIコマンド.対象欄フォーカス, language);
+        コマンドヘルプを適用する(_対象ラベル, GUIコマンド.対象欄フォーカス, language);
         コマンドヘルプを適用する(対象パス欄, GUIコマンド.対象欄フォーカス, language);
-        コマンドヘルプを適用する(_configurationLabel, GUIコマンド.設定欄フォーカス, language);
+        コマンドヘルプを適用する(_設定ラベル, GUIコマンド.設定欄フォーカス, language);
         コマンドヘルプを適用する(設定パス欄, GUIコマンド.設定欄フォーカス, language);
 
         コマンドヘルプを適用する(対象ファイルボタン, GUIコマンド.対象ファイル選択, language);
@@ -309,11 +309,11 @@ internal sealed class メイン画面 : Grid
         section.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         section.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
-        一覧へ追加する(section, _targetLabel, 0, 0);
+        一覧へ追加する(section, _対象ラベル, 0, 0);
         一覧へ追加する(section, 対象パス欄, 0, 1);
         一覧へ追加する(section, 対象ファイルボタン, 0, 2);
         一覧へ追加する(section, 対象フォルダーボタン, 0, 3);
-        一覧へ追加する(section, _configurationLabel, 1, 0);
+        一覧へ追加する(section, _設定ラベル, 1, 0);
         一覧へ追加する(section, 設定パス欄, 1, 1);
         一覧へ追加する(section, 設定選択ボタン, 1, 2);
         一覧へ追加する(section, 設定編集ボタン, 1, 3);
@@ -334,8 +334,8 @@ internal sealed class メイン画面 : Grid
             Spacing = 12,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        _showLabel.VerticalAlignment = VerticalAlignment.Center;
-        filters.Children.Add(_showLabel);
+        _表示ラベル.VerticalAlignment = VerticalAlignment.Center;
+        filters.Children.Add(_表示ラベル);
         filters.Children.Add(危険絞り込み);
         filters.Children.Add(警告絞り込み);
         filters.Children.Add(注意絞り込み);
@@ -349,11 +349,11 @@ internal sealed class メイン画面 : Grid
             Spacing = 8,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        _languageLabel.VerticalAlignment = VerticalAlignment.Center;
-        _themeLabel.VerticalAlignment = VerticalAlignment.Center;
-        preferences.Children.Add(_languageLabel);
+        _言語ラベル.VerticalAlignment = VerticalAlignment.Center;
+        _テーマラベル.VerticalAlignment = VerticalAlignment.Center;
+        preferences.Children.Add(_言語ラベル);
         preferences.Children.Add(表示言語選択);
-        preferences.Children.Add(_themeLabel);
+        preferences.Children.Add(_テーマラベル);
         preferences.Children.Add(テーマ選択);
 
         一覧へ追加する(grid, filters, 0, 0);
@@ -386,8 +386,8 @@ internal sealed class メイン画面 : Grid
     private Border 詳細欄を構築する()
     {
         var panel = new StackPanel { Spacing = 8, Margin = new Thickness(8) };
-        _detailHeading.FontSize = 18;
-        panel.Children.Add(_detailHeading);
+        _詳細見出し.FontSize = 18;
+        panel.Children.Add(_詳細見出し);
         panel.Children.Add(詳細重要度);
         panel.Children.Add(詳細規則);
         panel.Children.Add(詳細シンボル);

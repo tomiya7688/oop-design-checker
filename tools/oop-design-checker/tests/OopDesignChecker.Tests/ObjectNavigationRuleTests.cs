@@ -5,7 +5,7 @@ namespace OopDesignChecker.Tests;
 
 internal static class オブジェクト辿り規則テスト
 {
-    public static void Run()
+    public static void 実行する()
     {
         プロジェクトオブジェクトを深く辿る処理は注意する();
         フレームワーク型と値型の辿りは許可する();
@@ -15,7 +15,7 @@ internal static class オブジェクト辿り規則テスト
 
     private static void プロジェクトオブジェクトを深く辿る処理は注意する()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class Country
             {
                 public void Print() { }
@@ -45,12 +45,12 @@ internal static class オブジェクト辿り規則テスト
             }
             """;
 
-        AssertSingle(source);
+        単一診断を確認する(ソース);
     }
 
     private static void フレームワーク型と値型の辿りは許可する()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class Event
             {
                 public System.DateTime CreatedAt { get; } = System.DateTime.UtcNow;
@@ -65,12 +65,12 @@ internal static class オブジェクト辿り規則テスト
             }
             """;
 
-        AssertNone(source);
+        診断がないことを確認する(ソース);
     }
 
     private static void データ保持型の辿りは許可する()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class Country
             {
                 public void Print() { }
@@ -105,12 +105,12 @@ internal static class オブジェクト辿り規則テスト
             }
             """;
 
-        AssertNone(source);
+        診断がないことを確認する(ソース);
     }
 
     private static void 同じオブジェクト抽象の辿りは許可する()
     {
-        const string source = """
+        const string ソース = """
             internal interface INode
             {
                 INode Next { get; }
@@ -132,38 +132,38 @@ internal static class オブジェクト辿り規則テスト
             }
             """;
 
-        AssertNone(source);
+        診断がないことを確認する(ソース);
     }
 
-    private static void AssertSingle(string source)
+    private static void 単一診断を確認する(string ソース)
     {
-        var diagnostics = 解析する(source);
+        var 診断一覧 = 解析する(ソース);
         if (
-            diagnostics.Length != 1
-            || diagnostics[0].Rule.Id != "OOP404"
-            || diagnostics[0].Severity != DesignDiagnosticSeverity.Attention
+            診断一覧.Length != 1
+            || 診断一覧[0].Rule.Id != "OOP404"
+            || 診断一覧[0].Severity != DesignDiagnosticSeverity.Attention
         )
         {
             throw new InvalidOperationException(
-                $"Expected one OOP404:Attention diagnostic, found {diagnostics.Length}."
+                $"Expected one OOP404:Attention diagnostic, found {診断一覧.Length}."
             );
         }
     }
 
-    private static void AssertNone(string source)
+    private static void 診断がないことを確認する(string ソース)
     {
-        var diagnostics = 解析する(source);
-        if (diagnostics.Length != 0)
+        var 診断一覧 = 解析する(ソース);
+        if (診断一覧.Length != 0)
         {
             throw new InvalidOperationException(
-                $"Expected no OOP404 diagnostics, found {diagnostics.Length}."
+                $"Expected no OOP404 diagnostics, found {診断一覧.Length}."
             );
         }
     }
 
-    private static DesignDiagnostic[] 解析する(string source) =>
+    private static DesignDiagnostic[] 解析する(string ソース) =>
         new 過剰オブジェクト辿り規則()
-            .解析する(TestProjectFactory.解析文脈を作る(source))
-            .Where(diagnostic => diagnostic.Rule.Id == "OOP404")
+            .解析する(テスト用プロジェクト作成器.解析文脈を作る(ソース))
+            .Where(診断 => 診断.Rule.Id == "OOP404")
             .ToArray();
 }

@@ -20,7 +20,7 @@ internal sealed class 型分岐ポリモーフィズム規則 : I解析規則
 
             foreach (var 条件分岐 in 構文根.DescendantNodes().OfType<IfStatementSyntax>())
             {
-                if (else付き条件分岐である(条件分岐))
+                if (その他分岐を持つ条件式である(条件分岐))
                 {
                     continue;
                 }
@@ -54,7 +54,7 @@ internal sealed class 型分岐ポリモーフィズム規則 : I解析規則
         }
     }
 
-    private static bool else付き条件分岐である(IfStatementSyntax 条件文) =>
+    private static bool その他分岐を持つ条件式である(IfStatementSyntax 条件文) =>
         条件文.Parent is ElseClauseSyntax { Statement: IfStatementSyntax };
 
     private static IEnumerable<型判定情報> 型判定群を集める(

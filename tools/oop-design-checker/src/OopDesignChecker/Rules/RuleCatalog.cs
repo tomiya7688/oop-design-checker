@@ -3,9 +3,11 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal static class RuleCatalog
+internal static class 規則一覧
 {
-    public static IReadOnlyList<I解析規則> CreateDefault(CheckerConfiguration? configuration = null)
+    public static IReadOnlyList<I解析規則> 既定の規則一覧を作る(
+        CheckerConfiguration? configuration = null
+    )
     {
         configuration ??= new CheckerConfiguration();
 
@@ -13,7 +15,7 @@ internal static class RuleCatalog
         [
             new 共通抽象不足規則(),
             new 型分岐ポリモーフィズム規則(),
-            new UnnecessaryAbstractionRule(),
+            new 不要な抽象規則(),
             new 過剰可視性規則(),
             new 封止候補規則(),
             new 静的メンバー候補規則(),

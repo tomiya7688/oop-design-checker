@@ -6,9 +6,9 @@ using OopDesignChecker.Rules;
 
 namespace OopDesignChecker.Tests;
 
-internal static class InheritanceDepthPrecisionSmokeTests
+internal static class 継承深度精度スモークテスト
 {
-    public static void Run()
+    public static void 実行する()
     {
         既定の深度4を注意とする();
         既定未満の深度を許可する();
@@ -24,7 +24,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
     private static void 既定の深度4を注意とする()
     {
-        const string source = """
+        const string ソース = """
             internal class A { }
             internal class B : A { }
             internal class C : B { }
@@ -34,26 +34,29 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 継承深度過剰規則(),
-            TestProjectFactory.解析文脈を作る(source),
-            expectedDepth: 4
+            テスト用プロジェクト作成器.解析文脈を作る(ソース),
+            期待する深さ: 4
         );
     }
 
     private static void 既定未満の深度を許可する()
     {
-        const string source = """
+        const string ソース = """
             internal class A { }
             internal class B : A { }
             internal class C : B { }
             internal sealed class D : C { }
             """;
 
-        診断がないことを確認する(new 継承深度過剰規則(), TestProjectFactory.解析文脈を作る(source));
+        診断がないことを確認する(
+            new 継承深度過剰規則(),
+            テスト用プロジェクト作成器.解析文脈を作る(ソース)
+        );
     }
 
     private static void 設定した深度を適用する()
     {
-        const string source = """
+        const string ソース = """
             internal class A { }
             internal class B : A { }
             internal class C : B { }
@@ -62,17 +65,17 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 継承深度過剰規則(警告深度: 3),
-            TestProjectFactory.解析文脈を作る(source),
-            expectedDepth: 3
+            テスト用プロジェクト作成器.解析文脈を作る(ソース),
+            期待する深さ: 3
         );
     }
 
     private static void CheckerServiceで設定深度を適用する()
     {
-        一時プロジェクトを使って実行する(rootPath =>
+        一時プロジェクトを使って実行する(ルートパス =>
         {
             File.WriteAllText(
-                Path.Combine(rootPath, "Sample.cs"),
+                Path.Combine(ルートパス, "Sample.cs"),
                 """
                 internal class A { }
                 internal class B : A { }
@@ -81,7 +84,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
                 """
             );
             File.WriteAllText(
-                Path.Combine(rootPath, "oop-design-checker.json"),
+                Path.Combine(ルートパス, "oop-design-checker.json"),
                 """
                 {
                   "ruleSettings": {
@@ -93,11 +96,11 @@ internal static class InheritanceDepthPrecisionSmokeTests
                 """
             );
 
-            var result = CheckerService.Analyze(rootPath);
-            var diagnostics = result.Diagnostics.Where(item => item.Rule.Id == "OOP304").ToArray();
+            var 結果 = CheckerService.Analyze(ルートパス);
+            var 診断一覧 = 結果.Diagnostics.Where(項目 => 項目.Rule.Id == "OOP304").ToArray();
             if (
-                diagnostics.Length == 1
-                && diagnostics[0]
+                診断一覧.Length == 1
+                && 診断一覧[0]
                     .Message.Contains("configured attention threshold: 3", StringComparison.Ordinal)
             )
             {
@@ -105,21 +108,21 @@ internal static class InheritanceDepthPrecisionSmokeTests
             }
 
             throw new InvalidOperationException(
-                $"Expected configured OOP304 threshold 3 to produce one diagnostic, found {diagnostics.Length}."
+                $"Expected configured OOP304 threshold 3 to produce one diagnostic, found {診断一覧.Length}."
             );
         });
     }
 
     private static void 不正な深度設定を拒否する()
     {
-        一時プロジェクトを使って実行する(rootPath =>
+        一時プロジェクトを使って実行する(ルートパス =>
         {
             File.WriteAllText(
-                Path.Combine(rootPath, "Sample.cs"),
+                Path.Combine(ルートパス, "Sample.cs"),
                 "internal sealed class Sample { }"
             );
             File.WriteAllText(
-                Path.Combine(rootPath, "oop-design-checker.json"),
+                Path.Combine(ルートパス, "oop-design-checker.json"),
                 """
                 {
                   "ruleSettings": {
@@ -133,10 +136,10 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
             try
             {
-                _ = CheckerService.Analyze(rootPath);
+                _ = CheckerService.Analyze(ルートパス);
             }
-            catch (InvalidOperationException exception)
-                when (exception.Message.Contains(
+            catch (InvalidOperationException 例外)
+                when (例外.Message.Contains(
                         "ruleSettings.oop304.warningDepth must be at least 1",
                         StringComparison.Ordinal
                     )
@@ -153,14 +156,17 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
     private static void 外部継承を数えない()
     {
-        const string source = """
+        const string ソース = """
             internal class A : System.Exception { }
             internal class B : A { }
             internal class C : B { }
             internal class D : C { }
             """;
 
-        診断がないことを確認する(new 継承深度過剰規則(), TestProjectFactory.解析文脈を作る(source));
+        診断がないことを確認する(
+            new 継承深度過剰規則(),
+            テスト用プロジェクト作成器.解析文脈を作る(ソース)
+        );
     }
 
     private static void プロジェクトをまたぐ継承を数える()
@@ -181,9 +187,9 @@ internal static class InheritanceDepthPrecisionSmokeTests
             """,
             基底プロジェクト.コンパイル結果.ToMetadataReference()
         );
-        var context = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
+        var 文脈 = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
 
-        診断が1件であることを確認する(new 継承深度過剰規則(), context, expectedDepth: 4);
+        診断が1件であることを確認する(new 継承深度過剰規則(), 文脈, 期待する深さ: 4);
     }
 
     private static void 外部基底型で継承計測を止める()
@@ -203,14 +209,14 @@ internal static class InheritanceDepthPrecisionSmokeTests
             """,
             基底プロジェクト.コンパイル結果.ToMetadataReference()
         );
-        var context = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
+        var 文脈 = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
 
-        診断がないことを確認する(new 継承深度過剰規則(), context);
+        診断がないことを確認する(new 継承深度過剰規則(), 文脈);
     }
 
     private static void 部分型宣言で主宣言に診断を1件出す()
     {
-        var project = ソース群から解析対象プロジェクトを作る(
+        var プロジェクト = ソース群から解析対象プロジェクトを作る(
             "PartialProject",
             [
                 (
@@ -242,9 +248,9 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 継承深度過剰規則(),
-            new 解析文脈(project),
-            expectedDepth: 4,
-            expectedFileName: "Partial.Primary.cs"
+            new 解析文脈(プロジェクト),
+            期待する深さ: 4,
+            期待するファイル名: "Partial.Primary.cs"
         );
     }
 
@@ -285,141 +291,141 @@ internal static class InheritanceDepthPrecisionSmokeTests
             ],
             基底プロジェクト.コンパイル結果.ToMetadataReference()
         );
-        var context = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
+        var 文脈 = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
 
         診断が1件であることを確認する(
             new 継承深度過剰規則(),
-            context,
-            expectedDepth: 4,
-            expectedFileName: "Derived.Primary.cs"
+            文脈,
+            期待する深さ: 4,
+            期待するファイル名: "Derived.Primary.cs"
         );
     }
 
     private static 解析対象プロジェクト 解析対象プロジェクトを作る(
-        string assemblyName,
-        string source,
-        params MetadataReference[] additionalReferences
+        string アセンブリ名,
+        string ソース,
+        params MetadataReference[] 追加参照一覧
     ) =>
         ソース群から解析対象プロジェクトを作る(
-            assemblyName,
-            [($"{assemblyName}.cs", source)],
-            additionalReferences
+            アセンブリ名,
+            [($"{アセンブリ名}.cs", ソース)],
+            追加参照一覧
         );
 
     private static 解析対象プロジェクト ソース群から解析対象プロジェクトを作る(
-        string assemblyName,
-        IReadOnlyList<(string FilePath, string Source)> sources,
-        params MetadataReference[] additionalReferences
+        string アセンブリ名,
+        IReadOnlyList<(string FilePath, string Source)> ソース一覧,
+        params MetadataReference[] 追加参照一覧
     )
     {
-        var syntaxTrees = sources
-            .Select(source => CSharpSyntaxTree.ParseText(source.Source, path: source.FilePath))
+        var 構文木一覧 = ソース一覧
+            .Select(ソース => CSharpSyntaxTree.ParseText(ソース.Source, path: ソース.FilePath))
             .ToArray();
-        var references = メタデータ参照提供器
+        var 参照一覧 = メタデータ参照提供器
             .プラットフォーム参照群を作る()
-            .Concat(additionalReferences)
+            .Concat(追加参照一覧)
             .ToArray();
-        var compilation = CSharpCompilation.Create(
-            assemblyName,
-            syntaxTrees,
-            references,
+        var コンパイル結果 = CSharpCompilation.Create(
+            アセンブリ名,
+            構文木一覧,
+            参照一覧,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
-        var errors = compilation
+        var エラー一覧 = コンパイル結果
             .GetDiagnostics()
-            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .Where(診断 => 診断.Severity == DiagnosticSeverity.Error)
             .ToArray();
-        if (errors.Length > 0)
+        if (エラー一覧.Length > 0)
         {
             throw new InvalidOperationException(
                 "Inheritance-depth test project did not compile:\n"
-                    + string.Join("\n", errors.Select(error => error.ToString()))
+                    + string.Join("\n", エラー一覧.Select(エラー => エラー.ToString()))
             );
         }
 
-        var semanticModels = syntaxTrees.ToDictionary(
-            syntaxTree => syntaxTree,
-            syntaxTree => compilation.GetSemanticModel(syntaxTree)
+        var 意味モデル一覧 = 構文木一覧.ToDictionary(
+            構文木 => 構文木,
+            構文木 => コンパイル結果.GetSemanticModel(構文木)
         );
         return new 解析対象プロジェクト(
-            ルートパス: assemblyName,
+            ルートパス: アセンブリ名,
             アプリケーションである: false,
-            compilation,
-            semanticModels
+            コンパイル結果,
+            意味モデル一覧
         );
     }
 
-    private static void 一時プロジェクトを使って実行する(Action<string> action)
+    private static void 一時プロジェクトを使って実行する(Action<string> 処理)
     {
-        var rootPath = Path.Combine(
+        var ルートパス = Path.Combine(
             Path.GetTempPath(),
             "oop-design-checker-tests",
             Guid.NewGuid().ToString("N")
         );
-        Directory.CreateDirectory(rootPath);
+        Directory.CreateDirectory(ルートパス);
 
         try
         {
-            action(rootPath);
+            処理(ルートパス);
         }
         finally
         {
-            if (Directory.Exists(rootPath))
+            if (Directory.Exists(ルートパス))
             {
-                Directory.Delete(rootPath, recursive: true);
+                Directory.Delete(ルートパス, recursive: true);
             }
         }
     }
 
     private static void 診断が1件であることを確認する(
-        継承深度過剰規則 rule,
-        解析文脈 context,
-        int expectedDepth,
-        string? expectedFileName = null
+        継承深度過剰規則 規則,
+        解析文脈 文脈,
+        int 期待する深さ,
+        string? 期待するファイル名 = null
     )
     {
-        var diagnostics = rule.解析する(context).ToArray();
+        var 診断一覧 = 規則.解析する(文脈).ToArray();
         if (
-            diagnostics.Length == 1
-            && diagnostics[0].Rule.Id == "OOP304"
-            && diagnostics[0].Severity == DesignDiagnosticSeverity.Attention
-            && diagnostics[0]
+            診断一覧.Length == 1
+            && 診断一覧[0].Rule.Id == "OOP304"
+            && 診断一覧[0].Severity == DesignDiagnosticSeverity.Attention
+            && 診断一覧[0]
                 .Message.Contains(
-                    $"Project-owned inheritance depth is {expectedDepth}",
+                    $"Project-owned inheritance depth is {期待する深さ}",
                     StringComparison.Ordinal
                 )
             && (
-                expectedFileName is null
-                || Path.GetFileName(diagnostics[0].Location.FilePath) == expectedFileName
+                期待するファイル名 is null
+                || Path.GetFileName(診断一覧[0].Location.FilePath) == 期待するファイル名
             )
         )
         {
             return;
         }
 
-        var found = string.Join(
+        var 検出内容 = string.Join(
             " | ",
-            diagnostics.Select(diagnostic =>
-                $"{diagnostic.Rule.Id}:{diagnostic.Severity}:{diagnostic.Location.FilePath}:{diagnostic.Message}"
+            診断一覧.Select(診断 =>
+                $"{診断.Rule.Id}:{診断.Severity}:{診断.Location.FilePath}:{診断.Message}"
             )
         );
         throw new InvalidOperationException(
-            $"Expected one OOP304 Attention at depth {expectedDepth}"
-                + (expectedFileName is null ? string.Empty : $" in {expectedFileName}")
-                + $", found [{found}]."
+            $"Expected one OOP304 Attention at depth {期待する深さ}"
+                + (期待するファイル名 is null ? string.Empty : $" in {期待するファイル名}")
+                + $", found [{検出内容}]."
         );
     }
 
-    private static void 診断がないことを確認する(継承深度過剰規則 rule, 解析文脈 context)
+    private static void 診断がないことを確認する(継承深度過剰規則 規則, 解析文脈 文脈)
     {
-        var diagnostics = rule.解析する(context).Where(item => item.Rule.Id == "OOP304").ToArray();
-        if (diagnostics.Length == 0)
+        var 診断一覧 = 規則.解析する(文脈).Where(項目 => 項目.Rule.Id == "OOP304").ToArray();
+        if (診断一覧.Length == 0)
         {
             return;
         }
 
         throw new InvalidOperationException(
-            $"Expected no OOP304 diagnostic, found {diagnostics.Length}."
+            $"Expected no OOP304 diagnostic, found {診断一覧.Length}."
         );
     }
 }

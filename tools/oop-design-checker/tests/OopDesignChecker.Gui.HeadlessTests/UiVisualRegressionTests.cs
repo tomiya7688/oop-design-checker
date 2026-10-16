@@ -35,425 +35,441 @@ public sealed class 画面視覚回帰テスト
     [Avalonia.Headless.XUnit.AvaloniaFact]
     public void 英語画面を欠けずに描画する()
     {
-        var window = ウィンドウを作る(1280, 820);
+        var ウィンドウ = ウィンドウを作る(1280, 820);
         try
         {
-            window.テスト用表示言語を設定する(UserInterfaceLanguage.English);
+            ウィンドウ.テスト用表示言語を設定する(UserInterfaceLanguage.English);
             画面更新を完了する();
-            メイン画面配置を確認する(window);
-            画面を撮影する(window, "ready-en-default", "en");
+            メイン画面配置を確認する(ウィンドウ);
+            画面を撮影する(ウィンドウ, "ready-en-default", "en");
         }
         finally
         {
-            window.Close();
+            ウィンドウ.Close();
         }
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
     public void テーマ切り替え後も解析と絞り込み状態を保つ()
     {
-        var fixtureRoot = fixtureルートを取得する();
-        var result = CheckerService.Analyze(fixtureRoot);
-        var window = ウィンドウを作る(1280, 820);
+        var テストデータルート = テストデータルートを取得する();
+        var 結果 = CheckerService.Analyze(テストデータルート);
+        var ウィンドウ = ウィンドウを作る(1280, 820);
 
         try
         {
             Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
 
-            window.テスト用テーマを設定する(ThemeVariant.Light);
+            ウィンドウ.テスト用テーマを設定する(ThemeVariant.Light);
             画面更新を完了する();
             Assert.Equal(ThemeVariant.Light, Avalonia.Application.Current!.RequestedThemeVariant);
-            Assert.Equal(ThemeVariant.Light, window.ActualThemeVariant);
-            Assert.Equal(1, window.テスト用画面.テーマ選択.SelectedIndex);
-            画面を撮影する(window, "ready-light-default", "ja");
+            Assert.Equal(ThemeVariant.Light, ウィンドウ.ActualThemeVariant);
+            Assert.Equal(1, ウィンドウ.テスト用画面.テーマ選択.SelectedIndex);
+            画面を撮影する(ウィンドウ, "ready-light-default", "ja");
 
-            window.テスト用解析結果を表示する(result);
-            window.テスト用画面.危険絞り込み.IsChecked = false;
-            window.テスト用画面.警告絞り込み.IsChecked = true;
-            window.テスト用画面.注意絞り込み.IsChecked = false;
-            window.テスト用画面.検索絞り込み.Text = "OOP106";
-            window.テスト用絞り込みを適用する();
+            ウィンドウ.テスト用解析結果を表示する(結果);
+            ウィンドウ.テスト用画面.危険絞り込み.IsChecked = false;
+            ウィンドウ.テスト用画面.警告絞り込み.IsChecked = true;
+            ウィンドウ.テスト用画面.注意絞り込み.IsChecked = false;
+            ウィンドウ.テスト用画面.検索絞り込み.Text = "OOP106";
+            ウィンドウ.テスト用絞り込みを適用する();
             画面更新を完了する();
 
-            var rows = 表示行を取得する(window);
-            Assert.NotEmpty(rows);
-            Assert.All(rows, row => Assert.Equal("OOP106", row.RuleId));
-            Assert.Equal("OOP106", window.テスト用画面.検索絞り込み.Text);
-            集計を照合する(window, result.Diagnostics);
-            画面を撮影する(window, "fixture-light-default", "ja");
+            var 行一覧 = 表示行を取得する(ウィンドウ);
+            Assert.NotEmpty(行一覧);
+            Assert.All(行一覧, 行 => Assert.Equal("OOP106", 行.RuleId));
+            Assert.Equal("OOP106", ウィンドウ.テスト用画面.検索絞り込み.Text);
+            集計を照合する(ウィンドウ, 結果.Diagnostics);
+            画面を撮影する(ウィンドウ, "fixture-light-default", "ja");
 
-            window.テスト用テーマを設定する(ThemeVariant.Dark);
+            ウィンドウ.テスト用テーマを設定する(ThemeVariant.Dark);
             画面更新を完了する();
             Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
-            Assert.Equal("OOP106", window.テスト用画面.検索絞り込み.Text);
-            Assert.NotEmpty(表示行を取得する(window));
+            Assert.Equal("OOP106", ウィンドウ.テスト用画面.検索絞り込み.Text);
+            Assert.NotEmpty(表示行を取得する(ウィンドウ));
         }
         finally
         {
-            window.テスト用テーマを設定する(ThemeVariant.Dark);
-            window.Close();
+            ウィンドウ.テスト用テーマを設定する(ThemeVariant.Dark);
+            ウィンドウ.Close();
         }
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
     public void 両言語でAltアクセスキーからメニューを開く()
     {
-        var window = ウィンドウを作る(1280, 820);
+        var ウィンドウ = ウィンドウを作る(1280, 820);
         try
         {
-            window.テスト用画面.対象パス欄.Focus();
-            キーを押す(window, Key.F, PhysicalKey.F, RawInputModifiers.Alt, "f");
-            Assert.True(window.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
-            画面を撮影する(window, "menu-file-open-ja", "ja");
-            キーを押す(window, Key.Escape, PhysicalKey.Escape);
-            Assert.False(window.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
+            ウィンドウ.テスト用画面.対象パス欄.Focus();
+            キーを押す(ウィンドウ, Key.F, PhysicalKey.F, RawInputModifiers.Alt, "f");
+            Assert.True(ウィンドウ.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
+            画面を撮影する(ウィンドウ, "menu-file-open-ja", "ja");
+            キーを押す(ウィンドウ, Key.Escape, PhysicalKey.Escape);
+            Assert.False(ウィンドウ.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
 
-            キーを押す(window, Key.A, PhysicalKey.A, RawInputModifiers.Alt, "a");
-            Assert.True(window.テスト用画面.メインメニュー部品.解析メニュー.IsSubMenuOpen);
-            キーを押す(window, Key.Escape, PhysicalKey.Escape);
+            キーを押す(ウィンドウ, Key.A, PhysicalKey.A, RawInputModifiers.Alt, "a");
+            Assert.True(ウィンドウ.テスト用画面.メインメニュー部品.解析メニュー.IsSubMenuOpen);
+            キーを押す(ウィンドウ, Key.Escape, PhysicalKey.Escape);
 
-            window.テスト用表示言語を設定する(UserInterfaceLanguage.English);
-            window.テスト用画面.検索絞り込み.Focus();
-            キーを押す(window, Key.V, PhysicalKey.V, RawInputModifiers.Alt, "v");
-            Assert.True(window.テスト用画面.メインメニュー部品.表示メニュー.IsSubMenuOpen);
-            キーを押す(window, Key.Escape, PhysicalKey.Escape);
+            ウィンドウ.テスト用表示言語を設定する(UserInterfaceLanguage.English);
+            ウィンドウ.テスト用画面.検索絞り込み.Focus();
+            キーを押す(ウィンドウ, Key.V, PhysicalKey.V, RawInputModifiers.Alt, "v");
+            Assert.True(ウィンドウ.テスト用画面.メインメニュー部品.表示メニュー.IsSubMenuOpen);
+            キーを押す(ウィンドウ, Key.Escape, PhysicalKey.Escape);
         }
         finally
         {
-            window.Close();
+            ウィンドウ.Close();
         }
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
     public void 直接フォーカス操作で入力を保ち通常入力から操作を起動しない()
     {
-        var window = ウィンドウを作る(1280, 820);
+        var ウィンドウ = ウィンドウを作る(1280, 820);
         try
         {
-            window.テスト用画面.対象パス欄.Text = "target-value";
-            window.テスト用画面.設定パス欄.Text = "config-value";
-            window.テスト用画面.検索絞り込み.Text = "search-value";
+            ウィンドウ.テスト用画面.対象パス欄.Text = "target-value";
+            ウィンドウ.テスト用画面.設定パス欄.Text = "config-value";
+            ウィンドウ.テスト用画面.検索絞り込み.Text = "search-value";
 
-            window.テスト用画面.対象パス欄.Focus();
-            window.KeyTextInput("f");
+            ウィンドウ.テスト用画面.対象パス欄.Focus();
+            ウィンドウ.KeyTextInput("f");
             画面更新を完了する();
-            var typedTarget = window.テスト用画面.対象パス欄.Text ?? string.Empty;
-            Assert.Equal("target-value".Length + 1, typedTarget.Length);
+            var 入力した対象 = ウィンドウ.テスト用画面.対象パス欄.Text ?? string.Empty;
+            Assert.Equal("target-value".Length + 1, 入力した対象.Length);
             Assert.Equal(
                 "target-value",
-                typedTarget.Replace("f", string.Empty, StringComparison.Ordinal)
+                入力した対象.Replace("f", string.Empty, StringComparison.Ordinal)
             );
-            Assert.False(window.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
+            Assert.False(ウィンドウ.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
 
-            window.テスト用画面.検索絞り込み.Focus();
-            キーを押す(window, Key.LeftAlt, PhysicalKey.AltLeft);
-            Assert.False(window.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
+            ウィンドウ.テスト用画面.検索絞り込み.Focus();
+            キーを押す(ウィンドウ, Key.LeftAlt, PhysicalKey.AltLeft);
+            Assert.False(ウィンドウ.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
 
-            キーを押す(window, Key.T, PhysicalKey.T, RawInputModifiers.Alt, "t");
-            Assert.Same(window.テスト用画面.対象パス欄, window.FocusManager?.GetFocusedElement());
-            Assert.Equal(typedTarget, window.テスト用画面.対象パス欄.Text);
+            キーを押す(ウィンドウ, Key.T, PhysicalKey.T, RawInputModifiers.Alt, "t");
+            Assert.Same(
+                ウィンドウ.テスト用画面.対象パス欄,
+                ウィンドウ.FocusManager?.GetFocusedElement()
+            );
+            Assert.Equal(入力した対象, ウィンドウ.テスト用画面.対象パス欄.Text);
 
-            キーを押す(window, Key.C, PhysicalKey.C, RawInputModifiers.Alt, "c");
-            Assert.Same(window.テスト用画面.設定パス欄, window.FocusManager?.GetFocusedElement());
-            Assert.Equal("config-value", window.テスト用画面.設定パス欄.Text);
+            キーを押す(ウィンドウ, Key.C, PhysicalKey.C, RawInputModifiers.Alt, "c");
+            Assert.Same(
+                ウィンドウ.テスト用画面.設定パス欄,
+                ウィンドウ.FocusManager?.GetFocusedElement()
+            );
+            Assert.Equal("config-value", ウィンドウ.テスト用画面.設定パス欄.Text);
 
-            キーを押す(window, Key.F, PhysicalKey.F, RawInputModifiers.Control, "f");
-            Assert.Same(window.テスト用画面.検索絞り込み, window.FocusManager?.GetFocusedElement());
-            Assert.Equal("search-value", window.テスト用画面.検索絞り込み.Text);
+            キーを押す(ウィンドウ, Key.F, PhysicalKey.F, RawInputModifiers.Control, "f");
+            Assert.Same(
+                ウィンドウ.テスト用画面.検索絞り込み,
+                ウィンドウ.FocusManager?.GetFocusedElement()
+            );
+            Assert.Equal("search-value", ウィンドウ.テスト用画面.検索絞り込み.Text);
         }
         finally
         {
-            window.Close();
+            ウィンドウ.Close();
         }
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
     public void Escapeで編集を抜けてから解析をキャンセルする()
     {
-        const string delayVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS";
-        var previousDelay = Environment.GetEnvironmentVariable(delayVariable);
-        Environment.SetEnvironmentVariable(delayVariable, "30000");
+        const string 遅延変数名 = "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS";
+        var 変更前の遅延 = Environment.GetEnvironmentVariable(遅延変数名);
+        Environment.SetEnvironmentVariable(遅延変数名, "30000");
 
-        var window = ウィンドウを作る(1280, 820);
+        var ウィンドウ = ウィンドウを作る(1280, 820);
         try
         {
-            window.テスト用画面.検索絞り込み.Text = "OOP106";
-            window.テスト用画面.検索絞り込み.Focus();
-            window.テスト用画面.解析ボタン.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            ウィンドウ.テスト用画面.検索絞り込み.Text = "OOP106";
+            ウィンドウ.テスト用画面.検索絞り込み.Focus();
+            ウィンドウ.テスト用画面.解析ボタン.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             画面更新を完了する();
 
-            Assert.True(window.テスト用画面.キャンセルボタン.IsEnabled);
-            Assert.Same(window.テスト用画面.検索絞り込み, window.FocusManager?.GetFocusedElement());
-
-            キーを押す(window, Key.Escape, PhysicalKey.Escape);
-            Assert.Equal("OOP106", window.テスト用画面.検索絞り込み.Text);
-            Assert.NotSame(
-                window.テスト用画面.検索絞り込み,
-                window.FocusManager?.GetFocusedElement()
+            Assert.True(ウィンドウ.テスト用画面.キャンセルボタン.IsEnabled);
+            Assert.Same(
+                ウィンドウ.テスト用画面.検索絞り込み,
+                ウィンドウ.FocusManager?.GetFocusedElement()
             );
-            Assert.True(window.テスト用画面.キャンセルボタン.IsEnabled);
 
-            キーを押す(window, Key.Escape, PhysicalKey.Escape);
-            Assert.False(window.テスト用画面.キャンセルボタン.IsEnabled);
+            キーを押す(ウィンドウ, Key.Escape, PhysicalKey.Escape);
+            Assert.Equal("OOP106", ウィンドウ.テスト用画面.検索絞り込み.Text);
+            Assert.NotSame(
+                ウィンドウ.テスト用画面.検索絞り込み,
+                ウィンドウ.FocusManager?.GetFocusedElement()
+            );
+            Assert.True(ウィンドウ.テスト用画面.キャンセルボタン.IsEnabled);
+
+            キーを押す(ウィンドウ, Key.Escape, PhysicalKey.Escape);
+            Assert.False(ウィンドウ.テスト用画面.キャンセルボタン.IsEnabled);
             条件成立まで待つ(
                 () =>
-                    (window.テスト用画面.状態表示.Text ?? string.Empty).Contains(
+                    (ウィンドウ.テスト用画面.状態表示.Text ?? string.Empty).Contains(
                         "キャンセル",
                         StringComparison.OrdinalIgnoreCase
                     ),
-                timeoutMilliseconds: 3000
+                タイムアウト時間: 3000
             );
         }
         finally
         {
-            window.Close();
-            Environment.SetEnvironmentVariable(delayVariable, previousDelay);
+            ウィンドウ.Close();
+            Environment.SetEnvironmentVariable(遅延変数名, 変更前の遅延);
         }
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
     public void 両言語のショートカット表示をコマンド定義と一致させる()
     {
-        var window = ウィンドウを作る(1280, 820);
+        var ウィンドウ = ウィンドウを作る(1280, 820);
         try
         {
-            var view = window.テスト用画面;
+            var 画面 = ウィンドウ.テスト用画面;
             Assert.Contains(
                 GUIコマンド.解析開始.主操作の案内,
-                view.ショートカット案内.Text,
+                画面.ショートカット案内.Text,
                 StringComparison.Ordinal
             );
             Assert.Contains(
                 GUIコマンド.解析キャンセル.主操作の案内,
-                view.ショートカット案内.Text,
+                画面.ショートカット案内.Text,
                 StringComparison.Ordinal
             );
             Assert.Contains(
                 GUIコマンド.診断検索.主操作の案内,
-                view.ショートカット案内.Text,
+                画面.ショートカット案内.Text,
                 StringComparison.Ordinal
             );
 
             コマンドヘルプを確認する(
-                view.解析ボタン,
+                画面.解析ボタン,
                 GUIコマンド.解析開始,
                 UserInterfaceLanguage.Japanese
             );
             コマンドヘルプを確認する(
-                view.キャンセルボタン,
+                画面.キャンセルボタン,
                 GUIコマンド.解析キャンセル,
                 UserInterfaceLanguage.Japanese
             );
             コマンドヘルプを確認する(
-                view.検索絞り込み,
+                画面.検索絞り込み,
                 GUIコマンド.診断検索,
                 UserInterfaceLanguage.Japanese
             );
             コマンドヘルプを確認する(
-                view.対象パス欄,
+                画面.対象パス欄,
                 GUIコマンド.対象欄フォーカス,
                 UserInterfaceLanguage.Japanese
             );
             コマンドヘルプを確認する(
-                view.設定パス欄,
+                画面.設定パス欄,
                 GUIコマンド.設定欄フォーカス,
                 UserInterfaceLanguage.Japanese
             );
             コマンドヘルプを確認する(
-                view.対象ファイルボタン,
+                画面.対象ファイルボタン,
                 GUIコマンド.対象ファイル選択,
                 UserInterfaceLanguage.Japanese
             );
             コマンドヘルプを確認する(
-                view.JSON出力ボタン,
+                画面.JSON出力ボタン,
                 GUIコマンド.JSON出力,
                 UserInterfaceLanguage.Japanese
             );
 
-            Assert.False(view.キャンセルボタン.IsEnabled);
+            Assert.False(画面.キャンセルボタン.IsEnabled);
             Assert.Contains(
                 GUIコマンド.解析キャンセル.ショートカット表示,
-                AutomationProperties.GetHelpText(view.キャンセルボタン),
+                AutomationProperties.GetHelpText(画面.キャンセルボタン),
                 StringComparison.Ordinal
             );
 
             入力操作を照合する(
-                view.メインメニュー部品.解析項目,
+                画面.メインメニュー部品.解析項目,
                 GUIコマンド.解析開始.主ショートカット!.Value
             );
             入力操作を照合する(
-                view.メインメニュー部品.キャンセル項目,
+                画面.メインメニュー部品.キャンセル項目,
                 GUIコマンド.解析キャンセル.主ショートカット!.Value
             );
             入力操作を照合する(
-                view.メインメニュー部品.検索項目,
+                画面.メインメニュー部品.検索項目,
                 GUIコマンド.診断検索.主ショートカット!.Value
             );
 
-            var japaneseHelp = AutomationProperties.GetHelpText(view.解析ボタン);
-            window.テスト用表示言語を設定する(UserInterfaceLanguage.English);
+            var 日本語のヘルプ = AutomationProperties.GetHelpText(画面.解析ボタン);
+            ウィンドウ.テスト用表示言語を設定する(UserInterfaceLanguage.English);
             画面更新を完了する();
 
             Assert.Contains(
                 GUIコマンド.解析開始.主操作の案内,
-                view.ショートカット案内.Text,
+                画面.ショートカット案内.Text,
                 StringComparison.Ordinal
             );
             Assert.Contains(
                 GUIコマンド.対象欄フォーカス.主操作の案内,
-                AutomationProperties.GetHelpText(view.対象パス欄),
+                AutomationProperties.GetHelpText(画面.対象パス欄),
                 StringComparison.Ordinal
             );
             コマンドヘルプを確認する(
-                view.解析ボタン,
+                画面.解析ボタン,
                 GUIコマンド.解析開始,
                 UserInterfaceLanguage.English
             );
-            var englishHelp = AutomationProperties.GetHelpText(view.解析ボタン);
-            Assert.NotEqual(japaneseHelp, englishHelp);
-            Assert.Contains("Start analysis.", englishHelp, StringComparison.Ordinal);
+            var 英語のヘルプ = AutomationProperties.GetHelpText(画面.解析ボタン);
+            Assert.NotEqual(日本語のヘルプ, 英語のヘルプ);
+            Assert.Contains("Start analysis.", 英語のヘルプ, StringComparison.Ordinal);
             Assert.Contains(
                 GUIコマンド.解析開始.ショートカット表示,
-                englishHelp,
+                英語のヘルプ,
                 StringComparison.Ordinal
             );
         }
         finally
         {
-            window.Close();
+            ウィンドウ.Close();
         }
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
     public void メニュー状態を絞り込みと言語とテーマと結果有無へ同期する()
     {
-        var fixtureRoot = fixtureルートを取得する();
-        var result = CheckerService.Analyze(fixtureRoot);
-        var window = ウィンドウを作る(1280, 820);
+        var テストデータルート = テストデータルートを取得する();
+        var 結果 = CheckerService.Analyze(テストデータルート);
+        var ウィンドウ = ウィンドウを作る(1280, 820);
 
         try
         {
-            var menu = window.テスト用画面.メインメニュー部品;
-            Assert.True(menu.解析項目.IsEnabled);
-            Assert.False(menu.キャンセル項目.IsEnabled);
-            Assert.False(menu.JSON出力項目.IsEnabled);
-            Assert.False(menu.ソースを開く項目.IsEnabled);
-            Assert.True(menu.危険絞り込み項目.IsChecked);
-            Assert.True(menu.警告絞り込み項目.IsChecked);
-            Assert.True(menu.注意絞り込み項目.IsChecked);
+            var メニュー = ウィンドウ.テスト用画面.メインメニュー部品;
+            Assert.True(メニュー.解析項目.IsEnabled);
+            Assert.False(メニュー.キャンセル項目.IsEnabled);
+            Assert.False(メニュー.JSON出力項目.IsEnabled);
+            Assert.False(メニュー.ソースを開く項目.IsEnabled);
+            Assert.True(メニュー.危険絞り込み項目.IsChecked);
+            Assert.True(メニュー.警告絞り込み項目.IsChecked);
+            Assert.True(メニュー.注意絞り込み項目.IsChecked);
 
-            menu.警告絞り込み項目.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            メニュー.警告絞り込み項目.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             画面更新を完了する();
-            Assert.False(window.テスト用画面.警告絞り込み.IsChecked);
-            Assert.False(menu.警告絞り込み項目.IsChecked);
+            Assert.False(ウィンドウ.テスト用画面.警告絞り込み.IsChecked);
+            Assert.False(メニュー.警告絞り込み項目.IsChecked);
 
-            menu.ライトテーマ項目.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            メニュー.ライトテーマ項目.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             画面更新を完了する();
-            Assert.Equal(1, window.テスト用画面.テーマ選択.SelectedIndex);
-            Assert.True(menu.ライトテーマ項目.IsChecked);
+            Assert.Equal(1, ウィンドウ.テスト用画面.テーマ選択.SelectedIndex);
+            Assert.True(メニュー.ライトテーマ項目.IsChecked);
             Assert.Equal(ThemeVariant.Light, Avalonia.Application.Current!.RequestedThemeVariant);
 
-            menu.英語項目.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            メニュー.英語項目.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             画面更新を完了する();
-            Assert.Equal(1, window.テスト用画面.表示言語選択.SelectedIndex);
-            Assert.True(menu.英語項目.IsChecked);
+            Assert.Equal(1, ウィンドウ.テスト用画面.表示言語選択.SelectedIndex);
+            Assert.True(メニュー.英語項目.IsChecked);
 
-            window.テスト用解析結果を表示する(result);
+            ウィンドウ.テスト用解析結果を表示する(結果);
             画面更新を完了する();
-            Assert.True(menu.JSON出力項目.IsEnabled);
+            Assert.True(メニュー.JSON出力項目.IsEnabled);
 
-            var row = 表示行を取得する(window).First();
-            window.テスト用画面.診断一覧.SelectedItem = row;
-            window.テスト用選択診断を更新する();
+            var 行 = 表示行を取得する(ウィンドウ).First();
+            ウィンドウ.テスト用画面.診断一覧.SelectedItem = 行;
+            ウィンドウ.テスト用選択診断を更新する();
             画面更新を完了する();
-            Assert.True(menu.ソースを開く項目.IsEnabled);
+            Assert.True(メニュー.ソースを開く項目.IsEnabled);
         }
         finally
         {
-            window.テスト用テーマを設定する(ThemeVariant.Dark);
-            window.Close();
+            ウィンドウ.テスト用テーマを設定する(ThemeVariant.Dark);
+            ウィンドウ.Close();
         }
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
     public void リリース用fixtureの行と絞り込みと詳細を描画する()
     {
-        var fixtureRoot = fixtureルートを取得する();
-        var expectedCount = 期待する診断件数を読む(fixtureRoot);
-        var result = CheckerService.Analyze(fixtureRoot);
+        var テストデータルート = テストデータルートを取得する();
+        var 期待する件数 = 期待する診断件数を読む(テストデータルート);
+        var 結果 = CheckerService.Analyze(テストデータルート);
 
-        Assert.Equal(expectedCount, result.Diagnostics.Count);
+        Assert.Equal(期待する件数, 結果.Diagnostics.Count);
 
-        var window = ウィンドウを作る(1280, 820);
+        var ウィンドウ = ウィンドウを作る(1280, 820);
         try
         {
-            window.テスト用解析結果を表示する(result);
+            ウィンドウ.テスト用解析結果を表示する(結果);
             画面更新を完了する();
 
-            var rows = 表示行を取得する(window);
-            Assert.Equal(expectedCount, rows.Length);
-            集計を照合する(window, result.Diagnostics);
-            メイン画面配置を確認する(window);
-            画面を撮影する(window, "fixture-ja-default", "ja");
+            var 行一覧 = 表示行を取得する(ウィンドウ);
+            Assert.Equal(期待する件数, 行一覧.Length);
+            集計を照合する(ウィンドウ, 結果.Diagnostics);
+            メイン画面配置を確認する(ウィンドウ);
+            画面を撮影する(ウィンドウ, "fixture-ja-default", "ja");
 
-            window.テスト用画面.危険絞り込み.IsChecked = false;
-            window.テスト用画面.警告絞り込み.IsChecked = true;
-            window.テスト用画面.注意絞り込み.IsChecked = false;
-            window.テスト用画面.検索絞り込み.Text = "OOP106";
-            window.テスト用絞り込みを適用する();
+            ウィンドウ.テスト用画面.危険絞り込み.IsChecked = false;
+            ウィンドウ.テスト用画面.警告絞り込み.IsChecked = true;
+            ウィンドウ.テスト用画面.注意絞り込み.IsChecked = false;
+            ウィンドウ.テスト用画面.検索絞り込み.Text = "OOP106";
+            ウィンドウ.テスト用絞り込みを適用する();
             画面更新を完了する();
 
-            rows = 表示行を取得する(window);
-            Assert.NotEmpty(rows);
-            Assert.All(rows, row => Assert.Equal("OOP106", row.RuleId));
+            行一覧 = 表示行を取得する(ウィンドウ);
+            Assert.NotEmpty(行一覧);
+            Assert.All(行一覧, 行 => Assert.Equal("OOP106", 行.RuleId));
 
-            window.テスト用画面.診断一覧.SelectedItem = rows[0];
-            window.テスト用選択診断を更新する();
+            ウィンドウ.テスト用画面.診断一覧.SelectedItem = 行一覧[0];
+            ウィンドウ.テスト用選択診断を更新する();
             画面更新を完了する();
-            Assert.Contains("OOP106", window.テスト用画面.詳細規則.Text, StringComparison.Ordinal);
-            画像基準用fixture位置を固定する(window, fixtureRoot, rows[0].FilePath);
-            画面を撮影する(window, "filter-detail-oop106-ja", "ja");
+            Assert.Contains(
+                "OOP106",
+                ウィンドウ.テスト用画面.詳細規則.Text,
+                StringComparison.Ordinal
+            );
+            画像基準用fixture位置を固定する(ウィンドウ, テストデータルート, 行一覧[0].FilePath);
+            画面を撮影する(ウィンドウ, "filter-detail-oop106-ja", "ja");
 
-            window.テスト用画面.危険絞り込み.IsChecked = true;
-            window.テスト用画面.警告絞り込み.IsChecked = true;
-            window.テスト用画面.注意絞り込み.IsChecked = true;
-            window.テスト用画面.検索絞り込み.Text = string.Empty;
-            window.テスト用絞り込みを適用する();
-            window.テスト用表示言語を設定する(UserInterfaceLanguage.English);
+            ウィンドウ.テスト用画面.危険絞り込み.IsChecked = true;
+            ウィンドウ.テスト用画面.警告絞り込み.IsChecked = true;
+            ウィンドウ.テスト用画面.注意絞り込み.IsChecked = true;
+            ウィンドウ.テスト用画面.検索絞り込み.Text = string.Empty;
+            ウィンドウ.テスト用絞り込みを適用する();
+            ウィンドウ.テスト用表示言語を設定する(UserInterfaceLanguage.English);
             画面更新を完了する();
 
-            Assert.Equal(expectedCount, 表示行を取得する(window).Length);
-            集計を照合する(window, result.Diagnostics);
-            メイン画面配置を確認する(window);
-            画面を撮影する(window, "fixture-en-default", "en");
+            Assert.Equal(期待する件数, 表示行を取得する(ウィンドウ).Length);
+            集計を照合する(ウィンドウ, 結果.Diagnostics);
+            メイン画面配置を確認する(ウィンドウ);
+            画面を撮影する(ウィンドウ, "fixture-en-default", "en");
         }
         finally
         {
-            window.Close();
+            ウィンドウ.Close();
         }
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
     public void エラーと設定編集画面を描画する()
     {
-        var window = ウィンドウを作る(1280, 820);
+        var ウィンドウ = ウィンドウを作る(1280, 820);
         try
         {
-            const string error = "Release UI validation error";
-            window.テスト用エラーを表示する(error);
+            const string エラー = "Release UI validation error";
+            ウィンドウ.テスト用エラーを表示する(エラー);
             画面更新を完了する();
 
-            Assert.Equal(error, window.テスト用画面.状態表示.Text);
-            Assert.Empty(表示行を取得する(window));
-            メイン画面配置を確認する(window);
-            画面を撮影する(window, "error-ja-default", "ja");
+            Assert.Equal(エラー, ウィンドウ.テスト用画面.状態表示.Text);
+            Assert.Empty(表示行を取得する(ウィンドウ));
+            メイン画面配置を確認する(ウィンドウ);
+            画面を撮影する(ウィンドウ, "error-ja-default", "ja");
         }
         finally
         {
-            window.Close();
+            ウィンドウ.Close();
         }
 
-        var editor = new 設定編集画面(
+        var 編集画面 = new 設定編集画面(
             """
             {
               "disabledRules": ["OOP103"],
@@ -462,75 +478,75 @@ public sealed class 画面視覚回帰テスト
             """,
             UserInterfaceLanguage.Japanese
         );
-        editor.Show();
+        編集画面.Show();
         try
         {
             画面更新を完了する();
-            Assert.True(editor.ClientSize.Width >= 560);
-            Assert.True(editor.ClientSize.Height >= 420);
-            画面を撮影する(editor, "config-editor-ja-default", "ja");
+            Assert.True(編集画面.ClientSize.Width >= 560);
+            Assert.True(編集画面.ClientSize.Height >= 420);
+            画面を撮影する(編集画面, "config-editor-ja-default", "ja");
         }
         finally
         {
-            editor.Close();
+            編集画面.Close();
         }
     }
 
-    private static void 準備画面を撮影する(string scenario, double width, double height)
+    private static void 準備画面を撮影する(string シナリオ, double 幅, double 高さ)
     {
-        var window = ウィンドウを作る(width, height);
+        var ウィンドウ = ウィンドウを作る(幅, 高さ);
         try
         {
             Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
-            Assert.Equal(ThemeVariant.Dark, window.ActualThemeVariant);
-            Assert.Equal(0, window.テスト用画面.テーマ選択.SelectedIndex);
-            メイン画面配置を確認する(window);
-            画面を撮影する(window, scenario, "ja");
+            Assert.Equal(ThemeVariant.Dark, ウィンドウ.ActualThemeVariant);
+            Assert.Equal(0, ウィンドウ.テスト用画面.テーマ選択.SelectedIndex);
+            メイン画面配置を確認する(ウィンドウ);
+            画面を撮影する(ウィンドウ, シナリオ, "ja");
         }
         finally
         {
-            window.Close();
+            ウィンドウ.Close();
         }
     }
 
     private static void コマンドヘルプを確認する(
-        Control control,
-        GUIコマンド定義 command,
-        UserInterfaceLanguage language
+        Control コントロール,
+        GUIコマンド定義 コマンド,
+        UserInterfaceLanguage 言語
     )
     {
-        var expected = command.ヘルプ文(language);
-        Assert.Equal(expected, AutomationProperties.GetHelpText(control));
-        Assert.Equal(expected, ToolTip.GetTip(control)?.ToString());
+        var 期待値 = コマンド.ヘルプ文(言語);
+        Assert.Equal(期待値, AutomationProperties.GetHelpText(コントロール));
+        Assert.Equal(期待値, ToolTip.GetTip(コントロール)?.ToString());
     }
 
-    private static void 入力操作を照合する(MenuItem item, GUIショートカット expected)
+    private static void 入力操作を照合する(MenuItem 項目, GUIショートカット 期待値)
     {
-        var gesture = Assert.IsType<KeyGesture>(item.InputGesture);
-        Assert.Equal(expected.Key, gesture.Key);
-        Assert.Equal(expected.Modifiers, gesture.KeyModifiers);
+        var ジェスチャー = Assert.IsType<KeyGesture>(項目.InputGesture);
+        Assert.Equal(期待値.Key, ジェスチャー.Key);
+        Assert.Equal(期待値.Modifiers, ジェスチャー.KeyModifiers);
     }
 
     private static void キーを押す(
-        Window window,
-        Key key,
-        PhysicalKey physicalKey,
-        RawInputModifiers modifiers = RawInputModifiers.None,
-        string? keySymbol = null
+        Window ウィンドウ,
+        Key キー,
+        PhysicalKey 物理キー,
+        RawInputModifiers 修飾キー = RawInputModifiers.None,
+        string? キー記号 = null
     )
     {
-        window.KeyPress(key, modifiers, physicalKey, keySymbol);
-        window.KeyRelease(key, modifiers, physicalKey, keySymbol);
+        ウィンドウ.KeyPress(キー, 修飾キー, 物理キー, キー記号);
+        ウィンドウ.KeyRelease(キー, 修飾キー, 物理キー, キー記号);
         画面更新を完了する();
     }
 
-    private static void 条件成立まで待つ(Func<bool> predicate, int timeoutMilliseconds)
+    private static void 条件成立まで待つ(Func<bool> 判定条件, int タイムアウト時間)
     {
-        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMilliseconds);
-        while (DateTime.UtcNow < deadline)
+        var 期限 = DateTime.UtcNow.AddMilliseconds(タイムアウト時間);
+        while (DateTime.UtcNow < 期限)
         {
             画面更新を完了する();
-            if (predicate())
+            if (判定条件())
             {
                 return;
             }
@@ -538,15 +554,15 @@ public sealed class 画面視覚回帰テスト
             Thread.Sleep(10);
         }
 
-        Assert.True(predicate(), "Timed out waiting for UI state.");
+        Assert.True(判定条件(), "Timed out waiting for UI state.");
     }
 
-    private static メインウィンドウ ウィンドウを作る(double width, double height)
+    private static メインウィンドウ ウィンドウを作る(double 幅, double 高さ)
     {
-        var window = new メインウィンドウ { Width = width, Height = height };
-        window.Show();
+        var ウィンドウ = new メインウィンドウ { Width = 幅, Height = 高さ };
+        ウィンドウ.Show();
         画面更新を完了する();
-        return window;
+        return ウィンドウ;
     }
 
     private static void 画面更新を完了する()
@@ -556,128 +572,132 @@ public sealed class 画面視覚回帰テスト
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static DiagnosticRow[] 表示行を取得する(メインウィンドウ window)
+    private static DiagnosticRow[] 表示行を取得する(メインウィンドウ ウィンドウ)
     {
-        var source = window.テスト用画面.診断一覧.ItemsSource as IEnumerable;
-        return source?.Cast<object>().OfType<DiagnosticRow>().ToArray() ?? [];
+        var ソース = ウィンドウ.テスト用画面.診断一覧.ItemsSource as IEnumerable;
+        return ソース?.Cast<object>().OfType<DiagnosticRow>().ToArray() ?? [];
     }
 
     private static void 集計を照合する(
-        メインウィンドウ window,
-        IReadOnlyList<DesignDiagnostic> diagnostics
+        メインウィンドウ ウィンドウ,
+        IReadOnlyList<DesignDiagnostic> 診断一覧
     )
     {
-        var danger = diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Danger);
-        var warning = diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Warning);
-        var attention = diagnostics.Count(item =>
-            item.Severity == DesignDiagnosticSeverity.Attention
-        );
+        var 危険診断 = 診断一覧.Count(項目 => 項目.Severity == DesignDiagnosticSeverity.Danger);
+        var 警告診断 = 診断一覧.Count(項目 => 項目.Severity == DesignDiagnosticSeverity.Warning);
+        var 注意診断 = 診断一覧.Count(項目 => 項目.Severity == DesignDiagnosticSeverity.Attention);
 
         Assert.EndsWith(
-            $": {danger}",
-            window.テスト用画面.危険件数表示.Text,
+            $": {危険診断}",
+            ウィンドウ.テスト用画面.危険件数表示.Text,
             StringComparison.Ordinal
         );
         Assert.EndsWith(
-            $": {warning}",
-            window.テスト用画面.警告件数表示.Text,
+            $": {警告診断}",
+            ウィンドウ.テスト用画面.警告件数表示.Text,
             StringComparison.Ordinal
         );
         Assert.EndsWith(
-            $": {attention}",
-            window.テスト用画面.注意件数表示.Text,
+            $": {注意診断}",
+            ウィンドウ.テスト用画面.注意件数表示.Text,
             StringComparison.Ordinal
         );
     }
 
-    private static void メイン画面配置を確認する(メインウィンドウ window)
+    private static void メイン画面配置を確認する(メインウィンドウ ウィンドウ)
     {
-        var controls = new Control[]
+        var コントロール一覧 = new Control[]
         {
-            window.テスト用画面.メインメニュー部品,
-            window.テスト用画面.対象パス欄,
-            window.テスト用画面.対象ファイルボタン,
-            window.テスト用画面.対象フォルダーボタン,
-            window.テスト用画面.設定パス欄,
-            window.テスト用画面.設定選択ボタン,
-            window.テスト用画面.設定編集ボタン,
-            window.テスト用画面.設定消去ボタン,
-            window.テスト用画面.危険絞り込み,
-            window.テスト用画面.警告絞り込み,
-            window.テスト用画面.注意絞り込み,
-            window.テスト用画面.検索絞り込み,
-            window.テスト用画面.解析ボタン,
-            window.テスト用画面.キャンセルボタン,
-            window.テスト用画面.表示言語選択,
-            window.テスト用画面.テーマ選択,
-            window.テスト用画面.診断一覧,
-            window.テスト用画面.状態表示,
+            ウィンドウ.テスト用画面.メインメニュー部品,
+            ウィンドウ.テスト用画面.対象パス欄,
+            ウィンドウ.テスト用画面.対象ファイルボタン,
+            ウィンドウ.テスト用画面.対象フォルダーボタン,
+            ウィンドウ.テスト用画面.設定パス欄,
+            ウィンドウ.テスト用画面.設定選択ボタン,
+            ウィンドウ.テスト用画面.設定編集ボタン,
+            ウィンドウ.テスト用画面.設定消去ボタン,
+            ウィンドウ.テスト用画面.危険絞り込み,
+            ウィンドウ.テスト用画面.警告絞り込み,
+            ウィンドウ.テスト用画面.注意絞り込み,
+            ウィンドウ.テスト用画面.検索絞り込み,
+            ウィンドウ.テスト用画面.解析ボタン,
+            ウィンドウ.テスト用画面.キャンセルボタン,
+            ウィンドウ.テスト用画面.表示言語選択,
+            ウィンドウ.テスト用画面.テーマ選択,
+            ウィンドウ.テスト用画面.診断一覧,
+            ウィンドウ.テスト用画面.状態表示,
         };
 
-        foreach (var control in controls)
+        foreach (var コントロール in コントロール一覧)
         {
-            Assert.True(control.Bounds.Width > 0, $"{control.GetType().Name} has zero width.");
-            Assert.True(control.Bounds.Height > 0, $"{control.GetType().Name} has zero height.");
-
-            var origin = control.TranslatePoint(new Point(0, 0), window);
-            Assert.True(origin.HasValue, $"{control.GetType().Name} could not be located.");
-            var bounds = new Rect(origin!.Value, control.Bounds.Size);
-
-            Assert.True(bounds.X >= -1, $"{control.GetType().Name} is clipped on the left.");
-            Assert.True(bounds.Y >= -1, $"{control.GetType().Name} is clipped at the top.");
             Assert.True(
-                bounds.Right <= window.ClientSize.Width + 1,
-                $"{control.GetType().Name} is clipped on the right."
+                コントロール.Bounds.Width > 0,
+                $"{コントロール.GetType().Name} has zero width."
             );
             Assert.True(
-                bounds.Bottom <= window.ClientSize.Height + 1,
-                $"{control.GetType().Name} is clipped at the bottom."
+                コントロール.Bounds.Height > 0,
+                $"{コントロール.GetType().Name} has zero height."
+            );
+
+            var 原点 = コントロール.TranslatePoint(new Point(0, 0), ウィンドウ);
+            Assert.True(原点.HasValue, $"{コントロール.GetType().Name} could not be located.");
+            var 境界 = new Rect(原点!.Value, コントロール.Bounds.Size);
+
+            Assert.True(境界.X >= -1, $"{コントロール.GetType().Name} is clipped on the left.");
+            Assert.True(境界.Y >= -1, $"{コントロール.GetType().Name} is clipped at the top.");
+            Assert.True(
+                境界.Right <= ウィンドウ.ClientSize.Width + 1,
+                $"{コントロール.GetType().Name} is clipped on the right."
+            );
+            Assert.True(
+                境界.Bottom <= ウィンドウ.ClientSize.Height + 1,
+                $"{コントロール.GetType().Name} is clipped at the bottom."
             );
         }
 
         コントロールの重なりがないことを確認する(
-            window,
+            ウィンドウ,
             [
-                window.テスト用画面.危険絞り込み,
-                window.テスト用画面.警告絞り込み,
-                window.テスト用画面.注意絞り込み,
-                window.テスト用画面.検索絞り込み,
-                window.テスト用画面.解析ボタン,
-                window.テスト用画面.キャンセルボタン,
-                window.テスト用画面.表示言語選択,
-                window.テスト用画面.テーマ選択,
+                ウィンドウ.テスト用画面.危険絞り込み,
+                ウィンドウ.テスト用画面.警告絞り込み,
+                ウィンドウ.テスト用画面.注意絞り込み,
+                ウィンドウ.テスト用画面.検索絞り込み,
+                ウィンドウ.テスト用画面.解析ボタン,
+                ウィンドウ.テスト用画面.キャンセルボタン,
+                ウィンドウ.テスト用画面.表示言語選択,
+                ウィンドウ.テスト用画面.テーマ選択,
             ]
         );
     }
 
     private static void コントロールの重なりがないことを確認する(
-        メインウィンドウ window,
-        IReadOnlyList<Control> controls
+        メインウィンドウ ウィンドウ,
+        IReadOnlyList<Control> コントロール一覧
     )
     {
-        for (var leftIndex = 0; leftIndex < controls.Count; leftIndex++)
+        for (var 左側位置 = 0; 左側位置 < コントロール一覧.Count; 左側位置++)
         {
-            var left = 相対境界を取得する(window, controls[leftIndex]);
-            for (var rightIndex = leftIndex + 1; rightIndex < controls.Count; rightIndex++)
+            var 左側 = 相対境界を取得する(ウィンドウ, コントロール一覧[左側位置]);
+            for (var 右側位置 = 左側位置 + 1; 右側位置 < コントロール一覧.Count; 右側位置++)
             {
-                var right = 相対境界を取得する(window, controls[rightIndex]);
-                var intersection = left.Intersect(right);
+                var 右側 = 相対境界を取得する(ウィンドウ, コントロール一覧[右側位置]);
+                var 交差領域 = 左側.Intersect(右側);
                 Assert.True(
-                    intersection.Width <= 1 || intersection.Height <= 1,
-                    $"{controls[leftIndex].GetType().Name} overlaps {controls[rightIndex].GetType().Name}."
+                    交差領域.Width <= 1 || 交差領域.Height <= 1,
+                    $"{コントロール一覧[左側位置].GetType().Name} overlaps {コントロール一覧[右側位置].GetType().Name}."
                 );
             }
         }
     }
 
-    private static Rect 相対境界を取得する(Window window, Control control)
+    private static Rect 相対境界を取得する(Window ウィンドウ, Control コントロール)
     {
-        var origin = control.TranslatePoint(new Point(0, 0), window);
-        Assert.True(origin.HasValue);
-        return new Rect(origin!.Value, control.Bounds.Size);
+        var 原点 = コントロール.TranslatePoint(new Point(0, 0), ウィンドウ);
+        Assert.True(原点.HasValue);
+        return new Rect(原点!.Value, コントロール.Bounds.Size);
     }
 
-    private static void 画面を撮影する(Window window, string scenario, string language)
+    private static void 画面を撮影する(Window ウィンドウ, string シナリオ, string 言語)
     {
         画面更新を完了する();
 
@@ -688,39 +708,39 @@ public sealed class 画面視覚回帰テスト
 
         標準画像環境を確認する();
 
-        var frame = window.CaptureRenderedFrame();
-        Assert.NotNull(frame);
+        var フレーム = ウィンドウ.CaptureRenderedFrame();
+        Assert.NotNull(フレーム);
 
-        var baselinePath = Path.Combine(画像基準ルートを取得する(), $"{scenario}.png");
-        var evidenceDirectory = Path.Combine(証跡ルートを取得する(), scenario);
-        Directory.CreateDirectory(evidenceDirectory);
+        var 基準画像パス = Path.Combine(画像基準ルートを取得する(), $"{シナリオ}.png");
+        var 証跡ディレクトリ = Path.Combine(証跡ルートを取得する(), シナリオ);
+        Directory.CreateDirectory(証跡ディレクトリ);
 
-        var actualPath = Path.Combine(evidenceDirectory, "actual.png");
-        var diffPath = Path.Combine(evidenceDirectory, "diff.png");
-        frame.Save(actualPath, PngBitmapEncoderOptions.Default);
+        var 実際のパス = Path.Combine(証跡ディレクトリ, "actual.png");
+        var 差分画像パス = Path.Combine(証跡ディレクトリ, "diff.png");
+        フレーム.Save(実際のパス, PngBitmapEncoderOptions.Default);
 
-        UI状態を書き出す(window, scenario, language, evidenceDirectory);
+        UI状態を書き出す(ウィンドウ, シナリオ, 言語, 証跡ディレクトリ);
 
         if (Environment.GetEnvironmentVariable("UPDATE_VISUAL_BASELINES") == "1")
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(baselinePath)!);
-            File.Copy(actualPath, baselinePath, overwrite: true);
+            Directory.CreateDirectory(Path.GetDirectoryName(基準画像パス)!);
+            File.Copy(実際のパス, 基準画像パス, overwrite: true);
             return;
         }
 
-        Assert.True(File.Exists(baselinePath), $"Missing visual baseline: {baselinePath}");
-        var changedRatio = 差分画像を作る(baselinePath, actualPath, diffPath);
+        Assert.True(File.Exists(基準画像パス), $"Missing visual baseline: {基準画像パス}");
+        var 変更率 = 差分画像を作る(基準画像パス, 実際のパス, 差分画像パス);
         Assert.True(
-            changedRatio <= MaximumChangedPixelRatio,
-            $"Visual regression for {scenario}: {changedRatio:P3} pixels changed; "
-                + $"threshold is {MaximumChangedPixelRatio:P3}. Diff: {diffPath}"
+            変更率 <= MaximumChangedPixelRatio,
+            $"Visual regression for {シナリオ}: {変更率:P3} pixels changed; "
+                + $"threshold is {MaximumChangedPixelRatio:P3}. Diff: {差分画像パス}"
         );
     }
 
     private static void 画像基準用fixture位置を固定する(
-        メインウィンドウ window,
-        string fixtureRoot,
-        string sourcePath
+        メインウィンドウ ウィンドウ,
+        string テストデータルート,
+        string ソースパス
     )
     {
         if (!画像回帰確認が要求されている())
@@ -729,20 +749,20 @@ public sealed class 画面視覚回帰テスト
         }
 
         // fixtureの保存先ではなく画面レイアウトを画像で検証し、移行による誤検出を防ぐ。
-        var repositoryRoot = Path.GetFullPath(
+        var リポジトリルート = Path.GetFullPath(
             Path.Combine(リポジトリルートを取得する(), "..", "..")
         );
-        var relativePath = Path.GetRelativePath(fixtureRoot, sourcePath);
-        var stablePath = Path.Combine(
-            repositoryRoot,
+        var 相対パス = Path.GetRelativePath(テストデータルート, ソースパス);
+        var 安定化したパス = Path.Combine(
+            リポジトリルート,
             "tests",
             "fixtures",
             "release-validation-csharp",
-            relativePath
+            相対パス
         );
-        window.テスト用画面.詳細位置.Text = (
-            window.テスト用画面.詳細位置.Text ?? string.Empty
-        ).Replace(sourcePath, stablePath, StringComparison.Ordinal);
+        ウィンドウ.テスト用画面.詳細位置.Text = (
+            ウィンドウ.テスト用画面.詳細位置.Text ?? string.Empty
+        ).Replace(ソースパス, 安定化したパス, StringComparison.Ordinal);
     }
 
     private static bool 画像回帰確認が要求されている() =>
@@ -763,121 +783,125 @@ public sealed class 画面視覚回帰テスト
         );
     }
 
-    private static double 差分画像を作る(string expectedPath, string actualPath, string diffPath)
+    private static double 差分画像を作る(
+        string 期待するパス,
+        string 実際のパス,
+        string 差分画像パス
+    )
     {
-        using var expected = SKBitmap.Decode(expectedPath);
-        using var actual = SKBitmap.Decode(actualPath);
+        using var 期待値 = SKBitmap.Decode(期待するパス);
+        using var 実際の値 = SKBitmap.Decode(実際のパス);
 
-        Assert.NotNull(expected);
-        Assert.NotNull(actual);
-        Assert.Equal(expected.Width, actual.Width);
-        Assert.Equal(expected.Height, actual.Height);
+        Assert.NotNull(期待値);
+        Assert.NotNull(実際の値);
+        Assert.Equal(期待値.Width, 実際の値.Width);
+        Assert.Equal(期待値.Height, 実際の値.Height);
 
-        using var diff = new SKBitmap(
-            actual.Width,
-            actual.Height,
+        using var 差分 = new SKBitmap(
+            実際の値.Width,
+            実際の値.Height,
             SKColorType.Bgra8888,
             SKAlphaType.Premul
         );
 
-        long changedPixels = 0;
-        var totalPixels = (long)actual.Width * actual.Height;
-        for (var y = 0; y < actual.Height; y++)
+        long 変更画素数 = 0;
+        var 総画素数 = (long)実際の値.Width * 実際の値.Height;
+        for (var 縦位置 = 0; 縦位置 < 実際の値.Height; 縦位置++)
         {
-            for (var x = 0; x < actual.Width; x++)
+            for (var 横位置 = 0; 横位置 < 実際の値.Width; 横位置++)
             {
-                var expectedPixel = expected.GetPixel(x, y);
-                var actualPixel = actual.GetPixel(x, y);
-                var delta = Math.Max(
+                var 期待する画素数 = 期待値.GetPixel(横位置, 縦位置);
+                var 実際の画素数 = 実際の値.GetPixel(横位置, 縦位置);
+                var 差分量 = Math.Max(
                     Math.Max(
-                        Math.Abs(expectedPixel.Red - actualPixel.Red),
-                        Math.Abs(expectedPixel.Green - actualPixel.Green)
+                        Math.Abs(期待する画素数.Red - 実際の画素数.Red),
+                        Math.Abs(期待する画素数.Green - 実際の画素数.Green)
                     ),
                     Math.Max(
-                        Math.Abs(expectedPixel.Blue - actualPixel.Blue),
-                        Math.Abs(expectedPixel.Alpha - actualPixel.Alpha)
+                        Math.Abs(期待する画素数.Blue - 実際の画素数.Blue),
+                        Math.Abs(期待する画素数.Alpha - 実際の画素数.Alpha)
                     )
                 );
 
-                if (delta > PixelDeltaThreshold)
+                if (差分量 > PixelDeltaThreshold)
                 {
-                    changedPixels++;
-                    diff.SetPixel(x, y, SKColors.Red);
+                    変更画素数++;
+                    差分.SetPixel(横位置, 縦位置, SKColors.Red);
                 }
                 else
                 {
-                    diff.SetPixel(
-                        x,
-                        y,
-                        new SKColor(actualPixel.Red, actualPixel.Green, actualPixel.Blue, 64)
+                    差分.SetPixel(
+                        横位置,
+                        縦位置,
+                        new SKColor(実際の画素数.Red, 実際の画素数.Green, 実際の画素数.Blue, 64)
                     );
                 }
             }
         }
 
-        using var image = SKImage.FromBitmap(diff);
-        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
-        using var stream = File.Create(diffPath);
-        data.SaveTo(stream);
+        using var 画像 = SKImage.FromBitmap(差分);
+        using var データ = 画像.Encode(SKEncodedImageFormat.Png, 100);
+        using var ストリーム = File.Create(差分画像パス);
+        データ.SaveTo(ストリーム);
 
-        return totalPixels == 0 ? 0 : (double)changedPixels / totalPixels;
+        return 総画素数 == 0 ? 0 : (double)変更画素数 / 総画素数;
     }
 
     private static void UI状態を書き出す(
-        Window window,
-        string scenario,
-        string language,
-        string evidenceDirectory
+        Window ウィンドウ,
+        string シナリオ,
+        string 言語,
+        string 証跡ディレクトリ
     )
     {
-        var state = new
+        var 状態 = new
         {
-            scenario,
-            language,
-            width = window.ClientSize.Width,
-            height = window.ClientSize.Height,
-            title = window.Title,
-            theme = window.ActualThemeVariant.ToString(),
-            visibleRowCount = window is メインウィンドウ main
-                ? 表示行を取得する(main).Length
+            シナリオ,
+            言語,
+            幅 = ウィンドウ.ClientSize.Width,
+            高さ = ウィンドウ.ClientSize.Height,
+            タイトル = ウィンドウ.Title,
+            テーマ = ウィンドウ.ActualThemeVariant.ToString(),
+            表示行数 = ウィンドウ is メインウィンドウ 主処理
+                ? 表示行を取得する(主処理).Length
                 : (int?)null,
-            status = window is メインウィンドウ statusWindow
-                ? statusWindow.テスト用画面.状態表示.Text
+            状態 = ウィンドウ is メインウィンドウ 状態ウィンドウ
+                ? 状態ウィンドウ.テスト用画面.状態表示.Text
                 : null,
-            selectedRule = window is メインウィンドウ selectedWindow
-            && selectedWindow.テスト用画面.診断一覧.SelectedItem is DiagnosticRow row
-                ? row.RuleId
+            選択規則 = ウィンドウ is メインウィンドウ 選択ウィンドウ
+            && 選択ウィンドウ.テスト用画面.診断一覧.SelectedItem is DiagnosticRow 行
+                ? 行.RuleId
                 : null,
-            selectedFile = window is メインウィンドウ selectedFileWindow
-            && selectedFileWindow.テスト用画面.診断一覧.SelectedItem is DiagnosticRow fileRow
-                ? fileRow.FileName
+            選択ファイル = ウィンドウ is メインウィンドウ 選択ファイルウィンドウ
+            && 選択ファイルウィンドウ.テスト用画面.診断一覧.SelectedItem is DiagnosticRow ファイル行
+                ? ファイル行.FileName
                 : null,
-            summary = window is メインウィンドウ summaryWindow
+            概要 = ウィンドウ is メインウィンドウ 概要ウィンドウ
                 ? new
                 {
-                    danger = summaryWindow.テスト用画面.危険件数表示.Text,
-                    warning = summaryWindow.テスト用画面.警告件数表示.Text,
-                    attention = summaryWindow.テスト用画面.注意件数表示.Text,
-                    configuration = summaryWindow.テスト用画面.設定概要.Text,
+                    危険診断 = 概要ウィンドウ.テスト用画面.危険件数表示.Text,
+                    警告診断 = 概要ウィンドウ.テスト用画面.警告件数表示.Text,
+                    注意診断 = 概要ウィンドウ.テスト用画面.注意件数表示.Text,
+                    設定 = 概要ウィンドウ.テスト用画面.設定概要.Text,
                 }
                 : null,
         };
 
         File.WriteAllText(
-            Path.Combine(evidenceDirectory, "ui-state.json"),
-            JsonSerializer.Serialize(state, IndentedJson)
+            Path.Combine(証跡ディレクトリ, "ui-state.json"),
+            JsonSerializer.Serialize(状態, IndentedJson)
         );
     }
 
-    private static int 期待する診断件数を読む(string fixtureRoot)
+    private static int 期待する診断件数を読む(string テストデータルート)
     {
-        using var document = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(fixtureRoot, "expected-diagnostics.json"))
+        using var 文書 = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(テストデータルート, "expected-diagnostics.json"))
         );
-        return document.RootElement.GetProperty("exactDiagnostics").GetArrayLength();
+        return 文書.RootElement.GetProperty("exactDiagnostics").GetArrayLength();
     }
 
-    private static string fixtureルートを取得する() =>
+    private static string テストデータルートを取得する() =>
         Path.Combine(
             リポジトリルートを取得する(),
             "tests",
@@ -895,27 +919,25 @@ public sealed class 画面視覚回帰テスト
 
     private static string 証跡ルートを取得する()
     {
-        var configured = Environment.GetEnvironmentVariable("UI_EVIDENCE_DIR");
-        return string.IsNullOrWhiteSpace(configured)
+        var 設定済み = Environment.GetEnvironmentVariable("UI_EVIDENCE_DIR");
+        return string.IsNullOrWhiteSpace(設定済み)
             ? Path.Combine(Path.GetTempPath(), "oop-design-checker-ui-evidence")
-            : configured;
+            : 設定済み;
     }
 
     private static string リポジトリルートを取得する()
     {
-        foreach (
-            var candidate in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
-        )
+        foreach (var 候補 in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
         {
-            var current = new DirectoryInfo(candidate);
-            while (current is not null)
+            var 現在値 = new DirectoryInfo(候補);
+            while (現在値 is not null)
             {
-                if (File.Exists(Path.Combine(current.FullName, "OopDesignChecker.sln")))
+                if (File.Exists(Path.Combine(現在値.FullName, "OopDesignChecker.sln")))
                 {
-                    return current.FullName;
+                    return 現在値.FullName;
                 }
 
-                current = current.Parent;
+                現在値 = 現在値.Parent;
             }
         }
 

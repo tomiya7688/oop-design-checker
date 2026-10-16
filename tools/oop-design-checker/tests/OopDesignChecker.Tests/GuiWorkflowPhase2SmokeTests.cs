@@ -19,7 +19,7 @@ internal static class GUIワークフロー第2段階スモークテスト
 
     private static void 設定JSONを往復変換して検証する()
     {
-        var configuration = new CheckerConfiguration
+        var 設定 = new CheckerConfiguration
         {
             IgnoredPaths = ["**/Generated/**"],
             DisabledRules = ["OOP103"],
@@ -30,13 +30,13 @@ internal static class GUIワークフロー第2段階スモークテスト
             },
         };
 
-        var json = CheckerConfigurationJson.Serialize(configuration);
-        var parsed = CheckerConfigurationJson.Parse(json);
+        var JSON文字列 = CheckerConfigurationJson.Serialize(設定);
+        var 解析済み = CheckerConfigurationJson.Parse(JSON文字列);
         if (
-            parsed.FailureThreshold != DesignDiagnosticSeverity.Warning
-            || parsed.IgnoredPaths.Count != 1
-            || parsed.DisabledRules.Count != 1
-            || parsed.RuleSettings.Oop304.WarningDepth != 6
+            解析済み.FailureThreshold != DesignDiagnosticSeverity.Warning
+            || 解析済み.IgnoredPaths.Count != 1
+            || 解析済み.DisabledRules.Count != 1
+            || 解析済み.RuleSettings.Oop304.WarningDepth != 6
         )
         {
             throw new InvalidOperationException(
@@ -58,8 +58,8 @@ internal static class GUIワークフロー第2段階スモークテスト
                 """
             );
         }
-        catch (InvalidOperationException exception)
-            when (exception.Message.Contains("warningDepth", StringComparison.Ordinal))
+        catch (InvalidOperationException 例外)
+            when (例外.Message.Contains("warningDepth", StringComparison.Ordinal))
         {
             return;
         }
@@ -71,15 +71,15 @@ internal static class GUIワークフロー第2段階スモークテスト
 
     private static void 診断出力サービスがJSONとSARIFを書き出す()
     {
-        var temporaryDirectory = Path.Combine(
+        var 一時ディレクトリ = Path.Combine(
             Path.GetTempPath(),
             $"oop-checker-gui-export-{Guid.NewGuid():N}"
         );
-        Directory.CreateDirectory(temporaryDirectory);
+        Directory.CreateDirectory(一時ディレクトリ);
 
         try
         {
-            var diagnostics = new[]
+            var 診断一覧 = new[]
             {
                 new DesignDiagnostic(
                     new RuleDescriptor(
@@ -90,23 +90,23 @@ internal static class GUIワークフロー第2段階スモークテスト
                     DesignDiagnosticSeverity.Warning,
                     "Export smoke diagnostic.",
                     "Sample.実行する",
-                    new SourceLocation(Path.Combine(temporaryDirectory, "Sample.cs"), 3, 5)
+                    new SourceLocation(Path.Combine(一時ディレクトリ, "Sample.cs"), 3, 5)
                 ),
             };
-            var jsonPath = Path.Combine(temporaryDirectory, "result.json");
-            var sarifPath = Path.Combine(temporaryDirectory, "result.sarif");
+            var JSONパス = Path.Combine(一時ディレクトリ, "result.json");
+            var SARIFパス = Path.Combine(一時ディレクトリ, "result.sarif");
 
-            DiagnosticExportService.Export(diagnostics, jsonPath, DiagnosticExportFormat.Json);
-            DiagnosticExportService.Export(diagnostics, sarifPath, DiagnosticExportFormat.Sarif);
+            DiagnosticExportService.Export(診断一覧, JSONパス, DiagnosticExportFormat.Json);
+            DiagnosticExportService.Export(診断一覧, SARIFパス, DiagnosticExportFormat.Sarif);
 
-            using var jsonDocument = JsonDocument.Parse(File.ReadAllText(jsonPath));
-            using var sarifDocument = JsonDocument.Parse(File.ReadAllText(sarifPath));
-            var jsonRule = jsonDocument
+            using var JSON文書 = JsonDocument.Parse(File.ReadAllText(JSONパス));
+            using var SARIF文書 = JsonDocument.Parse(File.ReadAllText(SARIFパス));
+            var JSON規則 = JSON文書
                 .RootElement.GetProperty("diagnostics")[0]
                 .GetProperty("ruleId")
                 .GetString();
-            var sarifVersion = sarifDocument.RootElement.GetProperty("version").GetString();
-            if (jsonRule != "OOP999" || sarifVersion != "2.1.0")
+            var SARIFバージョン = SARIF文書.RootElement.GetProperty("version").GetString();
+            if (JSON規則 != "OOP999" || SARIFバージョン != "2.1.0")
             {
                 throw new InvalidOperationException(
                     "Shared diagnostic export did not produce the expected JSON/SARIF documents."
@@ -115,25 +115,25 @@ internal static class GUIワークフロー第2段階スモークテスト
         }
         finally
         {
-            Directory.Delete(temporaryDirectory, recursive: true);
+            Directory.Delete(一時ディレクトリ, recursive: true);
         }
     }
 
     private static void UI自動化設定は明示時のみ有効になる()
     {
-        const string delayVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS";
-        const string exportVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR";
-        var previousDelay = Environment.GetEnvironmentVariable(delayVariable);
-        var previousExport = Environment.GetEnvironmentVariable(exportVariable);
-        var temporaryDirectory = Path.Combine(
+        const string 遅延変数名 = "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS";
+        const string 出力先変数名 = "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR";
+        var 変更前の遅延 = Environment.GetEnvironmentVariable(遅延変数名);
+        var 変更前の出力先 = Environment.GetEnvironmentVariable(出力先変数名);
+        var 一時ディレクトリ = Path.Combine(
             Path.GetTempPath(),
             $"oop-checker-ui-automation-{Guid.NewGuid():N}"
         );
 
         try
         {
-            Environment.SetEnvironmentVariable(delayVariable, null);
-            Environment.SetEnvironmentVariable(exportVariable, null);
+            Environment.SetEnvironmentVariable(遅延変数名, null);
+            Environment.SetEnvironmentVariable(出力先変数名, null);
             if (
                 UI自動化設定.解析遅延ミリ秒 != 0
                 || UI自動化設定.出力先パス(DiagnosticExportFormat.Json) is not null
@@ -144,14 +144,14 @@ internal static class GUIワークフロー第2段階スモークテスト
                 );
             }
 
-            Environment.SetEnvironmentVariable(delayVariable, "2500");
-            Environment.SetEnvironmentVariable(exportVariable, temporaryDirectory);
-            var jsonPath = UI自動化設定.出力先パス(DiagnosticExportFormat.Json);
-            var sarifPath = UI自動化設定.出力先パス(DiagnosticExportFormat.Sarif);
+            Environment.SetEnvironmentVariable(遅延変数名, "2500");
+            Environment.SetEnvironmentVariable(出力先変数名, 一時ディレクトリ);
+            var JSONパス = UI自動化設定.出力先パス(DiagnosticExportFormat.Json);
+            var SARIFパス = UI自動化設定.出力先パス(DiagnosticExportFormat.Sarif);
             if (
                 UI自動化設定.解析遅延ミリ秒 != 2500
-                || jsonPath != Path.Combine(temporaryDirectory, "actual-diagnostics.json")
-                || sarifPath != Path.Combine(temporaryDirectory, "actual-diagnostics.sarif")
+                || JSONパス != Path.Combine(一時ディレクトリ, "actual-diagnostics.json")
+                || SARIFパス != Path.Combine(一時ディレクトリ, "actual-diagnostics.sarif")
             )
             {
                 throw new InvalidOperationException(
@@ -159,7 +159,7 @@ internal static class GUIワークフロー第2段階スモークテスト
                 );
             }
 
-            Environment.SetEnvironmentVariable(delayVariable, "30001");
+            Environment.SetEnvironmentVariable(遅延変数名, "30001");
             if (UI自動化設定.解析遅延ミリ秒 != 0)
             {
                 throw new InvalidOperationException(
@@ -169,21 +169,21 @@ internal static class GUIワークフロー第2段階スモークテスト
         }
         finally
         {
-            Environment.SetEnvironmentVariable(delayVariable, previousDelay);
-            Environment.SetEnvironmentVariable(exportVariable, previousExport);
+            Environment.SetEnvironmentVariable(遅延変数名, 変更前の遅延);
+            Environment.SetEnvironmentVariable(出力先変数名, 変更前の出力先);
         }
     }
 
     private static void クリップボード失敗を捕捉する()
     {
-        var copied = クリップボード操作
+        var コピー済み = クリップボード操作
             .テキスト設定を試す非同期(() =>
                 Task.FromException(new InvalidOperationException("clipboard failed"))
             )
             .GetAwaiter()
             .GetResult();
 
-        if (copied)
+        if (コピー済み)
         {
             throw new InvalidOperationException(
                 "ClipboardOperation reported success when the clipboard operation failed."
@@ -193,14 +193,14 @@ internal static class GUIワークフロー第2段階スモークテスト
 
     private static void チェッカーが事前キャンセルを反映する()
     {
-        using var cancellation = new CancellationTokenSource();
-        cancellation.Cancel();
+        using var キャンセル = new CancellationTokenSource();
+        キャンセル.Cancel();
 
         try
         {
             _ = CheckerService.Analyze(
                 Directory.GetCurrentDirectory(),
-                cancellationToken: cancellation.Token
+                cancellationToken: キャンセル.Token
             );
         }
         catch (OperationCanceledException)

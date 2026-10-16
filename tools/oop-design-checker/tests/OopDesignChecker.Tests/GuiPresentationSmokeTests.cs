@@ -15,23 +15,23 @@ internal static class GUI表示スモークテスト
 
     private static void 重要度で絞り込む()
     {
-        var rows = new[]
+        var 行一覧 = new[]
         {
-            CreateRow(
+            表示行を作る(
                 "OOP106",
                 DesignDiagnosticSeverity.Danger,
                 "danger.cs",
                 "Mutable field",
                 "DangerType"
             ),
-            CreateRow(
+            表示行を作る(
                 "OOP305",
                 DesignDiagnosticSeverity.Warning,
                 "warning.cs",
                 "Concrete dependency",
                 "WarningType"
             ),
-            CreateRow(
+            表示行を作る(
                 "OOP304",
                 DesignDiagnosticSeverity.Attention,
                 "attention.cs",
@@ -40,8 +40,8 @@ internal static class GUI表示スモークテスト
             ),
         };
 
-        var filtered = DiagnosticFilter.Apply(
-            rows,
+        var 絞り込み結果 = DiagnosticFilter.Apply(
+            行一覧,
             new DiagnosticFilterOptions(
                 IncludeDanger: false,
                 IncludeWarning: true,
@@ -50,7 +50,7 @@ internal static class GUI表示スモークテスト
             )
         );
 
-        if (filtered.Count != 1 || filtered[0].RuleId != "OOP305")
+        if (絞り込み結果.Count != 1 || 絞り込み結果[0].RuleId != "OOP305")
         {
             throw new InvalidOperationException("GUI severity filtering did not isolate warnings.");
         }
@@ -58,16 +58,16 @@ internal static class GUI表示スモークテスト
 
     private static void 規則とファイルとシンボルと説明で絞り込む()
     {
-        var rows = new[]
+        var 行一覧 = new[]
         {
-            CreateRow(
+            表示行を作る(
                 "OOP106",
                 DesignDiagnosticSeverity.Danger,
                 "Player.cs",
                 "Mutable field",
                 "Player"
             ),
-            CreateRow(
+            表示行を作る(
                 "OOP305",
                 DesignDiagnosticSeverity.Warning,
                 "ClockService.cs",
@@ -75,10 +75,10 @@ internal static class GUI表示スモークテスト
                 "ClockService"
             ),
         };
-        var options = new DiagnosticFilterOptions(true, true, true, "clock");
-        var filtered = DiagnosticFilter.Apply(rows, options);
+        var オプション一覧 = new DiagnosticFilterOptions(true, true, true, "clock");
+        var 絞り込み結果 = DiagnosticFilter.Apply(行一覧, オプション一覧);
 
-        if (filtered.Count != 1 || filtered[0].RuleId != "OOP305")
+        if (絞り込み結果.Count != 1 || 絞り込み結果[0].RuleId != "OOP305")
         {
             throw new InvalidOperationException(
                 "GUI text filtering did not search diagnostic metadata."
@@ -88,7 +88,7 @@ internal static class GUI表示スモークテスト
 
     private static void 診断行へ選択言語を適用する()
     {
-        var diagnostic = new DesignDiagnostic(
+        var 診断 = new DesignDiagnostic(
             new RuleDescriptor(
                 "OOP304",
                 "Excessive inheritance depth",
@@ -100,16 +100,16 @@ internal static class GUI表示スモークテスト
             new SourceLocation("deep.cs", 12, 3)
         );
 
-        var japanese = DiagnosticRow.From(diagnostic, UserInterfaceLanguage.Japanese);
-        var english = DiagnosticRow.From(diagnostic, UserInterfaceLanguage.English);
+        var 日本語文言 = DiagnosticRow.From(診断, UserInterfaceLanguage.Japanese);
+        var 英語文言 = DiagnosticRow.From(診断, UserInterfaceLanguage.English);
 
         if (
-            japanese.RuleTitle != "継承階層が深すぎる"
-            || !japanese.Message.Contains("プロジェクト内の継承階層", StringComparison.Ordinal)
-            || japanese.SeverityText != "注意"
-            || english.RuleTitle != "Excessive inheritance depth"
-            || english.Message != "Project-owned inheritance depth is 4."
-            || english.SeverityText != "Attention"
+            日本語文言.RuleTitle != "継承階層が深すぎる"
+            || !日本語文言.Message.Contains("プロジェクト内の継承階層", StringComparison.Ordinal)
+            || 日本語文言.SeverityText != "注意"
+            || 英語文言.RuleTitle != "Excessive inheritance depth"
+            || 英語文言.Message != "Project-owned inheritance depth is 4."
+            || 英語文言.SeverityText != "Attention"
         )
         {
             throw new InvalidOperationException(
@@ -118,20 +118,20 @@ internal static class GUI表示スモークテスト
         }
     }
 
-    private static DiagnosticRow CreateRow(
-        string ruleId,
-        DesignDiagnosticSeverity severity,
-        string filePath,
-        string message,
-        string symbolName
+    private static DiagnosticRow 表示行を作る(
+        string 規則ID,
+        DesignDiagnosticSeverity 重要度,
+        string ファイルパス,
+        string メッセージ,
+        string 記号名
     ) =>
         DiagnosticRow.From(
             new DesignDiagnostic(
-                new RuleDescriptor(ruleId, ruleId, severity),
-                severity,
-                message,
-                symbolName,
-                new SourceLocation(filePath, 10, 5)
+                new RuleDescriptor(規則ID, 規則ID, 重要度),
+                重要度,
+                メッセージ,
+                記号名,
+                new SourceLocation(ファイルパス, 10, 5)
             )
         );
 }

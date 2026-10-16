@@ -27,8 +27,7 @@ public static class CheckerService
         cancellationToken.ThrowIfCancellationRequested();
 
         var 無効な規則群 = 設定.DisabledRules.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var 規則群 = RuleCatalog
-            .CreateDefault(設定)
+        var 規則群 = 規則一覧.既定の規則一覧を作る(設定)
             .Where(rule => !無効な規則群.Contains(rule.規則情報.Id))
             .ToArray();
 

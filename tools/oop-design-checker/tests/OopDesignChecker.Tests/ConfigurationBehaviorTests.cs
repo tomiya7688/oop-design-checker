@@ -7,14 +7,14 @@ internal static class 設定動作テスト
 {
     public static void 無効化した規則の診断を抑制する()
     {
-        一時プロジェクトで実行する(rootPath =>
+        一時プロジェクトで実行する(ルートパス =>
         {
             File.WriteAllText(
-                Path.Combine(rootPath, "Sample.cs"),
+                Path.Combine(ルートパス, "Sample.cs"),
                 "internal sealed class Sample { public int Value; }"
             );
             File.WriteAllText(
-                Path.Combine(rootPath, "oop-design-checker.json"),
+                Path.Combine(ルートパス, "oop-design-checker.json"),
                 """
                 {
                   "disabledRules": ["OOP106"]
@@ -22,8 +22,8 @@ internal static class 設定動作テスト
                 """
             );
 
-            var result = CheckerService.Analyze(rootPath);
-            if (result.Diagnostics.Any(diagnostic => diagnostic.Rule.Id == "OOP106"))
+            var 結果 = CheckerService.Analyze(ルートパス);
+            if (結果.Diagnostics.Any(診断 => 診断.Rule.Id == "OOP106"))
             {
                 throw new InvalidOperationException(
                     "OOP106 should be suppressed by disabledRules."
@@ -34,22 +34,22 @@ internal static class 設定動作テスト
 
     public static void 無視対象のパスを除外する()
     {
-        一時プロジェクトで実行する(rootPath =>
+        一時プロジェクトで実行する(ルートパス =>
         {
             File.WriteAllText(
-                Path.Combine(rootPath, "Clean.cs"),
+                Path.Combine(ルートパス, "Clean.cs"),
                 "internal sealed class Clean { private int _value; public int Value => _value; }"
             );
 
-            var generatedPath = Path.Combine(rootPath, "Generated");
-            Directory.CreateDirectory(generatedPath);
+            var 生成したパス = Path.Combine(ルートパス, "Generated");
+            Directory.CreateDirectory(生成したパス);
             File.WriteAllText(
-                Path.Combine(generatedPath, "Bad.cs"),
+                Path.Combine(生成したパス, "Bad.cs"),
                 "internal sealed class GeneratedSample { public int Value; }"
             );
 
             File.WriteAllText(
-                Path.Combine(rootPath, "oop-design-checker.json"),
+                Path.Combine(ルートパス, "oop-design-checker.json"),
                 """
                 {
                   "ignoredPaths": ["**/Generated/**"]
@@ -57,8 +57,8 @@ internal static class 設定動作テスト
                 """
             );
 
-            var result = CheckerService.Analyze(rootPath);
-            if (result.Diagnostics.Any(diagnostic => diagnostic.Rule.Id == "OOP106"))
+            var 結果 = CheckerService.Analyze(ルートパス);
+            if (結果.Diagnostics.Any(診断 => 診断.Rule.Id == "OOP106"))
             {
                 throw new InvalidOperationException(
                     "Files matched by ignoredPaths must not be analyzed."
@@ -69,14 +69,14 @@ internal static class 設定動作テスト
 
     public static void 失敗基準を読み込む()
     {
-        一時プロジェクトで実行する(rootPath =>
+        一時プロジェクトで実行する(ルートパス =>
         {
             File.WriteAllText(
-                Path.Combine(rootPath, "Clean.cs"),
+                Path.Combine(ルートパス, "Clean.cs"),
                 "internal sealed class Clean { private int _value; public int Value => _value; }"
             );
             File.WriteAllText(
-                Path.Combine(rootPath, "oop-design-checker.json"),
+                Path.Combine(ルートパス, "oop-design-checker.json"),
                 """
                 {
                   "failureThreshold": "attention"
@@ -84,11 +84,11 @@ internal static class 設定動作テスト
                 """
             );
 
-            var result = CheckerService.Analyze(rootPath);
-            if (result.FailureThreshold != DesignDiagnosticSeverity.Attention)
+            var 結果 = CheckerService.Analyze(ルートパス);
+            if (結果.FailureThreshold != DesignDiagnosticSeverity.Attention)
             {
                 throw new InvalidOperationException(
-                    $"Expected Attention threshold, found {result.FailureThreshold}."
+                    $"Expected Attention threshold, found {結果.FailureThreshold}."
                 );
             }
         });
@@ -104,19 +104,19 @@ internal static class 設定動作テスト
 
     private static void 入れ子対象に親設定を適用する()
     {
-        一時プロジェクトで実行する(rootPath =>
+        一時プロジェクトで実行する(ルートパス =>
         {
-            var nestedPath = Path.Combine(rootPath, "src", "App");
-            Directory.CreateDirectory(nestedPath);
-            var sourcePath = Path.Combine(nestedPath, "Sample.cs");
+            var 入れ子パス = Path.Combine(ルートパス, "src", "App");
+            Directory.CreateDirectory(入れ子パス);
+            var ソースパス = Path.Combine(入れ子パス, "Sample.cs");
             File.WriteAllText(
-                sourcePath,
+                ソースパス,
                 "internal sealed class Sample { private int _value; public int Value => _value; }"
             );
 
-            var configurationPath = Path.Combine(rootPath, "oop-design-checker.json");
+            var 設定パス = Path.Combine(ルートパス, "oop-design-checker.json");
             File.WriteAllText(
-                configurationPath,
+                設定パス,
                 """
                 {
                   "failureThreshold": "attention"
@@ -124,9 +124,9 @@ internal static class 設定動作テスト
                 """
             );
 
-            var result = CheckerService.Analyze(sourcePath);
-            設定パスを確認する(result.ConfigurationPath, configurationPath);
-            if (result.FailureThreshold != DesignDiagnosticSeverity.Attention)
+            var 結果 = CheckerService.Analyze(ソースパス);
+            設定パスを確認する(結果.ConfigurationPath, 設定パス);
+            if (結果.FailureThreshold != DesignDiagnosticSeverity.Attention)
             {
                 throw new InvalidOperationException(
                     "Nested target did not inherit the parent checker configuration."
@@ -137,10 +137,10 @@ internal static class 設定動作テスト
 
     private static void 最も近い設定を優先する()
     {
-        一時プロジェクトで実行する(rootPath =>
+        一時プロジェクトで実行する(ルートパス =>
         {
             File.WriteAllText(
-                Path.Combine(rootPath, "oop-design-checker.json"),
+                Path.Combine(ルートパス, "oop-design-checker.json"),
                 """
                 {
                   "failureThreshold": "warning"
@@ -148,26 +148,26 @@ internal static class 設定動作テスト
                 """
             );
 
-            var nestedPath = Path.Combine(rootPath, "src", "App");
-            Directory.CreateDirectory(nestedPath);
-            var nestedConfigurationPath = Path.Combine(nestedPath, "oop-design-checker.json");
+            var 入れ子パス = Path.Combine(ルートパス, "src", "App");
+            Directory.CreateDirectory(入れ子パス);
+            var 入れ子設定パス = Path.Combine(入れ子パス, "oop-design-checker.json");
             File.WriteAllText(
-                nestedConfigurationPath,
+                入れ子設定パス,
                 """
                 {
                   "failureThreshold": "attention"
                 }
                 """
             );
-            var sourcePath = Path.Combine(nestedPath, "Sample.cs");
+            var ソースパス = Path.Combine(入れ子パス, "Sample.cs");
             File.WriteAllText(
-                sourcePath,
+                ソースパス,
                 "internal sealed class Sample { private int _value; public int Value => _value; }"
             );
 
-            var result = CheckerService.Analyze(sourcePath);
-            設定パスを確認する(result.ConfigurationPath, nestedConfigurationPath);
-            if (result.FailureThreshold != DesignDiagnosticSeverity.Attention)
+            var 結果 = CheckerService.Analyze(ソースパス);
+            設定パスを確認する(結果.ConfigurationPath, 入れ子設定パス);
+            if (結果.FailureThreshold != DesignDiagnosticSeverity.Attention)
             {
                 throw new InvalidOperationException(
                     "The nearest checker configuration did not win."
@@ -178,21 +178,21 @@ internal static class 設定動作テスト
 
     private static void 明示した相対設定パスを対象ディレクトリ基準で解決する()
     {
-        一時プロジェクトで実行する(rootPath =>
+        一時プロジェクトで実行する(ルートパス =>
         {
-            var targetPath = Path.Combine(rootPath, "src", "App");
-            Directory.CreateDirectory(targetPath);
-            var sourcePath = Path.Combine(targetPath, "Sample.cs");
+            var 対象パス = Path.Combine(ルートパス, "src", "App");
+            Directory.CreateDirectory(対象パス);
+            var ソースパス = Path.Combine(対象パス, "Sample.cs");
             File.WriteAllText(
-                sourcePath,
+                ソースパス,
                 "internal sealed class Sample { private int _value; public int Value => _value; }"
             );
 
-            var configurationDirectory = Path.Combine(targetPath, "config");
-            Directory.CreateDirectory(configurationDirectory);
-            var configurationPath = Path.Combine(configurationDirectory, "checker.json");
+            var 設定ディレクトリ = Path.Combine(対象パス, "config");
+            Directory.CreateDirectory(設定ディレクトリ);
+            var 設定パス = Path.Combine(設定ディレクトリ, "checker.json");
             File.WriteAllText(
-                configurationPath,
+                設定パス,
                 """
                 {
                   "failureThreshold": "attention"
@@ -200,40 +200,40 @@ internal static class 設定動作テスト
                 """
             );
 
-            var result = CheckerService.Analyze(sourcePath, Path.Combine("config", "checker.json"));
-            設定パスを確認する(result.ConfigurationPath, configurationPath);
+            var 結果 = CheckerService.Analyze(ソースパス, Path.Combine("config", "checker.json"));
+            設定パスを確認する(結果.ConfigurationPath, 設定パス);
         });
     }
 
     private static void 相対設定パスを作業ディレクトリ基準で優先する()
     {
-        一時プロジェクトで実行する(rootPath =>
+        一時プロジェクトで実行する(ルートパス =>
         {
-            var originalDirectory = Directory.GetCurrentDirectory();
-            var currentDirectory = Path.Combine(rootPath, "cwd");
-            var targetDirectory = Path.Combine(rootPath, "target");
-            var relativePath = Path.Combine("config", "checker.json");
-            Directory.CreateDirectory(Path.Combine(currentDirectory, "config"));
-            Directory.CreateDirectory(Path.Combine(targetDirectory, "config"));
+            var 元のディレクトリ = Directory.GetCurrentDirectory();
+            var 現在のディレクトリ = Path.Combine(ルートパス, "cwd");
+            var 対象ディレクトリ = Path.Combine(ルートパス, "target");
+            var 相対パス = Path.Combine("config", "checker.json");
+            Directory.CreateDirectory(Path.Combine(現在のディレクトリ, "config"));
+            Directory.CreateDirectory(Path.Combine(対象ディレクトリ, "config"));
 
-            var currentConfigurationPath = Path.Combine(currentDirectory, relativePath);
-            var targetConfigurationPath = Path.Combine(targetDirectory, relativePath);
-            File.WriteAllText(currentConfigurationPath, "{}");
-            File.WriteAllText(targetConfigurationPath, "{}");
+            var 現在の設定パス = Path.Combine(現在のディレクトリ, 相対パス);
+            var 対象設定パス = Path.Combine(対象ディレクトリ, 相対パス);
+            File.WriteAllText(現在の設定パス, "{}");
+            File.WriteAllText(対象設定パス, "{}");
 
             try
             {
-                Directory.SetCurrentDirectory(currentDirectory);
-                var expectedPath = Path.GetFullPath(relativePath, Directory.GetCurrentDirectory());
-                var resolved = CheckerConfigurationPathResolver.ResolveExplicit(
-                    targetDirectory,
-                    relativePath
+                Directory.SetCurrentDirectory(現在のディレクトリ);
+                var 期待するパス = Path.GetFullPath(相対パス, Directory.GetCurrentDirectory());
+                var 解決結果 = CheckerConfigurationPathResolver.ResolveExplicit(
+                    対象ディレクトリ,
+                    相対パス
                 );
-                設定パスを確認する(resolved, expectedPath);
+                設定パスを確認する(解決結果, 期待するパス);
             }
             finally
             {
-                Directory.SetCurrentDirectory(originalDirectory);
+                Directory.SetCurrentDirectory(元のディレクトリ);
             }
         });
     }
@@ -260,11 +260,11 @@ internal static class 設定動作テスト
 
     private static void 設定がない場合に既定値を使う()
     {
-        一時プロジェクトで実行する(rootPath =>
+        一時プロジェクトで実行する(ルートパス =>
         {
-            var projectPath = Path.Combine(rootPath, "FolderTarget.csproj");
+            var プロジェクトパス = Path.Combine(ルートパス, "FolderTarget.csproj");
             File.WriteAllText(
-                projectPath,
+                プロジェクトパス,
                 """
                 <Project Sdk="Microsoft.NET.Sdk">
                   <PropertyGroup>
@@ -274,22 +274,22 @@ internal static class 設定動作テスト
                 """
             );
             File.WriteAllText(
-                Path.Combine(rootPath, "Sample.cs"),
+                Path.Combine(ルートパス, "Sample.cs"),
                 "internal sealed class Sample { private int _value; public int Value => _value; }"
             );
 
-            var result = CheckerService.Analyze(rootPath);
-            if (result.ConfigurationPath is not null)
+            var 結果 = CheckerService.Analyze(ルートパス);
+            if (結果.ConfigurationPath is not null)
             {
                 throw new InvalidOperationException(
-                    $"Expected built-in defaults with no configuration file, found '{result.ConfigurationPath}'."
+                    $"Expected built-in defaults with no configuration file, found '{結果.ConfigurationPath}'."
                 );
             }
 
-            if (result.FailureThreshold != DesignDiagnosticSeverity.Danger)
+            if (結果.FailureThreshold != DesignDiagnosticSeverity.Danger)
             {
                 throw new InvalidOperationException(
-                    $"Expected default Danger threshold, found {result.FailureThreshold}."
+                    $"Expected default Danger threshold, found {結果.FailureThreshold}."
                 );
             }
         });
@@ -297,24 +297,24 @@ internal static class 設定動作テスト
 
     private static void 設定がない場合に確認先を表示する()
     {
-        一時プロジェクトで実行する(rootPath =>
+        一時プロジェクトで実行する(ルートパス =>
         {
-            var targetDirectory = Path.Combine(rootPath, "target");
-            Directory.CreateDirectory(targetDirectory);
-            const string relativePath = "missing-checker.json";
-            var currentDirectoryPath = Path.GetFullPath(
-                relativePath,
+            var 対象ディレクトリ = Path.Combine(ルートパス, "target");
+            Directory.CreateDirectory(対象ディレクトリ);
+            const string 相対パス = "missing-checker.json";
+            var 現在のディレクトリパス = Path.GetFullPath(
+                相対パス,
                 Directory.GetCurrentDirectory()
             );
-            var targetRelativePath = Path.GetFullPath(relativePath, targetDirectory);
+            var 対象相対パス = Path.GetFullPath(相対パス, 対象ディレクトリ);
 
             try
             {
-                _ = CheckerConfigurationPathResolver.ResolveExplicit(targetDirectory, relativePath);
+                _ = CheckerConfigurationPathResolver.ResolveExplicit(対象ディレクトリ, 相対パス);
             }
-            catch (InvalidOperationException exception)
-                when (exception.Message.Contains(currentDirectoryPath, StringComparison.Ordinal)
-                    && exception.Message.Contains(targetRelativePath, StringComparison.Ordinal)
+            catch (InvalidOperationException 例外)
+                when (例外.Message.Contains(現在のディレクトリパス, StringComparison.Ordinal)
+                    && 例外.Message.Contains(対象相対パス, StringComparison.Ordinal)
                 )
             {
                 return;
@@ -326,34 +326,34 @@ internal static class 設定動作テスト
         });
     }
 
-    private static void 設定パスを確認する(string? actualPath, string expectedPath)
+    private static void 設定パスを確認する(string? 実際のパス, string 期待するパス)
     {
-        if (!string.Equals(actualPath, expectedPath, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(実際のパス, 期待するパス, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
-                $"Expected configuration '{expectedPath}', found '{actualPath ?? "<none>"}'."
+                $"Expected configuration '{期待するパス}', found '{実際のパス ?? "<none>"}'."
             );
         }
     }
 
-    private static void 一時プロジェクトで実行する(Action<string> action)
+    private static void 一時プロジェクトで実行する(Action<string> 処理)
     {
-        var rootPath = Path.Combine(
+        var ルートパス = Path.Combine(
             Path.GetTempPath(),
             "oop-design-checker-tests",
             Guid.NewGuid().ToString("N")
         );
-        Directory.CreateDirectory(rootPath);
+        Directory.CreateDirectory(ルートパス);
 
         try
         {
-            action(rootPath);
+            処理(ルートパス);
         }
         finally
         {
-            if (Directory.Exists(rootPath))
+            if (Directory.Exists(ルートパス))
             {
-                Directory.Delete(rootPath, recursive: true);
+                Directory.Delete(ルートパス, recursive: true);
             }
         }
     }

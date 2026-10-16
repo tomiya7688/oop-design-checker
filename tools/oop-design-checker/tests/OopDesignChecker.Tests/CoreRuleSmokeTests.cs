@@ -3,32 +3,32 @@ using OopDesignChecker.Rules;
 
 namespace OopDesignChecker.Tests;
 
-internal static class CoreRuleSmokeTests
+internal static class 基本規則スモークテスト
 {
-    public static void Run()
+    public static void 実行する()
     {
-        MissingCommonAbstractionIsDetected();
-        SealingCandidateIsAttention();
+        共通抽象の不足を検出する();
+        シール候補を注意として報告する();
         状態を持つ静的設計は警告になる();
         抽象が足りない具象依存は警告になる();
         回避可能な具象生成は警告になる();
         独立オブジェクトまとまりを警告する();
         プロパティ状態まとまりを警告する();
         補助処理で連結した状態は警告しない();
-        InheritancePrecisionSmokeTests.Run();
-        InheritanceDepthPrecisionSmokeTests.Run();
-        PolymorphismPrecisionSmokeTests.Run();
-        EncapsulationPrecisionSmokeTests.Run();
-        静的設計精度スモークテスト.Run();
-        OperationPrecisionSmokeTests.Run();
-        DiagnosticCoordinationSmokeTests.Run();
-        オブジェクト辿り規則テスト.Run();
-        ExtendedRuleSmokeTests.Run();
+        継承精度スモークテスト.実行する();
+        継承深度精度スモークテスト.実行する();
+        多態性精度スモークテスト.実行する();
+        カプセル化精度スモークテスト.実行する();
+        静的設計精度スモークテスト.実行する();
+        操作精度スモークテスト.実行する();
+        診断協調スモークテスト.実行する();
+        オブジェクト辿り規則テスト.実行する();
+        拡張規則スモークテスト.実行する();
     }
 
-    private static void MissingCommonAbstractionIsDetected()
+    private static void 共通抽象の不足を検出する()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class Dog
             {
                 public void Move() { }
@@ -55,12 +55,17 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(new 共通抽象不足規則(), source, "OOP001", DesignDiagnosticSeverity.Warning);
+        単一診断を確認する(
+            new 共通抽象不足規則(),
+            ソース,
+            "OOP001",
+            DesignDiagnosticSeverity.Warning
+        );
     }
 
-    private static void SealingCandidateIsAttention()
+    private static void シール候補を注意として報告する()
     {
-        const string source = """
+        const string ソース = """
             internal class Worker
             {
                 private int _count;
@@ -68,12 +73,17 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(new 封止候補規則(), source, "OOP102", DesignDiagnosticSeverity.Attention);
+        単一診断を確認する(
+            new 封止候補規則(),
+            ソース,
+            "OOP102",
+            DesignDiagnosticSeverity.Attention
+        );
     }
 
     private static void 状態を持つ静的設計は警告になる()
     {
-        const string source = """
+        const string ソース = """
             internal static class GlobalState
             {
                 private static int _count;
@@ -81,9 +91,9 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(
+        単一診断を確認する(
             new 状態保持静的設計規則(),
-            source,
+            ソース,
             "OOP105",
             DesignDiagnosticSeverity.Warning
         );
@@ -91,7 +101,7 @@ internal static class CoreRuleSmokeTests
 
     private static void 抽象が足りない具象依存は警告になる()
     {
-        const string source = """
+        const string ソース = """
             internal interface IClock
             {
                 int Read();
@@ -110,12 +120,17 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(new 具象型依存規則(), source, "OOP305", DesignDiagnosticSeverity.Warning);
+        単一診断を確認する(
+            new 具象型依存規則(),
+            ソース,
+            "OOP305",
+            DesignDiagnosticSeverity.Warning
+        );
     }
 
     private static void 回避可能な具象生成は警告になる()
     {
-        const string source = """
+        const string ソース = """
             internal interface IClock
             {
                 int Read();
@@ -133,9 +148,9 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(
+        単一診断を確認する(
             new 回避可能な具象生成規則(),
-            source,
+            ソース,
             "OOP306",
             DesignDiagnosticSeverity.Warning
         );
@@ -143,7 +158,7 @@ internal static class CoreRuleSmokeTests
 
     private static void 独立オブジェクトまとまりを警告する()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class Combined
             {
                 private int _leftA;
@@ -163,9 +178,9 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(
+        単一診断を確認する(
             new 複数オブジェクト混在規則(),
-            source,
+            ソース,
             "OOP401",
             DesignDiagnosticSeverity.Warning
         );
@@ -173,7 +188,7 @@ internal static class CoreRuleSmokeTests
 
     private static void プロパティ状態まとまりを警告する()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class Combined
             {
                 private int LeftA { get; set; }
@@ -193,9 +208,9 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(
+        単一診断を確認する(
             new 複数オブジェクト混在規則(),
-            source,
+            ソース,
             "OOP401",
             DesignDiagnosticSeverity.Warning
         );
@@ -203,7 +218,7 @@ internal static class CoreRuleSmokeTests
 
     private static void 補助処理で連結した状態は警告しない()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class CoherentObject
             {
                 private int _leftA;
@@ -229,42 +244,44 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertNone(new 複数オブジェクト混在規則(), source, "OOP401");
+        診断がないことを確認する(new 複数オブジェクト混在規則(), ソース, "OOP401");
     }
 
-    private static void AssertSingle(
-        I解析規則 rule,
-        string source,
-        string ruleId,
-        DesignDiagnosticSeverity severity
+    private static void 単一診断を確認する(
+        I解析規則 規則,
+        string ソース,
+        string 規則ID,
+        DesignDiagnosticSeverity 重要度
     )
     {
-        var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
-        if (
-            diagnostics.Length != 1
-            || diagnostics[0].Rule.Id != ruleId
-            || diagnostics[0].Severity != severity
-        )
+        var 診断一覧 = 規則.解析する(テスト用プロジェクト作成器.解析文脈を作る(ソース)).ToArray();
+        if (診断一覧.Length != 1 || 診断一覧[0].Rule.Id != 規則ID || 診断一覧[0].Severity != 重要度)
         {
-            var found = string.Join(
+            var 検出内容 = string.Join(
                 ", ",
-                diagnostics.Select(item => $"{item.Rule.Id}:{item.Severity}")
+                診断一覧.Select(項目 => $"{項目.Rule.Id}:{項目.Severity}")
             );
             throw new InvalidOperationException(
-                $"Expected one {ruleId}:{severity} diagnostic, found [{found}]."
+                $"Expected one {規則ID}:{重要度} diagnostic, found [{検出内容}]."
             );
         }
     }
 
-    private static void AssertNone(複数オブジェクト混在規則 rule, string source, string ruleId)
+    private static void 診断がないことを確認する(
+        複数オブジェクト混在規則 規則,
+        string ソース,
+        string 規則ID
+    )
     {
-        var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
-        if (diagnostics.Length == 0)
+        var 診断一覧 = 規則.解析する(テスト用プロジェクト作成器.解析文脈を作る(ソース)).ToArray();
+        if (診断一覧.Length == 0)
         {
             return;
         }
 
-        var found = string.Join(", ", diagnostics.Select(item => item.Rule.Id));
-        throw new InvalidOperationException($"Expected no {ruleId} diagnostic, found [{found}].");
+        var 検出内容 = string.Join(", ", 診断一覧.Select(項目 => 項目.Rule.Id));
+        throw new InvalidOperationException(
+            $"Expected no {規則ID} diagnostic, found [{検出内容}]."
+        );
     }
 }

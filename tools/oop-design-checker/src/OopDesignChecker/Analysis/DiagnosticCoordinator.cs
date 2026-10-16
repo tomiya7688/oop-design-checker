@@ -12,12 +12,14 @@ internal static class 診断調整器
     //     2: 重要度だけで診断の優先関係を決めません
     //   ]
     // }
-    private static readonly FrozenDictionary<string, string> DominantRuleBySubsumedRule =
-        new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["OOP106"] = "OOP107",
-            ["OOP405"] = "OOP402",
-        }.ToFrozenDictionary(StringComparer.Ordinal);
+    private static readonly FrozenDictionary<string, string> 包含先規則対応表 = new Dictionary<
+        string,
+        string
+    >(StringComparer.Ordinal)
+    {
+        ["OOP106"] = "OOP107",
+        ["OOP405"] = "OOP402",
+    }.ToFrozenDictionary(StringComparer.Ordinal);
 
     public static IReadOnlyList<DesignDiagnostic> 集約する(
         IReadOnlyList<DesignDiagnostic> diagnostics
@@ -40,7 +42,7 @@ internal static class 診断調整器
     {
         if (
             diagnostic.SymbolName is null
-            || !DominantRuleBySubsumedRule.TryGetValue(diagnostic.Rule.Id, out var dominantRuleId)
+            || !包含先規則対応表.TryGetValue(diagnostic.Rule.Id, out var dominantRuleId)
         )
         {
             return false;

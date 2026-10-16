@@ -7,14 +7,14 @@ public static class DiagnosticTextLocalizer
     public static string Title(DesignDiagnostic diagnostic, UserInterfaceLanguage language) =>
         language == UserInterfaceLanguage.English
             ? diagnostic.Rule.Title
-            : JapaneseTitle(diagnostic.Rule.Id) ?? diagnostic.Rule.Title;
+            : 日本語タイトル(diagnostic.Rule.Id) ?? diagnostic.Rule.Title;
 
     public static string Message(DesignDiagnostic diagnostic, UserInterfaceLanguage language) =>
         language == UserInterfaceLanguage.English
             ? diagnostic.Message
-            : JapaneseMessage(diagnostic.Rule.Id) ?? diagnostic.Message;
+            : 日本語メッセージ(diagnostic.Rule.Id) ?? diagnostic.Message;
 
-    private static string? JapaneseTitle(string ruleId) =>
+    private static string? 日本語タイトル(string ruleId) =>
         ruleId switch
         {
             "OOP001" => "同じ役割の型に共通の動作がない",
@@ -44,7 +44,7 @@ public static class DiagnosticTextLocalizer
             _ => null,
         };
 
-    private static string? JapaneseMessage(string ruleId) =>
+    private static string? 日本語メッセージ(string ruleId) =>
         ruleId switch
         {
             "OOP001" =>

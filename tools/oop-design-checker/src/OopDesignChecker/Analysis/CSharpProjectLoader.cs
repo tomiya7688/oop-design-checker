@@ -18,10 +18,10 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
 
     public 解析対象プロジェクト 読み込む(
         string 対象パス,
-        CancellationToken cancellationToken = default
+        CancellationToken キャンセル通知 = default
     )
     {
-        var projects = プロジェクト群を読み込む(対象パス, cancellationToken);
+        var projects = プロジェクト群を読み込む(対象パス, キャンセル通知);
         if (projects.Count != 1)
         {
             throw new InvalidOperationException(
@@ -34,20 +34,20 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
 
     public IReadOnlyList<解析対象プロジェクト> プロジェクト群を読み込む(
         string 対象パス,
-        CancellationToken cancellationToken = default
+        CancellationToken キャンセル通知 = default
     )
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         var fullTargetPath = Path.GetFullPath(対象パス);
 
         if (File.Exists(fullTargetPath))
         {
             return Path.GetExtension(fullTargetPath).ToLowerInvariant() switch
             {
-                ".cs" => [個別ソース群を読み込む(fullTargetPath, cancellationToken)],
-                ".csproj" => [MSBuildプロジェクトを読み込む(fullTargetPath, cancellationToken)],
-                ".sln" => ソリューションを読み込む(fullTargetPath, cancellationToken),
-                ".slnx" => Slnxプロジェクト群を読み込む(fullTargetPath, cancellationToken),
+                ".cs" => [個別ソース群を読み込む(fullTargetPath, キャンセル通知)],
+                ".csproj" => [MSBuildプロジェクトを読み込む(fullTargetPath, キャンセル通知)],
+                ".sln" => ソリューションを読み込む(fullTargetPath, キャンセル通知),
+                ".slnx" => Slnxプロジェクト群を読み込む(fullTargetPath, キャンセル通知),
                 _ => throw new InvalidOperationException(
                     "Target file must be a C# source file (.cs), project file (.csproj), or solution file (.sln/.slnx)."
                 ),
@@ -59,39 +59,36 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             throw new InvalidOperationException($"Target does not exist: {fullTargetPath}");
         }
 
-        var solutionFile = ソリューションファイルを探す(fullTargetPath, cancellationToken);
+        var solutionFile = ソリューションファイルを探す(fullTargetPath, キャンセル通知);
         if (solutionFile is not null)
         {
-            return プロジェクト群を読み込む(solutionFile, cancellationToken);
+            return プロジェクト群を読み込む(solutionFile, キャンセル通知);
         }
 
-        var projectFiles = プロジェクトファイル群を探す(fullTargetPath, cancellationToken);
+        var projectFiles = プロジェクトファイル群を探す(fullTargetPath, キャンセル通知);
         return projectFiles.Length == 0
-            ? [個別ソース群を読み込む(fullTargetPath, cancellationToken)]
-            : MSBuildプロジェクト群を読み込む(projectFiles, cancellationToken);
+            ? [個別ソース群を読み込む(fullTargetPath, キャンセル通知)]
+            : MSBuildプロジェクト群を読み込む(projectFiles, キャンセル通知);
     }
 
     private 解析対象プロジェクト[] ソリューションを読み込む(
         string solutionFile,
-        CancellationToken cancellationToken
+        CancellationToken キャンセル通知
     )
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         MSBuildを登録する();
 
-        var workspaceFailures = new List<string>();
+        var 作業領域失敗群 = new List<string>();
         using var workspace = MSBuildWorkspace.Create();
-        using var workspaceFailureRegistration = workspace失敗処理を登録する(
-            workspace,
-            workspaceFailures
-        );
+        using var 作業領域失敗登録 = 作業領域の失敗処理を登録する(workspace, 作業領域失敗群);
 
         var solution = workspace
-            .OpenSolutionAsync(solutionFile, cancellationToken: cancellationToken)
+            .OpenSolutionAsync(solutionFile, cancellationToken: キャンセル通知)
             .GetAwaiter()
             .GetResult();
-        cancellationToken.ThrowIfCancellationRequested();
-        workspace失敗を例外にする(solutionFile, workspaceFailures);
+        キャンセル通知.ThrowIfCancellationRequested();
+        作業領域の失敗を例外にする(solutionFile, 作業領域失敗群);
 
         var rootPath =
             Path.GetDirectoryName(solutionFile)
@@ -105,9 +102,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
                 || !パス除外判定器.無視する(project.FilePath, rootPath, _無視対象パス群)
             )
             .OrderBy(project => project.FilePath, パス比較規則.文字列比較子)
-            .Select(project =>
-                解析対象プロジェクトを作る(project, workspaceFailures, cancellationToken)
-            )
+            .Select(project => 解析対象プロジェクトを作る(project, 作業領域失敗群, キャンセル通知))
             .ToArray();
 
         if (projects.Length == 0)
@@ -122,17 +117,17 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
 
     private 解析対象プロジェクト[] Slnxプロジェクト群を読み込む(
         string solutionFile,
-        CancellationToken cancellationToken
+        CancellationToken キャンセル通知
     )
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         var rootPath =
             Path.GetDirectoryName(solutionFile)
             ?? throw new InvalidOperationException(
                 $"Could not determine solution directory for {solutionFile}."
             );
         var document = XDocument.Load(solutionFile, LoadOptions.None);
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         var projectFiles = document
             .Descendants()
             .Where(element => element.Name.LocalName == "Project")
@@ -154,7 +149,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             );
         }
 
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         var 存在しないプロジェクトファイル群 = projectFiles
             .Where(path => !File.Exists(path))
             .ToArray();
@@ -166,50 +161,44 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             );
         }
 
-        return MSBuildプロジェクト群を読み込む(projectFiles, cancellationToken);
+        return MSBuildプロジェクト群を読み込む(projectFiles, キャンセル通知);
     }
 
     private 解析対象プロジェクト MSBuildプロジェクトを読み込む(
         string projectFile,
-        CancellationToken cancellationToken
+        CancellationToken キャンセル通知
     )
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         MSBuildを登録する();
 
-        var workspaceFailures = new List<string>();
+        var 作業領域失敗群 = new List<string>();
         using var workspace = MSBuildWorkspace.Create();
-        using var workspaceFailureRegistration = workspace失敗処理を登録する(
-            workspace,
-            workspaceFailures
-        );
+        using var 作業領域失敗登録 = 作業領域の失敗処理を登録する(workspace, 作業領域失敗群);
 
         var project = workspace
-            .OpenProjectAsync(projectFile, cancellationToken: cancellationToken)
+            .OpenProjectAsync(projectFile, cancellationToken: キャンセル通知)
             .GetAwaiter()
             .GetResult();
-        return 解析対象プロジェクトを作る(project, workspaceFailures, cancellationToken);
+        return 解析対象プロジェクトを作る(project, 作業領域失敗群, キャンセル通知);
     }
 
     private 解析対象プロジェクト[] MSBuildプロジェクト群を読み込む(
         string[] projectFiles,
-        CancellationToken cancellationToken
+        CancellationToken キャンセル通知
     )
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         MSBuildを登録する();
 
-        var workspaceFailures = new List<string>();
+        var 作業領域失敗群 = new List<string>();
         using var workspace = MSBuildWorkspace.Create();
-        using var workspaceFailureRegistration = workspace失敗処理を登録する(
-            workspace,
-            workspaceFailures
-        );
+        using var 作業領域失敗登録 = 作業領域の失敗処理を登録する(workspace, 作業領域失敗群);
 
         var projects = new List<解析対象プロジェクト>(projectFiles.Length);
         foreach (var projectFile in projectFiles.OrderBy(path => path, パス比較規則.文字列比較子))
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            キャンセル通知.ThrowIfCancellationRequested();
             var normalizedProjectFile = Path.GetFullPath(projectFile);
             var project = workspace.CurrentSolution.Projects.FirstOrDefault(candidate =>
                 string.Equals(
@@ -219,10 +208,10 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
                 )
             );
             project ??= workspace
-                .OpenProjectAsync(normalizedProjectFile, cancellationToken: cancellationToken)
+                .OpenProjectAsync(normalizedProjectFile, cancellationToken: キャンセル通知)
                 .GetAwaiter()
                 .GetResult();
-            projects.Add(解析対象プロジェクトを作る(project, workspaceFailures, cancellationToken));
+            projects.Add(解析対象プロジェクトを作る(project, 作業領域失敗群, キャンセル通知));
         }
 
         return projects.ToArray();
@@ -230,13 +219,13 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
 
     private 解析対象プロジェクト 解析対象プロジェクトを作る(
         Project project,
-        List<string> workspaceFailures,
-        CancellationToken cancellationToken
+        List<string> 作業領域失敗群,
+        CancellationToken キャンセル通知
     )
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         if (
-            project.GetCompilationAsync(cancellationToken).GetAwaiter().GetResult()
+            project.GetCompilationAsync(キャンセル通知).GetAwaiter().GetResult()
             is not CSharpCompilation compilation
         )
         {
@@ -245,7 +234,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             );
         }
 
-        コンパイル結果を検証する(compilation, workspaceFailures, cancellationToken);
+        コンパイル結果を検証する(compilation, 作業領域失敗群, キャンセル通知);
 
         var projectFile =
             project.FilePath
@@ -259,7 +248,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             );
         var syntaxTrees = project
             .Documents.Select(document =>
-                document.GetSyntaxTreeAsync(cancellationToken).GetAwaiter().GetResult()
+                document.GetSyntaxTreeAsync(キャンセル通知).GetAwaiter().GetResult()
             )
             .Where(tree => tree is not null)
             .Cast<SyntaxTree>()
@@ -269,7 +258,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             )
             .Distinct()
             .ToArray();
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         var semanticModels = syntaxTrees.ToDictionary(
             tree => tree,
             tree => compilation.GetSemanticModel(tree, ignoreAccessibility: true)
@@ -292,16 +281,15 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
 
     private 解析対象プロジェクト 個別ソース群を読み込む(
         string 対象パス,
-        CancellationToken cancellationToken
+        CancellationToken キャンセル通知
     )
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         var rootPath = File.Exists(対象パス)
             ? Path.GetDirectoryName(対象パス) ?? Directory.GetCurrentDirectory()
             : 対象パス;
 
-        var sourceFiles = 個別ソースファイル群を探す(対象パス, rootPath, cancellationToken)
-            .ToArray();
+        var sourceFiles = 個別ソースファイル群を探す(対象パス, rootPath, キャンセル通知).ToArray();
         if (sourceFiles.Length == 0)
         {
             throw new InvalidOperationException("No C# source files were found.");
@@ -311,12 +299,12 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         var syntaxTrees = sourceFiles
             .Select(path =>
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                キャンセル通知.ThrowIfCancellationRequested();
                 return CSharpSyntaxTree.ParseText(
                     File.ReadAllText(path),
                     parseOptions,
                     path,
-                    cancellationToken: cancellationToken
+                    cancellationToken: キャンセル通知
                 );
             })
             .ToArray();
@@ -328,7 +316,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
 
-        コンパイル結果を検証する(compilation, [], cancellationToken);
+        コンパイル結果を検証する(compilation, [], キャンセル通知);
 
         var semanticModels = syntaxTrees.ToDictionary(
             tree => (SyntaxTree)tree,
@@ -346,10 +334,10 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
 
     private string? ソリューションファイルを探す(
         string targetDirectory,
-        CancellationToken cancellationToken
+        CancellationToken キャンセル通知
     )
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         var solutionFiles = Directory
             .EnumerateFiles(targetDirectory, "*.sln", SearchOption.TopDirectoryOnly)
             .Concat(
@@ -359,7 +347,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             .OrderBy(path => path, パス比較規則.文字列比較子)
             .ToArray();
 
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         return solutionFiles.Length switch
         {
             0 => null,
@@ -372,10 +360,10 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
 
     private string[] プロジェクトファイル群を探す(
         string targetDirectory,
-        CancellationToken cancellationToken
+        CancellationToken キャンセル通知
     )
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         var 直下のプロジェクトファイル群 = Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.TopDirectoryOnly)
             .Where(path => !パス除外判定器.無視する(path, targetDirectory, _無視対象パス群))
@@ -387,7 +375,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             return 直下のプロジェクトファイル群;
         }
 
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         return Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.AllDirectories)
             .Where(path => !パス除外判定器.無視する(path, targetDirectory, _無視対象パス群))
@@ -399,10 +387,10 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
     private IEnumerable<string> 個別ソースファイル群を探す(
         string 対象パス,
         string rootPath,
-        CancellationToken cancellationToken
+        CancellationToken キャンセル通知
     )
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
         if (File.Exists(対象パス))
         {
             if (
@@ -420,7 +408,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             var file in Directory.EnumerateFiles(対象パス, "*.cs", SearchOption.AllDirectories)
         )
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            キャンセル通知.ThrowIfCancellationRequested();
             if (!パス除外判定器.無視する(file, rootPath, _無視対象パス群))
             {
                 yield return file;
@@ -428,15 +416,15 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         }
     }
 
-    private static WorkspaceEventRegistration workspace失敗処理を登録する(
+    private static WorkspaceEventRegistration 作業領域の失敗処理を登録する(
         MSBuildWorkspace workspace,
-        List<string> workspaceFailures
+        List<string> 作業領域失敗群
     ) =>
         workspace.RegisterWorkspaceFailedHandler(args =>
         {
             if (args.Diagnostic.Kind == WorkspaceDiagnosticKind.Failure)
             {
-                workspaceFailures.Add(args.Diagnostic.Message);
+                作業領域失敗群.Add(args.Diagnostic.Message);
             }
         });
 
@@ -448,38 +436,38 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         return Path.GetFullPath(Path.Combine(rootPath, normalizedPath));
     }
 
-    private static void workspace失敗を例外にする(string 対象パス, List<string> workspaceFailures)
+    private static void 作業領域の失敗を例外にする(string 対象パス, List<string> 作業領域失敗群)
     {
-        if (workspaceFailures.Count == 0)
+        if (作業領域失敗群.Count == 0)
         {
             return;
         }
 
         throw new InvalidOperationException(
             $"Target {対象パス} could not be analyzed reliably because project loading contains errors:\n"
-                + string.Join("\n", workspaceFailures.Select(message => $"MSBuild: {message}"))
+                + string.Join("\n", 作業領域失敗群.Select(message => $"MSBuild: {message}"))
         );
     }
 
     private static void コンパイル結果を検証する(
         CSharpCompilation compilation,
-        List<string> workspaceFailures,
-        CancellationToken cancellationToken
+        List<string> 作業領域失敗群,
+        CancellationToken キャンセル通知
     )
     {
         var errors = compilation
-            .GetDiagnostics(cancellationToken)
+            .GetDiagnostics(キャンセル通知)
             .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
             .Take(20)
             .ToArray();
 
-        if (errors.Length == 0 && workspaceFailures.Count == 0)
+        if (errors.Length == 0 && 作業領域失敗群.Count == 0)
         {
             return;
         }
 
         var details = errors.Select(error => error.ToString()).ToList();
-        details.AddRange(workspaceFailures.Select(message => $"MSBuild: {message}"));
+        details.AddRange(作業領域失敗群.Select(message => $"MSBuild: {message}"));
 
         throw new InvalidOperationException(
             "Target project could not be analyzed reliably because its compilation or project loading contains errors:\n"

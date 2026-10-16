@@ -4,43 +4,43 @@ using OopDesignChecker.Analysis;
 
 namespace OopDesignChecker.Tests;
 
-internal static class TestProjectFactory
+internal static class テスト用プロジェクト作成器
 {
-    public static 解析文脈 解析文脈を作る(string source)
+    public static 解析文脈 解析文脈を作る(string ソース)
     {
-        var syntaxTree = CSharpSyntaxTree.ParseText(source, path: "Test.cs");
-        var compilation = CSharpCompilation.Create(
+        var 構文木 = CSharpSyntaxTree.ParseText(ソース, path: "Test.cs");
+        var コンパイル結果 = CSharpCompilation.Create(
             "RuleTests",
-            [syntaxTree],
+            [構文木],
             メタデータ参照提供器.プラットフォーム参照群を作る(),
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
 
-        var errors = compilation
+        var エラー一覧 = コンパイル結果
             .GetDiagnostics()
-            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .Where(診断 => 診断.Severity == DiagnosticSeverity.Error)
             .ToArray();
 
-        if (errors.Length > 0)
+        if (エラー一覧.Length > 0)
         {
             throw new InvalidOperationException(
                 "Test source did not compile:\n"
-                    + string.Join("\n", errors.Select(error => error.ToString()))
+                    + string.Join("\n", エラー一覧.Select(エラー => エラー.ToString()))
             );
         }
 
-        var semanticModels = new Dictionary<SyntaxTree, SemanticModel>
+        var 意味モデル一覧 = new Dictionary<SyntaxTree, SemanticModel>
         {
-            [syntaxTree] = compilation.GetSemanticModel(syntaxTree),
+            [構文木] = コンパイル結果.GetSemanticModel(構文木),
         };
 
-        var project = new 解析対象プロジェクト(
+        var プロジェクト = new 解析対象プロジェクト(
             ルートパス: ".",
             アプリケーションである: true,
-            compilation,
-            semanticModels
+            コンパイル結果,
+            意味モデル一覧
         );
 
-        return new 解析文脈(project);
+        return new 解析文脈(プロジェクト);
     }
 }

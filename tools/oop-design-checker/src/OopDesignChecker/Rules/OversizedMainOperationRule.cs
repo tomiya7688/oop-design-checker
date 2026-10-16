@@ -34,7 +34,7 @@ internal sealed class 過大主処理規則 : I解析規則
                 if (
                     処理量指標.文数 < 最低文数
                     || 過大スコアを計算する(処理量指標) < 警告スコア
-                    || private補助メソッドである(解析文脈, メソッド記号)
+                    || 非公開補助メソッドである(解析文脈, メソッド記号)
                 )
                 {
                     continue;
@@ -101,7 +101,7 @@ internal sealed class 過大主処理規則 : I解析規則
         return 点数;
     }
 
-    private static bool private補助メソッドである(解析文脈 解析文脈, IMethodSymbol 対象メソッド)
+    private static bool 非公開補助メソッドである(解析文脈 解析文脈, IMethodSymbol 対象メソッド)
     {
         if (対象メソッド.DeclaredAccessibility != Accessibility.Private)
         {

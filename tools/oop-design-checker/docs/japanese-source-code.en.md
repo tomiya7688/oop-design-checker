@@ -37,3 +37,14 @@ dotnet csharpier check .
 ```
 
 Also verify Windows, Linux, and macOS in GitHub Actions. Identifier changes must not alter diagnostics, CLI output, configuration values, JSON/SARIF formats, or UI automation contracts.
+
+## Names retained after the final audit
+
+The final audit covers implementation-owned private identifiers and the types, methods, parameters, and local variables in test implementations. Keep the following names for their role or compatibility:
+
+- `Program.Main` is the .NET entry point. Keep `Program` as the conventional entry-point type name.
+- `BuildAvaloniaApp` is the conventional Avalonia test-host builder name. Keep `TestAppBuilder.cs` and test file names unchanged.
+- Keep `CSharp`, `MSBuild`, `Slnx`, and the interface prefix `I` as established technical terms or C# naming conventions. They appear in `Analysis/CSharpProjectLoader.cs`, `Analysis/IProjectLoader.cs`, and `Core/IAnalysisRule.cs`.
+- .NET, Roslyn, and Avalonia API names and named arguments follow the referenced public contracts. Examples: `Console.Error`, `DiagnosticSeverity.Error`, `Directory.Delete(recursive:)`, `CSharpSyntaxTree.ParseText(path:)`, `OpenSolutionAsync(cancellationToken:)`, and `Write(verbose:)`.
+- Code snippets in tests and `tests/fixtures/release-validation-csharp/` are input that the analyzer checks. Do not rewrite their English type and member names as product-code identifiers.
+- Preserve existing public CLR API, CLI, configuration, JSON/SARIF, and UI automation names as contracts.

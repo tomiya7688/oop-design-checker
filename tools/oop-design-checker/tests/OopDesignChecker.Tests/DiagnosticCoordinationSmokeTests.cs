@@ -5,18 +5,18 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Tests;
 
-internal static class DiagnosticCoordinationSmokeTests
+internal static class 診断協調スモークテスト
 {
-    public static void Run()
+    public static void 実行する()
     {
         同一記号で不変条件迂回がカプセル化漏出を抑制する();
         同一記号で貧血オブジェクトが取得設定のみ警告を抑制する();
-        DominanceDoesNotRunInReverse();
-        DifferentSymbolsRemainIndependent();
-        UnrelatedRulesRemainTogether();
-        DiagnosticsWithoutSymbolsAreNotSuppressed();
-        MessageChangesDoNotCreateDuplicateDiagnostics();
-        DifferentSymbolsAtSameLocationRemainDistinct();
+        優先規則を逆向きに適用しない();
+        異なる記号を独立して扱う();
+        無関係な規則の診断を残す();
+        記号のない診断を抑制しない();
+        メッセージ差だけで診断を重複させない();
+        同じ位置の異なる記号を区別する();
         不明な診断パスを安定して扱う();
         パスの大文字小文字をOS別に比較する();
         パス規則に従って診断の抑制と順序を決める();
@@ -25,106 +25,111 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void 同一記号で不変条件迂回がカプセル化漏出を抑制する()
     {
-        var diagnostics = 診断調整器.集約する([
-            Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Balance"),
-            Create("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
+        var 診断一覧 = 診断調整器.集約する([
+            診断を作る("OOP106", DesignDiagnosticSeverity.Warning, "Account.Balance"),
+            診断を作る("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
         ]);
 
-        AssertRuleIds(diagnostics, "OOP107");
+        規則IDを確認する(診断一覧, "OOP107");
     }
 
     private static void 同一記号で貧血オブジェクトが取得設定のみ警告を抑制する()
     {
-        var diagnostics = 診断調整器.集約する([
-            Create("OOP405", DesignDiagnosticSeverity.Attention, "Order"),
-            Create("OOP402", DesignDiagnosticSeverity.Warning, "Order"),
+        var 診断一覧 = 診断調整器.集約する([
+            診断を作る("OOP405", DesignDiagnosticSeverity.Attention, "Order"),
+            診断を作る("OOP402", DesignDiagnosticSeverity.Warning, "Order"),
         ]);
 
-        AssertRuleIds(diagnostics, "OOP402");
+        規則IDを確認する(診断一覧, "OOP402");
     }
 
-    private static void DominanceDoesNotRunInReverse()
+    private static void 優先規則を逆向きに適用しない()
     {
-        var diagnostics = 診断調整器.集約する([
-            Create("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
-            Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Other"),
+        var 診断一覧 = 診断調整器.集約する([
+            診断を作る("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
+            診断を作る("OOP106", DesignDiagnosticSeverity.Warning, "Account.Other"),
         ]);
 
-        AssertRuleIds(diagnostics, "OOP106", "OOP107");
+        規則IDを確認する(診断一覧, "OOP106", "OOP107");
     }
 
-    private static void DifferentSymbolsRemainIndependent()
+    private static void 異なる記号を独立して扱う()
     {
-        var diagnostics = 診断調整器.集約する([
-            Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Name"),
-            Create("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
+        var 診断一覧 = 診断調整器.集約する([
+            診断を作る("OOP106", DesignDiagnosticSeverity.Warning, "Account.Name"),
+            診断を作る("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
         ]);
 
-        AssertRuleIds(diagnostics, "OOP106", "OOP107");
+        規則IDを確認する(診断一覧, "OOP106", "OOP107");
     }
 
-    private static void UnrelatedRulesRemainTogether()
+    private static void 無関係な規則の診断を残す()
     {
-        var diagnostics = 診断調整器.集約する([
-            Create("OOP401", DesignDiagnosticSeverity.Warning, "Coordinator"),
-            Create("OOP403", DesignDiagnosticSeverity.Warning, "Coordinator"),
+        var 診断一覧 = 診断調整器.集約する([
+            診断を作る("OOP401", DesignDiagnosticSeverity.Warning, "Coordinator"),
+            診断を作る("OOP403", DesignDiagnosticSeverity.Warning, "Coordinator"),
         ]);
 
-        AssertRuleIds(diagnostics, "OOP401", "OOP403");
+        規則IDを確認する(診断一覧, "OOP401", "OOP403");
     }
 
-    private static void DiagnosticsWithoutSymbolsAreNotSuppressed()
+    private static void 記号のない診断を抑制しない()
     {
-        var diagnostics = 診断調整器.集約する([
-            Create("OOP106", DesignDiagnosticSeverity.Warning, null),
-            Create("OOP107", DesignDiagnosticSeverity.Danger, null),
+        var 診断一覧 = 診断調整器.集約する([
+            診断を作る("OOP106", DesignDiagnosticSeverity.Warning, null),
+            診断を作る("OOP107", DesignDiagnosticSeverity.Danger, null),
         ]);
 
-        AssertRuleIds(diagnostics, "OOP106", "OOP107");
+        規則IDを確認する(診断一覧, "OOP106", "OOP107");
     }
 
-    private static void MessageChangesDoNotCreateDuplicateDiagnostics()
+    private static void メッセージ差だけで診断を重複させない()
     {
-        var diagnostics = エンジンを通して解析する(
-            Create("OOP999", DesignDiagnosticSeverity.Warning, "Order", "Original wording"),
-            Create("OOP999", DesignDiagnosticSeverity.Warning, "Order", "Localized wording")
+        var 診断一覧 = エンジンを通して解析する(
+            診断を作る("OOP999", DesignDiagnosticSeverity.Warning, "Order", "Original wording"),
+            診断を作る("OOP999", DesignDiagnosticSeverity.Warning, "Order", "Localized wording")
         );
 
-        if (diagnostics.Count == 1)
+        if (診断一覧.Count == 1)
         {
             return;
         }
 
         throw new InvalidOperationException(
-            $"Expected message-only diagnostic differences to collapse to one item, found {diagnostics.Count}."
+            $"Expected message-only diagnostic differences to collapse to one item, found {診断一覧.Count}."
         );
     }
 
-    private static void DifferentSymbolsAtSameLocationRemainDistinct()
+    private static void 同じ位置の異なる記号を区別する()
     {
-        var diagnostics = エンジンを通して解析する(
-            Create("OOP999", DesignDiagnosticSeverity.Warning, "Order.First"),
-            Create("OOP999", DesignDiagnosticSeverity.Warning, "Order.Second")
+        var 診断一覧 = エンジンを通して解析する(
+            診断を作る("OOP999", DesignDiagnosticSeverity.Warning, "Order.First"),
+            診断を作る("OOP999", DesignDiagnosticSeverity.Warning, "Order.Second")
         );
 
-        if (diagnostics.Count == 2)
+        if (診断一覧.Count == 2)
         {
             return;
         }
 
         throw new InvalidOperationException(
-            $"Expected different symbols at the same location to remain distinct, found {diagnostics.Count}."
+            $"Expected different symbols at the same location to remain distinct, found {診断一覧.Count}."
         );
     }
 
     private static void 不明な診断パスを安定して扱う()
     {
-        var diagnostics = エンジンを通して解析する(
-            Create("OOP999", DesignDiagnosticSeverity.Warning, "Order", filePath: "<unknown>")
+        var 診断一覧 = エンジンを通して解析する(
+            診断を作る(
+                "OOP999",
+                DesignDiagnosticSeverity.Warning,
+                "Order",
+                ファイルパス: "<unknown>"
+            )
         );
 
-        var reduced = 診断調整器.集約する(diagnostics);
-        if (reduced.Count != 1 || reduced[0].Location.FilePath != "<unknown>")
+        var 縮小後 = 診断調整器.集約する(診断一覧);
+        if (縮小後.Count != 1 || 縮小後[0].Location.FilePath != "<unknown>")
         {
             throw new InvalidOperationException(
                 "Unknown diagnostic paths must survive identity and coordination unchanged."
@@ -134,155 +139,155 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void パスの大文字小文字をOS別に比較する()
     {
-        var diagnostics = エンジンを通して解析する(
-            Create(
+        var 診断一覧 = エンジンを通して解析する(
+            診断を作る(
                 "OOP999",
                 DesignDiagnosticSeverity.Warning,
                 "Order",
-                filePath: "CaseSensitive.cs"
+                ファイルパス: "CaseSensitive.cs"
             ),
-            Create(
+            診断を作る(
                 "OOP999",
                 DesignDiagnosticSeverity.Warning,
                 "Order",
-                filePath: "casesensitive.cs"
+                ファイルパス: "casesensitive.cs"
             )
         );
 
-        var expectedCount = OperatingSystem.IsWindows() ? 1 : 2;
-        if (diagnostics.Count == expectedCount)
+        var 期待する件数 = OperatingSystem.IsWindows() ? 1 : 2;
+        if (診断一覧.Count == 期待する件数)
         {
             return;
         }
 
         throw new InvalidOperationException(
-            $"Expected {expectedCount} diagnostic(s) for path casing on {Environment.OSVersion.Platform}, found {diagnostics.Count}."
+            $"Expected {期待する件数} diagnostic(s) for path casing on {Environment.OSVersion.Platform}, found {診断一覧.Count}."
         );
     }
 
     private static void パス規則に従って診断の抑制と順序を決める()
     {
-        var samePathWithDifferentCasing = 診断調整器.集約する([
-            Create(
+        var 大文字小文字が異なる同一パス = 診断調整器.集約する([
+            診断を作る(
                 "OOP106",
                 DesignDiagnosticSeverity.Warning,
                 "Account.Balance",
-                filePath: "CaseSensitive.cs"
+                ファイルパス: "CaseSensitive.cs"
             ),
-            Create(
+            診断を作る(
                 "OOP107",
                 DesignDiagnosticSeverity.Danger,
                 "Account.Balance",
-                filePath: "casesensitive.cs"
+                ファイルパス: "casesensitive.cs"
             ),
         ]);
-        var expectedSamePathCount = OperatingSystem.IsWindows() ? 1 : 2;
-        if (samePathWithDifferentCasing.Count != expectedSamePathCount)
+        var 期待する同一パス件数 = OperatingSystem.IsWindows() ? 1 : 2;
+        if (大文字小文字が異なる同一パス.Count != 期待する同一パス件数)
         {
             throw new InvalidOperationException(
-                $"Expected {expectedSamePathCount} diagnostic(s) for path case comparison, found {samePathWithDifferentCasing.Count}."
+                $"Expected {期待する同一パス件数} diagnostic(s) for path case comparison, found {大文字小文字が異なる同一パス.Count}."
             );
         }
 
-        var differentSymbolCasing = 診断調整器.集約する([
-            Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Balance"),
-            Create("OOP107", DesignDiagnosticSeverity.Danger, "account.balance"),
+        var 記号名の大文字小文字違い = 診断調整器.集約する([
+            診断を作る("OOP106", DesignDiagnosticSeverity.Warning, "Account.Balance"),
+            診断を作る("OOP107", DesignDiagnosticSeverity.Danger, "account.balance"),
         ]);
-        AssertRuleIds(differentSymbolCasing, "OOP106", "OOP107");
+        規則IDを確認する(記号名の大文字小文字違い, "OOP106", "OOP107");
     }
 
     private static void 診断順をパス規則で決める()
     {
-        var diagnostics = エンジンを通して解析する(
-            Create(
+        var 診断一覧 = エンジンを通して解析する(
+            診断を作る(
                 "OOP999",
                 DesignDiagnosticSeverity.Warning,
                 "Order",
-                filePath: "CaseSensitive.cs",
-                line: 2
+                ファイルパス: "CaseSensitive.cs",
+                行: 2
             ),
-            Create(
+            診断を作る(
                 "OOP998",
                 DesignDiagnosticSeverity.Warning,
                 "Order",
-                filePath: "casesensitive.cs",
-                line: 1
+                ファイルパス: "casesensitive.cs",
+                行: 1
             )
         );
 
-        var expectedFirstPath = OperatingSystem.IsWindows()
+        var 期待する先頭パス = OperatingSystem.IsWindows()
             ? "casesensitive.cs"
             : "CaseSensitive.cs";
-        if (Path.GetFileName(diagnostics[0].Location.FilePath) == expectedFirstPath)
+        if (Path.GetFileName(診断一覧[0].Location.FilePath) == 期待する先頭パス)
         {
             return;
         }
 
         throw new InvalidOperationException(
-            $"Expected {expectedFirstPath} first under {Environment.OSVersion.Platform} path ordering, found {diagnostics[0].Location.FilePath}."
+            $"Expected {期待する先頭パス} first under {Environment.OSVersion.Platform} path ordering, found {診断一覧[0].Location.FilePath}."
         );
     }
 
     private static IReadOnlyList<DesignDiagnostic> エンジンを通して解析する(
-        params DesignDiagnostic[] diagnostics
+        params DesignDiagnostic[] 診断一覧
     )
     {
-        var compilation = CSharpCompilation.Create("diagnostic-identity");
-        var project = new 解析対象プロジェクト(
+        var コンパイル結果 = CSharpCompilation.Create("diagnostic-identity");
+        var プロジェクト = new 解析対象プロジェクト(
             Directory.GetCurrentDirectory(),
             false,
-            compilation,
+            コンパイル結果,
             new Dictionary<SyntaxTree, SemanticModel>()
         );
-        var engine = new 解析実行器([new FixedDiagnosticsRule(diagnostics)]);
-        return engine.解析する(project);
+        var 解析器 = new 解析実行器([new 固定診断規則(診断一覧)]);
+        return 解析器.解析する(プロジェクト);
     }
 
-    private static DesignDiagnostic Create(
-        string ruleId,
-        DesignDiagnosticSeverity severity,
-        string? symbolName,
-        string? message = null,
-        string filePath = "sample.cs",
-        int line = 1
+    private static DesignDiagnostic 診断を作る(
+        string 規則ID,
+        DesignDiagnosticSeverity 重要度,
+        string? 記号名,
+        string? メッセージ = null,
+        string ファイルパス = "sample.cs",
+        int 行 = 1
     ) =>
         new(
-            new RuleDescriptor(ruleId, ruleId, severity),
-            severity,
-            message ?? ruleId,
-            symbolName,
-            new SourceLocation(filePath, line, 1)
+            new RuleDescriptor(規則ID, 規則ID, 重要度),
+            重要度,
+            メッセージ ?? 規則ID,
+            記号名,
+            new SourceLocation(ファイルパス, 行, 1)
         );
 
-    private static void AssertRuleIds(
-        IReadOnlyList<DesignDiagnostic> diagnostics,
-        params string[] expectedRuleIds
+    private static void 規則IDを確認する(
+        IReadOnlyList<DesignDiagnostic> 診断一覧,
+        params string[] 期待する規則ID一覧
     )
     {
-        var actual = diagnostics.Select(diagnostic => diagnostic.Rule.Id).Order().ToArray();
-        var expected = expectedRuleIds.Order().ToArray();
-        if (actual.SequenceEqual(expected, StringComparer.Ordinal))
+        var 実際の値 = 診断一覧.Select(診断 => 診断.Rule.Id).Order().ToArray();
+        var 期待値 = 期待する規則ID一覧.Order().ToArray();
+        if (実際の値.SequenceEqual(期待値, StringComparer.Ordinal))
         {
             return;
         }
 
         throw new InvalidOperationException(
-            $"Expected [{string.Join(", ", expected)}], found [{string.Join(", ", actual)}]."
+            $"Expected [{string.Join(", ", 期待値)}], found [{string.Join(", ", 実際の値)}]."
         );
     }
 
-    private sealed class FixedDiagnosticsRule : I解析規則
+    private sealed class 固定診断規則 : I解析規則
     {
         private readonly IReadOnlyList<DesignDiagnostic> _diagnostics;
 
-        public FixedDiagnosticsRule(IReadOnlyList<DesignDiagnostic> diagnostics)
+        public 固定診断規則(IReadOnlyList<DesignDiagnostic> 診断一覧)
         {
-            _diagnostics = diagnostics;
-            規則情報 = diagnostics[0].Rule;
+            _diagnostics = 診断一覧;
+            規則情報 = 診断一覧[0].Rule;
         }
 
         public RuleDescriptor 規則情報 { get; }
 
-        public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context) => _diagnostics;
+        public IEnumerable<DesignDiagnostic> 解析する(解析文脈 文脈) => _diagnostics;
     }
 }
