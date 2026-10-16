@@ -88,7 +88,7 @@ def main() -> None:
     parser.add_argument("--publish", type=Path, required=True)
     parser.add_argument("--bundle", type=Path, required=True)
     parser.add_argument("--version", required=True)
-    args = parser.引数を解析する()
+    args = parser.parse_args()
     try:
         print(アプリバンドルを作る(args.publish, args.bundle, args.version))
     except (OSError, ValueError) as exc:

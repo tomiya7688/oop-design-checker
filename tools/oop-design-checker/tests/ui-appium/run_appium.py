@@ -38,7 +38,7 @@ def 引数を解析する():
     parser.add_argument("--fixture", required=True)
     parser.add_argument("--evidence", required=True)
     parser.add_argument("--server", default="http://127.0.0.1:4723")
-    return parser.引数を解析する()
+    return parser.parse_args()
 
 
 def 期待値を読み込む(fixture: Path):
