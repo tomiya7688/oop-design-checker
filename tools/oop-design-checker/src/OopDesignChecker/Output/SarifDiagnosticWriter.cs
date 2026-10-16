@@ -56,7 +56,7 @@ internal sealed class SarifDiagnosticWriter : IDiagnosticWriter
 
     private static object ToResult(DesignDiagnostic diagnostic)
     {
-        var locations = DiagnosticPath.TryCreateFileUri(
+        var locations = 診断ファイルパス.ファイルURIを作成できる(
             diagnostic.Location.FilePath,
             out var fileUri
         )

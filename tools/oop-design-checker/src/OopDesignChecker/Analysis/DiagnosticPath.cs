@@ -1,38 +1,38 @@
 namespace OopDesignChecker.Analysis;
 
-internal static class DiagnosticPath
+internal static class 診断ファイルパス
 {
-    public const string Unknown = "<unknown>";
+    public const string 不明 = "<unknown>";
 
-    public static string Normalize(string? path)
+    public static string 正規化する(string? ファイルパス)
     {
-        if (string.IsNullOrWhiteSpace(path))
+        if (string.IsNullOrWhiteSpace(ファイルパス))
         {
-            return Unknown;
+            return 不明;
         }
 
-        if (string.Equals(path, Unknown, StringComparison.Ordinal))
+        if (string.Equals(ファイルパス, 不明, StringComparison.Ordinal))
         {
-            return path;
+            return ファイルパス;
         }
 
         try
         {
-            return Path.GetFullPath(path);
+            return Path.GetFullPath(ファイルパス);
         }
         catch (Exception exception)
             when (exception is ArgumentException or NotSupportedException or PathTooLongException)
         {
-            return path;
+            return ファイルパス;
         }
     }
 
-    public static bool TryCreateFileUri(string? path, out string uri)
+    public static bool ファイルURIを作成できる(string? ファイルパス, out string ファイルURI)
     {
-        uri = string.Empty;
+        ファイルURI = string.Empty;
         if (
-            string.IsNullOrWhiteSpace(path)
-            || string.Equals(path, Unknown, StringComparison.Ordinal)
+            string.IsNullOrWhiteSpace(ファイルパス)
+            || string.Equals(ファイルパス, 不明, StringComparison.Ordinal)
         )
         {
             return false;
@@ -40,7 +40,7 @@ internal static class DiagnosticPath
 
         try
         {
-            uri = new Uri(Path.GetFullPath(path)).AbsoluteUri;
+            ファイルURI = new Uri(Path.GetFullPath(ファイルパス)).AbsoluteUri;
             return true;
         }
         catch (Exception exception)

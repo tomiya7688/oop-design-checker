@@ -41,6 +41,8 @@ GitHub Actions exposes separate checks so failures are easy to identify:
 - `csharpier` - CSharpier 1.3.0 formatting check using the repository-local tool manifest
 - `release` - validates distributable CUI/GUI packages and the exact release fixture gate for Windows, Linux, and macOS when release-related files change
 
+For the C# source naming and comment policy, see [Japanese identifiers and comments](docs/japanese-source-code.en.md).
+
 ## CUI
 
 ```bash

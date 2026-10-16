@@ -33,8 +33,8 @@ internal sealed class AnalysisEngine
         return DiagnosticCoordinator
             .Reduce(diagnostics)
             .OrderBy(
-                diagnostic => DiagnosticPath.Normalize(diagnostic.Location.FilePath),
-                PathSemantics.Comparer
+                diagnostic => 診断ファイルパス.正規化する(diagnostic.Location.FilePath),
+                パス比較規則.文字列比較子
             )
             .ThenBy(diagnostic => diagnostic.Location.Line)
             .ThenBy(diagnostic => diagnostic.Location.Column)
@@ -62,7 +62,7 @@ internal sealed class AnalysisEngine
 
     private static DiagnosticIdentity CreateDiagnosticIdentity(DesignDiagnostic diagnostic) =>
         new(
-            DiagnosticPath.Normalize(diagnostic.Location.FilePath),
+            診断ファイルパス.正規化する(diagnostic.Location.FilePath),
             diagnostic.Location.Line,
             diagnostic.Location.Column,
             diagnostic.Rule.Id,
@@ -82,7 +82,7 @@ internal sealed class AnalysisEngine
         public static DiagnosticIdentityComparer Instance { get; } = new();
 
         public bool Equals(DiagnosticIdentity left, DiagnosticIdentity right) =>
-            PathSemantics.Comparer.Equals(left.FilePath, right.FilePath)
+            パス比較規則.文字列比較子.Equals(left.FilePath, right.FilePath)
             && left.Line == right.Line
             && left.Column == right.Column
             && string.Equals(left.RuleId, right.RuleId, StringComparison.Ordinal)
@@ -91,7 +91,7 @@ internal sealed class AnalysisEngine
         public int GetHashCode(DiagnosticIdentity identity)
         {
             var hash = new HashCode();
-            hash.Add(identity.FilePath, PathSemantics.Comparer);
+            hash.Add(identity.FilePath, パス比較規則.文字列比較子);
             hash.Add(identity.Line);
             hash.Add(identity.Column);
             hash.Add(identity.RuleId, StringComparer.Ordinal);

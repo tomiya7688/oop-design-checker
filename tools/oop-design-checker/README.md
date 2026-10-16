@@ -41,6 +41,8 @@ GitHub Actionsでは、失敗原因を切り分けやすいよう独立したche
 - `csharpier` - repository-local tool manifestのCSharpier 1.3.0でformat check
 - `release` - release関連変更時にWindows / Linux / macOS向けCUI/GUI packageとrelease fixture exact gateを検証
 
+開発時のC#日本語識別子・コメント方針は[こちら](docs/japanese-source-code.md)を参照してください。
+
 ## CUI
 
 ```bash
