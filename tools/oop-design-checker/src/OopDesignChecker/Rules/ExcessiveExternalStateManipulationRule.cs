@@ -5,91 +5,90 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ExcessiveExternalStateManipulationRule : I解析規則
+internal sealed class 外部状態操作過剰規則 : I解析規則
 {
-    private const int MinimumDistinctMembers = 3;
+    private const int 最小異なるメンバー数 = 3;
 
     public RuleDescriptor 規則情報 { get; } =
         new("OOP108", "Excessive external state manipulation", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 文脈)
     {
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 文脈.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            var 意味モデル = 文脈.対象プロジェクト.意味モデルを取得する(構文木);
+            var 構文ルート = 構文木.GetRoot();
 
             foreach (
-                var methodDeclaration in root.DescendantNodes().OfType<MethodDeclarationSyntax>()
+                var メソッド宣言 in 構文ルート.DescendantNodes().OfType<MethodDeclarationSyntax>()
             )
             {
-                if (semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol method)
+                if (意味モデル.GetDeclaredSymbol(メソッド宣言) is not IMethodSymbol メソッド)
                 {
                     continue;
                 }
 
-                var manipulatedGroups = methodDeclaration
+                var 操作対象群 = メソッド宣言
                     .DescendantNodes()
                     .OfType<AssignmentExpressionSyntax>()
-                    .Select(assignment => ReadExternalWrite(assignment, method, semanticModel))
-                    .Where(write => write is not null)
-                    .Select(write => write!.Value)
+                    .Select(代入式 => 外部書き込みを読み取る(代入式, メソッド, 意味モデル))
+                    .Where(書き込み => 書き込み is not null)
+                    .Select(書き込み => 書き込み!.Value)
                     .GroupBy(
-                        write => (write.Receiver, write.TargetType),
-                        ExternalWriteKeyComparer.Instance
+                        書き込み => (書き込み.受信対象, 書き込み.対象型),
+                        外部書き込み識別子比較器.Instance
                     );
 
-                foreach (var group in manipulatedGroups)
+                foreach (var まとまり in 操作対象群)
                 {
-                    var distinctMembers = group
-                        .Select(write => write.MemberName)
+                    var 重複のないメンバー群 = まとまり.Select(書き込み => 書き込み.メンバー名)
                         .Distinct(StringComparer.Ordinal)
                         .ToArray();
-                    if (distinctMembers.Length < MinimumDistinctMembers)
+                    if (重複のないメンバー群.Length < 最小異なるメンバー数)
                     {
                         continue;
                     }
 
                     yield return 診断生成器.生成する(
                         規則情報,
-                        methodDeclaration.Identifier.GetLocation(),
-                        $"This method directly writes {distinctMembers.Length} members of {group.Key.TargetType.Name} through {group.Key.Receiver}. Prefer asking that object to perform the state transition itself.",
-                        method.ToDisplayString()
+                        メソッド宣言.Identifier.GetLocation(),
+                        $"This method directly writes {重複のないメンバー群.Length} メンバー群 of {まとまり.Key.対象型.Name} through {まとまり.Key.受信対象}. Prefer asking that object to perform the state transition itself.",
+                        メソッド.ToDisplayString()
                     );
                 }
             }
         }
     }
 
-    private static ExternalWrite? ReadExternalWrite(
-        AssignmentExpressionSyntax assignment,
-        IMethodSymbol method,
-        SemanticModel semanticModel
+    private static 外部書き込み? 外部書き込みを読み取る(
+        AssignmentExpressionSyntax 代入式,
+        IMethodSymbol メソッド,
+        SemanticModel 意味モデル
     )
     {
-        if (assignment.Left is not MemberAccessExpressionSyntax memberAccess)
+        if (代入式.Left is not MemberAccessExpressionSyntax メンバーアクセス構文)
         {
             return null;
         }
 
-        var member = semanticModel.GetSymbolInfo(memberAccess).Symbol;
-        var targetType = member?.ContainingType;
+        var メンバー = 意味モデル.GetSymbolInfo(メンバーアクセス構文).Symbol;
+        var 対象型 = メンバー?.ContainingType;
         if (
-            targetType is null
-            || !targetType.Locations.Any(location => location.IsInSource)
-            || SymbolEqualityComparer.Default.Equals(targetType, method.ContainingType)
-            || DataCarrierClassifier.IsExplicitDataCarrier(targetType)
-            || !IsPublicInstanceState(member)
+            対象型 is null
+            || !対象型.Locations.Any(location => location.IsInSource)
+            || SymbolEqualityComparer.Default.Equals(対象型, メソッド.ContainingType)
+            || データ保持型判定器.明示的データ保持型である(対象型)
+            || !公開インスタンス状態である(メンバー)
         )
         {
             return null;
         }
 
-        return new ExternalWrite(memberAccess.Expression.ToString(), targetType, member!.Name);
+        return new 外部書き込み(メンバーアクセス構文.Expression.ToString(), 対象型, メンバー!.Name);
     }
 
-    private static bool IsPublicInstanceState(ISymbol? symbol) =>
-        symbol
+    private static bool 公開インスタンス状態である(ISymbol? 記号) =>
+        記号
             is IPropertySymbol
                 {
                     IsStatic: false,
@@ -97,28 +96,28 @@ internal sealed class ExcessiveExternalStateManipulationRule : I解析規則
                 }
                 or IFieldSymbol { IsStatic: false, DeclaredAccessibility: Accessibility.Public };
 
-    private readonly record struct ExternalWrite(
-        string Receiver,
-        INamedTypeSymbol TargetType,
-        string MemberName
+    private readonly record struct 外部書き込み(
+        string 受信対象,
+        INamedTypeSymbol 対象型,
+        string メンバー名
     );
 
-    private sealed class ExternalWriteKeyComparer
-        : IEqualityComparer<(string Receiver, INamedTypeSymbol TargetType)>
+    private sealed class 外部書き込み識別子比較器
+        : IEqualityComparer<(string 受信対象, INamedTypeSymbol 対象型)>
     {
-        public static ExternalWriteKeyComparer Instance { get; } = new();
+        public static 外部書き込み識別子比較器 Instance { get; } = new();
 
         public bool Equals(
-            (string Receiver, INamedTypeSymbol TargetType) left,
-            (string Receiver, INamedTypeSymbol TargetType) right
+            (string 受信対象, INamedTypeSymbol 対象型) left,
+            (string 受信対象, INamedTypeSymbol 対象型) right
         ) =>
-            StringComparer.Ordinal.Equals(left.Receiver, right.Receiver)
-            && SymbolEqualityComparer.Default.Equals(left.TargetType, right.TargetType);
+            StringComparer.Ordinal.Equals(left.受信対象, right.受信対象)
+            && SymbolEqualityComparer.Default.Equals(left.対象型, right.対象型);
 
-        public int GetHashCode((string Receiver, INamedTypeSymbol TargetType) value) =>
+        public int GetHashCode((string 受信対象, INamedTypeSymbol 対象型) value) =>
             HashCode.Combine(
-                StringComparer.Ordinal.GetHashCode(value.Receiver),
-                SymbolEqualityComparer.Default.GetHashCode(value.TargetType)
+                StringComparer.Ordinal.GetHashCode(value.受信対象),
+                SymbolEqualityComparer.Default.GetHashCode(value.対象型)
             );
     }
 }

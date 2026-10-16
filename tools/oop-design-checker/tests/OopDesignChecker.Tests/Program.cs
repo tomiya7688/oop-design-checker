@@ -37,16 +37,13 @@ internal static class Program
             "OOP101 detects public classes confined to an inheritance hierarchy",
             ExcessiveVisibilityIsDetected
         ),
-        new("OOP106 detects public mutable fields as danger", EncapsulationLeakIsDetected),
+        new("OOP106 detects public mutable fields as danger", カプセル化漏出を検出する),
         new(
             "OOP106 detects mutable collection exposure as danger",
-            MutableCollectionExposureIsDetected
+            可変コレクションの公開を検出する
         ),
-        new(
-            "OOP106 detects unnecessarily public setters as warning",
-            UnnecessaryPublicSetterIsDetected
-        ),
-        new("OOP106 keeps externally used setters public", ExternallyUsedSetterIsAllowed),
+        new("OOP106 detects unnecessarily public setters as warning", 不要な公開設定子を検出する),
+        new("OOP106 keeps externally used setters public", 外部使用される設定子を許可する),
         new("OOP103 static member candidates are attention", StaticMemberCandidateIsDetected),
         new(
             "OOP103 does not suggest static when inherited instance state is used",
@@ -238,7 +235,7 @@ internal static class Program
         {
             var upper = CreateProjectForPath(Path.Combine(root, "Foo.cs"));
             var lower = CreateProjectForPath(Path.Combine(root, "foo.cs"));
-            var diagnostics = new 解析実行器([new EncapsulationLeakRule()])
+            var diagnostics = new 解析実行器([new カプセル化漏出規則()])
                 .解析する([upper, lower])
                 .Where(diagnostic => diagnostic.Rule.Id == "OOP106")
                 .ToArray();
@@ -342,7 +339,7 @@ internal static class Program
         AssertSingleRule(diagnostics, "OOP101", DesignDiagnosticSeverity.Warning);
     }
 
-    private static void EncapsulationLeakIsDetected()
+    private static void カプセル化漏出を検出する()
     {
         const string source = """
             internal sealed class Sample
@@ -351,11 +348,11 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new EncapsulationLeakRule(), source);
+        var diagnostics = Run(new カプセル化漏出規則(), source);
         AssertSingleRule(diagnostics, "OOP106", DesignDiagnosticSeverity.Danger);
     }
 
-    private static void MutableCollectionExposureIsDetected()
+    private static void 可変コレクションの公開を検出する()
     {
         const string source = """
             using System.Collections.Generic;
@@ -368,11 +365,11 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new EncapsulationLeakRule(), source);
+        var diagnostics = Run(new カプセル化漏出規則(), source);
         AssertSingleRule(diagnostics, "OOP106", DesignDiagnosticSeverity.Danger);
     }
 
-    private static void UnnecessaryPublicSetterIsDetected()
+    private static void 不要な公開設定子を検出する()
     {
         const string source = """
             internal sealed class Counter
@@ -386,11 +383,11 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new EncapsulationLeakRule(), source);
+        var diagnostics = Run(new カプセル化漏出規則(), source);
         AssertSingleRule(diagnostics, "OOP106", DesignDiagnosticSeverity.Warning);
     }
 
-    private static void ExternallyUsedSetterIsAllowed()
+    private static void 外部使用される設定子を許可する()
     {
         const string source = """
             internal sealed class Counter
@@ -412,7 +409,7 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new EncapsulationLeakRule(), source);
+        var diagnostics = Run(new カプセル化漏出規則(), source);
         AssertRuleCount(diagnostics, "OOP106", 0);
     }
 

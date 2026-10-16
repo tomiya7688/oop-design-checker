@@ -8,22 +8,22 @@ internal static class ExtendedRuleSmokeTests
     public static void Run()
     {
         UnusedSingleImplementationAbstractionIsAttention();
-        InvariantBypassIsDanger();
-        ExternalStateManipulationIsWarning();
+        不変条件迂回を危険として検出する();
+        外部状態操作を警告する();
         SuspiciousHiddenInheritanceIsWarning();
         ParentContractNoOpsAreWarning();
         ImplementationReuseInheritanceIsAttention();
-        AnemicObjectWithExternalBehaviorIsWarning();
-        SerializableDataCarrierIsAllowed();
-        DataContractCarrierIsAllowed();
-        NamingAloneDoesNotExemptDomainBehavior();
-        MapperProjectionDoesNotMakeObjectAnemic();
+        外部振る舞いを持つ貧血オブジェクトを警告する();
+        シリアル化データ保持型を許可する();
+        データ契約型を許可する();
+        命名だけでドメイン振る舞いを除外しない();
+        マッパー投影を貧血オブジェクトと判定しない();
         UnrelatedDependencyClustersAreWarning();
         HelperConnectedDependenciesAreAllowed();
         SharedAbstractionDependenciesAreAllowed();
         DeepObjectNavigationIsAttention();
-        GetterSetterOnlyObjectIsAttention();
-        MessageDataCarrierIsAllowed();
+        取得設定のみオブジェクトを注意として検出する();
+        メッセージデータ保持型を許可する();
     }
 
     private static void UnusedSingleImplementationAbstractionIsAttention()
@@ -48,7 +48,7 @@ internal static class ExtendedRuleSmokeTests
         );
     }
 
-    private static void InvariantBypassIsDanger()
+    private static void 不変条件迂回を危険として検出する()
     {
         const string source = """
             using System;
@@ -69,15 +69,10 @@ internal static class ExtendedRuleSmokeTests
             }
             """;
 
-        AssertSingle(
-            new ObjectInvariantBypassRule(),
-            source,
-            "OOP107",
-            DesignDiagnosticSeverity.Danger
-        );
+        AssertSingle(new 不変条件迂回規則(), source, "OOP107", DesignDiagnosticSeverity.Danger);
     }
 
-    private static void ExternalStateManipulationIsWarning()
+    private static void 外部状態操作を警告する()
     {
         const string source = """
             internal sealed class Player
@@ -99,7 +94,7 @@ internal static class ExtendedRuleSmokeTests
             """;
 
         AssertSingle(
-            new ExcessiveExternalStateManipulationRule(),
+            new 外部状態操作過剰規則(),
             source,
             "OOP108",
             DesignDiagnosticSeverity.Warning
@@ -172,7 +167,7 @@ internal static class ExtendedRuleSmokeTests
         );
     }
 
-    private static void AnemicObjectWithExternalBehaviorIsWarning()
+    private static void 外部振る舞いを持つ貧血オブジェクトを警告する()
     {
         const string source = """
             internal sealed class Position
@@ -191,10 +186,15 @@ internal static class ExtendedRuleSmokeTests
             }
             """;
 
-        AssertSingle(new AnemicObjectRule(), source, "OOP402", DesignDiagnosticSeverity.Warning);
+        AssertSingle(
+            new 貧血オブジェクト規則(),
+            source,
+            "OOP402",
+            DesignDiagnosticSeverity.Warning
+        );
     }
 
-    private static void SerializableDataCarrierIsAllowed()
+    private static void シリアル化データ保持型を許可する()
     {
         const string source = """
             [System.Serializable]
@@ -215,11 +215,11 @@ internal static class ExtendedRuleSmokeTests
             }
             """;
 
-        AssertNone(new AnemicObjectRule(), source, "OOP402");
-        AssertNone(new GetterSetterOnlyObjectRule(), source, "OOP405");
+        AssertNone(new 貧血オブジェクト規則(), source, "OOP402");
+        AssertNone(new 取得設定のみオブジェクト規則(), source, "OOP405");
     }
 
-    private static void DataContractCarrierIsAllowed()
+    private static void データ契約型を許可する()
     {
         const string source = """
             [System.Runtime.Serialization.DataContract]
@@ -240,11 +240,11 @@ internal static class ExtendedRuleSmokeTests
             }
             """;
 
-        AssertNone(new AnemicObjectRule(), source, "OOP402");
-        AssertNone(new GetterSetterOnlyObjectRule(), source, "OOP405");
+        AssertNone(new 貧血オブジェクト規則(), source, "OOP402");
+        AssertNone(new 取得設定のみオブジェクト規則(), source, "OOP405");
     }
 
-    private static void NamingAloneDoesNotExemptDomainBehavior()
+    private static void 命名だけでドメイン振る舞いを除外しない()
     {
         const string source = """
             internal sealed class AccountModel
@@ -262,14 +262,14 @@ internal static class ExtendedRuleSmokeTests
             """;
 
         AssertSingle(
-            new GetterSetterOnlyObjectRule(),
+            new 取得設定のみオブジェクト規則(),
             source,
             "OOP405",
             DesignDiagnosticSeverity.Attention
         );
     }
 
-    private static void MapperProjectionDoesNotMakeObjectAnemic()
+    private static void マッパー投影を貧血オブジェクトと判定しない()
     {
         const string source = """
             internal sealed class Person
@@ -288,7 +288,7 @@ internal static class ExtendedRuleSmokeTests
             }
             """;
 
-        AssertNone(new AnemicObjectRule(), source, "OOP402");
+        AssertNone(new 貧血オブジェクト規則(), source, "OOP402");
     }
 
     private static void UnrelatedDependencyClustersAreWarning()
@@ -427,7 +427,7 @@ internal static class ExtendedRuleSmokeTests
         );
     }
 
-    private static void GetterSetterOnlyObjectIsAttention()
+    private static void 取得設定のみオブジェクトを注意として検出する()
     {
         const string source = """
             internal sealed class Person
@@ -440,14 +440,14 @@ internal static class ExtendedRuleSmokeTests
             """;
 
         AssertSingle(
-            new GetterSetterOnlyObjectRule(),
+            new 取得設定のみオブジェクト規則(),
             source,
             "OOP405",
             DesignDiagnosticSeverity.Attention
         );
     }
 
-    private static void MessageDataCarrierIsAllowed()
+    private static void メッセージデータ保持型を許可する()
     {
         const string source = """
             internal sealed class UserCreatedMessage
@@ -459,7 +459,7 @@ internal static class ExtendedRuleSmokeTests
             }
             """;
 
-        AssertNone(new GetterSetterOnlyObjectRule(), source, "OOP405");
+        AssertNone(new 取得設定のみオブジェクト規則(), source, "OOP405");
     }
 
     private static void AssertSingle(

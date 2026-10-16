@@ -12,9 +12,9 @@ internal static class CoreRuleSmokeTests
         StatefulStaticDesignIsWarning();
         ConcreteDependencyDespiteAbstractionIsWarning();
         AvoidableConcreteConstructionIsWarning();
-        IndependentObjectClustersAreWarning();
-        PropertyStateClustersAreWarning();
-        HelperConnectedStateIsNotFlagged();
+        独立オブジェクトまとまりを警告する();
+        プロパティ状態まとまりを警告する();
+        補助処理で連結した状態は警告しない();
         InheritancePrecisionSmokeTests.Run();
         InheritanceDepthPrecisionSmokeTests.Run();
         PolymorphismPrecisionSmokeTests.Run();
@@ -146,7 +146,7 @@ internal static class CoreRuleSmokeTests
         );
     }
 
-    private static void IndependentObjectClustersAreWarning()
+    private static void 独立オブジェクトまとまりを警告する()
     {
         const string source = """
             internal sealed class Combined
@@ -169,14 +169,14 @@ internal static class CoreRuleSmokeTests
             """;
 
         AssertSingle(
-            new MultipleObjectsInClassRule(),
+            new 複数オブジェクト混在規則(),
             source,
             "OOP401",
             DesignDiagnosticSeverity.Warning
         );
     }
 
-    private static void PropertyStateClustersAreWarning()
+    private static void プロパティ状態まとまりを警告する()
     {
         const string source = """
             internal sealed class Combined
@@ -199,14 +199,14 @@ internal static class CoreRuleSmokeTests
             """;
 
         AssertSingle(
-            new MultipleObjectsInClassRule(),
+            new 複数オブジェクト混在規則(),
             source,
             "OOP401",
             DesignDiagnosticSeverity.Warning
         );
     }
 
-    private static void HelperConnectedStateIsNotFlagged()
+    private static void 補助処理で連結した状態は警告しない()
     {
         const string source = """
             internal sealed class CoherentObject
@@ -234,7 +234,7 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertNone(new MultipleObjectsInClassRule(), source, "OOP401");
+        AssertNone(new 複数オブジェクト混在規則(), source, "OOP401");
     }
 
     private static void AssertSingle(
@@ -261,7 +261,7 @@ internal static class CoreRuleSmokeTests
         }
     }
 
-    private static void AssertNone(MultipleObjectsInClassRule rule, string source, string ruleId)
+    private static void AssertNone(複数オブジェクト混在規則 rule, string source, string ruleId)
     {
         var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
         if (diagnostics.Length == 0)

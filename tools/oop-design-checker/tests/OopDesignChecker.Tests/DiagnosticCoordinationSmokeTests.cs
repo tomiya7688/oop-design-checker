@@ -9,8 +9,8 @@ internal static class DiagnosticCoordinationSmokeTests
 {
     public static void Run()
     {
-        InvariantBypassSuppressesEncapsulationLeakForSameSymbol();
-        AnemicObjectSuppressesGetterSetterOnlyForSameSymbol();
+        同一記号で不変条件迂回がカプセル化漏出を抑制する();
+        同一記号で貧血オブジェクトが取得設定のみ警告を抑制する();
         DominanceDoesNotRunInReverse();
         DifferentSymbolsRemainIndependent();
         UnrelatedRulesRemainTogether();
@@ -23,7 +23,7 @@ internal static class DiagnosticCoordinationSmokeTests
         診断順をパス規則で決める();
     }
 
-    private static void InvariantBypassSuppressesEncapsulationLeakForSameSymbol()
+    private static void 同一記号で不変条件迂回がカプセル化漏出を抑制する()
     {
         var diagnostics = 診断調整器.集約する([
             Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Balance"),
@@ -33,7 +33,7 @@ internal static class DiagnosticCoordinationSmokeTests
         AssertRuleIds(diagnostics, "OOP107");
     }
 
-    private static void AnemicObjectSuppressesGetterSetterOnlyForSameSymbol()
+    private static void 同一記号で貧血オブジェクトが取得設定のみ警告を抑制する()
     {
         var diagnostics = 診断調整器.集約する([
             Create("OOP405", DesignDiagnosticSeverity.Attention, "Order"),
