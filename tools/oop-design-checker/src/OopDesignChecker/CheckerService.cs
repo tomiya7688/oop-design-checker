@@ -21,33 +21,27 @@ public static class CheckerService
             throw new InvalidOperationException($"Target does not exist: {targetPath}");
         }
 
-        var fullTargetPath = Path.GetFullPath(targetPath);
-        var loadedConfiguration = CheckerConfigurationLoader.Load(
-            fullTargetPath,
-            configurationPath
-        );
-        var configuration = loadedConfiguration.Configuration;
+        var 対象の絶対パス = Path.GetFullPath(targetPath);
+        var 読込済み設定 = チェッカー設定読み込み器.Load(対象の絶対パス, configurationPath);
+        var 設定 = 読込済み設定.Configuration;
         cancellationToken.ThrowIfCancellationRequested();
 
-        var disabledRules = configuration.DisabledRules.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var rules = RuleCatalog
-            .CreateDefault(configuration)
-            .Where(rule => !disabledRules.Contains(rule.規則情報.Id))
+        var 無効な規則群 = 設定.DisabledRules.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var 規則群 = RuleCatalog
+            .CreateDefault(設定)
+            .Where(rule => !無効な規則群.Contains(rule.規則情報.Id))
             .ToArray();
 
-        Iプロジェクト読み込み器 loader = プロジェクト読み込み器生成器.生成する(
-            configuration.IgnoredPaths
+        Iプロジェクト読み込み器 読み込み器 = プロジェクト読み込み器生成器.生成する(
+            設定.IgnoredPaths
         );
-        var projects = loader.プロジェクト群を読み込む(fullTargetPath, cancellationToken);
+        var プロジェクト群 = 読み込み器.プロジェクト群を読み込む(対象の絶対パス, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var engine = new 解析実行器(rules);
-        var diagnostics = engine.解析する(projects, cancellationToken);
-        var failureThreshold = failureThresholdOverride ?? configuration.FailureThreshold;
+        var 解析実行器 = new 解析実行器(規則群);
+        var 診断群 = 解析実行器.解析する(プロジェクト群, cancellationToken);
+        var 失敗基準 = failureThresholdOverride ?? 設定.FailureThreshold;
 
-        return new CheckerRunResult(diagnostics, failureThreshold, loadedConfiguration.Path)
-        {
-            Configuration = configuration,
-        };
+        return new CheckerRunResult(診断群, 失敗基準, 読込済み設定.Path) { Configuration = 設定 };
     }
 }

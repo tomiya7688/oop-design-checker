@@ -23,11 +23,11 @@ internal static class LocalizationSmokeTests
 
     private static void JapaneseIsDefault()
     {
-        var result = CommandLineOptionsParser.Parse(["sample.cs"]);
+        var result = コマンドライン引数解析器.Parse(["sample.cs"]);
         if (
             !result.IsSuccess
             || result.Options?.Language != UserInterfaceLanguage.Japanese
-            || !CommandLineOptionsParser
+            || !コマンドライン引数解析器
                 .Usage(UserInterfaceLanguage.Japanese)
                 .Contains("使用方法", StringComparison.Ordinal)
         )
@@ -38,11 +38,11 @@ internal static class LocalizationSmokeTests
 
     private static void EnglishCanBeSelected()
     {
-        var result = CommandLineOptionsParser.Parse(["sample.cs", "--language", "en"]);
+        var result = コマンドライン引数解析器.Parse(["sample.cs", "--language", "en"]);
         if (
             !result.IsSuccess
             || result.Options?.Language != UserInterfaceLanguage.English
-            || !CommandLineOptionsParser
+            || !コマンドライン引数解析器
                 .Usage(UserInterfaceLanguage.English)
                 .StartsWith("Usage:", StringComparison.Ordinal)
         )
@@ -53,7 +53,7 @@ internal static class LocalizationSmokeTests
 
     private static void InvalidLanguageIsRejected()
     {
-        var result = CommandLineOptionsParser.Parse(["sample.cs", "--language", "xx"]);
+        var result = コマンドライン引数解析器.Parse(["sample.cs", "--language", "xx"]);
         if (result.IsSuccess)
         {
             throw new InvalidOperationException("Unsupported UI languages must be rejected.");
@@ -134,7 +134,7 @@ internal static class LocalizationSmokeTests
 
         try
         {
-            new JsonDiagnosticWriter(path).Write([diagnostic], verbose: true);
+            new JSON診断書き込み器(path).Write([diagnostic], verbose: true);
             var json = File.ReadAllText(path);
             if (
                 !json.Contains("Excessive inheritance depth", StringComparison.Ordinal)
@@ -307,7 +307,7 @@ internal static class LocalizationSmokeTests
         var path = Path.Combine(Path.GetTempPath(), $"oop-localization-{Guid.NewGuid():N}.txt");
         try
         {
-            new ConsoleDiagnosticWriter(path, language).Write([diagnostic], verbose);
+            new コンソール診断書き込み器(path, language).Write([diagnostic], verbose);
             return File.ReadAllText(path);
         }
         finally

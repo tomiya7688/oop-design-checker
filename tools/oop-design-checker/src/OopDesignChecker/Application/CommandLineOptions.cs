@@ -3,22 +3,22 @@ using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Application;
 
-internal sealed record CommandLineOptions(
+internal sealed record コマンドライン引数(
     string TargetPath,
     string? ConfigurationPath,
     DesignDiagnosticSeverity? FailureThreshold,
     bool Verbose,
-    DiagnosticOutputFormat OutputFormat,
+    診断出力形式 OutputFormat,
     string? OutputPath,
     UserInterfaceLanguage Language
 )
 {
-    public CommandLineOptions(
+    public コマンドライン引数(
         string targetPath,
         string? configurationPath,
         DesignDiagnosticSeverity? failureThreshold,
         bool verbose,
-        DiagnosticOutputFormat outputFormat,
+        診断出力形式 outputFormat,
         string? outputPath
     )
         : this(

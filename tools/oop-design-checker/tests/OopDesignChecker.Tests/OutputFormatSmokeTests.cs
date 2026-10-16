@@ -5,25 +5,25 @@ using OopDesignChecker.Output;
 
 namespace OopDesignChecker.Tests;
 
-internal static class OutputFormatSmokeTests
+internal static class 出力形式スモークテスト
 {
-    public static void Run()
+    public static void 実行する()
     {
-        CommandLineParsesFormatAndOutput();
-        RelativeConfigurationPathIsPreserved();
-        CommandLineReportsProductVersion();
-        GitHubFormatRejectsOutputFile();
-        NumericFailureThresholdIsRejected();
-        NumericOutputFormatIsRejected();
-        JsonOutputIsMachineReadable();
-        SarifOutputIsMachineReadable();
-        SarifOutputToleratesUnknownPaths();
-        GitHubAnnotationsEscapeSpecialCharacters();
+        CLIで出力形式と出力先を解析する();
+        相対設定パスを維持する();
+        CLIで製品バージョンを表示する();
+        GitHub形式で出力ファイルを拒否する();
+        数値の失敗基準を拒否する();
+        数値の出力形式を拒否する();
+        JSON出力を機械可読にする();
+        SARIF出力を機械可読にする();
+        SARIF出力で不明なパスを扱う();
+        GitHub注釈で特殊文字をエスケープする();
     }
 
-    private static void CommandLineParsesFormatAndOutput()
+    private static void CLIで出力形式と出力先を解析する()
     {
-        var result = CommandLineOptionsParser.Parse([
+        var result = コマンドライン引数解析器.Parse([
             "sample.cs",
             "--format",
             "sarif",
@@ -34,7 +34,7 @@ internal static class OutputFormatSmokeTests
         if (
             !result.IsSuccess
             || result.Options is null
-            || result.Options.OutputFormat != DiagnosticOutputFormat.Sarif
+            || result.Options.OutputFormat != 診断出力形式.Sarif
             || !result.Options.OutputPath!.EndsWith("results.sarif", StringComparison.Ordinal)
         )
         {
@@ -42,10 +42,10 @@ internal static class OutputFormatSmokeTests
         }
     }
 
-    private static void RelativeConfigurationPathIsPreserved()
+    private static void 相対設定パスを維持する()
     {
         var relativePath = Path.Combine("config", "checker.json");
-        var result = CommandLineOptionsParser.Parse(["sample.cs", "--config", relativePath]);
+        var result = コマンドライン引数解析器.Parse(["sample.cs", "--config", relativePath]);
 
         if (
             !result.IsSuccess
@@ -59,7 +59,7 @@ internal static class OutputFormatSmokeTests
         }
     }
 
-    private static void CommandLineReportsProductVersion()
+    private static void CLIで製品バージョンを表示する()
     {
         var originalOut = Console.Out;
         using var captured = new StringWriter();
@@ -87,9 +87,9 @@ internal static class OutputFormatSmokeTests
         }
     }
 
-    private static void GitHubFormatRejectsOutputFile()
+    private static void GitHub形式で出力ファイルを拒否する()
     {
-        var result = CommandLineOptionsParser.Parse([
+        var result = コマンドライン引数解析器.Parse([
             "sample.cs",
             "--format",
             "github",
@@ -105,30 +105,30 @@ internal static class OutputFormatSmokeTests
         }
     }
 
-    private static void NumericFailureThresholdIsRejected()
+    private static void 数値の失敗基準を拒否する()
     {
-        var result = CommandLineOptionsParser.Parse(["sample.cs", "--fail-on", "999"]);
+        var result = コマンドライン引数解析器.Parse(["sample.cs", "--fail-on", "999"]);
         if (result.IsSuccess)
         {
             throw new InvalidOperationException("Numeric --fail-on values must be rejected.");
         }
     }
 
-    private static void NumericOutputFormatIsRejected()
+    private static void 数値の出力形式を拒否する()
     {
-        var result = CommandLineOptionsParser.Parse(["sample.cs", "--format", "999"]);
+        var result = コマンドライン引数解析器.Parse(["sample.cs", "--format", "999"]);
         if (result.IsSuccess)
         {
             throw new InvalidOperationException("Numeric --format values must be rejected.");
         }
     }
 
-    private static void JsonOutputIsMachineReadable()
+    private static void JSON出力を機械可読にする()
     {
-        var path = CreateTemporaryPath("json");
+        var path = 一時パスを作る("json");
         try
         {
-            new JsonDiagnosticWriter(path).Write([CreateDiagnostic()], verbose: true);
+            new JSON診断書き込み器(path).Write([診断を作る()], verbose: true);
             using var document = JsonDocument.Parse(File.ReadAllText(path));
             var root = document.RootElement;
 
@@ -145,16 +145,16 @@ internal static class OutputFormatSmokeTests
         }
         finally
         {
-            DeleteIfExists(path);
+            存在する場合は削除する(path);
         }
     }
 
-    private static void SarifOutputIsMachineReadable()
+    private static void SARIF出力を機械可読にする()
     {
-        var path = CreateTemporaryPath("sarif");
+        var path = 一時パスを作る("sarif");
         try
         {
-            new SarifDiagnosticWriter(path).Write([CreateDiagnostic()], verbose: false);
+            new SARIF診断書き込み器(path).Write([診断を作る()], verbose: false);
             using var document = JsonDocument.Parse(File.ReadAllText(path));
             var root = document.RootElement;
             var result = root.GetProperty("runs")[0].GetProperty("results")[0];
@@ -170,17 +170,17 @@ internal static class OutputFormatSmokeTests
         }
         finally
         {
-            DeleteIfExists(path);
+            存在する場合は削除する(path);
         }
     }
 
-    private static void SarifOutputToleratesUnknownPaths()
+    private static void SARIF出力で不明なパスを扱う()
     {
-        var path = CreateTemporaryPath("sarif");
+        var path = 一時パスを作る("sarif");
         try
         {
-            new SarifDiagnosticWriter(path).Write(
-                [CreateDiagnostic(filePath: "<unknown>")],
+            new SARIF診断書き込み器(path).Write(
+                [診断を作る(filePath: "<unknown>")],
                 verbose: false
             );
 
@@ -203,22 +203,22 @@ internal static class OutputFormatSmokeTests
         }
         finally
         {
-            DeleteIfExists(path);
+            存在する場合は削除する(path);
         }
     }
 
-    private static void GitHubAnnotationsEscapeSpecialCharacters()
+    private static void GitHub注釈で特殊文字をエスケープする()
     {
         var originalOut = Console.Out;
         using var captured = new StringWriter();
         try
         {
             Console.SetOut(captured);
-            var diagnostic = CreateDiagnostic(
+            var diagnostic = 診断を作る(
                 filePath: Path.Combine("sample,dir", "file:part.cs"),
                 message: "first%line\nsecond"
             );
-            new GitHubAnnotationDiagnosticWriter().Write([diagnostic], verbose: false);
+            new GitHub注釈診断書き込み器().Write([diagnostic], verbose: false);
         }
         finally
         {
@@ -240,7 +240,7 @@ internal static class OutputFormatSmokeTests
         }
     }
 
-    private static DesignDiagnostic CreateDiagnostic(
+    private static DesignDiagnostic 診断を作る(
         string? filePath = null,
         string message = "Sample diagnostic"
     ) =>
@@ -252,10 +252,10 @@ internal static class OutputFormatSmokeTests
             new SourceLocation(filePath ?? Path.GetFullPath("sample.cs"), 3, 7)
         );
 
-    private static string CreateTemporaryPath(string extension) =>
+    private static string 一時パスを作る(string extension) =>
         Path.Combine(Path.GetTempPath(), $"oop-checker-{Guid.NewGuid():N}.{extension}");
 
-    private static void DeleteIfExists(string path)
+    private static void 存在する場合は削除する(string path)
     {
         if (File.Exists(path))
         {

@@ -4,61 +4,60 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Output;
 
-internal sealed class SarifDiagnosticWriter : IDiagnosticWriter
+internal sealed class SARIF診断書き込み器 : 診断書き込み器
 {
-    private readonly DiagnosticOutputTarget _target;
+    private readonly 診断出力先 _診断出力先;
 
-    public SarifDiagnosticWriter(string? outputPath = null)
+    public SARIF診断書き込み器(string? outputPath = null)
     {
-        _target = new DiagnosticOutputTarget(outputPath);
+        _診断出力先 = new 診断出力先(outputPath);
     }
 
-    public void Write(IReadOnlyList<DesignDiagnostic> diagnostics, bool verbose)
+    public void Write(IReadOnlyList<DesignDiagnostic> 診断群, bool verbose)
     {
-        var rules = diagnostics
-            .GroupBy(diagnostic => diagnostic.Rule.Id, StringComparer.Ordinal)
-            .Select(group => group.First())
-            .OrderBy(diagnostic => diagnostic.Rule.Id, StringComparer.Ordinal)
-            .Select(ToRule)
+        var 規則群 = 診断群.GroupBy(診断 => 診断.Rule.Id, StringComparer.Ordinal)
+            .Select(同一規則群 => 同一規則群.First())
+            .OrderBy(診断 => 診断.Rule.Id, StringComparer.Ordinal)
+            .Select(規則情報に変換する)
             .ToArray();
 
-        var run = new
+        var 実行情報 = new
         {
-            tool = new { driver = new { name = "oop-design-checker", rules } },
-            results = diagnostics.Select(ToResult).ToArray(),
+            tool = new { driver = new { name = "oop-design-checker", rules = 規則群 } },
+            results = 診断群.Select(診断結果に変換する).ToArray(),
         };
 
-        var document = new Dictionary<string, object?>
+        var 文書 = new Dictionary<string, object?>
         {
             ["version"] = "2.1.0",
             ["$schema"] = "https://json.schemastore.org/sarif-2.1.0.json",
-            ["runs"] = new[] { run },
+            ["runs"] = new[] { 実行情報 },
         };
-        var serializerOptions = new JsonSerializerOptions
+        var シリアライザー設定 = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true,
         };
 
-        _target.Write(writer =>
-            writer.Write(JsonSerializer.Serialize(document, serializerOptions))
+        _診断出力先.Write(writer =>
+            writer.Write(JsonSerializer.Serialize(文書, シリアライザー設定))
         );
     }
 
-    private static object ToRule(DesignDiagnostic diagnostic) =>
+    private static object 規則情報に変換する(DesignDiagnostic 診断) =>
         new
         {
-            id = diagnostic.Rule.Id,
-            name = diagnostic.Rule.Title,
-            shortDescription = new { text = diagnostic.Rule.Title },
-            defaultConfiguration = new { level = FormatLevel(diagnostic.Severity) },
+            id = 診断.Rule.Id,
+            name = 診断.Rule.Title,
+            shortDescription = new { text = 診断.Rule.Title },
+            defaultConfiguration = new { level = SARIF重要度を整形する(診断.Severity) },
         };
 
-    private static object ToResult(DesignDiagnostic diagnostic)
+    private static object 診断結果に変換する(DesignDiagnostic 診断)
     {
-        var locations = 診断ファイルパス.ファイルURIを作成できる(
-            diagnostic.Location.FilePath,
-            out var fileUri
+        var 位置情報群 = 診断ファイルパス.ファイルURIを作成できる(
+            診断.Location.FilePath,
+            out var ファイルURI
         )
             ? new object[]
             {
@@ -66,11 +65,11 @@ internal sealed class SarifDiagnosticWriter : IDiagnosticWriter
                 {
                     physicalLocation = new
                     {
-                        artifactLocation = new { uri = fileUri },
+                        artifactLocation = new { uri = ファイルURI },
                         region = new
                         {
-                            startLine = diagnostic.Location.Line,
-                            startColumn = diagnostic.Location.Column,
+                            startLine = 診断.Location.Line,
+                            startColumn = 診断.Location.Column,
                         },
                     },
                 },
@@ -79,22 +78,22 @@ internal sealed class SarifDiagnosticWriter : IDiagnosticWriter
 
         return new
         {
-            ruleId = diagnostic.Rule.Id,
-            level = FormatLevel(diagnostic.Severity),
-            message = new { text = diagnostic.Message },
-            locations,
-            properties = diagnostic.SymbolName is null
+            ruleId = 診断.Rule.Id,
+            level = SARIF重要度を整形する(診断.Severity),
+            message = new { text = 診断.Message },
+            locations = 位置情報群,
+            properties = 診断.SymbolName is null
                 ? null
-                : new Dictionary<string, string> { ["symbol"] = diagnostic.SymbolName },
+                : new Dictionary<string, string> { ["symbol"] = 診断.SymbolName },
         };
     }
 
-    private static string FormatLevel(DesignDiagnosticSeverity severity) =>
-        severity switch
+    private static string SARIF重要度を整形する(DesignDiagnosticSeverity 重要度) =>
+        重要度 switch
         {
             DesignDiagnosticSeverity.Danger => "error",
             DesignDiagnosticSeverity.Warning => "warning",
             DesignDiagnosticSeverity.Attention => "note",
-            _ => throw new ArgumentOutOfRangeException(nameof(severity), severity, null),
+            _ => throw new ArgumentOutOfRangeException(nameof(重要度), 重要度, null),
         };
 }

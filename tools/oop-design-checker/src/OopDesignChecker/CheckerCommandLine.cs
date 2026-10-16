@@ -13,22 +13,22 @@ public static class CheckerCommandLine
             return 0;
         }
 
-        var requestedLanguage = CommandLineOptionsParser.ResolveRequestedLanguage(args);
-        var optionsResult = CommandLineOptionsParser.Parse(args);
-        if (!optionsResult.IsSuccess)
+        var 要求された言語 = コマンドライン引数解析器.ResolveRequestedLanguage(args);
+        var 解析結果 = コマンドライン引数解析器.Parse(args);
+        if (!解析結果.IsSuccess)
         {
-            Console.Error.WriteLine(optionsResult.ErrorMessage);
-            Console.Error.WriteLine(CommandLineOptionsParser.Usage(requestedLanguage));
+            Console.Error.WriteLine(解析結果.ErrorMessage);
+            Console.Error.WriteLine(コマンドライン引数解析器.Usage(要求された言語));
             return 2;
         }
 
-        var options = optionsResult.Options!;
-        var diagnosticWriter = DiagnosticWriterFactory.Create(
-            options.OutputFormat,
-            options.OutputPath,
-            options.Language
+        var 引数設定 = 解析結果.Options!;
+        var 診断書き込み器 = 診断書き込み器生成器.Create(
+            引数設定.OutputFormat,
+            引数設定.OutputPath,
+            引数設定.Language
         );
-        var application = new CheckerApplication(diagnosticWriter);
-        return application.Run(options);
+        var アプリケーション = new チェッカーアプリケーション(診断書き込み器);
+        return アプリケーション.Run(引数設定);
     }
 }

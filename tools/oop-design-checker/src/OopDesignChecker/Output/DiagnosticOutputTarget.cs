@@ -1,29 +1,29 @@
 namespace OopDesignChecker.Output;
 
-internal sealed class DiagnosticOutputTarget
+internal sealed class 診断出力先
 {
-    private readonly string? _outputPath;
+    private readonly string? _出力パス;
 
-    public DiagnosticOutputTarget(string? outputPath)
+    public 診断出力先(string? outputPath)
     {
-        _outputPath = outputPath;
+        _出力パス = outputPath;
     }
 
     public void Write(Action<TextWriter> action)
     {
-        if (_outputPath is null)
+        if (_出力パス is null)
         {
             action(Console.Out);
             return;
         }
 
-        var directory = Path.GetDirectoryName(_outputPath);
-        if (!string.IsNullOrWhiteSpace(directory))
+        var ディレクトリ = Path.GetDirectoryName(_出力パス);
+        if (!string.IsNullOrWhiteSpace(ディレクトリ))
         {
-            Directory.CreateDirectory(directory);
+            Directory.CreateDirectory(ディレクトリ);
         }
 
-        using var writer = new StreamWriter(_outputPath, append: false);
-        action(writer);
+        using var 書き込み器 = new StreamWriter(_出力パス, append: false);
+        action(書き込み器);
     }
 }

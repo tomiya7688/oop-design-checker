@@ -11,7 +11,7 @@ public sealed class CommandLineContractTests
     [Fact]
     public void TargetDefaultsToCurrentDirectory()
     {
-        var result = CommandLineOptionsParser.Parse([]);
+        var result = コマンドライン引数解析器.Parse([]);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Options);
@@ -26,7 +26,7 @@ public sealed class CommandLineContractTests
     [InlineData("sample-folder")]
     public void SupportedTargetShapesReachTheApplication(string target)
     {
-        var result = CommandLineOptionsParser.Parse([target]);
+        var result = コマンドライン引数解析器.Parse([target]);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Options);
@@ -41,7 +41,7 @@ public sealed class CommandLineContractTests
     [InlineData("--language")]
     public void OptionsThatRequireValuesRejectMissingValues(string option)
     {
-        var result = CommandLineOptionsParser.Parse([option]);
+        var result = コマンドライン引数解析器.Parse([option]);
 
         Assert.False(result.IsSuccess);
         Assert.Null(result.Options);
@@ -51,7 +51,7 @@ public sealed class CommandLineContractTests
     [Fact]
     public void UnknownOptionIsRejected()
     {
-        var result = CommandLineOptionsParser.Parse(["--not-a-real-option"]);
+        var result = コマンドライン引数解析器.Parse(["--not-a-real-option"]);
 
         Assert.False(result.IsSuccess);
         Assert.Contains("--not-a-real-option", result.ErrorMessage, StringComparison.Ordinal);
@@ -60,7 +60,7 @@ public sealed class CommandLineContractTests
     [Fact]
     public void MultipleTargetsAreRejected()
     {
-        var result = CommandLineOptionsParser.Parse(["one.cs", "two.cs"]);
+        var result = コマンドライン引数解析器.Parse(["one.cs", "two.cs"]);
 
         Assert.False(result.IsSuccess);
         Assert.Null(result.Options);
@@ -75,7 +75,7 @@ public sealed class CommandLineContractTests
         DesignDiagnosticSeverity expected
     )
     {
-        var result = CommandLineOptionsParser.Parse(["--fail-on", value]);
+        var result = コマンドライン引数解析器.Parse(["--fail-on", value]);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(expected, result.Options!.FailureThreshold);
@@ -86,7 +86,7 @@ public sealed class CommandLineContractTests
     [InlineData("critical")]
     public void FailureThresholdRejectsInvalidValues(string value)
     {
-        var result = CommandLineOptionsParser.Parse(["--fail-on", value]);
+        var result = コマンドライン引数解析器.Parse(["--fail-on", value]);
 
         Assert.False(result.IsSuccess);
     }
@@ -98,7 +98,7 @@ public sealed class CommandLineContractTests
     [InlineData("github", "GitHub")]
     public void OutputFormatAcceptsEveryNamedValue(string value, string expected)
     {
-        var result = CommandLineOptionsParser.Parse(["--format", value]);
+        var result = コマンドライン引数解析器.Parse(["--format", value]);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(expected, result.Options!.OutputFormat.ToString());
@@ -109,7 +109,7 @@ public sealed class CommandLineContractTests
     [InlineData("xml")]
     public void OutputFormatRejectsInvalidValues(string value)
     {
-        var result = CommandLineOptionsParser.Parse(["--format", value]);
+        var result = コマンドライン引数解析器.Parse(["--format", value]);
 
         Assert.False(result.IsSuccess);
     }
@@ -119,7 +119,7 @@ public sealed class CommandLineContractTests
     [InlineData("en", UserInterfaceLanguage.English)]
     public void LanguageAcceptsSupportedValues(string value, UserInterfaceLanguage expected)
     {
-        var result = CommandLineOptionsParser.Parse(["--language", value]);
+        var result = コマンドライン引数解析器.Parse(["--language", value]);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(expected, result.Options!.Language);
@@ -128,7 +128,7 @@ public sealed class CommandLineContractTests
     [Fact]
     public void LanguageRejectsUnknownValue()
     {
-        var result = CommandLineOptionsParser.Parse(["--language", "fr"]);
+        var result = コマンドライン引数解析器.Parse(["--language", "fr"]);
 
         Assert.False(result.IsSuccess);
     }
@@ -136,7 +136,7 @@ public sealed class CommandLineContractTests
     [Fact]
     public void WarningsAsErrorsMapsToWarningThreshold()
     {
-        var result = CommandLineOptionsParser.Parse(["--warnings-as-errors"]);
+        var result = コマンドライン引数解析器.Parse(["--warnings-as-errors"]);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(DesignDiagnosticSeverity.Warning, result.Options!.FailureThreshold);
@@ -145,7 +145,7 @@ public sealed class CommandLineContractTests
     [Fact]
     public void VerboseFlagIsPreserved()
     {
-        var result = CommandLineOptionsParser.Parse(["--verbose"]);
+        var result = コマンドライン引数解析器.Parse(["--verbose"]);
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Options!.Verbose);
@@ -154,7 +154,7 @@ public sealed class CommandLineContractTests
     [Fact]
     public void OutputPathIsNormalized()
     {
-        var result = CommandLineOptionsParser.Parse([
+        var result = コマンドライン引数解析器.Parse([
             "--format",
             "json",
             "--output",
@@ -168,7 +168,7 @@ public sealed class CommandLineContractTests
     [Fact]
     public void GithubAnnotationsRejectOutputFile()
     {
-        var result = CommandLineOptionsParser.Parse([
+        var result = コマンドライン引数解析器.Parse([
             "--format",
             "github",
             "--output",
@@ -192,7 +192,7 @@ public sealed class CommandLineContractTests
 
         Assert.Equal(2, result.ExitCode);
         Assert.Contains(
-            CommandLineOptionsParser.Usage(UserInterfaceLanguage.Japanese),
+            コマンドライン引数解析器.Usage(UserInterfaceLanguage.Japanese),
             result.Error,
             StringComparison.Ordinal
         );

@@ -3,260 +3,256 @@ using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Application;
 
-internal static class CommandLineOptionsParser
+internal static class コマンドライン引数解析器
 {
-    public static CommandLineParseResult Parse(IReadOnlyList<string> args)
+    public static コマンドライン解析結果 Parse(IReadOnlyList<string> args)
     {
-        var language = ResolveRequestedLanguage(args);
-        var accumulator = new OptionAccumulator(language);
-        for (var index = 0; index < args.Count; index++)
+        var 言語 = ResolveRequestedLanguage(args);
+        var 引数蓄積器 = new コマンドライン引数蓄積器(言語);
+        for (var 位置 = 0; 位置 < args.Count; 位置++)
         {
-            if (!accumulator.TryConsume(args, ref index, out var errorMessage))
+            if (!引数蓄積器.TryConsume(args, ref 位置, out var エラー内容))
             {
-                return CommandLineParseResult.Failure(errorMessage!);
+                return コマンドライン解析結果.Failure(エラー内容!);
             }
         }
 
-        return accumulator.BuildResult();
+        return 引数蓄積器.BuildResult();
     }
 
-    public static string Usage(UserInterfaceLanguage language) => LocalizedText.Usage(language);
+    public static string Usage(UserInterfaceLanguage 言語) => LocalizedText.Usage(言語);
 
     public static UserInterfaceLanguage ResolveRequestedLanguage(IReadOnlyList<string> args)
     {
-        for (var index = 0; index + 1 < args.Count; index++)
+        for (var 位置 = 0; 位置 + 1 < args.Count; 位置++)
         {
             if (
-                args[index] == "--language"
-                && LocalizedText.TryParseLanguage(args[index + 1], out var language)
+                args[位置] == "--language"
+                && LocalizedText.TryParseLanguage(args[位置 + 1], out var 言語)
             )
             {
-                return language;
+                return 言語;
             }
         }
 
         return LocalizedText.DefaultLanguage;
     }
 
-    private sealed class OptionAccumulator
+    private sealed class コマンドライン引数蓄積器
     {
-        private string? _targetPath;
-        private string? _configurationPath;
-        private string? _outputPath;
-        private DesignDiagnosticSeverity? _failureThreshold;
-        private bool _verbose;
-        private DiagnosticOutputFormat _outputFormat = DiagnosticOutputFormat.Text;
-        private UserInterfaceLanguage _language;
+        private string? _対象パス;
+        private string? _設定パス;
+        private string? _出力パス;
+        private DesignDiagnosticSeverity? _失敗基準;
+        private bool _詳細表示;
+        private 診断出力形式 _出力形式 = 診断出力形式.Text;
+        private UserInterfaceLanguage _表示言語;
 
-        public OptionAccumulator(UserInterfaceLanguage language)
+        public コマンドライン引数蓄積器(UserInterfaceLanguage 言語)
         {
-            _language = language;
+            _表示言語 = 言語;
         }
 
-        public bool TryConsume(IReadOnlyList<string> args, ref int index, out string? errorMessage)
+        public bool TryConsume(IReadOnlyList<string> args, ref int 位置, out string? エラー内容)
         {
-            var argument = args[index];
-            return argument switch
+            var 引数 = args[位置];
+            return 引数 switch
             {
-                "--config" => TrySetConfigurationPath(args, ref index, out errorMessage),
-                "--fail-on" => TrySetFailureThreshold(args, ref index, out errorMessage),
-                "--format" => TrySetOutputFormat(args, ref index, out errorMessage),
-                "--output" => TrySetOutputPath(args, ref index, out errorMessage),
-                "--language" => TrySetLanguage(args, ref index, out errorMessage),
-                "--warnings-as-errors" => SetWarningsAsErrors(out errorMessage),
-                "--verbose" => SetVerbose(out errorMessage),
-                "--help" or "-h" => Fail(Usage(_language), out errorMessage),
-                _ => TrySetTargetPath(argument, out errorMessage),
+                "--config" => 設定パスを設定する(args, ref 位置, out エラー内容),
+                "--fail-on" => 失敗基準を設定する(args, ref 位置, out エラー内容),
+                "--format" => 出力形式を設定する(args, ref 位置, out エラー内容),
+                "--output" => 出力先を設定する(args, ref 位置, out エラー内容),
+                "--language" => 表示言語を設定する(args, ref 位置, out エラー内容),
+                "--warnings-as-errors" => 警告を失敗基準にする(out エラー内容),
+                "--verbose" => 詳細表示を有効にする(out エラー内容),
+                "--help" or "-h" => 失敗を返す(Usage(_表示言語), out エラー内容),
+                _ => 対象パスを設定する(引数, out エラー内容),
             };
         }
 
-        public CommandLineParseResult BuildResult()
+        public コマンドライン解析結果 BuildResult()
         {
-            if (_outputFormat == DiagnosticOutputFormat.GitHub && _outputPath is not null)
+            if (_出力形式 == 診断出力形式.GitHub && _出力パス is not null)
             {
-                return CommandLineParseResult.Failure(
-                    LocalizedText.GitHubOutputCannotUseFile(_language)
+                return コマンドライン解析結果.Failure(
+                    LocalizedText.GitHubOutputCannotUseFile(_表示言語)
                 );
             }
 
-            _targetPath ??= Directory.GetCurrentDirectory();
-            return CommandLineParseResult.Success(
-                new CommandLineOptions(
-                    Path.GetFullPath(_targetPath),
-                    _configurationPath,
-                    _failureThreshold,
-                    _verbose,
-                    _outputFormat,
-                    _outputPath is null ? null : Path.GetFullPath(_outputPath),
-                    _language
+            _対象パス ??= Directory.GetCurrentDirectory();
+            return コマンドライン解析結果.Success(
+                new コマンドライン引数(
+                    Path.GetFullPath(_対象パス),
+                    _設定パス,
+                    _失敗基準,
+                    _詳細表示,
+                    _出力形式,
+                    _出力パス is null ? null : Path.GetFullPath(_出力パス),
+                    _表示言語
                 )
             );
         }
 
-        private bool TrySetConfigurationPath(
+        private bool 設定パスを設定する(
             IReadOnlyList<string> args,
-            ref int index,
-            out string? errorMessage
+            ref int 位置,
+            out string? エラー内容
         )
         {
-            if (!TryReadValue(args, ref index, out _configurationPath))
+            if (!次の値を読む(args, ref 位置, out _設定パス))
             {
-                return Fail(LocalizedText.ConfigRequiresPath(_language), out errorMessage);
+                return 失敗を返す(LocalizedText.ConfigRequiresPath(_表示言語), out エラー内容);
             }
 
-            return Succeed(out errorMessage);
+            return 成功を返す(out エラー内容);
         }
 
-        private bool TrySetFailureThreshold(
+        private bool 失敗基準を設定する(
             IReadOnlyList<string> args,
-            ref int index,
-            out string? errorMessage
-        )
-        {
-            if (
-                !TryReadValue(args, ref index, out var thresholdText)
-                || !TryParseSeverity(thresholdText, out var parsedThreshold)
-            )
-            {
-                return Fail(LocalizedText.FailOnRequiresSeverity(_language), out errorMessage);
-            }
-
-            _failureThreshold = parsedThreshold;
-            return Succeed(out errorMessage);
-        }
-
-        private bool TrySetOutputFormat(
-            IReadOnlyList<string> args,
-            ref int index,
-            out string? errorMessage
+            ref int 位置,
+            out string? エラー内容
         )
         {
             if (
-                !TryReadValue(args, ref index, out var formatText)
-                || !TryParseOutputFormat(formatText, out _outputFormat)
+                !次の値を読む(args, ref 位置, out var 失敗基準文字列)
+                || !重要度を解析する(失敗基準文字列, out var 解析済み失敗基準)
             )
             {
-                return Fail(LocalizedText.FormatRequiresValue(_language), out errorMessage);
+                return 失敗を返す(LocalizedText.FailOnRequiresSeverity(_表示言語), out エラー内容);
             }
 
-            return Succeed(out errorMessage);
+            _失敗基準 = 解析済み失敗基準;
+            return 成功を返す(out エラー内容);
         }
 
-        private bool TrySetOutputPath(
+        private bool 出力形式を設定する(
             IReadOnlyList<string> args,
-            ref int index,
-            out string? errorMessage
-        )
-        {
-            if (!TryReadValue(args, ref index, out _outputPath))
-            {
-                return Fail(LocalizedText.OutputRequiresPath(_language), out errorMessage);
-            }
-
-            return Succeed(out errorMessage);
-        }
-
-        private bool TrySetLanguage(
-            IReadOnlyList<string> args,
-            ref int index,
-            out string? errorMessage
+            ref int 位置,
+            out string? エラー内容
         )
         {
             if (
-                !TryReadValue(args, ref index, out var languageText)
-                || !LocalizedText.TryParseLanguage(languageText, out _language)
+                !次の値を読む(args, ref 位置, out var 出力形式文字列)
+                || !出力形式を解析する(出力形式文字列, out _出力形式)
             )
             {
-                return Fail(LocalizedText.LanguageRequiresValue(_language), out errorMessage);
+                return 失敗を返す(LocalizedText.FormatRequiresValue(_表示言語), out エラー内容);
             }
 
-            return Succeed(out errorMessage);
+            return 成功を返す(out エラー内容);
         }
 
-        private bool SetWarningsAsErrors(out string? errorMessage)
-        {
-            _failureThreshold = DesignDiagnosticSeverity.Warning;
-            return Succeed(out errorMessage);
-        }
-
-        private bool SetVerbose(out string? errorMessage)
-        {
-            _verbose = true;
-            return Succeed(out errorMessage);
-        }
-
-        private bool TrySetTargetPath(string argument, out string? errorMessage)
-        {
-            if (argument.StartsWith('-'))
-            {
-                return Fail(LocalizedText.UnknownOption(_language, argument), out errorMessage);
-            }
-
-            if (_targetPath is not null)
-            {
-                return Fail(LocalizedText.OnlyOneTarget(_language), out errorMessage);
-            }
-
-            _targetPath = argument;
-            return Succeed(out errorMessage);
-        }
-
-        private static bool TryReadValue(
+        private bool 出力先を設定する(
             IReadOnlyList<string> args,
-            ref int index,
-            out string? value
+            ref int 位置,
+            out string? エラー内容
         )
         {
-            if (index + 1 >= args.Count)
+            if (!次の値を読む(args, ref 位置, out _出力パス))
             {
-                value = null;
+                return 失敗を返す(LocalizedText.OutputRequiresPath(_表示言語), out エラー内容);
+            }
+
+            return 成功を返す(out エラー内容);
+        }
+
+        private bool 表示言語を設定する(
+            IReadOnlyList<string> args,
+            ref int 位置,
+            out string? エラー内容
+        )
+        {
+            if (
+                !次の値を読む(args, ref 位置, out var 表示言語文字列)
+                || !LocalizedText.TryParseLanguage(表示言語文字列, out _表示言語)
+            )
+            {
+                return 失敗を返す(LocalizedText.LanguageRequiresValue(_表示言語), out エラー内容);
+            }
+
+            return 成功を返す(out エラー内容);
+        }
+
+        private bool 警告を失敗基準にする(out string? エラー内容)
+        {
+            _失敗基準 = DesignDiagnosticSeverity.Warning;
+            return 成功を返す(out エラー内容);
+        }
+
+        private bool 詳細表示を有効にする(out string? エラー内容)
+        {
+            _詳細表示 = true;
+            return 成功を返す(out エラー内容);
+        }
+
+        private bool 対象パスを設定する(string 引数, out string? エラー内容)
+        {
+            if (引数.StartsWith('-'))
+            {
+                return 失敗を返す(LocalizedText.UnknownOption(_表示言語, 引数), out エラー内容);
+            }
+
+            if (_対象パス is not null)
+            {
+                return 失敗を返す(LocalizedText.OnlyOneTarget(_表示言語), out エラー内容);
+            }
+
+            _対象パス = 引数;
+            return 成功を返す(out エラー内容);
+        }
+
+        private static bool 次の値を読む(IReadOnlyList<string> args, ref int 位置, out string? 値)
+        {
+            if (位置 + 1 >= args.Count)
+            {
+                値 = null;
                 return false;
             }
 
-            index++;
-            value = args[index];
-            return !string.IsNullOrWhiteSpace(value);
+            位置++;
+            値 = args[位置];
+            return !string.IsNullOrWhiteSpace(値);
         }
 
-        private static bool TryParseSeverity(string? value, out DesignDiagnosticSeverity severity)
+        private static bool 重要度を解析する(string? 値, out DesignDiagnosticSeverity 重要度)
         {
             if (
-                Enum.TryParse(value, ignoreCase: true, out severity)
-                && Enum.IsDefined(severity)
-                && !int.TryParse(value, out _)
+                Enum.TryParse(値, ignoreCase: true, out 重要度)
+                && Enum.IsDefined(重要度)
+                && !int.TryParse(値, out _)
             )
             {
                 return true;
             }
 
-            severity = default;
+            重要度 = default;
             return false;
         }
 
-        private static bool TryParseOutputFormat(string? value, out DiagnosticOutputFormat format)
+        private static bool 出力形式を解析する(string? 値, out 診断出力形式 形式)
         {
             if (
-                Enum.TryParse(value, ignoreCase: true, out format)
-                && Enum.IsDefined(format)
-                && !int.TryParse(value, out _)
+                Enum.TryParse(値, ignoreCase: true, out 形式)
+                && Enum.IsDefined(形式)
+                && !int.TryParse(値, out _)
             )
             {
                 return true;
             }
 
-            format = default;
+            形式 = default;
             return false;
         }
 
-        private static bool Succeed(out string? errorMessage)
+        private static bool 成功を返す(out string? エラー内容)
         {
-            errorMessage = null;
+            エラー内容 = null;
             return true;
         }
 
-        private static bool Fail(string message, out string? errorMessage)
+        private static bool 失敗を返す(string message, out string? エラー内容)
         {
-            errorMessage = message;
+            エラー内容 = message;
             return false;
         }
     }

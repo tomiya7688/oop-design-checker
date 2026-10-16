@@ -6,23 +6,23 @@ namespace OopDesignChecker.Configuration;
 
 public static class CheckerConfigurationJson
 {
-    private static readonly JsonSerializerOptions SerializerOptions = CreateSerializerOptions();
+    private static readonly JsonSerializerOptions シリアライザー設定 = シリアライザー設定を作る();
 
     public static CheckerConfiguration Parse(string json)
     {
         try
         {
             var configuration =
-                JsonSerializer.Deserialize<CheckerConfiguration>(json, SerializerOptions)
+                JsonSerializer.Deserialize<CheckerConfiguration>(json, シリアライザー設定)
                 ?? throw new InvalidOperationException("The checker configuration is empty.");
             Validate(configuration);
             return configuration;
         }
-        catch (JsonException exception)
+        catch (JsonException 例外)
         {
             throw new InvalidOperationException(
-                $"Invalid checker configuration JSON: {exception.Message}",
-                exception
+                $"Invalid checker configuration JSON: {例外.Message}",
+                例外
             );
         }
     }
@@ -30,7 +30,7 @@ public static class CheckerConfigurationJson
     public static string Serialize(CheckerConfiguration configuration)
     {
         Validate(configuration);
-        return JsonSerializer.Serialize(configuration, SerializerOptions);
+        return JsonSerializer.Serialize(configuration, シリアライザー設定);
     }
 
     public static void Validate(CheckerConfiguration configuration)
@@ -70,9 +70,9 @@ public static class CheckerConfigurationJson
         }
     }
 
-    private static JsonSerializerOptions CreateSerializerOptions()
+    private static JsonSerializerOptions シリアライザー設定を作る()
     {
-        var options = new JsonSerializerOptions
+        var 設定 = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -80,9 +80,9 @@ public static class CheckerConfigurationJson
             AllowTrailingCommas = true,
             WriteIndented = true,
         };
-        options.Converters.Add(
+        設定.Converters.Add(
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false)
         );
-        return options;
+        return 設定;
     }
 }

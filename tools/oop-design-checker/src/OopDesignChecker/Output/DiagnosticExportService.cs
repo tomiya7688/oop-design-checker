@@ -20,15 +20,15 @@ public static class DiagnosticExportService
         ArgumentNullException.ThrowIfNull(diagnostics);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
 
-        var writer = DiagnosticWriterFactory.Create(ToOutputFormat(format), outputPath);
-        writer.Write(diagnostics, verbose: false);
+        var 書き込み器 = 診断書き込み器生成器.Create(出力形式に変換する(format), outputPath);
+        書き込み器.Write(diagnostics, verbose: false);
     }
 
-    private static DiagnosticOutputFormat ToOutputFormat(DiagnosticExportFormat format) =>
+    private static 診断出力形式 出力形式に変換する(DiagnosticExportFormat format) =>
         format switch
         {
-            DiagnosticExportFormat.Json => DiagnosticOutputFormat.Json,
-            DiagnosticExportFormat.Sarif => DiagnosticOutputFormat.Sarif,
+            DiagnosticExportFormat.Json => 診断出力形式.Json,
+            DiagnosticExportFormat.Sarif => 診断出力形式.Sarif,
             _ => throw new ArgumentOutOfRangeException(nameof(format), format, null),
         };
 }
