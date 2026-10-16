@@ -1,6 +1,6 @@
 namespace OopDesignChecker.Application;
 
-internal enum DiagnosticOutputFormat
+internal enum 診断出力形式
 {
     Text,
     Json,

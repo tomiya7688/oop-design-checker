@@ -1,14 +1,14 @@
 namespace OopDesignChecker.Application;
 
-internal sealed record CommandLineParseResult(
+internal sealed record コマンドライン解析結果(
     bool IsSuccess,
-    CommandLineOptions? Options,
+    コマンドライン引数? Options,
     string? ErrorMessage
 )
 {
-    public static CommandLineParseResult Success(CommandLineOptions options) =>
+    public static コマンドライン解析結果 Success(コマンドライン引数 options) =>
         new(true, options, null);
 
-    public static CommandLineParseResult Failure(string errorMessage) =>
+    public static コマンドライン解析結果 Failure(string errorMessage) =>
         new(false, null, errorMessage);
 }

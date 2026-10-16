@@ -54,7 +54,7 @@ internal static class Program
         new("OOP303 disabled parent behavior is danger", DisabledParentBehaviorIsDetected),
         new("OOP304 deep inheritance is attention", DeepInheritanceIsDetected),
         new("core OOP rule sprint", CoreRuleSmokeTests.Run),
-        new("CI diagnostic output formats", OutputFormatSmokeTests.Run),
+        new("CI diagnostic output formats", 出力形式スモークテスト.実行する),
         new(
             "shared product version resolution handles metadata and fallbacks",
             ProductVersionResolverTests.Run
@@ -64,18 +64,9 @@ internal static class Program
             "GUI configuration, export, and cancellation workflow",
             GuiWorkflowPhase2SmokeTests.Run
         ),
-        new(
-            "configuration disables selected rules",
-            ConfigurationBehaviorTests.DisabledRulesAreSuppressed
-        ),
-        new(
-            "configuration ignores matching paths",
-            ConfigurationBehaviorTests.IgnoredPathsAreExcluded
-        ),
-        new(
-            "configuration controls failure threshold",
-            ConfigurationBehaviorTests.FailureThresholdIsLoaded
-        ),
+        new("configuration disables selected rules", 設定動作テスト.無効化した規則の診断を抑制する),
+        new("configuration ignores matching paths", 設定動作テスト.無視対象のパスを除外する),
+        new("configuration controls failure threshold", 設定動作テスト.失敗基準を読み込む),
     ];
 
     private static int Main()

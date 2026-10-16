@@ -3,11 +3,11 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Tests;
 
-internal static class ConfigurationBehaviorTests
+internal static class 設定動作テスト
 {
-    public static void DisabledRulesAreSuppressed()
+    public static void 無効化した規則の診断を抑制する()
     {
-        WithTemporaryProject(rootPath =>
+        一時プロジェクトで実行する(rootPath =>
         {
             File.WriteAllText(
                 Path.Combine(rootPath, "Sample.cs"),
@@ -32,9 +32,9 @@ internal static class ConfigurationBehaviorTests
         });
     }
 
-    public static void IgnoredPathsAreExcluded()
+    public static void 無視対象のパスを除外する()
     {
-        WithTemporaryProject(rootPath =>
+        一時プロジェクトで実行する(rootPath =>
         {
             File.WriteAllText(
                 Path.Combine(rootPath, "Clean.cs"),
@@ -67,9 +67,9 @@ internal static class ConfigurationBehaviorTests
         });
     }
 
-    public static void FailureThresholdIsLoaded()
+    public static void 失敗基準を読み込む()
     {
-        WithTemporaryProject(rootPath =>
+        一時プロジェクトで実行する(rootPath =>
         {
             File.WriteAllText(
                 Path.Combine(rootPath, "Clean.cs"),
@@ -93,18 +93,18 @@ internal static class ConfigurationBehaviorTests
             }
         });
 
-        ParentConfigurationIsDiscoveredForNestedTarget();
-        NearestConfigurationWins();
-        ExplicitRelativeConfigurationCanUseTargetDirectory();
-        ExplicitResolverPrefersCurrentDirectory();
-        MissingExplicitConfigurationListsCheckedLocations();
-        MissingConfigurationUsesBuiltInDefaults();
-        NumericFailureThresholdIsRejected();
+        入れ子対象に親設定を適用する();
+        最も近い設定を優先する();
+        明示した相対設定パスを対象ディレクトリ基準で解決する();
+        相対設定パスを作業ディレクトリ基準で優先する();
+        設定がない場合に確認先を表示する();
+        設定がない場合に既定値を使う();
+        数値の失敗基準を拒否する();
     }
 
-    private static void ParentConfigurationIsDiscoveredForNestedTarget()
+    private static void 入れ子対象に親設定を適用する()
     {
-        WithTemporaryProject(rootPath =>
+        一時プロジェクトで実行する(rootPath =>
         {
             var nestedPath = Path.Combine(rootPath, "src", "App");
             Directory.CreateDirectory(nestedPath);
@@ -125,7 +125,7 @@ internal static class ConfigurationBehaviorTests
             );
 
             var result = CheckerService.Analyze(sourcePath);
-            AssertConfigurationPath(result.ConfigurationPath, configurationPath);
+            設定パスを確認する(result.ConfigurationPath, configurationPath);
             if (result.FailureThreshold != DesignDiagnosticSeverity.Attention)
             {
                 throw new InvalidOperationException(
@@ -135,9 +135,9 @@ internal static class ConfigurationBehaviorTests
         });
     }
 
-    private static void NearestConfigurationWins()
+    private static void 最も近い設定を優先する()
     {
-        WithTemporaryProject(rootPath =>
+        一時プロジェクトで実行する(rootPath =>
         {
             File.WriteAllText(
                 Path.Combine(rootPath, "oop-design-checker.json"),
@@ -166,7 +166,7 @@ internal static class ConfigurationBehaviorTests
             );
 
             var result = CheckerService.Analyze(sourcePath);
-            AssertConfigurationPath(result.ConfigurationPath, nestedConfigurationPath);
+            設定パスを確認する(result.ConfigurationPath, nestedConfigurationPath);
             if (result.FailureThreshold != DesignDiagnosticSeverity.Attention)
             {
                 throw new InvalidOperationException(
@@ -176,9 +176,9 @@ internal static class ConfigurationBehaviorTests
         });
     }
 
-    private static void ExplicitRelativeConfigurationCanUseTargetDirectory()
+    private static void 明示した相対設定パスを対象ディレクトリ基準で解決する()
     {
-        WithTemporaryProject(rootPath =>
+        一時プロジェクトで実行する(rootPath =>
         {
             var targetPath = Path.Combine(rootPath, "src", "App");
             Directory.CreateDirectory(targetPath);
@@ -201,13 +201,13 @@ internal static class ConfigurationBehaviorTests
             );
 
             var result = CheckerService.Analyze(sourcePath, Path.Combine("config", "checker.json"));
-            AssertConfigurationPath(result.ConfigurationPath, configurationPath);
+            設定パスを確認する(result.ConfigurationPath, configurationPath);
         });
     }
 
-    private static void ExplicitResolverPrefersCurrentDirectory()
+    private static void 相対設定パスを作業ディレクトリ基準で優先する()
     {
-        WithTemporaryProject(rootPath =>
+        一時プロジェクトで実行する(rootPath =>
         {
             var originalDirectory = Directory.GetCurrentDirectory();
             var currentDirectory = Path.Combine(rootPath, "cwd");
@@ -229,7 +229,7 @@ internal static class ConfigurationBehaviorTests
                     targetDirectory,
                     relativePath
                 );
-                AssertConfigurationPath(resolved, expectedPath);
+                設定パスを確認する(resolved, expectedPath);
             }
             finally
             {
@@ -238,7 +238,7 @@ internal static class ConfigurationBehaviorTests
         });
     }
 
-    private static void NumericFailureThresholdIsRejected()
+    private static void 数値の失敗基準を拒否する()
     {
         try
         {
@@ -258,9 +258,9 @@ internal static class ConfigurationBehaviorTests
         throw new InvalidOperationException("Numeric failureThreshold values must be rejected.");
     }
 
-    private static void MissingConfigurationUsesBuiltInDefaults()
+    private static void 設定がない場合に既定値を使う()
     {
-        WithTemporaryProject(rootPath =>
+        一時プロジェクトで実行する(rootPath =>
         {
             var projectPath = Path.Combine(rootPath, "FolderTarget.csproj");
             File.WriteAllText(
@@ -295,9 +295,9 @@ internal static class ConfigurationBehaviorTests
         });
     }
 
-    private static void MissingExplicitConfigurationListsCheckedLocations()
+    private static void 設定がない場合に確認先を表示する()
     {
-        WithTemporaryProject(rootPath =>
+        一時プロジェクトで実行する(rootPath =>
         {
             var targetDirectory = Path.Combine(rootPath, "target");
             Directory.CreateDirectory(targetDirectory);
@@ -326,7 +326,7 @@ internal static class ConfigurationBehaviorTests
         });
     }
 
-    private static void AssertConfigurationPath(string? actualPath, string expectedPath)
+    private static void 設定パスを確認する(string? actualPath, string expectedPath)
     {
         if (!string.Equals(actualPath, expectedPath, StringComparison.OrdinalIgnoreCase))
         {
@@ -336,7 +336,7 @@ internal static class ConfigurationBehaviorTests
         }
     }
 
-    private static void WithTemporaryProject(Action<string> action)
+    private static void 一時プロジェクトで実行する(Action<string> action)
     {
         var rootPath = Path.Combine(
             Path.GetTempPath(),

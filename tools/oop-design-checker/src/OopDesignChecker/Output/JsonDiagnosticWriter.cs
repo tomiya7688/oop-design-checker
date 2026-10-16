@@ -3,56 +3,56 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Output;
 
-internal sealed class JsonDiagnosticWriter : IDiagnosticWriter
+internal sealed class JSON診断書き込み器 : 診断書き込み器
 {
-    private readonly DiagnosticOutputTarget _target;
+    private readonly 診断出力先 _診断出力先;
 
-    public JsonDiagnosticWriter(string? outputPath = null)
+    public JSON診断書き込み器(string? outputPath = null)
     {
-        _target = new DiagnosticOutputTarget(outputPath);
+        _診断出力先 = new 診断出力先(outputPath);
     }
 
-    public void Write(IReadOnlyList<DesignDiagnostic> diagnostics, bool verbose)
+    public void Write(IReadOnlyList<DesignDiagnostic> 診断群, bool verbose)
     {
-        var document = new JsonDiagnosticDocument(
+        var 文書 = new JSON診断文書(
             1,
-            diagnostics.Select(ToItem).ToArray(),
-            new JsonDiagnosticSummary(
-                diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Danger),
-                diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Warning),
-                diagnostics.Count(item => item.Severity == DesignDiagnosticSeverity.Attention)
+            診断群.Select(診断項目に変換する).ToArray(),
+            new JSON診断集計(
+                診断群.Count(項目 => 項目.Severity == DesignDiagnosticSeverity.Danger),
+                診断群.Count(項目 => 項目.Severity == DesignDiagnosticSeverity.Warning),
+                診断群.Count(項目 => 項目.Severity == DesignDiagnosticSeverity.Attention)
             )
         );
 
-        var serializerOptions = new JsonSerializerOptions
+        var シリアライザー設定 = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true,
         };
-        _target.Write(writer =>
-            writer.Write(JsonSerializer.Serialize(document, serializerOptions))
+        _診断出力先.Write(writer =>
+            writer.Write(JsonSerializer.Serialize(文書, シリアライザー設定))
         );
     }
 
-    private static JsonDiagnosticItem ToItem(DesignDiagnostic diagnostic) =>
+    private static JSON診断項目 診断項目に変換する(DesignDiagnostic 診断) =>
         new(
-            diagnostic.Rule.Id,
-            diagnostic.Rule.Title,
-            diagnostic.Severity.ToString().ToLowerInvariant(),
-            diagnostic.Message,
-            diagnostic.SymbolName,
-            diagnostic.Location.FilePath,
-            diagnostic.Location.Line,
-            diagnostic.Location.Column
+            診断.Rule.Id,
+            診断.Rule.Title,
+            診断.Severity.ToString().ToLowerInvariant(),
+            診断.Message,
+            診断.SymbolName,
+            診断.Location.FilePath,
+            診断.Location.Line,
+            診断.Location.Column
         );
 
-    private sealed record JsonDiagnosticDocument(
+    private sealed record JSON診断文書(
         int Version,
-        IReadOnlyList<JsonDiagnosticItem> Diagnostics,
-        JsonDiagnosticSummary Summary
+        IReadOnlyList<JSON診断項目> Diagnostics,
+        JSON診断集計 Summary
     );
 
-    private sealed record JsonDiagnosticItem(
+    private sealed record JSON診断項目(
         string RuleId,
         string Title,
         string Severity,
@@ -63,5 +63,5 @@ internal sealed class JsonDiagnosticWriter : IDiagnosticWriter
         int Column
     );
 
-    private sealed record JsonDiagnosticSummary(int Danger, int Warning, int Attention);
+    private sealed record JSON診断集計(int Danger, int Warning, int Attention);
 }
