@@ -35,8 +35,10 @@ public static class CheckerService
             .Where(rule => !disabledRules.Contains(rule.規則情報.Id))
             .ToArray();
 
-        IProjectLoader loader = ProjectLoaderFactory.Create(configuration.IgnoredPaths);
-        var projects = loader.LoadProjects(fullTargetPath, cancellationToken);
+        Iプロジェクト読み込み器 loader = プロジェクト読み込み器生成器.生成する(
+            configuration.IgnoredPaths
+        );
+        var projects = loader.プロジェクト群を読み込む(fullTargetPath, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
         var engine = new AnalysisEngine(rules);

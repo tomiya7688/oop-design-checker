@@ -114,9 +114,9 @@ internal static class Program
             "OopDesignChecker.csproj"
         );
 
-        var project = new CSharpProjectLoader().Load(projectPath);
+        var project = new CSharpプロジェクト読み込み器().読み込む(projectPath);
         var errors = project
-            .Compilation.GetDiagnostics()
+            .コンパイル結果.GetDiagnostics()
             .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
             .ToArray();
 
@@ -128,7 +128,7 @@ internal static class Program
             );
         }
 
-        if (project.SyntaxTrees.Any(tree => PathFilter.ShouldIgnore(tree.FilePath)))
+        if (project.構文木群.Any(tree => PathFilter.ShouldIgnore(tree.FilePath)))
         {
             throw new InvalidOperationException(
                 "Generated bin/obj source leaked into rule traversal."
@@ -156,7 +156,9 @@ internal static class Program
 
         try
         {
-            var projects = new CSharpProjectLoader().LoadProjects(temporarySolution);
+            var projects = new CSharpプロジェクト読み込み器().プロジェクト群を読み込む(
+                temporarySolution
+            );
             if (projects.Count != 2)
             {
                 throw new InvalidOperationException(
@@ -165,7 +167,7 @@ internal static class Program
             }
 
             var assemblyNames = projects
-                .Select(project => project.Compilation.AssemblyName)
+                .Select(project => project.コンパイル結果.AssemblyName)
                 .Where(name => !string.IsNullOrWhiteSpace(name))
                 .Distinct(StringComparer.Ordinal)
                 .ToArray();
@@ -218,7 +220,7 @@ internal static class Program
     private static void ProjectLoaderAnalyzesSolutionRootFolder()
     {
         var repositoryRoot = FindRepositoryRoot();
-        var projects = new CSharpProjectLoader().LoadProjects(repositoryRoot);
+        var projects = new CSharpプロジェクト読み込み器().プロジェクト群を読み込む(repositoryRoot);
         if (projects.Count < 1)
         {
             throw new InvalidOperationException(
@@ -255,7 +257,7 @@ internal static class Program
         }
     }
 
-    private static SourceProject CreateProjectForPath(string filePath)
+    private static 解析対象プロジェクト CreateProjectForPath(string filePath)
     {
         const string source = "internal sealed class Same { public int Value; }";
         var syntaxTree = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(
@@ -265,7 +267,7 @@ internal static class Program
         var compilation = Microsoft.CodeAnalysis.CSharp.CSharpCompilation.Create(
             Path.GetFileNameWithoutExtension(filePath),
             [syntaxTree],
-            MetadataReferenceProvider.CreatePlatformReferences(),
+            メタデータ参照提供器.プラットフォーム参照群を作る(),
             new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(
                 Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary
             )
@@ -278,9 +280,9 @@ internal static class Program
             [syntaxTree] = compilation.GetSemanticModel(syntaxTree),
         };
 
-        return new SourceProject(
+        return new 解析対象プロジェクト(
             Path.GetDirectoryName(filePath)!,
-            isApplication: false,
+            アプリケーションである: false,
             compilation,
             semanticModels,
             [syntaxTree]
@@ -302,7 +304,7 @@ internal static class Program
 
             try
             {
-                _ = new CSharpProjectLoader().Load(sourcePath);
+                _ = new CSharpプロジェクト読み込み器().読み込む(sourcePath);
             }
             catch (InvalidOperationException exception)
                 when (exception.Message.Contains(

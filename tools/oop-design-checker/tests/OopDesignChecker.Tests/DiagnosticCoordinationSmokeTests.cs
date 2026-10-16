@@ -228,7 +228,7 @@ internal static class DiagnosticCoordinationSmokeTests
     )
     {
         var compilation = CSharpCompilation.Create("diagnostic-identity");
-        var project = new SourceProject(
+        var project = new 解析対象プロジェクト(
             Directory.GetCurrentDirectory(),
             false,
             compilation,

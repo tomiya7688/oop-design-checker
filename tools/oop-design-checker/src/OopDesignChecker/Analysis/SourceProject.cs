@@ -3,33 +3,33 @@ using Microsoft.CodeAnalysis.CSharp;
 
 namespace OopDesignChecker.Analysis;
 
-internal sealed class SourceProject
+internal sealed class 解析対象プロジェクト
 {
-    private readonly IReadOnlyDictionary<SyntaxTree, SemanticModel> _semanticModels;
-    private readonly IReadOnlyList<SyntaxTree> _syntaxTrees;
+    private readonly IReadOnlyDictionary<SyntaxTree, SemanticModel> _意味モデル群;
+    private readonly IReadOnlyList<SyntaxTree> _構文木群;
 
-    public SourceProject(
-        string rootPath,
-        bool isApplication,
-        CSharpCompilation compilation,
-        IReadOnlyDictionary<SyntaxTree, SemanticModel> semanticModels,
-        IReadOnlyList<SyntaxTree>? syntaxTrees = null
+    public 解析対象プロジェクト(
+        string ルートパス,
+        bool アプリケーションである,
+        CSharpCompilation コンパイル結果,
+        IReadOnlyDictionary<SyntaxTree, SemanticModel> 意味モデル群,
+        IReadOnlyList<SyntaxTree>? 構文木群 = null
     )
     {
-        RootPath = rootPath;
-        IsApplication = isApplication;
-        Compilation = compilation;
-        _semanticModels = semanticModels;
-        _syntaxTrees = syntaxTrees ?? compilation.SyntaxTrees.ToArray();
+        this.ルートパス = ルートパス;
+        this.アプリケーションである = アプリケーションである;
+        this.コンパイル結果 = コンパイル結果;
+        _意味モデル群 = 意味モデル群;
+        _構文木群 = 構文木群 ?? コンパイル結果.SyntaxTrees.ToArray();
     }
 
-    public string RootPath { get; }
+    public string ルートパス { get; }
 
-    public bool IsApplication { get; }
+    public bool アプリケーションである { get; }
 
-    public CSharpCompilation Compilation { get; }
+    public CSharpCompilation コンパイル結果 { get; }
 
-    public IEnumerable<SyntaxTree> SyntaxTrees => _syntaxTrees;
+    public IEnumerable<SyntaxTree> 構文木群 => _構文木群;
 
-    public SemanticModel GetSemanticModel(SyntaxTree syntaxTree) => _semanticModels[syntaxTree];
+    public SemanticModel 意味モデルを取得する(SyntaxTree 構文木) => _意味モデル群[構文木];
 }

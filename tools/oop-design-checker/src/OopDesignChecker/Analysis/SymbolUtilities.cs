@@ -25,7 +25,7 @@ internal static class SymbolUtilities
 
     public static int GetInheritanceDepth(
         INamedTypeSymbol symbol,
-        IReadOnlyList<SourceProject> projects
+        IReadOnlyList<解析対象プロジェクト> projects
     )
     {
         var depth = 0;
@@ -46,7 +46,7 @@ internal static class SymbolUtilities
 
     private static bool IsProjectOwnedType(
         INamedTypeSymbol type,
-        IReadOnlyList<SourceProject> projects
+        IReadOnlyList<解析対象プロジェクト> projects
     )
     {
         if (type.Locations.Any(location => location.IsInSource))
@@ -60,7 +60,7 @@ internal static class SymbolUtilities
         }
 
         return projects.Any(project =>
-            project.Compilation.Assembly.Identity.Equals(type.ContainingAssembly.Identity)
+            project.コンパイル結果.Assembly.Identity.Equals(type.ContainingAssembly.Identity)
         );
     }
 

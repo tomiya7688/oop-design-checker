@@ -179,7 +179,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
             public class D : C { }
             public sealed class E : D { }
             """,
-            baseProject.Compilation.ToMetadataReference()
+            baseProject.コンパイル結果.ToMetadataReference()
         );
         var context = new AnalysisContext(derivedProject, [baseProject, derivedProject]);
 
@@ -201,7 +201,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
             public class C : B { }
             public sealed class D : C { }
             """,
-            baseProject.Compilation.ToMetadataReference()
+            baseProject.コンパイル結果.ToMetadataReference()
         );
         var context = new AnalysisContext(derivedProject, [baseProject, derivedProject]);
 
@@ -283,7 +283,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
                     """
                 ),
             ],
-            baseProject.Compilation.ToMetadataReference()
+            baseProject.コンパイル結果.ToMetadataReference()
         );
         var context = new AnalysisContext(derivedProject, [baseProject, derivedProject]);
 
@@ -295,7 +295,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
         );
     }
 
-    private static SourceProject CreateProject(
+    private static 解析対象プロジェクト CreateProject(
         string assemblyName,
         string source,
         params MetadataReference[] additionalReferences
@@ -306,7 +306,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
             additionalReferences
         );
 
-    private static SourceProject CreateProjectFromSources(
+    private static 解析対象プロジェクト CreateProjectFromSources(
         string assemblyName,
         IReadOnlyList<(string FilePath, string Source)> sources,
         params MetadataReference[] additionalReferences
@@ -315,8 +315,8 @@ internal static class InheritanceDepthPrecisionSmokeTests
         var syntaxTrees = sources
             .Select(source => CSharpSyntaxTree.ParseText(source.Source, path: source.FilePath))
             .ToArray();
-        var references = MetadataReferenceProvider
-            .CreatePlatformReferences()
+        var references = メタデータ参照提供器
+            .プラットフォーム参照群を作る()
             .Concat(additionalReferences)
             .ToArray();
         var compilation = CSharpCompilation.Create(
@@ -341,9 +341,9 @@ internal static class InheritanceDepthPrecisionSmokeTests
             syntaxTree => syntaxTree,
             syntaxTree => compilation.GetSemanticModel(syntaxTree)
         );
-        return new SourceProject(
-            rootPath: assemblyName,
-            isApplication: false,
+        return new 解析対象プロジェクト(
+            ルートパス: assemblyName,
+            アプリケーションである: false,
             compilation,
             semanticModels
         );

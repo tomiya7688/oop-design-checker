@@ -12,14 +12,14 @@ internal sealed class ExcessiveVisibilityRule : I解析規則
 
     public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
-        if (!context.Project.IsApplication)
+        if (!context.Project.アプリケーションである)
         {
             yield break;
         }
 
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        foreach (var syntaxTree in context.Project.構文木群)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
@@ -63,9 +63,9 @@ internal sealed class ExcessiveVisibilityRule : I解析規則
     {
         var result = new List<INamedTypeSymbol>();
 
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        foreach (var syntaxTree in context.Project.構文木群)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var name in root.DescendantNodes().OfType<SimpleNameSyntax>())

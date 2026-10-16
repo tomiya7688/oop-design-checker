@@ -16,7 +16,7 @@ internal sealed class MissingCommonAbstractionRule : I解析規則
     public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         var candidates = context
-            .Project.SyntaxTrees.SelectMany(tree => FindCandidates(context, tree))
+            .Project.構文木群.SelectMany(tree => FindCandidates(context, tree))
             .ToArray();
 
         foreach (
@@ -46,7 +46,7 @@ internal sealed class MissingCommonAbstractionRule : I解析規則
         SyntaxTree syntaxTree
     )
     {
-        var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+        var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
         var root = syntaxTree.GetRoot();
 
         foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
@@ -93,9 +93,9 @@ internal sealed class MissingCommonAbstractionRule : I解析規則
     {
         var methods = new List<IMethodSymbol>();
 
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        foreach (var syntaxTree in context.Project.構文木群)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
             foreach (
                 var declaration in syntaxTree
                     .GetRoot()

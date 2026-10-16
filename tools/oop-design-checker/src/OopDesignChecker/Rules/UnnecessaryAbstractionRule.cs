@@ -62,9 +62,9 @@ internal sealed class UnnecessaryAbstractionRule : I解析規則
 
     private static IEnumerable<InterfaceEntry> ReadSourceInterfaces(AnalysisContext context)
     {
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        foreach (var syntaxTree in context.Project.構文木群)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
             foreach (
                 var declaration in syntaxTree
                     .GetRoot()
@@ -82,9 +82,9 @@ internal sealed class UnnecessaryAbstractionRule : I解析規則
 
     private static IEnumerable<ClassEntry> ReadSourceClasses(AnalysisContext context)
     {
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        foreach (var syntaxTree in context.Project.構文木群)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
             foreach (
                 var declaration in syntaxTree
                     .GetRoot()
@@ -106,9 +106,9 @@ internal sealed class UnnecessaryAbstractionRule : I解析規則
         INamedTypeSymbol implementation
     )
     {
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        foreach (var syntaxTree in context.Project.構文木群)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
             foreach (var name in syntaxTree.GetRoot().DescendantNodes().OfType<SimpleNameSyntax>())
             {
                 if (

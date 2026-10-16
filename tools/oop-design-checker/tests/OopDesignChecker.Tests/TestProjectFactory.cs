@@ -12,7 +12,7 @@ internal static class TestProjectFactory
         var compilation = CSharpCompilation.Create(
             "RuleTests",
             [syntaxTree],
-            MetadataReferenceProvider.CreatePlatformReferences(),
+            メタデータ参照提供器.プラットフォーム参照群を作る(),
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
 
@@ -34,9 +34,9 @@ internal static class TestProjectFactory
             [syntaxTree] = compilation.GetSemanticModel(syntaxTree),
         };
 
-        var project = new SourceProject(
-            rootPath: ".",
-            isApplication: true,
+        var project = new 解析対象プロジェクト(
+            ルートパス: ".",
+            アプリケーションである: true,
             compilation,
             semanticModels
         );

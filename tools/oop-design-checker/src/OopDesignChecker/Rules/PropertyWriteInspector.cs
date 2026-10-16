@@ -14,9 +14,9 @@ internal static class PropertyWriteInspector
         var hasInternalWrite = false;
         var hasExternalWrite = false;
 
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        foreach (var syntaxTree in context.Project.構文木群)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var assignment in root.DescendantNodes().OfType<AssignmentExpressionSyntax>())

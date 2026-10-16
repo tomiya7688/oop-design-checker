@@ -2,9 +2,9 @@ using Microsoft.CodeAnalysis;
 
 namespace OopDesignChecker.Analysis;
 
-internal static class MetadataReferenceProvider
+internal static class メタデータ参照提供器
 {
-    public static IReadOnlyList<MetadataReference> CreatePlatformReferences()
+    public static IReadOnlyList<MetadataReference> プラットフォーム参照群を作る()
     {
         var trustedAssemblies = AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string;
         if (!string.IsNullOrWhiteSpace(trustedAssemblies))
