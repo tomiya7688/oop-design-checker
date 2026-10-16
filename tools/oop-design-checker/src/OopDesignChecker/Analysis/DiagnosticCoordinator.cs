@@ -3,10 +3,15 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Analysis;
 
-internal static class DiagnosticCoordinator
+internal static class 診断調整器
 {
-    // Dominance is intentionally explicit: a stronger diagnostic suppresses a weaker supporting
-    // signal only when both refer to the same symbol. Severity alone never implies dominance.
+    // {
+    //   責務: 診断の優先関係を明示します,
+    //   処理: [
+    //     1: 同じシンボルを対象とする場合に、強い診断が補助的な診断を抑制します,
+    //     2: 重要度だけで診断の優先関係を決めません
+    //   ]
+    // }
     private static readonly FrozenDictionary<string, string> DominantRuleBySubsumedRule =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -14,21 +19,23 @@ internal static class DiagnosticCoordinator
             ["OOP405"] = "OOP402",
         }.ToFrozenDictionary(StringComparer.Ordinal);
 
-    public static IReadOnlyList<DesignDiagnostic> Reduce(
+    public static IReadOnlyList<DesignDiagnostic> 集約する(
         IReadOnlyList<DesignDiagnostic> diagnostics
     )
     {
         var diagnosticKeys = diagnostics
             .Where(diagnostic => diagnostic.SymbolName is not null)
-            .Select(CreateRuleSymbolKey)
-            .ToHashSet(RuleSymbolKeyComparer.Instance);
+            .Select(規則記号識別子を作る)
+            .ToHashSet(規則記号識別子比較器.Instance);
 
-        return diagnostics.Where(diagnostic => !IsSubsumed(diagnostic, diagnosticKeys)).ToArray();
+        return diagnostics
+            .Where(diagnostic => !抑制対象である(diagnostic, diagnosticKeys))
+            .ToArray();
     }
 
-    private static bool IsSubsumed(
+    private static bool 抑制対象である(
         DesignDiagnostic diagnostic,
-        IReadOnlySet<RuleSymbolKey> diagnosticKeys
+        IReadOnlySet<規則記号識別子> diagnosticKeys
     )
     {
         if (
@@ -39,29 +46,35 @@ internal static class DiagnosticCoordinator
             return false;
         }
 
-        return diagnosticKeys.Contains(CreateRuleSymbolKey(diagnostic, dominantRuleId));
+        return diagnosticKeys.Contains(規則記号識別子を作る(diagnostic, dominantRuleId));
     }
 
-    private static RuleSymbolKey CreateRuleSymbolKey(DesignDiagnostic diagnostic) =>
-        CreateRuleSymbolKey(diagnostic, diagnostic.Rule.Id);
+    private static 規則記号識別子 規則記号識別子を作る(DesignDiagnostic diagnostic) =>
+        規則記号識別子を作る(diagnostic, diagnostic.Rule.Id);
 
-    private static RuleSymbolKey CreateRuleSymbolKey(DesignDiagnostic diagnostic, string ruleId) =>
-        new(パスを正規化する(diagnostic.Location.FilePath), diagnostic.SymbolName!, ruleId);
+    private static 規則記号識別子 規則記号識別子を作る(
+        DesignDiagnostic diagnostic,
+        string ruleId
+    ) => new(パスを正規化する(diagnostic.Location.FilePath), diagnostic.SymbolName!, ruleId);
 
     private static string パスを正規化する(string パス) => 診断ファイルパス.正規化する(パス);
 
-    private readonly record struct RuleSymbolKey(string FilePath, string SymbolName, string RuleId);
+    private readonly record struct 規則記号識別子(
+        string FilePath,
+        string SymbolName,
+        string RuleId
+    );
 
-    private sealed class RuleSymbolKeyComparer : IEqualityComparer<RuleSymbolKey>
+    private sealed class 規則記号識別子比較器 : IEqualityComparer<規則記号識別子>
     {
-        public static RuleSymbolKeyComparer Instance { get; } = new();
+        public static 規則記号識別子比較器 Instance { get; } = new();
 
-        public bool Equals(RuleSymbolKey left, RuleSymbolKey right) =>
+        public bool Equals(規則記号識別子 left, 規則記号識別子 right) =>
             パス比較規則.文字列比較子.Equals(left.FilePath, right.FilePath)
             && string.Equals(left.SymbolName, right.SymbolName, StringComparison.Ordinal)
             && string.Equals(left.RuleId, right.RuleId, StringComparison.Ordinal);
 
-        public int GetHashCode(RuleSymbolKey key)
+        public int GetHashCode(規則記号識別子 key)
         {
             var hash = new HashCode();
             hash.Add(key.FilePath, パス比較規則.文字列比較子);

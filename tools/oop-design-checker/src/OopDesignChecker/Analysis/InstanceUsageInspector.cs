@@ -3,9 +3,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace OopDesignChecker.Analysis;
 
-internal static class InstanceUsageInspector
+internal static class インスタンス使用検査器
 {
-    public static bool UsesInstanceState(
+    public static bool インスタンス状態を使う(
         MethodDeclarationSyntax method,
         IMethodSymbol symbol,
         SemanticModel semanticModel
@@ -38,7 +38,7 @@ internal static class InstanceUsageInspector
             }
 
             if (
-                SymbolUtilities.IsSameOrBaseType(
+                シンボル操作器.同じ型か基底型である(
                     referencedSymbol.ContainingType,
                     symbol.ContainingType
                 )

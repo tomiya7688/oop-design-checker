@@ -4,9 +4,9 @@ using System.Text.RegularExpressions;
 
 namespace OopDesignChecker.Analysis;
 
-internal static class PathFilter
+internal static class パス除外判定器
 {
-    private static readonly FrozenSet<string> IgnoredDirectoryNames = new[]
+    private static readonly FrozenSet<string> 無視するディレクトリ名 = new[]
     {
         "bin",
         "obj",
@@ -14,30 +14,26 @@ internal static class PathFilter
         ".vs",
     }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
-    public static bool ShouldIgnore(string path) => HasBuiltInIgnoredSegment(path);
+    public static bool 無視する(string path) => 組み込み除外区間を含む(path);
 
-    public static bool ShouldIgnore(
-        string path,
-        string rootPath,
-        IReadOnlyList<string> ignoredPatterns
-    )
+    public static bool 無視する(string path, string rootPath, IReadOnlyList<string> ignoredPatterns)
     {
-        if (HasBuiltInIgnoredSegment(path))
+        if (組み込み除外区間を含む(path))
         {
             return true;
         }
 
         var relativePath = Path.GetRelativePath(rootPath, path).Replace('\\', '/');
-        return ignoredPatterns.Any(pattern => MatchesPattern(relativePath, pattern));
+        return ignoredPatterns.Any(pattern => パターンに一致する(relativePath, pattern));
     }
 
-    private static bool HasBuiltInIgnoredSegment(string path)
+    private static bool 組み込み除外区間を含む(string path)
     {
         var segments = path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        return segments.Any(IgnoredDirectoryNames.Contains);
+        return segments.Any(無視するディレクトリ名.Contains);
     }
 
-    private static bool MatchesPattern(string relativePath, string pattern)
+    private static bool パターンに一致する(string relativePath, string pattern)
     {
         var normalizedPattern = pattern.Trim().Replace('\\', '/').TrimStart('/');
         if (normalizedPattern.Length == 0)
@@ -56,7 +52,7 @@ internal static class PathFilter
                 .Contains(normalizedPattern, StringComparer.OrdinalIgnoreCase);
         }
 
-        var regexPattern = BuildGlobRegex(normalizedPattern);
+        var regexPattern = glob正規表現を作る(normalizedPattern);
         return Regex.IsMatch(
             relativePath,
             regexPattern,
@@ -64,7 +60,7 @@ internal static class PathFilter
         );
     }
 
-    private static string BuildGlobRegex(string pattern)
+    private static string glob正規表現を作る(string pattern)
     {
         var builder = new StringBuilder("^");
 

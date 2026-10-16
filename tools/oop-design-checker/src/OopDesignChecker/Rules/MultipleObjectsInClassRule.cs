@@ -13,18 +13,18 @@ internal sealed class MultipleObjectsInClassRule : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP401", "Possible multiple objects in one class", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
                 if (
                     semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
+                    || !シンボル操作器.主宣言である(symbol, declaration)
                 )
                 {
                     continue;
@@ -228,5 +228,5 @@ internal sealed class MultipleObjectsInClassRule : I解析規則
         HashSet<IMethodSymbol> CalledMethods
     );
 
-    private readonly record struct StateCluster(int StateMemberCount, int MethodCount);
+    private readonly record struct StateCluster(int 状態メンバー数, int MethodCount);
 }

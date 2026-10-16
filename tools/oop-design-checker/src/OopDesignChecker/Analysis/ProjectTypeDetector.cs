@@ -14,7 +14,7 @@ internal static class プロジェクト種別判定器
             )
         )
         {
-            if (PathFilter.ShouldIgnore(projectFile))
+            if (パス除外判定器.無視する(projectFile))
             {
                 continue;
             }

@@ -1,17 +1,17 @@
 namespace OopDesignChecker.Analysis;
 
-internal sealed record AnalysisContext(
-    解析対象プロジェクト Project,
-    IReadOnlyList<解析対象プロジェクト> Projects,
-    CancellationToken CancellationToken
+internal sealed record 解析文脈(
+    解析対象プロジェクト 対象プロジェクト,
+    IReadOnlyList<解析対象プロジェクト> 対象プロジェクト群,
+    CancellationToken キャンセル通知
 )
 {
-    public AnalysisContext(解析対象プロジェクト project)
-        : this(project, [project], CancellationToken.None) { }
+    public 解析文脈(解析対象プロジェクト 対象プロジェクト)
+        : this(対象プロジェクト, [対象プロジェクト], CancellationToken.None) { }
 
-    public AnalysisContext(
-        解析対象プロジェクト project,
-        IReadOnlyList<解析対象プロジェクト> projects
+    public 解析文脈(
+        解析対象プロジェクト 対象プロジェクト,
+        IReadOnlyList<解析対象プロジェクト> 対象プロジェクト群
     )
-        : this(project, projects, CancellationToken.None) { }
+        : this(対象プロジェクト, 対象プロジェクト群, CancellationToken.None) { }
 }

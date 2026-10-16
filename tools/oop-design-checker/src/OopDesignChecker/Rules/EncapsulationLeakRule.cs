@@ -11,14 +11,14 @@ internal sealed class EncapsulationLeakRule : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP106", "Encapsulation leak", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
-            foreach (var diagnostic in AnalyzeFields(root, semanticModel))
+            foreach (var diagnostic in フィールドを解析する(root, semanticModel))
             {
                 yield return diagnostic;
             }
@@ -58,7 +58,7 @@ internal sealed class EncapsulationLeakRule : I解析規則
         }
     }
 
-    private IEnumerable<DesignDiagnostic> AnalyzeFields(
+    private IEnumerable<DesignDiagnostic> フィールドを解析する(
         SyntaxNode root,
         SemanticModel semanticModel
     )
@@ -168,13 +168,13 @@ internal sealed class EncapsulationLeakRule : I解析規則
                 or IPropertySymbol { IsStatic: false };
 
     private static bool HasUnnecessarilyPublicSetter(
-        AnalysisContext context,
+        解析文脈 context,
         PropertyDeclarationSyntax declaration,
         IPropertySymbol property
     )
     {
         if (
-            !context.Project.アプリケーションである
+            !context.対象プロジェクト.アプリケーションである
             || property.SetMethod?.DeclaredAccessibility != Accessibility.Public
             || property.IsAbstract
             || property.IsVirtual

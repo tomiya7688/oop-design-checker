@@ -10,11 +10,11 @@ internal sealed class StaticMemberCandidateRule : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP103", "Static member candidate", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             foreach (
                 var declaration in syntaxTree
                     .GetRoot()
@@ -22,7 +22,7 @@ internal sealed class StaticMemberCandidateRule : I解析規則
                     .OfType<ClassDeclarationSyntax>()
             )
             {
-                foreach (var diagnostic in AnalyzeClass(declaration, semanticModel))
+                foreach (var diagnostic in クラスを解析する(declaration, semanticModel))
                 {
                     yield return diagnostic;
                 }
@@ -30,7 +30,7 @@ internal sealed class StaticMemberCandidateRule : I解析規則
         }
     }
 
-    private IEnumerable<DesignDiagnostic> AnalyzeClass(
+    private IEnumerable<DesignDiagnostic> クラスを解析する(
         ClassDeclarationSyntax declaration,
         SemanticModel semanticModel
     )
@@ -93,8 +93,12 @@ internal sealed class StaticMemberCandidateRule : I解析規則
             || methodSymbol.IsOverride
             || method.ExplicitInterfaceSpecifier is not null
             || FrameworkContractClassifier.HasFrameworkContractAttribute(methodSymbol)
-            || SymbolUtilities.ImplementsInterfaceMember(methodSymbol, declaration, semanticModel)
-            || InstanceUsageInspector.UsesInstanceState(method, methodSymbol, semanticModel)
+            || シンボル操作器.インターフェースメンバーを実装している(
+                methodSymbol,
+                declaration,
+                semanticModel
+            )
+            || インスタンス使用検査器.インスタンス状態を使う(method, methodSymbol, semanticModel)
         )
         {
             return null;

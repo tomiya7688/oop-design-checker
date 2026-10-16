@@ -41,8 +41,8 @@ public static class CheckerService
         var projects = loader.プロジェクト群を読み込む(fullTargetPath, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var engine = new AnalysisEngine(rules);
-        var diagnostics = engine.Analyze(projects, cancellationToken);
+        var engine = new 解析実行器(rules);
+        var diagnostics = engine.解析する(projects, cancellationToken);
         var failureThreshold = failureThresholdOverride ?? configuration.FailureThreshold;
 
         return new CheckerRunResult(diagnostics, failureThreshold, loadedConfiguration.Path)

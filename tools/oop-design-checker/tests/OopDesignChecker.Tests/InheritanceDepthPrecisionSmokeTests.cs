@@ -34,7 +34,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
         AssertSingle(
             new ExcessiveInheritanceDepthRule(),
-            TestProjectFactory.Create(source),
+            TestProjectFactory.解析文脈を作る(source),
             expectedDepth: 4
         );
     }
@@ -48,7 +48,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
             internal sealed class D : C { }
             """;
 
-        AssertNone(new ExcessiveInheritanceDepthRule(), TestProjectFactory.Create(source));
+        AssertNone(new ExcessiveInheritanceDepthRule(), TestProjectFactory.解析文脈を作る(source));
     }
 
     private static void CustomDepthChangesTriggerPoint()
@@ -62,7 +62,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
         AssertSingle(
             new ExcessiveInheritanceDepthRule(warningDepth: 3),
-            TestProjectFactory.Create(source),
+            TestProjectFactory.解析文脈を作る(source),
             expectedDepth: 3
         );
     }
@@ -160,57 +160,57 @@ internal static class InheritanceDepthPrecisionSmokeTests
             internal class D : C { }
             """;
 
-        AssertNone(new ExcessiveInheritanceDepthRule(), TestProjectFactory.Create(source));
+        AssertNone(new ExcessiveInheritanceDepthRule(), TestProjectFactory.解析文脈を作る(source));
     }
 
     private static void CrossProjectInheritanceIsCounted()
     {
-        var baseProject = CreateProject(
+        var 基底プロジェクト = 解析対象プロジェクトを作る(
             "BaseProject",
             """
             public class A { }
             public class B : A { }
             """
         );
-        var derivedProject = CreateProject(
+        var 派生プロジェクト = 解析対象プロジェクトを作る(
             "DerivedProject",
             """
             public class C : B { }
             public class D : C { }
             public sealed class E : D { }
             """,
-            baseProject.コンパイル結果.ToMetadataReference()
+            基底プロジェクト.コンパイル結果.ToMetadataReference()
         );
-        var context = new AnalysisContext(derivedProject, [baseProject, derivedProject]);
+        var context = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
 
         AssertSingle(new ExcessiveInheritanceDepthRule(), context, expectedDepth: 4);
     }
 
     private static void CrossProjectChainStopsAtExternalBase()
     {
-        var baseProject = CreateProject(
+        var 基底プロジェクト = 解析対象プロジェクトを作る(
             "BaseProject",
             """
             public class A : System.Exception { }
             public class B : A { }
             """
         );
-        var derivedProject = CreateProject(
+        var 派生プロジェクト = 解析対象プロジェクトを作る(
             "DerivedProject",
             """
             public class C : B { }
             public sealed class D : C { }
             """,
-            baseProject.コンパイル結果.ToMetadataReference()
+            基底プロジェクト.コンパイル結果.ToMetadataReference()
         );
-        var context = new AnalysisContext(derivedProject, [baseProject, derivedProject]);
+        var context = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
 
         AssertNone(new ExcessiveInheritanceDepthRule(), context);
     }
 
     private static void PartialClassProducesSingleDiagnosticAtPrimaryDeclaration()
     {
-        var project = CreateProjectFromSources(
+        var project = ソース群から解析対象プロジェクトを作る(
             "PartialProject",
             [
                 (
@@ -242,7 +242,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
         AssertSingle(
             new ExcessiveInheritanceDepthRule(),
-            new AnalysisContext(project),
+            new 解析文脈(project),
             expectedDepth: 4,
             expectedFileName: "Partial.Primary.cs"
         );
@@ -250,14 +250,14 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
     private static void PartialClassAcrossProjectBoundaryStopsAtExternalBase()
     {
-        var baseProject = CreateProject(
+        var 基底プロジェクト = 解析対象プロジェクトを作る(
             "ExternalBoundaryBaseProject",
             """
             public class A : System.Exception { }
             public class B : A { }
             """
         );
-        var derivedProject = CreateProjectFromSources(
+        var 派生プロジェクト = ソース群から解析対象プロジェクトを作る(
             "ExternalBoundaryDerivedProject",
             [
                 (
@@ -283,9 +283,9 @@ internal static class InheritanceDepthPrecisionSmokeTests
                     """
                 ),
             ],
-            baseProject.コンパイル結果.ToMetadataReference()
+            基底プロジェクト.コンパイル結果.ToMetadataReference()
         );
-        var context = new AnalysisContext(derivedProject, [baseProject, derivedProject]);
+        var context = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
 
         AssertSingle(
             new ExcessiveInheritanceDepthRule(),
@@ -295,18 +295,18 @@ internal static class InheritanceDepthPrecisionSmokeTests
         );
     }
 
-    private static 解析対象プロジェクト CreateProject(
+    private static 解析対象プロジェクト 解析対象プロジェクトを作る(
         string assemblyName,
         string source,
         params MetadataReference[] additionalReferences
     ) =>
-        CreateProjectFromSources(
+        ソース群から解析対象プロジェクトを作る(
             assemblyName,
             [($"{assemblyName}.cs", source)],
             additionalReferences
         );
 
-    private static 解析対象プロジェクト CreateProjectFromSources(
+    private static 解析対象プロジェクト ソース群から解析対象プロジェクトを作る(
         string assemblyName,
         IReadOnlyList<(string FilePath, string Source)> sources,
         params MetadataReference[] additionalReferences
@@ -373,7 +373,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
 
     private static void AssertSingle(
         ExcessiveInheritanceDepthRule rule,
-        AnalysisContext context,
+        解析文脈 context,
         int expectedDepth,
         string? expectedFileName = null
     )
@@ -410,7 +410,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
         );
     }
 
-    private static void AssertNone(ExcessiveInheritanceDepthRule rule, AnalysisContext context)
+    private static void AssertNone(ExcessiveInheritanceDepthRule rule, 解析文脈 context)
     {
         var diagnostics = rule.解析する(context).Where(item => item.Rule.Id == "OOP304").ToArray();
         if (diagnostics.Length == 0)

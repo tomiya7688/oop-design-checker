@@ -16,18 +16,18 @@ internal sealed class CompositionCandidateRule : I解析規則
             DesignDiagnosticSeverity.Attention
         );
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
                 if (
                     semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
+                    || !シンボル操作器.主宣言である(symbol, declaration)
                     || symbol.BaseType is not { } baseType
                     || baseType.SpecialType == SpecialType.System_Object
                     || baseType.IsAbstract
@@ -112,7 +112,7 @@ internal sealed class CompositionCandidateRule : I解析規則
                 or Accessibility.ProtectedOrInternal
                 or Accessibility.ProtectedAndInternal
         && member.ContainingType is not null
-        && SymbolUtilities.IsSameOrBaseType(member.ContainingType, baseType);
+        && シンボル操作器.同じ型か基底型である(member.ContainingType, baseType);
 
     private static bool IsInstanceMember(ISymbol member) =>
         member switch

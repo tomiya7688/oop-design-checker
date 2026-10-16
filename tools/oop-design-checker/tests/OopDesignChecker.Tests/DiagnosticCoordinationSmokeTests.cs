@@ -25,7 +25,7 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void InvariantBypassSuppressesEncapsulationLeakForSameSymbol()
     {
-        var diagnostics = DiagnosticCoordinator.Reduce([
+        var diagnostics = 診断調整器.集約する([
             Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Balance"),
             Create("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
         ]);
@@ -35,7 +35,7 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void AnemicObjectSuppressesGetterSetterOnlyForSameSymbol()
     {
-        var diagnostics = DiagnosticCoordinator.Reduce([
+        var diagnostics = 診断調整器.集約する([
             Create("OOP405", DesignDiagnosticSeverity.Attention, "Order"),
             Create("OOP402", DesignDiagnosticSeverity.Warning, "Order"),
         ]);
@@ -45,7 +45,7 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void DominanceDoesNotRunInReverse()
     {
-        var diagnostics = DiagnosticCoordinator.Reduce([
+        var diagnostics = 診断調整器.集約する([
             Create("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
             Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Other"),
         ]);
@@ -55,7 +55,7 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void DifferentSymbolsRemainIndependent()
     {
-        var diagnostics = DiagnosticCoordinator.Reduce([
+        var diagnostics = 診断調整器.集約する([
             Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Name"),
             Create("OOP107", DesignDiagnosticSeverity.Danger, "Account.Balance"),
         ]);
@@ -65,7 +65,7 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void UnrelatedRulesRemainTogether()
     {
-        var diagnostics = DiagnosticCoordinator.Reduce([
+        var diagnostics = 診断調整器.集約する([
             Create("OOP401", DesignDiagnosticSeverity.Warning, "Coordinator"),
             Create("OOP403", DesignDiagnosticSeverity.Warning, "Coordinator"),
         ]);
@@ -75,7 +75,7 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void DiagnosticsWithoutSymbolsAreNotSuppressed()
     {
-        var diagnostics = DiagnosticCoordinator.Reduce([
+        var diagnostics = 診断調整器.集約する([
             Create("OOP106", DesignDiagnosticSeverity.Warning, null),
             Create("OOP107", DesignDiagnosticSeverity.Danger, null),
         ]);
@@ -85,7 +85,7 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void MessageChangesDoNotCreateDuplicateDiagnostics()
     {
-        var diagnostics = AnalyzeThroughEngine(
+        var diagnostics = エンジンを通して解析する(
             Create("OOP999", DesignDiagnosticSeverity.Warning, "Order", "Original wording"),
             Create("OOP999", DesignDiagnosticSeverity.Warning, "Order", "Localized wording")
         );
@@ -102,7 +102,7 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void DifferentSymbolsAtSameLocationRemainDistinct()
     {
-        var diagnostics = AnalyzeThroughEngine(
+        var diagnostics = エンジンを通して解析する(
             Create("OOP999", DesignDiagnosticSeverity.Warning, "Order.First"),
             Create("OOP999", DesignDiagnosticSeverity.Warning, "Order.Second")
         );
@@ -119,11 +119,11 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void 不明な診断パスを安定して扱う()
     {
-        var diagnostics = AnalyzeThroughEngine(
+        var diagnostics = エンジンを通して解析する(
             Create("OOP999", DesignDiagnosticSeverity.Warning, "Order", filePath: "<unknown>")
         );
 
-        var reduced = DiagnosticCoordinator.Reduce(diagnostics);
+        var reduced = 診断調整器.集約する(diagnostics);
         if (reduced.Count != 1 || reduced[0].Location.FilePath != "<unknown>")
         {
             throw new InvalidOperationException(
@@ -134,7 +134,7 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void パスの大文字小文字をOS別に比較する()
     {
-        var diagnostics = AnalyzeThroughEngine(
+        var diagnostics = エンジンを通して解析する(
             Create(
                 "OOP999",
                 DesignDiagnosticSeverity.Warning,
@@ -162,7 +162,7 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void パス規則に従って診断の抑制と順序を決める()
     {
-        var samePathWithDifferentCasing = DiagnosticCoordinator.Reduce([
+        var samePathWithDifferentCasing = 診断調整器.集約する([
             Create(
                 "OOP106",
                 DesignDiagnosticSeverity.Warning,
@@ -184,7 +184,7 @@ internal static class DiagnosticCoordinationSmokeTests
             );
         }
 
-        var differentSymbolCasing = DiagnosticCoordinator.Reduce([
+        var differentSymbolCasing = 診断調整器.集約する([
             Create("OOP106", DesignDiagnosticSeverity.Warning, "Account.Balance"),
             Create("OOP107", DesignDiagnosticSeverity.Danger, "account.balance"),
         ]);
@@ -193,7 +193,7 @@ internal static class DiagnosticCoordinationSmokeTests
 
     private static void 診断順をパス規則で決める()
     {
-        var diagnostics = AnalyzeThroughEngine(
+        var diagnostics = エンジンを通して解析する(
             Create(
                 "OOP999",
                 DesignDiagnosticSeverity.Warning,
@@ -223,7 +223,7 @@ internal static class DiagnosticCoordinationSmokeTests
         );
     }
 
-    private static IReadOnlyList<DesignDiagnostic> AnalyzeThroughEngine(
+    private static IReadOnlyList<DesignDiagnostic> エンジンを通して解析する(
         params DesignDiagnostic[] diagnostics
     )
     {
@@ -234,8 +234,8 @@ internal static class DiagnosticCoordinationSmokeTests
             compilation,
             new Dictionary<SyntaxTree, SemanticModel>()
         );
-        var engine = new AnalysisEngine([new FixedDiagnosticsRule(diagnostics)]);
-        return engine.Analyze(project);
+        var engine = new 解析実行器([new FixedDiagnosticsRule(diagnostics)]);
+        return engine.解析する(project);
     }
 
     private static DesignDiagnostic Create(
@@ -283,6 +283,6 @@ internal static class DiagnosticCoordinationSmokeTests
 
         public RuleDescriptor 規則情報 { get; }
 
-        public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context) => _diagnostics;
+        public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context) => _diagnostics;
     }
 }

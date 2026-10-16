@@ -102,7 +102,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             .Projects.Where(project => project.Language == LanguageNames.CSharp)
             .Where(project =>
                 string.IsNullOrWhiteSpace(project.FilePath)
-                || !PathFilter.ShouldIgnore(project.FilePath, rootPath, _無視対象パス群)
+                || !パス除外判定器.無視する(project.FilePath, rootPath, _無視対象パス群)
             )
             .OrderBy(project => project.FilePath, パス比較規則.文字列比較子)
             .Select(project =>
@@ -142,7 +142,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             .Where(path =>
                 string.Equals(Path.GetExtension(path), ".csproj", パス比較規則.文字列比較方式)
             )
-            .Where(path => !PathFilter.ShouldIgnore(path, rootPath, _無視対象パス群))
+            .Where(path => !パス除外判定器.無視する(path, rootPath, _無視対象パス群))
             .Distinct(パス比較規則.文字列比較子)
             .OrderBy(path => path, パス比較規則.文字列比較子)
             .ToArray();
@@ -155,12 +155,14 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        var missingProjects = projectFiles.Where(path => !File.Exists(path)).ToArray();
-        if (missingProjects.Length > 0)
+        var 存在しないプロジェクトファイル群 = projectFiles
+            .Where(path => !File.Exists(path))
+            .ToArray();
+        if (存在しないプロジェクトファイル群.Length > 0)
         {
             throw new InvalidOperationException(
                 "Solution references missing C# project files:\n"
-                    + string.Join("\n", missingProjects)
+                    + string.Join("\n", 存在しないプロジェクトファイル群)
             );
         }
 
@@ -263,7 +265,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             .Cast<SyntaxTree>()
             .Where(tree =>
                 string.IsNullOrWhiteSpace(tree.FilePath)
-                || !PathFilter.ShouldIgnore(tree.FilePath, rootPath, _無視対象パス群)
+                || !パス除外判定器.無視する(tree.FilePath, rootPath, _無視対象パス群)
             )
             .Distinct()
             .ToArray();
@@ -353,7 +355,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             .Concat(
                 Directory.EnumerateFiles(targetDirectory, "*.slnx", SearchOption.TopDirectoryOnly)
             )
-            .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _無視対象パス群))
+            .Where(path => !パス除外判定器.無視する(path, targetDirectory, _無視対象パス群))
             .OrderBy(path => path, パス比較規則.文字列比較子)
             .ToArray();
 
@@ -374,21 +376,21 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
     )
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var directProjects = Directory
+        var 直下のプロジェクトファイル群 = Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.TopDirectoryOnly)
-            .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _無視対象パス群))
+            .Where(path => !パス除外判定器.無視する(path, targetDirectory, _無視対象パス群))
             .OrderBy(path => path, パス比較規則.文字列比較子)
             .ToArray();
 
-        if (directProjects.Length > 0)
+        if (直下のプロジェクトファイル群.Length > 0)
         {
-            return directProjects;
+            return 直下のプロジェクトファイル群;
         }
 
         cancellationToken.ThrowIfCancellationRequested();
         return Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.AllDirectories)
-            .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _無視対象パス群))
+            .Where(path => !パス除外判定器.無視する(path, targetDirectory, _無視対象パス群))
             .Distinct(パス比較規則.文字列比較子)
             .OrderBy(path => path, パス比較規則.文字列比較子)
             .ToArray();
@@ -405,7 +407,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         {
             if (
                 string.Equals(Path.GetExtension(対象パス), ".cs", パス比較規則.文字列比較方式)
-                && !PathFilter.ShouldIgnore(対象パス, rootPath, _無視対象パス群)
+                && !パス除外判定器.無視する(対象パス, rootPath, _無視対象パス群)
             )
             {
                 yield return 対象パス;
@@ -419,7 +421,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         )
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!PathFilter.ShouldIgnore(file, rootPath, _無視対象パス群))
+            if (!パス除外判定器.無視する(file, rootPath, _無視対象パス群))
             {
                 yield return file;
             }

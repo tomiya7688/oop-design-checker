@@ -10,16 +10,16 @@ internal sealed class ExcessiveVisibilityRule : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP101", "Excessive visibility", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
-        if (!context.Project.アプリケーションである)
+        if (!context.対象プロジェクト.アプリケーションである)
         {
             yield break;
         }
 
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
@@ -27,7 +27,7 @@ internal sealed class ExcessiveVisibilityRule : I解析規則
                 if (
                     semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
                     || symbol.DeclaredAccessibility != Accessibility.Public
-                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
+                    || !シンボル操作器.主宣言である(symbol, declaration)
                     || FrameworkContractClassifier.HasExternalTypeContract(symbol)
                 )
                 {
@@ -57,15 +57,15 @@ internal sealed class ExcessiveVisibilityRule : I解析規則
     }
 
     private static List<INamedTypeSymbol> FindReferencingTypes(
-        AnalysisContext context,
+        解析文脈 context,
         INamedTypeSymbol target
     )
     {
         var result = new List<INamedTypeSymbol>();
 
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var name in root.DescendantNodes().OfType<SimpleNameSyntax>())
@@ -99,6 +99,6 @@ internal sealed class ExcessiveVisibilityRule : I解析規則
     }
 
     private static bool IsHierarchyRelated(INamedTypeSymbol target, INamedTypeSymbol other) =>
-        SymbolUtilities.IsSameOrBaseType(target, other)
-        || SymbolUtilities.IsSameOrBaseType(other, target);
+        シンボル操作器.同じ型か基底型である(target, other)
+        || シンボル操作器.同じ型か基底型である(other, target);
 }

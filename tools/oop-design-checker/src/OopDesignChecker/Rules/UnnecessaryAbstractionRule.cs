@@ -10,7 +10,7 @@ internal sealed class UnnecessaryAbstractionRule : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP003", "Unnecessary abstraction candidate", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
         var interfaces = ReadSourceInterfaces(context).ToArray();
         var classes = ReadSourceClasses(context).ToArray();
@@ -60,11 +60,11 @@ internal sealed class UnnecessaryAbstractionRule : I解析規則
                 or Accessibility.ProtectedOrInternal
                 or Accessibility.ProtectedAndInternal;
 
-    private static IEnumerable<InterfaceEntry> ReadSourceInterfaces(AnalysisContext context)
+    private static IEnumerable<InterfaceEntry> ReadSourceInterfaces(解析文脈 context)
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             foreach (
                 var declaration in syntaxTree
                     .GetRoot()
@@ -80,11 +80,11 @@ internal sealed class UnnecessaryAbstractionRule : I解析規則
         }
     }
 
-    private static IEnumerable<ClassEntry> ReadSourceClasses(AnalysisContext context)
+    private static IEnumerable<ClassEntry> ReadSourceClasses(解析文脈 context)
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             foreach (
                 var declaration in syntaxTree
                     .GetRoot()
@@ -101,14 +101,14 @@ internal sealed class UnnecessaryAbstractionRule : I解析規則
     }
 
     private static bool HasTypedUseOutsideImplementation(
-        AnalysisContext context,
+        解析文脈 context,
         INamedTypeSymbol interfaceType,
         INamedTypeSymbol implementation
     )
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             foreach (var name in syntaxTree.GetRoot().DescendantNodes().OfType<SimpleNameSyntax>())
             {
                 if (
