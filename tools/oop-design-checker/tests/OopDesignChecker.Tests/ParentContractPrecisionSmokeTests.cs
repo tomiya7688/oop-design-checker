@@ -3,9 +3,9 @@ using OopDesignChecker.Rules;
 
 namespace OopDesignChecker.Tests;
 
-internal static class ParentContractPrecisionSmokeTests
+internal static class 親契約精度スモークテスト
 {
-    public static void Run()
+    public static void 実行する()
     {
         意味のある親操作を無効化した場合に警告する();
         任意の空実装フックを許可する();
@@ -17,7 +17,7 @@ internal static class ParentContractPrecisionSmokeTests
 
     private static void 意味のある親操作を無効化した場合に警告する()
     {
-        const string source = """
+        const string ソース = """
             internal class Base
             {
                 private int _started;
@@ -35,7 +35,7 @@ internal static class ParentContractPrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 親契約未使用規則(),
-            source,
+            ソース,
             "OOP302",
             DesignDiagnosticSeverity.Warning
         );
@@ -43,7 +43,7 @@ internal static class ParentContractPrecisionSmokeTests
 
     private static void 任意の空実装フックを許可する()
     {
-        const string source = """
+        const string ソース = """
             internal class Template
             {
                 protected virtual void BeforeRun() { }
@@ -57,12 +57,12 @@ internal static class ParentContractPrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new 親契約未使用規則(), source, "OOP302");
+        診断がないことを確認する(new 親契約未使用規則(), ソース, "OOP302");
     }
 
     private static void 抽象親操作の拒否を危険とする()
     {
-        const string source = """
+        const string ソース = """
             internal abstract class Base
             {
                 public abstract void Run();
@@ -76,7 +76,7 @@ internal static class ParentContractPrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 子型による親動作無効化規則(),
-            source,
+            ソース,
             "OOP303",
             DesignDiagnosticSeverity.Danger
         );
@@ -84,7 +84,7 @@ internal static class ParentContractPrecisionSmokeTests
 
     private static void 実装済み親操作の拒否を危険とする()
     {
-        const string source = """
+        const string ソース = """
             internal class Base
             {
                 private int _runs;
@@ -99,7 +99,7 @@ internal static class ParentContractPrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 子型による親動作無効化規則(),
-            source,
+            ソース,
             "OOP303",
             DesignDiagnosticSeverity.Danger
         );
@@ -107,7 +107,7 @@ internal static class ParentContractPrecisionSmokeTests
 
     private static void 既に拒否される親操作を許可する()
     {
-        const string source = """
+        const string ソース = """
             internal class Base
             {
                 public virtual void Run() => throw new System.NotSupportedException();
@@ -119,12 +119,12 @@ internal static class ParentContractPrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new 子型による親動作無効化規則(), source, "OOP303");
+        診断がないことを確認する(new 子型による親動作無効化規則(), ソース, "OOP303");
     }
 
     private static void 外部抽象操作の拒否を危険とする()
     {
-        const string source = """
+        const string ソース = """
             using System;
             using System.Net.Http;
             using System.Threading;
@@ -141,47 +141,45 @@ internal static class ParentContractPrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 子型による親動作無効化規則(),
-            source,
+            ソース,
             "OOP303",
             DesignDiagnosticSeverity.Danger
         );
     }
 
     private static void 診断が1件であることを確認する(
-        I解析規則 rule,
-        string source,
-        string ruleId,
-        DesignDiagnosticSeverity severity
+        I解析規則 規則,
+        string ソース,
+        string 規則ID,
+        DesignDiagnosticSeverity 重要度
     )
     {
-        var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
-        if (
-            diagnostics.Length == 1
-            && diagnostics[0].Rule.Id == ruleId
-            && diagnostics[0].Severity == severity
-        )
+        var 診断一覧 = 規則.解析する(テスト用プロジェクト作成器.解析文脈を作る(ソース)).ToArray();
+        if (診断一覧.Length == 1 && 診断一覧[0].Rule.Id == 規則ID && 診断一覧[0].Severity == 重要度)
         {
             return;
         }
 
-        var found = string.Join(
+        var 検出内容 = string.Join(
             ", ",
-            diagnostics.Select(item => $"{item.Rule.Id}:{item.Severity}")
+            診断一覧.Select(項目 => $"{項目.Rule.Id}:{項目.Severity}")
         );
         throw new InvalidOperationException(
-            $"Expected one {ruleId}:{severity} diagnostic, found [{found}]."
+            $"Expected one {規則ID}:{重要度} diagnostic, found [{検出内容}]."
         );
     }
 
-    private static void 診断がないことを確認する(I解析規則 rule, string source, string ruleId)
+    private static void 診断がないことを確認する(I解析規則 規則, string ソース, string 規則ID)
     {
-        var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
-        if (diagnostics.Length == 0)
+        var 診断一覧 = 規則.解析する(テスト用プロジェクト作成器.解析文脈を作る(ソース)).ToArray();
+        if (診断一覧.Length == 0)
         {
             return;
         }
 
-        var found = string.Join(", ", diagnostics.Select(item => item.Rule.Id));
-        throw new InvalidOperationException($"Expected no {ruleId} diagnostic, found [{found}].");
+        var 検出内容 = string.Join(", ", 診断一覧.Select(項目 => 項目.Rule.Id));
+        throw new InvalidOperationException(
+            $"Expected no {規則ID} diagnostic, found [{検出内容}]."
+        );
     }
 }

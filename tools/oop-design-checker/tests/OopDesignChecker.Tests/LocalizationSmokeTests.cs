@@ -6,27 +6,27 @@ using OopDesignChecker.Output;
 
 namespace OopDesignChecker.Tests;
 
-internal static class LocalizationSmokeTests
+internal static class 表示言語スモークテスト
 {
-    public static void Run()
+    public static void 実行する()
     {
-        JapaneseIsDefault();
-        EnglishCanBeSelected();
-        InvalidLanguageIsRejected();
-        TextSummaryIsLocalized();
-        DiagnosticTitleAndMessageAreLocalized();
-        JapaneseDiagnosticTextUsesEverydayLanguage();
-        JapaneseOperationTextAvoidsUnneededEnglish();
-        JapaneseAnalysisErrorsDoNotExposeLoaderInternals();
-        MachineReadableDiagnosticsRemainCanonicalEnglish();
+        日本語を既定にする();
+        英語を選択できる();
+        無効な言語を拒否する();
+        テキスト概要を選択言語で表示する();
+        診断名とメッセージを選択言語で表示する();
+        日本語診断を日常的な表現にする();
+        日本語の処理説明で不要な英語を避ける();
+        日本語の解析エラーに読み込み器の内部情報を出さない();
+        機械可読診断を英語の正規表記で維持する();
     }
 
-    private static void JapaneseIsDefault()
+    private static void 日本語を既定にする()
     {
-        var result = コマンドライン引数解析器.Parse(["sample.cs"]);
+        var 結果 = コマンドライン引数解析器.Parse(["sample.cs"]);
         if (
-            !result.IsSuccess
-            || result.Options?.Language != UserInterfaceLanguage.Japanese
+            !結果.IsSuccess
+            || 結果.Options?.Language != UserInterfaceLanguage.Japanese
             || !コマンドライン引数解析器
                 .Usage(UserInterfaceLanguage.Japanese)
                 .Contains("使用方法", StringComparison.Ordinal)
@@ -36,12 +36,12 @@ internal static class LocalizationSmokeTests
         }
     }
 
-    private static void EnglishCanBeSelected()
+    private static void 英語を選択できる()
     {
-        var result = コマンドライン引数解析器.Parse(["sample.cs", "--language", "en"]);
+        var 結果 = コマンドライン引数解析器.Parse(["sample.cs", "--language", "en"]);
         if (
-            !result.IsSuccess
-            || result.Options?.Language != UserInterfaceLanguage.English
+            !結果.IsSuccess
+            || 結果.Options?.Language != UserInterfaceLanguage.English
             || !コマンドライン引数解析器
                 .Usage(UserInterfaceLanguage.English)
                 .StartsWith("Usage:", StringComparison.Ordinal)
@@ -51,30 +51,30 @@ internal static class LocalizationSmokeTests
         }
     }
 
-    private static void InvalidLanguageIsRejected()
+    private static void 無効な言語を拒否する()
     {
-        var result = コマンドライン引数解析器.Parse(["sample.cs", "--language", "xx"]);
-        if (result.IsSuccess)
+        var 結果 = コマンドライン引数解析器.Parse(["sample.cs", "--language", "xx"]);
+        if (結果.IsSuccess)
         {
             throw new InvalidOperationException("Unsupported UI languages must be rejected.");
         }
     }
 
-    private static void TextSummaryIsLocalized()
+    private static void テキスト概要を選択言語で表示する()
     {
-        var diagnostic = new DesignDiagnostic(
+        var 診断 = new DesignDiagnostic(
             new RuleDescriptor("OOP999", "Sample rule", DesignDiagnosticSeverity.Warning),
             DesignDiagnosticSeverity.Warning,
             "Sample diagnostic",
             "Sample.Member",
             new SourceLocation(Path.GetFullPath("sample.cs"), 3, 7)
         );
-        var japanese = CaptureWriter(UserInterfaceLanguage.Japanese, diagnostic);
-        var english = CaptureWriter(UserInterfaceLanguage.English, diagnostic);
+        var 日本語文言 = 書き込み結果を取得する(UserInterfaceLanguage.Japanese, 診断);
+        var 英語文言 = 書き込み結果を取得する(UserInterfaceLanguage.English, 診断);
 
         if (
-            !japanese.Contains("結果: 危険 0件、警告 1件、注意 0件。", StringComparison.Ordinal)
-            || !english.Contains(
+            !日本語文言.Contains("結果: 危険 0件、警告 1件、注意 0件。", StringComparison.Ordinal)
+            || !英語文言.Contains(
                 "Diagnostics: 0 danger, 1 warning(s), 0 attention.",
                 StringComparison.Ordinal
             )
@@ -84,9 +84,9 @@ internal static class LocalizationSmokeTests
         }
     }
 
-    private static void DiagnosticTitleAndMessageAreLocalized()
+    private static void 診断名とメッセージを選択言語で表示する()
     {
-        var diagnostic = new DesignDiagnostic(
+        var 診断 = new DesignDiagnostic(
             new RuleDescriptor(
                 "OOP304",
                 "Excessive inheritance depth",
@@ -98,17 +98,17 @@ internal static class LocalizationSmokeTests
             new SourceLocation(Path.GetFullPath("deep.cs"), 12, 3)
         );
 
-        var japanese = CaptureWriter(UserInterfaceLanguage.Japanese, diagnostic, verbose: true);
-        var english = CaptureWriter(UserInterfaceLanguage.English, diagnostic, verbose: true);
+        var 日本語文言 = 書き込み結果を取得する(UserInterfaceLanguage.Japanese, 診断, true);
+        var 英語文言 = 書き込み結果を取得する(UserInterfaceLanguage.English, 診断, true);
 
         if (
-            !japanese.Contains("継承が深く複雑になっている", StringComparison.Ordinal)
-            || !japanese.Contains(
+            !日本語文言.Contains("継承が深く複雑になっている", StringComparison.Ordinal)
+            || !日本語文言.Contains(
                 "このプロジェクトでは継承が何段階にも重なっています",
                 StringComparison.Ordinal
             )
-            || !english.Contains("Excessive inheritance depth", StringComparison.Ordinal)
-            || !english.Contains("Project-owned inheritance depth is 4.", StringComparison.Ordinal)
+            || !英語文言.Contains("Excessive inheritance depth", StringComparison.Ordinal)
+            || !英語文言.Contains("Project-owned inheritance depth is 4.", StringComparison.Ordinal)
         )
         {
             throw new InvalidOperationException(
@@ -117,9 +117,9 @@ internal static class LocalizationSmokeTests
         }
     }
 
-    private static void MachineReadableDiagnosticsRemainCanonicalEnglish()
+    private static void 機械可読診断を英語の正規表記で維持する()
     {
-        var diagnostic = new DesignDiagnostic(
+        var 診断 = new DesignDiagnostic(
             new RuleDescriptor(
                 "OOP304",
                 "Excessive inheritance depth",
@@ -130,16 +130,19 @@ internal static class LocalizationSmokeTests
             "Sample.DeepType",
             new SourceLocation(Path.GetFullPath("deep.cs"), 12, 3)
         );
-        var path = Path.Combine(Path.GetTempPath(), $"oop-localization-{Guid.NewGuid():N}.json");
+        var パス = Path.Combine(Path.GetTempPath(), $"oop-localization-{Guid.NewGuid():N}.json");
 
         try
         {
-            new JSON診断書き込み器(path).Write([diagnostic], verbose: true);
-            var json = File.ReadAllText(path);
+            new JSON診断書き込み器(パス).Write([診断], verbose: true);
+            var JSON文字列 = File.ReadAllText(パス);
             if (
-                !json.Contains("Excessive inheritance depth", StringComparison.Ordinal)
-                || !json.Contains("Project-owned inheritance depth is 4.", StringComparison.Ordinal)
-                || json.Contains("継承階層が深すぎる", StringComparison.Ordinal)
+                !JSON文字列.Contains("Excessive inheritance depth", StringComparison.Ordinal)
+                || !JSON文字列.Contains(
+                    "Project-owned inheritance depth is 4.",
+                    StringComparison.Ordinal
+                )
+                || JSON文字列.Contains("継承階層が深すぎる", StringComparison.Ordinal)
             )
             {
                 throw new InvalidOperationException(
@@ -149,16 +152,16 @@ internal static class LocalizationSmokeTests
         }
         finally
         {
-            if (File.Exists(path))
+            if (File.Exists(パス))
             {
-                File.Delete(path);
+                File.Delete(パス);
             }
         }
     }
 
-    private static void JapaneseDiagnosticTextUsesEverydayLanguage()
+    private static void 日本語診断を日常的な表現にする()
     {
-        var forbiddenTerms = new[]
+        var 禁止語一覧 = new[]
         {
             "具象型",
             "型コード",
@@ -171,37 +174,37 @@ internal static class LocalizationSmokeTests
             "setter",
         };
 
-        for (var ruleNumber = 1; ruleNumber <= 3; ruleNumber++)
+        for (var 規則番号 = 1; 規則番号 <= 3; 規則番号++)
         {
-            AssertJapaneseTextHasNoTerms($"OOP{ruleNumber:000}", forbiddenTerms);
+            日本語表示に禁止語がないことを確認する($"OOP{規則番号:000}", 禁止語一覧);
         }
 
-        for (var ruleNumber = 101; ruleNumber <= 108; ruleNumber++)
+        for (var 規則番号 = 101; 規則番号 <= 108; 規則番号++)
         {
-            AssertJapaneseTextHasNoTerms($"OOP{ruleNumber:000}", forbiddenTerms);
+            日本語表示に禁止語がないことを確認する($"OOP{規則番号:000}", 禁止語一覧);
         }
 
-        AssertJapaneseTextHasNoTerms("OOP201", forbiddenTerms);
+        日本語表示に禁止語がないことを確認する("OOP201", 禁止語一覧);
 
-        for (var ruleNumber = 301; ruleNumber <= 307; ruleNumber++)
+        for (var 規則番号 = 301; 規則番号 <= 307; 規則番号++)
         {
-            AssertJapaneseTextHasNoTerms($"OOP{ruleNumber:000}", forbiddenTerms);
+            日本語表示に禁止語がないことを確認する($"OOP{規則番号:000}", 禁止語一覧);
         }
 
-        for (var ruleNumber = 401; ruleNumber <= 405; ruleNumber++)
+        for (var 規則番号 = 401; 規則番号 <= 405; 規則番号++)
         {
-            AssertJapaneseTextHasNoTerms($"OOP{ruleNumber:000}", forbiddenTerms);
+            日本語表示に禁止語がないことを確認する($"OOP{規則番号:000}", 禁止語一覧);
         }
 
-        var typeBranching = CreateDiagnostic("OOP002");
-        var exposedState = CreateDiagnostic("OOP106");
-        var deepNavigation = CreateDiagnostic("OOP404");
+        var 型分岐 = 診断を作る("OOP002");
+        var 公開状態 = 診断を作る("OOP106");
+        var 深い辿り = 診断を作る("OOP404");
         if (
-            DiagnosticTextLocalizer.Message(typeBranching, UserInterfaceLanguage.Japanese)
+            DiagnosticTextLocalizer.Message(型分岐, UserInterfaceLanguage.Japanese)
                 != "種類ごとの分岐が繰り返されています。各種類に処理を持たせて、呼び出し側の分岐を減らせないか確認してください。"
-            || DiagnosticTextLocalizer.Message(exposedState, UserInterfaceLanguage.Japanese)
+            || DiagnosticTextLocalizer.Message(公開状態, UserInterfaceLanguage.Japanese)
                 != "外部から内部の値を直接変更できる状態です。値の変更方法をこのオブジェクト側で管理できないか確認してください。"
-            || DiagnosticTextLocalizer.Message(deepNavigation, UserInterfaceLanguage.Japanese)
+            || DiagnosticTextLocalizer.Message(深い辿り, UserInterfaceLanguage.Japanese)
                 != "別のオブジェクトの中を何段階もたどって処理しています。相手の内部構造を知らずに済む形にできないか確認してください。"
         )
         {
@@ -211,9 +214,9 @@ internal static class LocalizationSmokeTests
         }
     }
 
-    private static void JapaneseOperationTextAvoidsUnneededEnglish()
+    private static void 日本語の処理説明で不要な英語を避ける()
     {
-        var terms = new[]
+        var 用語一覧 = new[]
         {
             "target path",
             "option",
@@ -226,7 +229,7 @@ internal static class LocalizationSmokeTests
             "checker設定",
             "フォーカス",
         };
-        var messages = new[]
+        var メッセージ一覧 = new[]
         {
             LocalizedText.ConfigRequiresPath(UserInterfaceLanguage.Japanese),
             LocalizedText.OutputRequiresPath(UserInterfaceLanguage.Japanese),
@@ -243,8 +246,8 @@ internal static class LocalizationSmokeTests
         };
 
         if (
-            messages.Any(message =>
-                terms.Any(term => message.Contains(term, StringComparison.OrdinalIgnoreCase))
+            メッセージ一覧.Any(メッセージ =>
+                用語一覧.Any(用語 => メッセージ.Contains(用語, StringComparison.OrdinalIgnoreCase))
             )
         )
         {
@@ -254,18 +257,24 @@ internal static class LocalizationSmokeTests
         }
     }
 
-    private static void JapaneseAnalysisErrorsDoNotExposeLoaderInternals()
+    private static void 日本語の解析エラーに読み込み器の内部情報を出さない()
     {
-        const string loaderMessage =
+        const string 読み込みエラー内容 =
             "Target contains 3 C# projects. Use project-set analysis for multi-project targets.";
-        var japanese = LocalizedText.AnalysisFailed(UserInterfaceLanguage.Japanese, loaderMessage);
-        var english = LocalizedText.AnalysisFailed(UserInterfaceLanguage.English, loaderMessage);
+        var 日本語文言 = LocalizedText.AnalysisFailed(
+            UserInterfaceLanguage.Japanese,
+            読み込みエラー内容
+        );
+        var 英語文言 = LocalizedText.AnalysisFailed(
+            UserInterfaceLanguage.English,
+            読み込みエラー内容
+        );
 
         if (
-            japanese.Contains("Target contains", StringComparison.Ordinal)
-            || japanese.Contains("project-set", StringComparison.Ordinal)
-            || !japanese.Contains("確認してください", StringComparison.Ordinal)
-            || !english.Contains(loaderMessage, StringComparison.Ordinal)
+            日本語文言.Contains("Target contains", StringComparison.Ordinal)
+            || 日本語文言.Contains("project-set", StringComparison.Ordinal)
+            || !日本語文言.Contains("確認してください", StringComparison.Ordinal)
+            || !英語文言.Contains(読み込みエラー内容, StringComparison.Ordinal)
         )
         {
             throw new InvalidOperationException(
@@ -274,47 +283,50 @@ internal static class LocalizationSmokeTests
         }
     }
 
-    private static void AssertJapaneseTextHasNoTerms(string ruleId, IReadOnlyList<string> terms)
+    private static void 日本語表示に禁止語がないことを確認する(
+        string 規則ID,
+        IReadOnlyList<string> 用語一覧
+    )
     {
-        var diagnostic = CreateDiagnostic(ruleId);
-        var text =
-            DiagnosticTextLocalizer.Title(diagnostic, UserInterfaceLanguage.Japanese)
-            + DiagnosticTextLocalizer.Message(diagnostic, UserInterfaceLanguage.Japanese);
+        var 診断 = 診断を作る(規則ID);
+        var テキスト =
+            DiagnosticTextLocalizer.Title(診断, UserInterfaceLanguage.Japanese)
+            + DiagnosticTextLocalizer.Message(診断, UserInterfaceLanguage.Japanese);
 
-        if (terms.Any(term => text.Contains(term, StringComparison.OrdinalIgnoreCase)))
+        if (用語一覧.Any(用語 => テキスト.Contains(用語, StringComparison.OrdinalIgnoreCase)))
         {
             throw new InvalidOperationException(
-                $"Japanese text for {ruleId} contains unnecessary jargon."
+                $"Japanese text for {規則ID} contains unnecessary jargon."
             );
         }
     }
 
-    private static DesignDiagnostic CreateDiagnostic(string ruleId) =>
+    private static DesignDiagnostic 診断を作る(string 規則ID) =>
         new(
-            new RuleDescriptor(ruleId, $"English title {ruleId}", DesignDiagnosticSeverity.Warning),
+            new RuleDescriptor(規則ID, $"English title {規則ID}", DesignDiagnosticSeverity.Warning),
             DesignDiagnosticSeverity.Warning,
-            $"English diagnostic {ruleId}",
+            $"English diagnostic {規則ID}",
             "Sample.Member",
             new SourceLocation("sample.cs", 1, 1)
         );
 
-    private static string CaptureWriter(
-        UserInterfaceLanguage language,
-        DesignDiagnostic diagnostic,
-        bool verbose = false
+    private static string 書き込み結果を取得する(
+        UserInterfaceLanguage 言語,
+        DesignDiagnostic 診断,
+        bool 詳細表示 = false
     )
     {
-        var path = Path.Combine(Path.GetTempPath(), $"oop-localization-{Guid.NewGuid():N}.txt");
+        var パス = Path.Combine(Path.GetTempPath(), $"oop-localization-{Guid.NewGuid():N}.txt");
         try
         {
-            new コンソール診断書き込み器(path, language).Write([diagnostic], verbose);
-            return File.ReadAllText(path);
+            new コンソール診断書き込み器(パス, 言語).Write([診断], 詳細表示);
+            return File.ReadAllText(パス);
         }
         finally
         {
-            if (File.Exists(path))
+            if (File.Exists(パス))
             {
-                File.Delete(path);
+                File.Delete(パス);
             }
         }
     }

@@ -6,16 +6,16 @@ using Xunit;
 
 namespace OopDesignChecker.ContractTests;
 
-public sealed class CommandLineContractTests
+public sealed class CLI契約テスト
 {
     [Fact]
-    public void TargetDefaultsToCurrentDirectory()
+    public void 対象を作業ディレクトリに設定する()
     {
-        var result = コマンドライン引数解析器.Parse([]);
+        var 結果 = コマンドライン引数解析器.Parse([]);
 
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Options);
-        Assert.Equal(Path.GetFullPath(Directory.GetCurrentDirectory()), result.Options.TargetPath);
+        Assert.True(結果.IsSuccess);
+        Assert.NotNull(結果.Options);
+        Assert.Equal(Path.GetFullPath(Directory.GetCurrentDirectory()), 結果.Options.TargetPath);
     }
 
     [Theory]
@@ -24,13 +24,13 @@ public sealed class CommandLineContractTests
     [InlineData("sample.sln")]
     [InlineData("sample.slnx")]
     [InlineData("sample-folder")]
-    public void SupportedTargetShapesReachTheApplication(string target)
+    public void 対応する対象形式をアプリケーションへ渡す(string 対象)
     {
-        var result = コマンドライン引数解析器.Parse([target]);
+        var 結果 = コマンドライン引数解析器.Parse([対象]);
 
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Options);
-        Assert.Equal(Path.GetFullPath(target), result.Options.TargetPath);
+        Assert.True(結果.IsSuccess);
+        Assert.NotNull(結果.Options);
+        Assert.Equal(Path.GetFullPath(対象), 結果.Options.TargetPath);
     }
 
     [Theory]
@@ -39,56 +39,56 @@ public sealed class CommandLineContractTests
     [InlineData("--format")]
     [InlineData("--output")]
     [InlineData("--language")]
-    public void OptionsThatRequireValuesRejectMissingValues(string option)
+    public void 値が必要なオプションで値の欠落を拒否する(string オプション)
     {
-        var result = コマンドライン引数解析器.Parse([option]);
+        var 結果 = コマンドライン引数解析器.Parse([オプション]);
 
-        Assert.False(result.IsSuccess);
-        Assert.Null(result.Options);
-        Assert.False(string.IsNullOrWhiteSpace(result.ErrorMessage));
+        Assert.False(結果.IsSuccess);
+        Assert.Null(結果.Options);
+        Assert.False(string.IsNullOrWhiteSpace(結果.ErrorMessage));
     }
 
     [Fact]
-    public void UnknownOptionIsRejected()
+    public void 不明なオプションを拒否する()
     {
-        var result = コマンドライン引数解析器.Parse(["--not-a-real-option"]);
+        var 結果 = コマンドライン引数解析器.Parse(["--not-a-real-option"]);
 
-        Assert.False(result.IsSuccess);
-        Assert.Contains("--not-a-real-option", result.ErrorMessage, StringComparison.Ordinal);
+        Assert.False(結果.IsSuccess);
+        Assert.Contains("--not-a-real-option", 結果.ErrorMessage, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void MultipleTargetsAreRejected()
+    public void 複数の対象を拒否する()
     {
-        var result = コマンドライン引数解析器.Parse(["one.cs", "two.cs"]);
+        var 結果 = コマンドライン引数解析器.Parse(["one.cs", "two.cs"]);
 
-        Assert.False(result.IsSuccess);
-        Assert.Null(result.Options);
+        Assert.False(結果.IsSuccess);
+        Assert.Null(結果.Options);
     }
 
     [Theory]
     [InlineData("attention", DesignDiagnosticSeverity.Attention)]
     [InlineData("warning", DesignDiagnosticSeverity.Warning)]
     [InlineData("danger", DesignDiagnosticSeverity.Danger)]
-    public void FailureThresholdAcceptsEveryNamedSeverity(
-        string value,
-        DesignDiagnosticSeverity expected
+    public void 失敗基準にすべての名前付き重要度を受け入れる(
+        string 値,
+        DesignDiagnosticSeverity 期待値
     )
     {
-        var result = コマンドライン引数解析器.Parse(["--fail-on", value]);
+        var 結果 = コマンドライン引数解析器.Parse(["--fail-on", 値]);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(expected, result.Options!.FailureThreshold);
+        Assert.True(結果.IsSuccess);
+        Assert.Equal(期待値, 結果.Options!.FailureThreshold);
     }
 
     [Theory]
     [InlineData("999")]
     [InlineData("critical")]
-    public void FailureThresholdRejectsInvalidValues(string value)
+    public void 失敗基準の不正な値を拒否する(string 値)
     {
-        var result = コマンドライン引数解析器.Parse(["--fail-on", value]);
+        var 結果 = コマンドライン引数解析器.Parse(["--fail-on", 値]);
 
-        Assert.False(result.IsSuccess);
+        Assert.False(結果.IsSuccess);
     }
 
     [Theory]
@@ -96,222 +96,217 @@ public sealed class CommandLineContractTests
     [InlineData("json", "Json")]
     [InlineData("sarif", "Sarif")]
     [InlineData("github", "GitHub")]
-    public void OutputFormatAcceptsEveryNamedValue(string value, string expected)
+    public void 出力形式にすべての名前付き値を受け入れる(string 値, string 期待値)
     {
-        var result = コマンドライン引数解析器.Parse(["--format", value]);
+        var 結果 = コマンドライン引数解析器.Parse(["--format", 値]);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(expected, result.Options!.OutputFormat.ToString());
+        Assert.True(結果.IsSuccess);
+        Assert.Equal(期待値, 結果.Options!.OutputFormat.ToString());
     }
 
     [Theory]
     [InlineData("999")]
     [InlineData("xml")]
-    public void OutputFormatRejectsInvalidValues(string value)
+    public void 出力形式の不正な値を拒否する(string 値)
     {
-        var result = コマンドライン引数解析器.Parse(["--format", value]);
+        var 結果 = コマンドライン引数解析器.Parse(["--format", 値]);
 
-        Assert.False(result.IsSuccess);
+        Assert.False(結果.IsSuccess);
     }
 
     [Theory]
     [InlineData("ja", UserInterfaceLanguage.Japanese)]
     [InlineData("en", UserInterfaceLanguage.English)]
-    public void LanguageAcceptsSupportedValues(string value, UserInterfaceLanguage expected)
+    public void 対応する言語値を受け入れる(string 値, UserInterfaceLanguage 期待値)
     {
-        var result = コマンドライン引数解析器.Parse(["--language", value]);
+        var 結果 = コマンドライン引数解析器.Parse(["--language", 値]);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(expected, result.Options!.Language);
+        Assert.True(結果.IsSuccess);
+        Assert.Equal(期待値, 結果.Options!.Language);
     }
 
     [Fact]
-    public void LanguageRejectsUnknownValue()
+    public void 不明な言語値を拒否する()
     {
-        var result = コマンドライン引数解析器.Parse(["--language", "fr"]);
+        var 結果 = コマンドライン引数解析器.Parse(["--language", "fr"]);
 
-        Assert.False(result.IsSuccess);
+        Assert.False(結果.IsSuccess);
     }
 
     [Fact]
-    public void WarningsAsErrorsMapsToWarningThreshold()
+    public void 警告をエラーにする指定を警告基準へ対応させる()
     {
-        var result = コマンドライン引数解析器.Parse(["--warnings-as-errors"]);
+        var 結果 = コマンドライン引数解析器.Parse(["--warnings-as-errors"]);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(DesignDiagnosticSeverity.Warning, result.Options!.FailureThreshold);
+        Assert.True(結果.IsSuccess);
+        Assert.Equal(DesignDiagnosticSeverity.Warning, 結果.Options!.FailureThreshold);
     }
 
     [Fact]
-    public void VerboseFlagIsPreserved()
+    public void 詳細表示フラグを維持する()
     {
-        var result = コマンドライン引数解析器.Parse(["--verbose"]);
+        var 結果 = コマンドライン引数解析器.Parse(["--verbose"]);
 
-        Assert.True(result.IsSuccess);
-        Assert.True(result.Options!.Verbose);
+        Assert.True(結果.IsSuccess);
+        Assert.True(結果.Options!.Verbose);
     }
 
     [Fact]
-    public void OutputPathIsNormalized()
+    public void 出力先パスを正規化する()
     {
-        var result = コマンドライン引数解析器.Parse([
-            "--format",
-            "json",
-            "--output",
-            "results.json",
-        ]);
+        var 結果 = コマンドライン引数解析器.Parse(["--format", "json", "--output", "results.json"]);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(Path.GetFullPath("results.json"), result.Options!.OutputPath);
+        Assert.True(結果.IsSuccess);
+        Assert.Equal(Path.GetFullPath("results.json"), 結果.Options!.OutputPath);
     }
 
     [Fact]
-    public void GithubAnnotationsRejectOutputFile()
+    public void GitHub注釈形式で出力ファイルを拒否する()
     {
-        var result = コマンドライン引数解析器.Parse([
+        var 結果 = コマンドライン引数解析器.Parse([
             "--format",
             "github",
             "--output",
             "annotations.txt",
         ]);
 
-        Assert.False(result.IsSuccess);
+        Assert.False(結果.IsSuccess);
     }
 
     [Fact]
-    public void VersionAliasesReturnProductVersion()
+    public void バージョン別名で製品バージョンを返す()
     {
-        AssertVersion("--version");
-        AssertVersion("-V");
+        バージョンを確認する("--version");
+        バージョンを確認する("-V");
     }
 
     [Fact]
-    public void HelpReturnsControlledUsageExit()
+    public void ヘルプ表示で制御された終了結果を返す()
     {
-        var result = RunCommand(["--help"]);
+        var 結果 = CLIを実行する(["--help"]);
 
-        Assert.Equal(2, result.ExitCode);
+        Assert.Equal(2, 結果.終了コード);
         Assert.Contains(
             コマンドライン引数解析器.Usage(UserInterfaceLanguage.Japanese),
-            result.Error,
+            結果.エラー,
             StringComparison.Ordinal
         );
     }
 
     [Fact]
-    public void CliExitCodesCoverSuccessDiagnosticFailureAndUsageFailure()
+    public void CLI終了コードで成功と診断失敗と使用方法エラーを区別する()
     {
-        WithTemporaryDirectory(root =>
+        一時ディレクトリで実行する(ルート =>
         {
-            var clean = Path.Combine(root, "Clean.cs");
-            var danger = Path.Combine(root, "Danger.cs");
+            var 正常 = Path.Combine(ルート, "Clean.cs");
+            var 危険診断 = Path.Combine(ルート, "Danger.cs");
             File.WriteAllText(
-                clean,
+                正常,
                 "internal sealed class Clean { private int _value; public int Value => _value; }"
             );
-            File.WriteAllText(danger, "internal sealed class Danger { public int Value; }");
+            File.WriteAllText(危険診断, "internal sealed class Danger { public int Value; }");
 
-            Assert.Equal(0, RunCommand([clean, "--fail-on", "danger"]).ExitCode);
-            Assert.Equal(1, RunCommand([danger, "--fail-on", "danger"]).ExitCode);
-            Assert.Equal(2, RunCommand([Path.Combine(root, "missing-target")]).ExitCode);
+            Assert.Equal(0, CLIを実行する([正常, "--fail-on", "danger"]).終了コード);
+            Assert.Equal(1, CLIを実行する([危険診断, "--fail-on", "danger"]).終了コード);
+            Assert.Equal(2, CLIを実行する([Path.Combine(ルート, "missing-target")]).終了コード);
         });
     }
 
     [Fact]
-    public void JsonOutputCreatesRequestedFile()
+    public void JSON出力で指定ファイルを作成する()
     {
-        WithTemporaryDirectory(root =>
+        一時ディレクトリで実行する(ルート =>
         {
-            var source = Path.Combine(root, "Danger.cs");
-            var output = Path.Combine(root, "diagnostics.json");
-            File.WriteAllText(source, "internal sealed class Danger { public int Value; }");
+            var ソース = Path.Combine(ルート, "Danger.cs");
+            var 出力 = Path.Combine(ルート, "diagnostics.json");
+            File.WriteAllText(ソース, "internal sealed class Danger { public int Value; }");
 
-            var result = RunCommand([
-                source,
+            var 結果 = CLIを実行する([
+                ソース,
                 "--format",
                 "json",
                 "--output",
-                output,
+                出力,
                 "--fail-on",
                 "danger",
             ]);
 
-            Assert.Equal(1, result.ExitCode);
-            Assert.True(File.Exists(output));
+            Assert.Equal(1, 結果.終了コード);
+            Assert.True(File.Exists(出力));
             Assert.Contains(
                 @"""ruleId"": ""OOP106""",
-                File.ReadAllText(output),
+                File.ReadAllText(出力),
                 StringComparison.Ordinal
             );
         });
     }
 
     [Fact]
-    public void OutputWriteFailureReturnsControlledExitCode()
+    public void 出力書き込み失敗で制御された終了コードを返す()
     {
-        WithTemporaryDirectory(root =>
+        一時ディレクトリで実行する(ルート =>
         {
-            var source = Path.Combine(root, "Clean.cs");
-            var output = Path.Combine(root, "output-target");
-            Directory.CreateDirectory(output);
+            var ソース = Path.Combine(ルート, "Clean.cs");
+            var 出力 = Path.Combine(ルート, "output-target");
+            Directory.CreateDirectory(出力);
             File.WriteAllText(
-                source,
+                ソース,
                 "internal sealed class Clean { private int _value; public int Value => _value; }"
             );
 
-            var result = RunCommand([source, "--format", "json", "--output", output]);
+            var 結果 = CLIを実行する([ソース, "--format", "json", "--output", 出力]);
 
-            Assert.Equal(2, result.ExitCode);
-            Assert.False(string.IsNullOrWhiteSpace(result.Error));
+            Assert.Equal(2, 結果.終了コード);
+            Assert.False(string.IsNullOrWhiteSpace(結果.エラー));
         });
     }
 
-    private static void AssertVersion(string option)
+    private static void バージョンを確認する(string オプション)
     {
-        var result = RunCommand([option]);
+        var 結果 = CLIを実行する([オプション]);
 
-        Assert.Equal(0, result.ExitCode);
-        Assert.Equal("1.0.0", result.Output.Trim());
-        Assert.True(string.IsNullOrWhiteSpace(result.Error));
+        Assert.Equal(0, 結果.終了コード);
+        Assert.Equal("1.0.0", 結果.出力.Trim());
+        Assert.True(string.IsNullOrWhiteSpace(結果.エラー));
     }
 
-    private static CommandResult RunCommand(IReadOnlyList<string> args)
+    private static コマンド実行結果 CLIを実行する(IReadOnlyList<string> 引数)
     {
-        var originalOut = Console.Out;
-        var originalError = Console.Error;
-        using var output = new StringWriter();
-        using var error = new StringWriter();
+        var 元の標準出力 = Console.Out;
+        var 元のエラー = Console.Error;
+        using var 出力 = new StringWriter();
+        using var エラー = new StringWriter();
         try
         {
-            Console.SetOut(output);
-            Console.SetError(error);
-            var exitCode = CheckerCommandLine.Run(args);
-            return new CommandResult(exitCode, output.ToString(), error.ToString());
+            Console.SetOut(出力);
+            Console.SetError(エラー);
+            var 終了コード = CheckerCommandLine.Run(引数);
+            return new コマンド実行結果(終了コード, 出力.ToString(), エラー.ToString());
         }
         finally
         {
-            Console.SetOut(originalOut);
-            Console.SetError(originalError);
+            Console.SetOut(元の標準出力);
+            Console.SetError(元のエラー);
         }
     }
 
-    private static void WithTemporaryDirectory(Action<string> action)
+    private static void 一時ディレクトリで実行する(Action<string> 処理)
     {
-        var root = Path.Combine(
+        var ルート = Path.Combine(
             Path.GetTempPath(),
             "oop-design-checker-contract-tests",
             Guid.NewGuid().ToString("N")
         );
-        Directory.CreateDirectory(root);
+        Directory.CreateDirectory(ルート);
         try
         {
-            action(root);
+            処理(ルート);
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            Directory.Delete(ルート, recursive: true);
         }
     }
 
-    private sealed record CommandResult(int ExitCode, string Output, string Error);
+    private sealed record コマンド実行結果(int 終了コード, string 出力, string エラー);
 }

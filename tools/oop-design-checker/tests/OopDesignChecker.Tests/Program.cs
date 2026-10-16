@@ -5,21 +5,21 @@ using OopDesignChecker.Rules;
 
 namespace OopDesignChecker.Tests;
 
-internal static class Program
+internal static class スモークテスト実行処理
 {
-    private static readonly IReadOnlyList<TestCase> TestCases =
+    private static readonly IReadOnlyList<テスト項目> テスト項目一覧 =
     [
         new(
             "project loader resolves real project/package references",
-            ProjectLoaderResolvesProjectReferences
+            プロジェクト読み込み器がプロジェクト参照を解決する
         ),
         new(
             "project loader rejects broken loose-source compilations",
-            ProjectLoaderRejectsBrokenCompilation
+            プロジェクト読み込み器が不正なコンパイルを拒否する
         ),
         new(
             "project loader keeps multi-project compilations separate",
-            ProjectLoaderKeepsMultiProjectCompilationsSeparate
+            プロジェクト読み込み器が複数プロジェクトを別々に保つ
         ),
         new(
             "checker service analyzes SDK-style project folders",
@@ -35,7 +35,7 @@ internal static class Program
         ),
         new(
             "OOP101 detects public classes confined to an inheritance hierarchy",
-            ExcessiveVisibilityIsDetected
+            過剰な可視性を検出する
         ),
         new("OOP106 detects public mutable fields as danger", カプセル化漏出を検出する),
         new(
@@ -44,22 +44,22 @@ internal static class Program
         ),
         new("OOP106 detects unnecessarily public setters as warning", 不要な公開設定子を検出する),
         new("OOP106 keeps externally used setters public", 外部使用される設定子を許可する),
-        new("OOP103 static member candidates are attention", StaticMemberCandidateIsDetected),
+        new("OOP103 static member candidates are attention", 静的メンバー候補を検出する),
         new(
             "OOP103 does not suggest static when inherited instance state is used",
-            InheritedInstanceStateIsNotStaticCandidate
+            継承したインスタンス状態を静的候補にしない
         ),
-        new("OOP104 static class candidates are attention", StaticClassCandidateIsDetected),
-        new("OOP002 type branching is warning", TypeBranchingIsDetected),
-        new("OOP303 disabled parent behavior is danger", DisabledParentBehaviorIsDetected),
-        new("OOP304 deep inheritance is attention", DeepInheritanceIsDetected),
-        new("core OOP rule sprint", CoreRuleSmokeTests.Run),
+        new("OOP104 static class candidates are attention", 静的クラス候補を検出する),
+        new("OOP002 type branching is warning", 型による分岐を検出する),
+        new("OOP303 disabled parent behavior is danger", 無効化された親の振る舞いを検出する),
+        new("OOP304 deep inheritance is attention", 深い継承を検出する),
+        new("core OOP rule sprint", 基本規則スモークテスト.実行する),
         new("CI diagnostic output formats", 出力形式スモークテスト.実行する),
         new(
             "shared product version resolution handles metadata and fallbacks",
-            ProductVersionResolverTests.Run
+            製品版情報解決テスト.実行する
         ),
-        new("Japanese and English UI localization", LocalizationSmokeTests.Run),
+        new("Japanese and English UI localization", 表示言語スモークテスト.実行する),
         new(
             "GUI configuration, export, and cancellation workflow",
             GUIワークフロー第2段階スモークテスト.実行する
@@ -71,52 +71,52 @@ internal static class Program
 
     private static int Main()
     {
-        var failed = 0;
+        var 失敗数 = 0;
 
-        foreach (var testCase in TestCases)
+        foreach (var テスト項目 in テスト項目一覧)
         {
             try
             {
-                testCase.Run();
-                Console.WriteLine($"PASS {testCase.Name}");
+                テスト項目.実行する();
+                Console.WriteLine($"PASS {テスト項目.Name}");
             }
-            catch (Exception exception)
+            catch (Exception 例外)
             {
-                failed++;
-                Console.Error.WriteLine($"FAIL {testCase.Name}");
-                Console.Error.WriteLine(exception.Message);
+                失敗数++;
+                Console.Error.WriteLine($"FAIL {テスト項目.Name}");
+                Console.Error.WriteLine(例外.Message);
             }
         }
 
-        Console.WriteLine($"{TestCases.Count - failed}/{TestCases.Count} tests passed.");
-        return failed == 0 ? 0 : 1;
+        Console.WriteLine($"{テスト項目一覧.Count - 失敗数}/{テスト項目一覧.Count} tests passed.");
+        return 失敗数 == 0 ? 0 : 1;
     }
 
-    private static void ProjectLoaderResolvesProjectReferences()
+    private static void プロジェクト読み込み器がプロジェクト参照を解決する()
     {
-        var repositoryRoot = FindRepositoryRoot();
-        var projectPath = Path.Combine(
-            repositoryRoot,
+        var リポジトリルート = リポジトリルートを取得する();
+        var プロジェクトパス = Path.Combine(
+            リポジトリルート,
             "src",
             "OopDesignChecker",
             "OopDesignChecker.csproj"
         );
 
-        var project = new CSharpプロジェクト読み込み器().読み込む(projectPath);
-        var errors = project
+        var プロジェクト = new CSharpプロジェクト読み込み器().読み込む(プロジェクトパス);
+        var エラー一覧 = プロジェクト
             .コンパイル結果.GetDiagnostics()
-            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .Where(診断 => 診断.Severity == DiagnosticSeverity.Error)
             .ToArray();
 
-        if (errors.Length > 0)
+        if (エラー一覧.Length > 0)
         {
             throw new InvalidOperationException(
                 "Expected project compilation without errors:\n"
-                    + string.Join("\n", errors.Select(error => error.ToString()))
+                    + string.Join("\n", エラー一覧.Select(エラー => エラー.ToString()))
             );
         }
 
-        if (project.構文木群.Any(tree => パス除外判定器.無視する(tree.FilePath)))
+        if (プロジェクト.構文木群.Any(ツリー => パス除外判定器.無視する(ツリー.FilePath)))
         {
             throw new InvalidOperationException(
                 "Generated bin/obj source leaked into rule traversal."
@@ -124,16 +124,16 @@ internal static class Program
         }
     }
 
-    private static void ProjectLoaderKeepsMultiProjectCompilationsSeparate()
+    private static void プロジェクト読み込み器が複数プロジェクトを別々に保つ()
     {
-        var repositoryRoot = FindRepositoryRoot();
-        var temporarySolution = Path.Combine(
-            repositoryRoot,
+        var リポジトリルート = リポジトリルートを取得する();
+        var 一時ソリューション = Path.Combine(
+            リポジトリルート,
             $"oop-checker-multi-project-{Guid.NewGuid():N}.slnx"
         );
 
         File.WriteAllText(
-            temporarySolution,
+            一時ソリューション,
             """
             <Solution>
               <Project Path="src/OopDesignChecker/OopDesignChecker.csproj" />
@@ -144,22 +144,22 @@ internal static class Program
 
         try
         {
-            var projects = new CSharpプロジェクト読み込み器().プロジェクト群を読み込む(
-                temporarySolution
+            var プロジェクト一覧 = new CSharpプロジェクト読み込み器().プロジェクト群を読み込む(
+                一時ソリューション
             );
-            if (projects.Count != 2)
+            if (プロジェクト一覧.Count != 2)
             {
                 throw new InvalidOperationException(
-                    $"Expected 2 separately loaded projects, found {projects.Count}."
+                    $"Expected 2 separately loaded projects, found {プロジェクト一覧.Count}."
                 );
             }
 
-            var assemblyNames = projects
-                .Select(project => project.コンパイル結果.AssemblyName)
-                .Where(name => !string.IsNullOrWhiteSpace(name))
+            var アセンブリ名一覧 = プロジェクト一覧
+                .Select(プロジェクト => プロジェクト.コンパイル結果.AssemblyName)
+                .Where(名前 => !string.IsNullOrWhiteSpace(名前))
                 .Distinct(StringComparer.Ordinal)
                 .ToArray();
-            if (assemblyNames.Length != 2)
+            if (アセンブリ名一覧.Length != 2)
             {
                 throw new InvalidOperationException(
                     "Expected each project to retain its own compilation."
@@ -168,22 +168,22 @@ internal static class Program
         }
         finally
         {
-            File.Delete(temporarySolution);
+            File.Delete(一時ソリューション);
         }
     }
 
     private static void CheckerServiceがSDK形式のプロジェクトフォルダーを解析する()
     {
-        var temporaryDirectory = Path.Combine(
+        var 一時ディレクトリ = Path.Combine(
             Path.GetTempPath(),
             $"oop-checker-folder-project-{Guid.NewGuid():N}"
         );
-        Directory.CreateDirectory(temporaryDirectory);
+        Directory.CreateDirectory(一時ディレクトリ);
 
         try
         {
             File.WriteAllText(
-                Path.Combine(temporaryDirectory, "FolderTarget.csproj"),
+                Path.Combine(一時ディレクトリ, "FolderTarget.csproj"),
                 """
                 <Project Sdk="Microsoft.NET.Sdk">
                   <PropertyGroup>
@@ -193,23 +193,25 @@ internal static class Program
                 """
             );
             File.WriteAllText(
-                Path.Combine(temporaryDirectory, "Sample.cs"),
+                Path.Combine(一時ディレクトリ, "Sample.cs"),
                 "internal sealed class Sample { private int _value; public int Value => _value; }"
             );
 
-            _ = CheckerService.Analyze(temporaryDirectory);
+            _ = CheckerService.Analyze(一時ディレクトリ);
         }
         finally
         {
-            Directory.Delete(temporaryDirectory, recursive: true);
+            Directory.Delete(一時ディレクトリ, recursive: true);
         }
     }
 
     private static void プロジェクト読み込み器がソリューションルートを読み込む()
     {
-        var repositoryRoot = FindRepositoryRoot();
-        var projects = new CSharpプロジェクト読み込み器().プロジェクト群を読み込む(repositoryRoot);
-        if (projects.Count < 1)
+        var リポジトリルート = リポジトリルートを取得する();
+        var プロジェクト一覧 = new CSharpプロジェクト読み込み器().プロジェクト群を読み込む(
+            リポジトリルート
+        );
+        if (プロジェクト一覧.Count < 1)
         {
             throw new InvalidOperationException(
                 "Expected the solution root folder to load at least one C# project."
@@ -219,83 +221,83 @@ internal static class Program
 
     private static void 診断識別情報がパスの大文字小文字規則を維持する()
     {
-        var root = Path.Combine(Path.GetTempPath(), $"oop-checker-case-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(root);
+        var ルート = Path.Combine(Path.GetTempPath(), $"oop-checker-case-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(ルート);
 
         try
         {
-            var upper = CreateProjectForPath(Path.Combine(root, "Foo.cs"));
-            var lower = CreateProjectForPath(Path.Combine(root, "foo.cs"));
-            var diagnostics = new 解析実行器([new カプセル化漏出規則()])
-                .解析する([upper, lower])
-                .Where(diagnostic => diagnostic.Rule.Id == "OOP106")
+            var 大文字 = パスに対応するプロジェクトを作る(Path.Combine(ルート, "Foo.cs"));
+            var 小文字 = パスに対応するプロジェクトを作る(Path.Combine(ルート, "foo.cs"));
+            var 診断一覧 = new 解析実行器([new カプセル化漏出規則()])
+                .解析する([大文字, 小文字])
+                .Where(診断 => 診断.Rule.Id == "OOP106")
                 .ToArray();
 
-            var expected = OperatingSystem.IsWindows() ? 1 : 2;
-            if (diagnostics.Length != expected)
+            var 期待値 = OperatingSystem.IsWindows() ? 1 : 2;
+            if (診断一覧.Length != 期待値)
             {
                 throw new InvalidOperationException(
-                    $"Expected {expected} case-distinct diagnostic(s), found {diagnostics.Length}."
+                    $"Expected {期待値} case-distinct diagnostic(s), found {診断一覧.Length}."
                 );
             }
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            Directory.Delete(ルート, recursive: true);
         }
     }
 
-    private static 解析対象プロジェクト CreateProjectForPath(string filePath)
+    private static 解析対象プロジェクト パスに対応するプロジェクトを作る(string ファイルパス)
     {
-        const string source = "internal sealed class Same { public int Value; }";
-        var syntaxTree = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(
-            source,
-            path: filePath
+        const string ソース = "internal sealed class Same { public int Value; }";
+        var 構文木 = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(
+            ソース,
+            path: ファイルパス
         );
-        var compilation = Microsoft.CodeAnalysis.CSharp.CSharpCompilation.Create(
-            Path.GetFileNameWithoutExtension(filePath),
-            [syntaxTree],
+        var コンパイル結果 = Microsoft.CodeAnalysis.CSharp.CSharpCompilation.Create(
+            Path.GetFileNameWithoutExtension(ファイルパス),
+            [構文木],
             メタデータ参照提供器.プラットフォーム参照群を作る(),
             new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(
                 Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary
             )
         );
-        var semanticModels = new Dictionary<
+        var 意味モデル一覧 = new Dictionary<
             Microsoft.CodeAnalysis.SyntaxTree,
             Microsoft.CodeAnalysis.SemanticModel
         >
         {
-            [syntaxTree] = compilation.GetSemanticModel(syntaxTree),
+            [構文木] = コンパイル結果.GetSemanticModel(構文木),
         };
 
         return new 解析対象プロジェクト(
-            Path.GetDirectoryName(filePath)!,
+            Path.GetDirectoryName(ファイルパス)!,
             アプリケーションである: false,
-            compilation,
-            semanticModels,
-            [syntaxTree]
+            コンパイル結果,
+            意味モデル一覧,
+            [構文木]
         );
     }
 
-    private static void ProjectLoaderRejectsBrokenCompilation()
+    private static void プロジェクト読み込み器が不正なコンパイルを拒否する()
     {
-        var temporaryDirectory = Path.Combine(
+        var 一時ディレクトリ = Path.Combine(
             Path.GetTempPath(),
             $"oop-checker-test-{Guid.NewGuid():N}"
         );
-        Directory.CreateDirectory(temporaryDirectory);
+        Directory.CreateDirectory(一時ディレクトリ);
 
         try
         {
-            var sourcePath = Path.Combine(temporaryDirectory, "Broken.cs");
-            File.WriteAllText(sourcePath, "internal sealed class Broken { MissingType Value; }");
+            var ソースパス = Path.Combine(一時ディレクトリ, "Broken.cs");
+            File.WriteAllText(ソースパス, "internal sealed class Broken { MissingType Value; }");
 
             try
             {
-                _ = new CSharpプロジェクト読み込み器().読み込む(sourcePath);
+                _ = new CSharpプロジェクト読み込み器().読み込む(ソースパス);
             }
-            catch (InvalidOperationException exception)
-                when (exception.Message.Contains(
+            catch (InvalidOperationException 例外)
+                when (例外.Message.Contains(
                         "could not be analyzed reliably",
                         StringComparison.Ordinal
                     )
@@ -310,13 +312,13 @@ internal static class Program
         }
         finally
         {
-            Directory.Delete(temporaryDirectory, recursive: true);
+            Directory.Delete(一時ディレクトリ, recursive: true);
         }
     }
 
-    private static void ExcessiveVisibilityIsDetected()
+    private static void 過剰な可視性を検出する()
     {
-        const string source = """
+        const string ソース = """
             public class Base
             {
             }
@@ -326,26 +328,26 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new 過剰可視性規則(), source);
-        AssertSingleRule(diagnostics, "OOP101", DesignDiagnosticSeverity.Warning);
+        var 診断一覧 = 実行する(new 過剰可視性規則(), ソース);
+        単一規則の診断を確認する(診断一覧, "OOP101", DesignDiagnosticSeverity.Warning);
     }
 
     private static void カプセル化漏出を検出する()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class Sample
             {
                 public int Value;
             }
             """;
 
-        var diagnostics = Run(new カプセル化漏出規則(), source);
-        AssertSingleRule(diagnostics, "OOP106", DesignDiagnosticSeverity.Danger);
+        var 診断一覧 = 実行する(new カプセル化漏出規則(), ソース);
+        単一規則の診断を確認する(診断一覧, "OOP106", DesignDiagnosticSeverity.Danger);
     }
 
     private static void 可変コレクションの公開を検出する()
     {
-        const string source = """
+        const string ソース = """
             using System.Collections.Generic;
 
             internal sealed class Bag
@@ -356,13 +358,13 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new カプセル化漏出規則(), source);
-        AssertSingleRule(diagnostics, "OOP106", DesignDiagnosticSeverity.Danger);
+        var 診断一覧 = 実行する(new カプセル化漏出規則(), ソース);
+        単一規則の診断を確認する(診断一覧, "OOP106", DesignDiagnosticSeverity.Danger);
     }
 
     private static void 不要な公開設定子を検出する()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class Counter
             {
                 public int Value { get; set; }
@@ -374,13 +376,13 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new カプセル化漏出規則(), source);
-        AssertSingleRule(diagnostics, "OOP106", DesignDiagnosticSeverity.Warning);
+        var 診断一覧 = 実行する(new カプセル化漏出規則(), ソース);
+        単一規則の診断を確認する(診断一覧, "OOP106", DesignDiagnosticSeverity.Warning);
     }
 
     private static void 外部使用される設定子を許可する()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class Counter
             {
                 public int Value { get; set; }
@@ -400,13 +402,13 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new カプセル化漏出規則(), source);
-        AssertRuleCount(diagnostics, "OOP106", 0);
+        var 診断一覧 = 実行する(new カプセル化漏出規則(), ソース);
+        規則数を確認する(診断一覧, "OOP106", 0);
     }
 
-    private static void StaticMemberCandidateIsDetected()
+    private static void 静的メンバー候補を検出する()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class Calculator
             {
                 private int _offset;
@@ -416,13 +418,13 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new 静的メンバー候補規則(), source);
-        AssertSingleRule(diagnostics, "OOP103", DesignDiagnosticSeverity.Attention);
+        var 診断一覧 = 実行する(new 静的メンバー候補規則(), ソース);
+        単一規則の診断を確認する(診断一覧, "OOP103", DesignDiagnosticSeverity.Attention);
     }
 
-    private static void InheritedInstanceStateIsNotStaticCandidate()
+    private static void 継承したインスタンス状態を静的候補にしない()
     {
-        const string source = """
+        const string ソース = """
             internal class BaseCalculator
             {
                 protected int Offset => 1;
@@ -434,26 +436,26 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new 静的メンバー候補規則(), source);
-        AssertRuleCount(diagnostics, "OOP103", 0);
+        var 診断一覧 = 実行する(new 静的メンバー候補規則(), ソース);
+        規則数を確認する(診断一覧, "OOP103", 0);
     }
 
-    private static void StaticClassCandidateIsDetected()
+    private static void 静的クラス候補を検出する()
     {
-        const string source = """
+        const string ソース = """
             internal class Utility
             {
                 public int Add(int left, int right) => left + right;
             }
             """;
 
-        var diagnostics = Run(new 静的クラス候補規則(), source);
-        AssertSingleRule(diagnostics, "OOP104", DesignDiagnosticSeverity.Attention);
+        var 診断一覧 = 実行する(new 静的クラス候補規則(), ソース);
+        単一規則の診断を確認する(診断一覧, "OOP104", DesignDiagnosticSeverity.Attention);
     }
 
-    private static void TypeBranchingIsDetected()
+    private static void 型による分岐を検出する()
     {
-        const string source = """
+        const string ソース = """
             internal abstract class Animal
             {
             }
@@ -480,13 +482,13 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new 型分岐ポリモーフィズム規則(), source);
-        AssertSingleRule(diagnostics, "OOP002", DesignDiagnosticSeverity.Warning);
+        var 診断一覧 = 実行する(new 型分岐ポリモーフィズム規則(), ソース);
+        単一規則の診断を確認する(診断一覧, "OOP002", DesignDiagnosticSeverity.Warning);
     }
 
-    private static void DisabledParentBehaviorIsDetected()
+    private static void 無効化された親の振る舞いを検出する()
     {
-        const string source = """
+        const string ソース = """
             using System;
 
             internal abstract class Base
@@ -500,13 +502,13 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new 子型による親動作無効化規則(), source);
-        AssertSingleRule(diagnostics, "OOP303", DesignDiagnosticSeverity.Danger);
+        var 診断一覧 = 実行する(new 子型による親動作無効化規則(), ソース);
+        単一規則の診断を確認する(診断一覧, "OOP303", DesignDiagnosticSeverity.Danger);
     }
 
-    private static void DeepInheritanceIsDetected()
+    private static void 深い継承を検出する()
     {
-        const string source = """
+        const string ソース = """
             internal class A
             {
             }
@@ -528,28 +530,28 @@ internal static class Program
             }
             """;
 
-        var diagnostics = Run(new 継承深度過剰規則(), source);
-        AssertSingleRule(diagnostics, "OOP304", DesignDiagnosticSeverity.Attention);
+        var 診断一覧 = 実行する(new 継承深度過剰規則(), ソース);
+        単一規則の診断を確認する(診断一覧, "OOP304", DesignDiagnosticSeverity.Attention);
     }
 
-    private static DesignDiagnostic[] Run(I解析規則 rule, string source) =>
-        rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
+    private static DesignDiagnostic[] 実行する(I解析規則 規則, string ソース) =>
+        規則.解析する(テスト用プロジェクト作成器.解析文脈を作る(ソース)).ToArray();
 
-    private static string FindRepositoryRoot()
+    private static string リポジトリルートを取得する()
     {
-        var candidates = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        var 候補一覧 = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
 
-        foreach (var candidate in candidates)
+        foreach (var 候補 in 候補一覧)
         {
-            var current = new DirectoryInfo(candidate);
-            while (current is not null)
+            var 現在値 = new DirectoryInfo(候補);
+            while (現在値 is not null)
             {
-                if (File.Exists(Path.Combine(current.FullName, "OopDesignChecker.sln")))
+                if (File.Exists(Path.Combine(現在値.FullName, "OopDesignChecker.sln")))
                 {
-                    return current.FullName;
+                    return 現在値.FullName;
                 }
 
-                current = current.Parent;
+                現在値 = 現在値.Parent;
             }
         }
 
@@ -558,37 +560,37 @@ internal static class Program
         );
     }
 
-    private static void AssertSingleRule(
-        DesignDiagnostic[] diagnostics,
-        string ruleId,
-        DesignDiagnosticSeverity severity
+    private static void 単一規則の診断を確認する(
+        DesignDiagnostic[] 診断一覧,
+        string 規則ID,
+        DesignDiagnosticSeverity 重要度
     )
     {
-        AssertRuleCount(diagnostics, ruleId, 1);
+        規則数を確認する(診断一覧, 規則ID, 1);
 
-        if (diagnostics[0].Severity != severity)
+        if (診断一覧[0].Severity != 重要度)
         {
             throw new InvalidOperationException(
-                $"Expected severity {severity}, but found {diagnostics[0].Severity}."
+                $"Expected severity {重要度}, but found {診断一覧[0].Severity}."
             );
         }
     }
 
-    private static void AssertRuleCount(
-        DesignDiagnostic[] diagnostics,
-        string ruleId,
-        int expectedCount
+    private static void 規則数を確認する(
+        DesignDiagnostic[] 診断一覧,
+        string 規則ID,
+        int 期待する件数
     )
     {
-        var matching = diagnostics.Where(diagnostic => diagnostic.Rule.Id == ruleId).ToArray();
-        if (matching.Length != expectedCount)
+        var 一致項目 = 診断一覧.Where(診断 => 診断.Rule.Id == 規則ID).ToArray();
+        if (一致項目.Length != 期待する件数)
         {
-            var found = string.Join(", ", diagnostics.Select(diagnostic => diagnostic.Rule.Id));
+            var 検出内容 = string.Join(", ", 診断一覧.Select(診断 => 診断.Rule.Id));
             throw new InvalidOperationException(
-                $"Expected {expectedCount} {ruleId} diagnostic(s), found {matching.Length}. All diagnostics: [{found}]"
+                $"Expected {期待する件数} {規則ID} diagnostic(s), found {一致項目.Length}. All diagnostics: [{検出内容}]"
             );
         }
     }
 
-    private sealed record TestCase(string Name, Action Run);
+    private sealed record テスト項目(string Name, Action 実行する);
 }

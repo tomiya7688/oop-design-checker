@@ -21,7 +21,7 @@ public static class ProductVersionResolver
     {
         ArgumentNullException.ThrowIfNull(assembly);
 
-        return Resolve(
+        return バージョンを解決する(
             assembly
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
                 ?.InformationalVersion,
@@ -37,7 +37,10 @@ public static class ProductVersionResolver
       戻り値: CLIに表示するversion文字列
     }
     */
-    internal static string Resolve(string? informationalVersion, Version? assemblyVersion)
+    internal static string バージョンを解決する(
+        string? informationalVersion,
+        Version? assemblyVersion
+    )
     {
         if (!string.IsNullOrWhiteSpace(informationalVersion))
         {

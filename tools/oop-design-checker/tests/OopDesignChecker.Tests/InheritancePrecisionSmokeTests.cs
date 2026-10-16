@@ -4,9 +4,9 @@ using OopDesignChecker.Rules;
 
 namespace OopDesignChecker.Tests;
 
-internal static class InheritancePrecisionSmokeTests
+internal static class 継承精度スモークテスト
 {
-    public static void Run()
+    public static void 実行する()
     {
         マーカーインターフェースだけでは具象依存の警告を出さない();
         アクセス不能なインターフェースメンバーを抽象候補にしない();
@@ -29,12 +29,12 @@ internal static class InheritancePrecisionSmokeTests
         実装再利用目的の継承を注意とする();
         コンストラクターだけのprotected利用を許可する();
         正当な特化をコンポジション候補にしない();
-        ParentContractPrecisionSmokeTests.Run();
+        親契約精度スモークテスト.実行する();
     }
 
     private static void マーカーインターフェースだけでは具象依存の警告を出さない()
     {
-        const string source = """
+        const string ソース = """
             internal interface IMarker
             {
             }
@@ -50,12 +50,12 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new 具象型依存規則(), source, "OOP305");
+        診断がないことを確認する(new 具象型依存規則(), ソース, "OOP305");
     }
 
     private static void アクセス不能なインターフェースメンバーを抽象候補にしない()
     {
-        const string source = """
+        const string ソース = """
             internal interface IPrivateHelperOnly
             {
                 private void Reset() { }
@@ -94,13 +94,13 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new 具象型依存規則(), source, "OOP305");
-        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
+        診断がないことを確認する(new 具象型依存規則(), ソース, "OOP305");
+        診断がないことを確認する(new 回避可能な具象生成規則(), ソース, "OOP306");
     }
 
     private static void 継承したインスタンス契約を意味のある抽象とみなす()
     {
-        const string source = """
+        const string ソース = """
             internal interface IReadOnlyClock
             {
                 int Read();
@@ -141,13 +141,13 @@ internal static class InheritancePrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 具象型依存規則(),
-            source,
+            ソース,
             "OOP305",
             DesignDiagnosticSeverity.Warning
         );
         診断が1件であることを確認する(
             new 回避可能な具象生成規則(),
-            source,
+            ソース,
             "OOP306",
             DesignDiagnosticSeverity.Warning
         );
@@ -155,7 +155,7 @@ internal static class InheritancePrecisionSmokeTests
 
     private static void internalなインスタンス契約を同一プロジェクト内で利用できる()
     {
-        const string source = """
+        const string ソース = """
             internal interface IAssemblyContract
             {
                 internal void Reset() { }
@@ -179,7 +179,7 @@ internal static class InheritancePrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 回避可能な具象生成規則(),
-            source,
+            ソース,
             "OOP306",
             DesignDiagnosticSeverity.Warning
         );
@@ -187,7 +187,7 @@ internal static class InheritancePrecisionSmokeTests
 
     private static void 抽象のみを使う利用者へ具象依存を警告する()
     {
-        const string source = """
+        const string ソース = """
             internal interface IClock
             {
                 int Read();
@@ -214,7 +214,7 @@ internal static class InheritancePrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 具象型依存規則(),
-            source,
+            ソース,
             "OOP305",
             DesignDiagnosticSeverity.Warning
         );
@@ -222,7 +222,7 @@ internal static class InheritancePrecisionSmokeTests
 
     private static void 後続の意味ある抽象と利用者の使用を照合する()
     {
-        const string source = """
+        const string ソース = """
             internal interface IClock
             {
                 int Read();
@@ -254,7 +254,7 @@ internal static class InheritancePrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 具象型依存規則(),
-            source,
+            ソース,
             "OOP305",
             DesignDiagnosticSeverity.Warning
         );
@@ -262,7 +262,7 @@ internal static class InheritancePrecisionSmokeTests
 
     private static void 複数の抽象候補を決定的に選ぶ()
     {
-        const string source = """
+        const string ソース = """
             internal interface IZeta
             {
                 int Read();
@@ -291,20 +291,20 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        var diagnostic = new 具象型依存規則()
-            .解析する(TestProjectFactory.解析文脈を作る(source))
-            .Single(item => item.Rule.Id == "OOP305");
-        if (!diagnostic.Message.Contains("project abstraction IAlpha", StringComparison.Ordinal))
+        var 診断 = new 具象型依存規則()
+            .解析する(テスト用プロジェクト作成器.解析文脈を作る(ソース))
+            .Single(項目 => 項目.Rule.Id == "OOP305");
+        if (!診断.Message.Contains("project abstraction IAlpha", StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
-                $"Expected deterministic IAlpha candidate in the diagnostic, found: {diagnostic.Message}"
+                $"Expected deterministic IAlpha candidate in the diagnostic, found: {診断.Message}"
             );
         }
     }
 
     private static void 具象型だけの振る舞いを具象依存の根拠にする()
     {
-        const string source = """
+        const string ソース = """
             internal interface IClock
             {
                 int Read();
@@ -335,81 +335,81 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new 具象型依存規則(), source, "OOP305");
+        診断がないことを確認する(new 具象型依存規則(), ソース, "OOP305");
     }
 
     private static void 多数のコンストラクター引数で利用状況を再利用する()
     {
-        var source = new System.Text.StringBuilder();
-        const int dependencyCount = 8;
-        const int unrelatedTypeCount = 200;
+        var ソース = new System.Text.StringBuilder();
+        const int 依存数 = 8;
+        const int 無関係な型の数 = 200;
 
-        for (var index = 0; index < dependencyCount; index++)
+        for (var 位置 = 0; 位置 < 依存数; 位置++)
         {
-            source.AppendLine(
+            ソース.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"internal interface IContract{index} {{ int Read{index}(); }}"
+                $"internal interface IContract{位置} {{ int Read{位置}(); }}"
             );
-            source.AppendLine(
+            ソース.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"internal sealed class Dependency{index} : IContract{index} {{ public int Read{index}() => 0; }}"
+                $"internal sealed class Dependency{位置} : IContract{位置} {{ public int Read{位置}() => 0; }}"
             );
-            source.AppendLine(
+            ソース.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"internal sealed partial class Consumer {{ private readonly Dependency{index} _dependency{index}; }}"
+                $"internal sealed partial class Consumer {{ private readonly Dependency{位置} _dependency{位置}; }}"
             );
         }
 
-        for (var index = 0; index < unrelatedTypeCount; index++)
+        for (var 位置 = 0; 位置 < 無関係な型の数; 位置++)
         {
-            source.AppendLine(
+            ソース.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"internal sealed class Unrelated{index} {{ public int Read() => {index}; }}"
+                $"internal sealed class Unrelated{位置} {{ public int Read() => {位置}; }}"
             );
         }
 
-        source.AppendLine("internal sealed partial class Consumer");
-        source.AppendLine("{");
-        source.AppendLine(
+        ソース.AppendLine("internal sealed partial class Consumer");
+        ソース.AppendLine("{");
+        ソース.AppendLine(
             CultureInfo.InvariantCulture,
-            $"    public Consumer({string.Join(", ", Enumerable.Range(0, dependencyCount).Select(index => string.Create(CultureInfo.InvariantCulture, $"Dependency{index} dependency{index}")))})"
+            $"    public Consumer({string.Join(", ", Enumerable.Range(0, 依存数).Select(位置 => string.Create(CultureInfo.InvariantCulture, $"Dependency{位置} dependency{位置}")))})"
         );
-        source.AppendLine("    {");
-        for (var index = 0; index < dependencyCount; index++)
+        ソース.AppendLine("    {");
+        for (var 位置 = 0; 位置 < 依存数; 位置++)
         {
-            source.AppendLine(
+            ソース.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"        _dependency{index} = dependency{index};"
+                $"        _dependency{位置} = dependency{位置};"
             );
         }
 
-        source.AppendLine("    }");
-        for (var index = 0; index < dependencyCount; index++)
+        ソース.AppendLine("    }");
+        for (var 位置 = 0; 位置 < 依存数; 位置++)
         {
-            source.AppendLine(
+            ソース.AppendLine(
                 CultureInfo.InvariantCulture,
-                $"    public int Use{index}() => _dependency{index}.Read{index}();"
+                $"    public int Use{位置}() => _dependency{位置}.Read{位置}();"
             );
         }
 
-        source.AppendLine("}");
+        ソース.AppendLine("}");
 
-        var diagnostics = new 具象型依存規則()
-            .解析する(TestProjectFactory.解析文脈を作る(source.ToString()))
-            .Where(diagnostic => diagnostic.Rule.Id == "OOP305")
+        var 診断一覧 = new 具象型依存規則()
+            .解析する(テスト用プロジェクト作成器.解析文脈を作る(ソース.ToString()))
+            .Where(診断 => 診断.Rule.Id == "OOP305")
             .ToArray();
 
-        if (diagnostics.Length != dependencyCount)
+        if (診断一覧.Length != 依存数)
         {
             throw new InvalidOperationException(
-                $"Expected {dependencyCount} OOP305 diagnostics for a partial consumer with multiple constructor parameters, found {diagnostics.Length}."
+                $"Expected {依存数} OOP305 diagnostics for a partial consumer with multiple constructor parameters, found {診断一覧.Length}."
             );
         }
     }
 
     private static void マーカーインターフェースだけでは生成警告を出さない()
     {
-        const string source = """
+        const string ソース = """
             internal interface IMarker
             {
             }
@@ -425,12 +425,12 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
+        診断がないことを確認する(new 回避可能な具象生成規則(), ソース, "OOP306");
     }
 
     private static void 所有するファクトリーでの生成を許可する()
     {
-        const string source = """
+        const string ソース = """
             internal interface IClock
             {
                 int Read();
@@ -452,12 +452,12 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
+        診断がないことを確認する(new 回避可能な具象生成規則(), ソース, "OOP306");
     }
 
     private static void 入れ子のオブジェクト生成を許可する()
     {
-        const string source = """
+        const string ソース = """
             internal interface IClock
             {
                 int Read();
@@ -479,12 +479,12 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
+        診断がないことを確認する(new 回避可能な具象生成規則(), ソース, "OOP306");
     }
 
     private static void main内の依存構築を許可する()
     {
-        const string source = """
+        const string ソース = """
             internal interface IClock
             {
                 int Read();
@@ -510,12 +510,12 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
+        診断がないことを確認する(new 回避可能な具象生成規則(), ソース, "OOP306");
     }
 
     private static void コンポジションルート内の依存構築を許可する()
     {
-        const string source = """
+        const string ソース = """
             internal interface IClock
             {
                 int Read();
@@ -541,12 +541,12 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new 回避可能な具象生成規則(), source, "OOP306");
+        診断がないことを確認する(new 回避可能な具象生成規則(), ソース, "OOP306");
     }
 
     private static void 業務メソッド内の依存構築を警告する()
     {
-        const string source = """
+        const string ソース = """
             internal interface IClock
             {
                 int Read();
@@ -574,7 +574,7 @@ internal static class InheritancePrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 回避可能な具象生成規則(),
-            source,
+            ソース,
             "OOP306",
             DesignDiagnosticSeverity.Warning
         );
@@ -582,7 +582,7 @@ internal static class InheritancePrecisionSmokeTests
 
     private static void 業務式内の具象生成を警告する()
     {
-        const string source = """
+        const string ソース = """
             internal interface IClock
             {
                 int Read();
@@ -601,7 +601,7 @@ internal static class InheritancePrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 回避可能な具象生成規則(),
-            source,
+            ソース,
             "OOP306",
             DesignDiagnosticSeverity.Warning
         );
@@ -609,7 +609,7 @@ internal static class InheritancePrecisionSmokeTests
 
     private static void プロジェクト内の継承公開面置換を検出する()
     {
-        const string source = """
+        const string ソース = """
             internal class Device
             {
                 public void Start() { }
@@ -625,7 +625,7 @@ internal static class InheritancePrecisionSmokeTests
 
         診断が1件であることを確認する(
             new 疑わしい継承関係規則(),
-            source,
+            ソース,
             "OOP301",
             DesignDiagnosticSeverity.Warning
         );
@@ -633,7 +633,7 @@ internal static class InheritancePrecisionSmokeTests
 
     private static void 外部基底型の公開面置換を許可する()
     {
-        const string source = """
+        const string ソース = """
             internal sealed class CustomException : System.Exception
             {
                 public new string Message => "custom";
@@ -645,12 +645,12 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new 疑わしい継承関係規則(), source, "OOP301");
+        診断がないことを確認する(new 疑わしい継承関係規則(), ソース, "OOP301");
     }
 
     private static void 実装再利用目的の継承を注意とする()
     {
-        const string source = """
+        const string ソース = """
             internal class CalculatorBase
             {
                 protected int ReadLeft() => 1;
@@ -665,7 +665,7 @@ internal static class InheritancePrecisionSmokeTests
 
         診断が1件であることを確認する(
             new コンポジション候補規則(),
-            source,
+            ソース,
             "OOP307",
             DesignDiagnosticSeverity.Attention
         );
@@ -673,7 +673,7 @@ internal static class InheritancePrecisionSmokeTests
 
     private static void コンストラクターだけのprotected利用を許可する()
     {
-        const string source = """
+        const string ソース = """
             internal class ConfigurationBase
             {
                 protected int Left;
@@ -690,12 +690,12 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new コンポジション候補規則(), source, "OOP307");
+        診断がないことを確認する(new コンポジション候補規則(), ソース, "OOP307");
     }
 
     private static void 正当な特化をコンポジション候補にしない()
     {
-        const string source = """
+        const string ソース = """
             internal class Processor
             {
                 protected int ReadLeft() => 1;
@@ -709,44 +709,42 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        診断がないことを確認する(new コンポジション候補規則(), source, "OOP307");
+        診断がないことを確認する(new コンポジション候補規則(), ソース, "OOP307");
     }
 
     private static void 診断が1件であることを確認する(
-        I解析規則 rule,
-        string source,
-        string ruleId,
-        DesignDiagnosticSeverity severity
+        I解析規則 規則,
+        string ソース,
+        string 規則ID,
+        DesignDiagnosticSeverity 重要度
     )
     {
-        var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
-        if (
-            diagnostics.Length == 1
-            && diagnostics[0].Rule.Id == ruleId
-            && diagnostics[0].Severity == severity
-        )
+        var 診断一覧 = 規則.解析する(テスト用プロジェクト作成器.解析文脈を作る(ソース)).ToArray();
+        if (診断一覧.Length == 1 && 診断一覧[0].Rule.Id == 規則ID && 診断一覧[0].Severity == 重要度)
         {
             return;
         }
 
-        var found = string.Join(
+        var 検出内容 = string.Join(
             ", ",
-            diagnostics.Select(item => $"{item.Rule.Id}:{item.Severity}")
+            診断一覧.Select(項目 => $"{項目.Rule.Id}:{項目.Severity}")
         );
         throw new InvalidOperationException(
-            $"Expected one {ruleId}:{severity} diagnostic, found [{found}]."
+            $"Expected one {規則ID}:{重要度} diagnostic, found [{検出内容}]."
         );
     }
 
-    private static void 診断がないことを確認する(I解析規則 rule, string source, string ruleId)
+    private static void 診断がないことを確認する(I解析規則 規則, string ソース, string 規則ID)
     {
-        var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
-        if (diagnostics.Length == 0)
+        var 診断一覧 = 規則.解析する(テスト用プロジェクト作成器.解析文脈を作る(ソース)).ToArray();
+        if (診断一覧.Length == 0)
         {
             return;
         }
 
-        var found = string.Join(", ", diagnostics.Select(item => item.Rule.Id));
-        throw new InvalidOperationException($"Expected no {ruleId} diagnostic, found [{found}].");
+        var 検出内容 = string.Join(", ", 診断一覧.Select(項目 => 項目.Rule.Id));
+        throw new InvalidOperationException(
+            $"Expected no {規則ID} diagnostic, found [{検出内容}]."
+        );
     }
 }

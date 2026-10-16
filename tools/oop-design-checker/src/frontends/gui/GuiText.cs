@@ -88,7 +88,7 @@ internal enum GUI文言キー
 
 internal static class GUI文言
 {
-    private static readonly FrozenDictionary<GUI文言キー, string> Japanese = new Dictionary<
+    private static readonly FrozenDictionary<GUI文言キー, string> 日本語文言 = new Dictionary<
         GUI文言キー,
         string
     >
@@ -180,7 +180,7 @@ internal static class GUI文言
         [GUI文言キー.操作失敗] = "処理に失敗しました。入力内容と保存先を確認してください。",
     }.ToFrozenDictionary();
 
-    private static readonly FrozenDictionary<GUI文言キー, string> English = new Dictionary<
+    private static readonly FrozenDictionary<GUI文言キー, string> 英語文言 = new Dictionary<
         GUI文言キー,
         string
     >
@@ -269,7 +269,7 @@ internal static class GUI文言
     }.ToFrozenDictionary();
 
     public static string 取得する(GUI文言キー key, UserInterfaceLanguage language) =>
-        language == UserInterfaceLanguage.Japanese ? Japanese[key] : English[key];
+        language == UserInterfaceLanguage.Japanese ? 日本語文言[key] : 英語文言[key];
 
     public static string 書式化する(
         GUI文言キー key,

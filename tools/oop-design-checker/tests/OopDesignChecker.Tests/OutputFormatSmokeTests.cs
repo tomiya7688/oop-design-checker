@@ -23,7 +23,7 @@ internal static class 出力形式スモークテスト
 
     private static void CLIで出力形式と出力先を解析する()
     {
-        var result = コマンドライン引数解析器.Parse([
+        var 結果 = コマンドライン引数解析器.Parse([
             "sample.cs",
             "--format",
             "sarif",
@@ -32,10 +32,10 @@ internal static class 出力形式スモークテスト
         ]);
 
         if (
-            !result.IsSuccess
-            || result.Options is null
-            || result.Options.OutputFormat != 診断出力形式.Sarif
-            || !result.Options.OutputPath!.EndsWith("results.sarif", StringComparison.Ordinal)
+            !結果.IsSuccess
+            || 結果.Options is null
+            || 結果.Options.OutputFormat != 診断出力形式.Sarif
+            || !結果.Options.OutputPath!.EndsWith("results.sarif", StringComparison.Ordinal)
         )
         {
             throw new InvalidOperationException("Expected SARIF output CLI options to parse.");
@@ -44,14 +44,10 @@ internal static class 出力形式スモークテスト
 
     private static void 相対設定パスを維持する()
     {
-        var relativePath = Path.Combine("config", "checker.json");
-        var result = コマンドライン引数解析器.Parse(["sample.cs", "--config", relativePath]);
+        var 相対パス = Path.Combine("config", "checker.json");
+        var 結果 = コマンドライン引数解析器.Parse(["sample.cs", "--config", 相対パス]);
 
-        if (
-            !result.IsSuccess
-            || result.Options is null
-            || result.Options.ConfigurationPath != relativePath
-        )
+        if (!結果.IsSuccess || 結果.Options is null || 結果.Options.ConfigurationPath != 相対パス)
         {
             throw new InvalidOperationException(
                 "Relative --config paths must reach the configuration loader without being converted to a CWD-based absolute path."
@@ -61,35 +57,35 @@ internal static class 出力形式スモークテスト
 
     private static void CLIで製品バージョンを表示する()
     {
-        var originalOut = Console.Out;
-        using var captured = new StringWriter();
+        var 元の標準出力 = Console.Out;
+        using var 捕捉内容 = new StringWriter();
         try
         {
-            Console.SetOut(captured);
-            var exitCode = CheckerCommandLine.Run(["--version"]);
-            if (exitCode != 0)
+            Console.SetOut(捕捉内容);
+            var 終了コード = CheckerCommandLine.Run(["--version"]);
+            if (終了コード != 0)
             {
                 throw new InvalidOperationException(
-                    $"Expected --version to succeed, exit code was {exitCode}."
+                    $"Expected --version to succeed, exit code was {終了コード}."
                 );
             }
         }
         finally
         {
-            Console.SetOut(originalOut);
+            Console.SetOut(元の標準出力);
         }
 
-        if (!string.Equals(captured.ToString().Trim(), "1.0.0", StringComparison.Ordinal))
+        if (!string.Equals(捕捉内容.ToString().Trim(), "1.0.0", StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
-                $"Expected product version 1.0.0, found '{captured.ToString().Trim()}'."
+                $"Expected product version 1.0.0, found '{捕捉内容.ToString().Trim()}'."
             );
         }
     }
 
     private static void GitHub形式で出力ファイルを拒否する()
     {
-        var result = コマンドライン引数解析器.Parse([
+        var 結果 = コマンドライン引数解析器.Parse([
             "sample.cs",
             "--format",
             "github",
@@ -97,7 +93,7 @@ internal static class 出力形式スモークテスト
             "annotations.txt",
         ]);
 
-        if (result.IsSuccess)
+        if (結果.IsSuccess)
         {
             throw new InvalidOperationException(
                 "GitHub annotation output should reject --output because annotations must use stdout."
@@ -107,8 +103,8 @@ internal static class 出力形式スモークテスト
 
     private static void 数値の失敗基準を拒否する()
     {
-        var result = コマンドライン引数解析器.Parse(["sample.cs", "--fail-on", "999"]);
-        if (result.IsSuccess)
+        var 結果 = コマンドライン引数解析器.Parse(["sample.cs", "--fail-on", "999"]);
+        if (結果.IsSuccess)
         {
             throw new InvalidOperationException("Numeric --fail-on values must be rejected.");
         }
@@ -116,8 +112,8 @@ internal static class 出力形式スモークテスト
 
     private static void 数値の出力形式を拒否する()
     {
-        var result = コマンドライン引数解析器.Parse(["sample.cs", "--format", "999"]);
-        if (result.IsSuccess)
+        var 結果 = コマンドライン引数解析器.Parse(["sample.cs", "--format", "999"]);
+        if (結果.IsSuccess)
         {
             throw new InvalidOperationException("Numeric --format values must be rejected.");
         }
@@ -125,17 +121,18 @@ internal static class 出力形式スモークテスト
 
     private static void JSON出力を機械可読にする()
     {
-        var path = 一時パスを作る("json");
+        var パス = 一時パスを作る("json");
         try
         {
-            new JSON診断書き込み器(path).Write([診断を作る()], verbose: true);
-            using var document = JsonDocument.Parse(File.ReadAllText(path));
-            var root = document.RootElement;
+            new JSON診断書き込み器(パス).Write([診断を作る()], verbose: true);
+            using var 文書 = JsonDocument.Parse(File.ReadAllText(パス));
+            var ルート = 文書.RootElement;
 
             if (
-                root.GetProperty("version").GetInt32() != 1
-                || root.GetProperty("diagnostics")[0].GetProperty("ruleId").GetString() != "OOP999"
-                || root.GetProperty("summary").GetProperty("warning").GetInt32() != 1
+                ルート.GetProperty("version").GetInt32() != 1
+                || ルート.GetProperty("diagnostics")[0].GetProperty("ruleId").GetString()
+                    != "OOP999"
+                || ルート.GetProperty("summary").GetProperty("warning").GetInt32() != 1
             )
             {
                 throw new InvalidOperationException(
@@ -145,24 +142,24 @@ internal static class 出力形式スモークテスト
         }
         finally
         {
-            存在する場合は削除する(path);
+            存在する場合は削除する(パス);
         }
     }
 
     private static void SARIF出力を機械可読にする()
     {
-        var path = 一時パスを作る("sarif");
+        var パス = 一時パスを作る("sarif");
         try
         {
-            new SARIF診断書き込み器(path).Write([診断を作る()], verbose: false);
-            using var document = JsonDocument.Parse(File.ReadAllText(path));
-            var root = document.RootElement;
-            var result = root.GetProperty("runs")[0].GetProperty("results")[0];
+            new SARIF診断書き込み器(パス).Write([診断を作る()], verbose: false);
+            using var 文書 = JsonDocument.Parse(File.ReadAllText(パス));
+            var ルート = 文書.RootElement;
+            var 結果 = ルート.GetProperty("runs")[0].GetProperty("results")[0];
 
             if (
-                root.GetProperty("version").GetString() != "2.1.0"
-                || result.GetProperty("ruleId").GetString() != "OOP999"
-                || result.GetProperty("level").GetString() != "warning"
+                ルート.GetProperty("version").GetString() != "2.1.0"
+                || 結果.GetProperty("ruleId").GetString() != "OOP999"
+                || 結果.GetProperty("level").GetString() != "warning"
             )
             {
                 throw new InvalidOperationException("SARIF document had unexpected content.");
@@ -170,31 +167,31 @@ internal static class 出力形式スモークテスト
         }
         finally
         {
-            存在する場合は削除する(path);
+            存在する場合は削除する(パス);
         }
     }
 
     private static void SARIF出力で不明なパスを扱う()
     {
-        var path = 一時パスを作る("sarif");
+        var パス = 一時パスを作る("sarif");
         try
         {
-            new SARIF診断書き込み器(path).Write(
-                [診断を作る(filePath: "<unknown>")],
+            new SARIF診断書き込み器(パス).Write(
+                [診断を作る(ファイルパス: "<unknown>")],
                 verbose: false
             );
 
-            using var document = JsonDocument.Parse(File.ReadAllText(path));
-            var result = document.RootElement.GetProperty("runs")[0].GetProperty("results")[0];
+            using var 文書 = JsonDocument.Parse(File.ReadAllText(パス));
+            var 結果 = 文書.RootElement.GetProperty("runs")[0].GetProperty("results")[0];
 
-            if (result.GetProperty("ruleId").GetString() != "OOP999")
+            if (結果.GetProperty("ruleId").GetString() != "OOP999")
             {
                 throw new InvalidOperationException(
                     "SARIF output lost the diagnostic with an unknown source path."
                 );
             }
 
-            if (result.GetProperty("locations").GetArrayLength() != 0)
+            if (結果.GetProperty("locations").GetArrayLength() != 0)
             {
                 throw new InvalidOperationException(
                     "SARIF output must not invent a file URI for an unknown source path."
@@ -203,63 +200,63 @@ internal static class 出力形式スモークテスト
         }
         finally
         {
-            存在する場合は削除する(path);
+            存在する場合は削除する(パス);
         }
     }
 
     private static void GitHub注釈で特殊文字をエスケープする()
     {
-        var originalOut = Console.Out;
-        using var captured = new StringWriter();
+        var 元の標準出力 = Console.Out;
+        using var 捕捉内容 = new StringWriter();
         try
         {
-            Console.SetOut(captured);
-            var diagnostic = 診断を作る(
-                filePath: Path.Combine("sample,dir", "file:part.cs"),
-                message: "first%line\nsecond"
+            Console.SetOut(捕捉内容);
+            var 診断 = 診断を作る(
+                ファイルパス: Path.Combine("sample,dir", "file:part.cs"),
+                メッセージ: "first%line\nsecond"
             );
-            new GitHub注釈診断書き込み器().Write([diagnostic], verbose: false);
+            new GitHub注釈診断書き込み器().Write([診断], verbose: false);
         }
         finally
         {
-            Console.SetOut(originalOut);
+            Console.SetOut(元の標準出力);
         }
 
-        var output = captured.ToString();
+        var 出力 = 捕捉内容.ToString();
         if (
-            !output.Contains("::warning ", StringComparison.Ordinal)
-            || !output.Contains("%2C", StringComparison.Ordinal)
-            || !output.Contains("%3A", StringComparison.Ordinal)
-            || !output.Contains("%25", StringComparison.Ordinal)
-            || !output.Contains("%0A", StringComparison.Ordinal)
+            !出力.Contains("::warning ", StringComparison.Ordinal)
+            || !出力.Contains("%2C", StringComparison.Ordinal)
+            || !出力.Contains("%3A", StringComparison.Ordinal)
+            || !出力.Contains("%25", StringComparison.Ordinal)
+            || !出力.Contains("%0A", StringComparison.Ordinal)
         )
         {
             throw new InvalidOperationException(
-                $"GitHub annotation escaping was incomplete: {output}"
+                $"GitHub annotation escaping was incomplete: {出力}"
             );
         }
     }
 
     private static DesignDiagnostic 診断を作る(
-        string? filePath = null,
-        string message = "Sample diagnostic"
+        string? ファイルパス = null,
+        string メッセージ = "Sample diagnostic"
     ) =>
         new(
             new RuleDescriptor("OOP999", "Sample rule", DesignDiagnosticSeverity.Warning),
             DesignDiagnosticSeverity.Warning,
-            message,
+            メッセージ,
             "Sample.Member",
-            new SourceLocation(filePath ?? Path.GetFullPath("sample.cs"), 3, 7)
+            new SourceLocation(ファイルパス ?? Path.GetFullPath("sample.cs"), 3, 7)
         );
 
-    private static string 一時パスを作る(string extension) =>
-        Path.Combine(Path.GetTempPath(), $"oop-checker-{Guid.NewGuid():N}.{extension}");
+    private static string 一時パスを作る(string 拡張子) =>
+        Path.Combine(Path.GetTempPath(), $"oop-checker-{Guid.NewGuid():N}.{拡張子}");
 
-    private static void 存在する場合は削除する(string path)
+    private static void 存在する場合は削除する(string パス)
     {
-        if (File.Exists(path))
+        if (File.Exists(パス))
         {
-            File.Delete(path);
+            File.Delete(パス);
         }
     }
 }

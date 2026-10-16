@@ -64,10 +64,10 @@ internal sealed class 設定編集画面 : Window
             Text = GUI文言.取得する(GUI文言キー.編集画面説明, _表示言語),
             TextWrapping = TextWrapping.Wrap,
         };
-        Add(root, description, 0);
-        Add(root, _編集欄, 1);
-        Add(root, _状態欄, 2);
-        Add(root, 操作欄を構築する(), 3);
+        項目を配置する(root, description, 0);
+        項目を配置する(root, _編集欄, 1);
+        項目を配置する(root, _状態欄, 2);
+        項目を配置する(root, 操作欄を構築する(), 3);
         return root;
     }
 
@@ -130,7 +130,7 @@ internal sealed class 設定編集画面 : Window
         }
     }
 
-    private static void Add(Grid grid, Control control, int row)
+    private static void 項目を配置する(Grid grid, Control control, int row)
     {
         Grid.SetRow(control, row);
         grid.Children.Add(control);

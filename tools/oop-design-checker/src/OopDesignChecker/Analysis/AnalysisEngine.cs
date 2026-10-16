@@ -4,34 +4,36 @@ namespace OopDesignChecker.Analysis;
 
 internal sealed class 解析実行器
 {
-    private readonly IReadOnlyList<I解析規則> _rules;
+    private readonly IReadOnlyList<I解析規則> _解析規則群;
 
-    public 解析実行器(IReadOnlyList<I解析規則> rules)
+    public 解析実行器(IReadOnlyList<I解析規則> 解析規則群)
     {
-        _rules = rules;
+        _解析規則群 = 解析規則群;
     }
 
     public IReadOnlyList<DesignDiagnostic> 解析する(
-        解析対象プロジェクト project,
-        CancellationToken cancellationToken = default
-    ) => 解析する([project], cancellationToken);
+        解析対象プロジェクト 解析対象プロジェクト,
+        CancellationToken キャンセル通知 = default
+    ) => 解析する([解析対象プロジェクト], キャンセル通知);
 
     public IReadOnlyList<DesignDiagnostic> 解析する(
-        IReadOnlyList<解析対象プロジェクト> projects,
-        CancellationToken cancellationToken = default
+        IReadOnlyList<解析対象プロジェクト> 解析対象プロジェクト群,
+        CancellationToken キャンセル通知 = default
     )
     {
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
 
-        var diagnostics = projects
-            .SelectMany(project => プロジェクトを解析する(project, projects, cancellationToken))
+        var 診断群 = 解析対象プロジェクト群
+            .SelectMany(解析対象プロジェクト =>
+                プロジェクトを解析する(解析対象プロジェクト, 解析対象プロジェクト群, キャンセル通知)
+            )
             .DistinctBy(診断識別情報を作る, 診断識別情報比較器.Instance)
             .ToArray();
 
-        cancellationToken.ThrowIfCancellationRequested();
+        キャンセル通知.ThrowIfCancellationRequested();
 
         return 診断調整器
-            .集約する(diagnostics)
+            .集約する(診断群)
             .OrderBy(
                 diagnostic => 診断ファイルパス.正規化する(diagnostic.Location.FilePath),
                 パス比較規則.文字列比較子
@@ -43,18 +45,18 @@ internal sealed class 解析実行器
     }
 
     private IEnumerable<DesignDiagnostic> プロジェクトを解析する(
-        解析対象プロジェクト project,
-        IReadOnlyList<解析対象プロジェクト> projects,
-        CancellationToken cancellationToken
+        解析対象プロジェクト 解析対象プロジェクト,
+        IReadOnlyList<解析対象プロジェクト> 解析対象プロジェクト群,
+        CancellationToken キャンセル通知
     )
     {
-        var context = new 解析文脈(project, projects, cancellationToken);
-        foreach (var rule in _rules)
+        var context = new 解析文脈(解析対象プロジェクト, 解析対象プロジェクト群, キャンセル通知);
+        foreach (var 解析規則 in _解析規則群)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            foreach (var diagnostic in rule.解析する(context))
+            キャンセル通知.ThrowIfCancellationRequested();
+            foreach (var diagnostic in 解析規則.解析する(context))
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                キャンセル通知.ThrowIfCancellationRequested();
                 yield return diagnostic;
             }
         }
