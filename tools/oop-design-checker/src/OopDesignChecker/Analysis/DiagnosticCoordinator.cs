@@ -46,9 +46,9 @@ internal static class DiagnosticCoordinator
         CreateRuleSymbolKey(diagnostic, diagnostic.Rule.Id);
 
     private static RuleSymbolKey CreateRuleSymbolKey(DesignDiagnostic diagnostic, string ruleId) =>
-        new(NormalizePath(diagnostic.Location.FilePath), diagnostic.SymbolName!, ruleId);
+        new(パスを正規化する(diagnostic.Location.FilePath), diagnostic.SymbolName!, ruleId);
 
-    private static string NormalizePath(string path) => DiagnosticPath.Normalize(path);
+    private static string パスを正規化する(string パス) => 診断ファイルパス.正規化する(パス);
 
     private readonly record struct RuleSymbolKey(string FilePath, string SymbolName, string RuleId);
 
@@ -57,14 +57,14 @@ internal static class DiagnosticCoordinator
         public static RuleSymbolKeyComparer Instance { get; } = new();
 
         public bool Equals(RuleSymbolKey left, RuleSymbolKey right) =>
-            PathSemantics.Comparer.Equals(left.FilePath, right.FilePath)
+            パス比較規則.文字列比較子.Equals(left.FilePath, right.FilePath)
             && string.Equals(left.SymbolName, right.SymbolName, StringComparison.Ordinal)
             && string.Equals(left.RuleId, right.RuleId, StringComparison.Ordinal);
 
         public int GetHashCode(RuleSymbolKey key)
         {
             var hash = new HashCode();
-            hash.Add(key.FilePath, PathSemantics.Comparer);
+            hash.Add(key.FilePath, パス比較規則.文字列比較子);
             hash.Add(key.SymbolName, StringComparer.Ordinal);
             hash.Add(key.RuleId, StringComparer.Ordinal);
             return hash.ToHashCode();

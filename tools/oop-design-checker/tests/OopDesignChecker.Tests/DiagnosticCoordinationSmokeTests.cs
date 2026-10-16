@@ -17,10 +17,10 @@ internal static class DiagnosticCoordinationSmokeTests
         DiagnosticsWithoutSymbolsAreNotSuppressed();
         MessageChangesDoNotCreateDuplicateDiagnostics();
         DifferentSymbolsAtSameLocationRemainDistinct();
-        UnknownDiagnosticPathsRemainStable();
-        PathCaseIdentityFollowsOperatingSystemSemantics();
-        DominanceUsesPathSemanticsAndKeepsSymbolNamesOrdinal();
-        DiagnosticSortUsesPathSemantics();
+        不明な診断パスを安定して扱う();
+        パスの大文字小文字をOS別に比較する();
+        パス規則に従って診断の抑制と順序を決める();
+        診断順をパス規則で決める();
     }
 
     private static void InvariantBypassSuppressesEncapsulationLeakForSameSymbol()
@@ -117,7 +117,7 @@ internal static class DiagnosticCoordinationSmokeTests
         );
     }
 
-    private static void UnknownDiagnosticPathsRemainStable()
+    private static void 不明な診断パスを安定して扱う()
     {
         var diagnostics = AnalyzeThroughEngine(
             Create("OOP999", DesignDiagnosticSeverity.Warning, "Order", filePath: "<unknown>")
@@ -132,7 +132,7 @@ internal static class DiagnosticCoordinationSmokeTests
         }
     }
 
-    private static void PathCaseIdentityFollowsOperatingSystemSemantics()
+    private static void パスの大文字小文字をOS別に比較する()
     {
         var diagnostics = AnalyzeThroughEngine(
             Create(
@@ -160,7 +160,7 @@ internal static class DiagnosticCoordinationSmokeTests
         );
     }
 
-    private static void DominanceUsesPathSemanticsAndKeepsSymbolNamesOrdinal()
+    private static void パス規則に従って診断の抑制と順序を決める()
     {
         var samePathWithDifferentCasing = DiagnosticCoordinator.Reduce([
             Create(
@@ -191,7 +191,7 @@ internal static class DiagnosticCoordinationSmokeTests
         AssertRuleIds(differentSymbolCasing, "OOP106", "OOP107");
     }
 
-    private static void DiagnosticSortUsesPathSemantics()
+    private static void 診断順をパス規則で決める()
     {
         var diagnostics = AnalyzeThroughEngine(
             Create(

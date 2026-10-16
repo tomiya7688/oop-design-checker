@@ -101,7 +101,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
                 string.IsNullOrWhiteSpace(project.FilePath)
                 || !PathFilter.ShouldIgnore(project.FilePath, rootPath, _ignoredPaths)
             )
-            .OrderBy(project => project.FilePath, PathSemantics.Comparer)
+            .OrderBy(project => project.FilePath, パス比較規則.文字列比較子)
             .Select(project => CreateSourceProject(project, workspaceFailures, cancellationToken))
             .ToArray();
 
@@ -135,11 +135,11 @@ internal sealed class CSharpProjectLoader : IProjectLoader
             .Where(path => !string.IsNullOrWhiteSpace(path))
             .Select(path => ResolveSlnxProjectPath(rootPath, path!))
             .Where(path =>
-                string.Equals(Path.GetExtension(path), ".csproj", PathSemantics.Comparison)
+                string.Equals(Path.GetExtension(path), ".csproj", パス比較規則.文字列比較方式)
             )
             .Where(path => !PathFilter.ShouldIgnore(path, rootPath, _ignoredPaths))
-            .Distinct(PathSemantics.Comparer)
-            .OrderBy(path => path, PathSemantics.Comparer)
+            .Distinct(パス比較規則.文字列比較子)
+            .OrderBy(path => path, パス比較規則.文字列比較子)
             .ToArray();
 
         if (projectFiles.Length == 0)
@@ -200,12 +200,16 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         );
 
         var projects = new List<SourceProject>(projectFiles.Length);
-        foreach (var projectFile in projectFiles.OrderBy(path => path, PathSemantics.Comparer))
+        foreach (var projectFile in projectFiles.OrderBy(path => path, パス比較規則.文字列比較子))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var normalizedProjectFile = Path.GetFullPath(projectFile);
             var project = workspace.CurrentSolution.Projects.FirstOrDefault(candidate =>
-                string.Equals(candidate.FilePath, normalizedProjectFile, PathSemantics.Comparison)
+                string.Equals(
+                    candidate.FilePath,
+                    normalizedProjectFile,
+                    パス比較規則.文字列比較方式
+                )
             );
             project ??= workspace
                 .OpenProjectAsync(normalizedProjectFile, cancellationToken: cancellationToken)
@@ -333,7 +337,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
                 Directory.EnumerateFiles(targetDirectory, "*.slnx", SearchOption.TopDirectoryOnly)
             )
             .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
-            .OrderBy(path => path, PathSemantics.Comparer)
+            .OrderBy(path => path, パス比較規則.文字列比較子)
             .ToArray();
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -356,7 +360,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         var directProjects = Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.TopDirectoryOnly)
             .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
-            .OrderBy(path => path, PathSemantics.Comparer)
+            .OrderBy(path => path, パス比較規則.文字列比較子)
             .ToArray();
 
         if (directProjects.Length > 0)
@@ -368,8 +372,8 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         return Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.AllDirectories)
             .Where(path => !PathFilter.ShouldIgnore(path, targetDirectory, _ignoredPaths))
-            .Distinct(PathSemantics.Comparer)
-            .OrderBy(path => path, PathSemantics.Comparer)
+            .Distinct(パス比較規則.文字列比較子)
+            .OrderBy(path => path, パス比較規則.文字列比較子)
             .ToArray();
     }
 
@@ -383,7 +387,7 @@ internal sealed class CSharpProjectLoader : IProjectLoader
         if (File.Exists(targetPath))
         {
             if (
-                string.Equals(Path.GetExtension(targetPath), ".cs", PathSemantics.Comparison)
+                string.Equals(Path.GetExtension(targetPath), ".cs", パス比較規則.文字列比較方式)
                 && !PathFilter.ShouldIgnore(targetPath, rootPath, _ignoredPaths)
             )
             {
