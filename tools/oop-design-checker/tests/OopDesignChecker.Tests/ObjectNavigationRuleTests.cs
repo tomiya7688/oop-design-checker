@@ -137,7 +137,7 @@ internal static class ObjectNavigationRuleTests
 
     private static void AssertSingle(string source)
     {
-        var diagnostics = Analyze(source);
+        var diagnostics = 解析する(source);
         if (
             diagnostics.Length != 1
             || diagnostics[0].Rule.Id != "OOP404"
@@ -152,7 +152,7 @@ internal static class ObjectNavigationRuleTests
 
     private static void AssertNone(string source)
     {
-        var diagnostics = Analyze(source);
+        var diagnostics = 解析する(source);
         if (diagnostics.Length != 0)
         {
             throw new InvalidOperationException(
@@ -161,9 +161,9 @@ internal static class ObjectNavigationRuleTests
         }
     }
 
-    private static DesignDiagnostic[] Analyze(string source) =>
+    private static DesignDiagnostic[] 解析する(string source) =>
         new ExcessiveObjectNavigationRule()
-            .解析する(TestProjectFactory.Create(source))
+            .解析する(TestProjectFactory.解析文脈を作る(source))
             .Where(diagnostic => diagnostic.Rule.Id == "OOP404")
             .ToArray();
 }

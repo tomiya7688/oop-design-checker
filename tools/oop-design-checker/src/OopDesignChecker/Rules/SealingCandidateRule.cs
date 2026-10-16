@@ -10,21 +10,21 @@ internal sealed class SealingCandidateRule : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP102", "Sealing candidate", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
-        if (!context.Project.アプリケーションである)
+        if (!context.対象プロジェクト.アプリケーションである)
         {
             yield break;
         }
 
         var declarations = context
-            .Project.構文木群.SelectMany(tree =>
+            .対象プロジェクト.構文木群.SelectMany(tree =>
                 tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>()
             )
             .Select(declaration => new TypeDeclaration(
                 declaration,
                 context
-                    .Project.意味モデルを取得する(declaration.SyntaxTree)
+                    .対象プロジェクト.意味モデルを取得する(declaration.SyntaxTree)
                     .GetDeclaredSymbol(declaration) as INamedTypeSymbol
             ))
             .Where(item => item.Symbol is not null)
@@ -39,7 +39,7 @@ internal sealed class SealingCandidateRule : I解析規則
         {
             var symbol = item.Symbol!;
             if (
-                !SymbolUtilities.IsPrimaryDeclaration(symbol, item.Declaration)
+                !シンボル操作器.主宣言である(symbol, item.Declaration)
                 || symbol.IsAbstract
                 || symbol.IsStatic
                 || symbol.IsSealed

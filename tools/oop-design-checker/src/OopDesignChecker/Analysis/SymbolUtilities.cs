@@ -3,12 +3,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace OopDesignChecker.Analysis;
 
-internal static class SymbolUtilities
+internal static class シンボル操作器
 {
-    public static bool IsPrimaryDeclaration(
-        INamedTypeSymbol symbol,
-        TypeDeclarationSyntax declaration
-    )
+    public static bool 主宣言である(INamedTypeSymbol symbol, TypeDeclarationSyntax declaration)
     {
         var firstReference = symbol.DeclaringSyntaxReferences.FirstOrDefault();
         if (firstReference is null)
@@ -20,10 +17,9 @@ internal static class SymbolUtilities
             && firstReference.Span == declaration.Span;
     }
 
-    public static int GetInheritanceDepth(INamedTypeSymbol symbol) =>
-        GetInheritanceDepth(symbol, []);
+    public static int 継承深度を取得する(INamedTypeSymbol symbol) => 継承深度を取得する(symbol, []);
 
-    public static int GetInheritanceDepth(
+    public static int 継承深度を取得する(
         INamedTypeSymbol symbol,
         IReadOnlyList<解析対象プロジェクト> projects
     )
@@ -34,7 +30,7 @@ internal static class SymbolUtilities
         while (
             current is not null
             && current.SpecialType != SpecialType.System_Object
-            && IsProjectOwnedType(current, projects)
+            && プロジェクト内の型である(current, projects)
         )
         {
             depth++;
@@ -44,7 +40,7 @@ internal static class SymbolUtilities
         return depth;
     }
 
-    private static bool IsProjectOwnedType(
+    private static bool プロジェクト内の型である(
         INamedTypeSymbol type,
         IReadOnlyList<解析対象プロジェクト> projects
     )
@@ -64,7 +60,7 @@ internal static class SymbolUtilities
         );
     }
 
-    public static bool ImplementsInterfaceMember(
+    public static bool インターフェースメンバーを実装している(
         IMethodSymbol method,
         ClassDeclarationSyntax declaration,
         SemanticModel semanticModel
@@ -72,7 +68,7 @@ internal static class SymbolUtilities
     {
         foreach (var interfaceType in method.ContainingType.AllInterfaces)
         {
-            if (HasMatchingInterfaceMethod(method, interfaceType))
+            if (一致するインターフェースメソッドがある(method, interfaceType))
             {
                 return true;
             }
@@ -94,9 +90,9 @@ internal static class SymbolUtilities
             }
 
             if (
-                HasMatchingInterfaceMethod(method, type)
+                一致するインターフェースメソッドがある(method, type)
                 || type.AllInterfaces.Any(interfaceType =>
-                    HasMatchingInterfaceMethod(method, interfaceType)
+                    一致するインターフェースメソッドがある(method, interfaceType)
                 )
             )
             {
@@ -107,7 +103,7 @@ internal static class SymbolUtilities
         return false;
     }
 
-    private static bool HasMatchingInterfaceMethod(
+    private static bool 一致するインターフェースメソッドがある(
         IMethodSymbol method,
         INamedTypeSymbol interfaceType
     )
@@ -136,7 +132,7 @@ internal static class SymbolUtilities
         return false;
     }
 
-    public static bool IsSameOrBaseType(INamedTypeSymbol possibleBase, INamedTypeSymbol type)
+    public static bool 同じ型か基底型である(INamedTypeSymbol possibleBase, INamedTypeSymbol type)
     {
         INamedTypeSymbol? current = type;
         while (current is not null)

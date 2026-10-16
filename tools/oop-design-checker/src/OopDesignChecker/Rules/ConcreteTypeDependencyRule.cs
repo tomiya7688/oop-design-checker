@@ -10,16 +10,16 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP305", "Concrete dependency despite abstraction", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
         var consumerTypeUsages = new Dictionary<ISymbol, ConsumerTypeUsage>(
             SymbolEqualityComparer.Default
         );
 
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
-            var root = syntaxTree.GetRoot(context.CancellationToken);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
+            var root = syntaxTree.GetRoot(context.キャンセル通知);
 
             foreach (
                 var constructor in root.DescendantNodes().OfType<ConstructorDeclarationSyntax>()
@@ -28,7 +28,7 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
                 foreach (var parameter in constructor.ParameterList.Parameters)
                 {
                     if (
-                        semanticModel.GetDeclaredSymbol(parameter, context.CancellationToken)
+                        semanticModel.GetDeclaredSymbol(parameter, context.キャンセル通知)
                             is not IParameterSymbol parameterSymbol
                         || parameterSymbol.Type
                             is not INamedTypeSymbol { TypeKind: TypeKind.Class } concreteType
@@ -78,7 +78,7 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
     }
 
     private static bool UsesConcreteOnlyContract(
-        AnalysisContext context,
+        解析文脈 context,
         IParameterSymbol parameter,
         INamedTypeSymbol concreteType,
         INamedTypeSymbol abstraction,
@@ -98,7 +98,7 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
     }
 
     private static ConsumerTypeUsage CreateConsumerTypeUsage(
-        AnalysisContext context,
+        解析文脈 context,
         INamedTypeSymbol consumerType
     )
     {
@@ -114,40 +114,38 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
 
         foreach (var syntaxReference in consumerType.DeclaringSyntaxReferences)
         {
-            context.CancellationToken.ThrowIfCancellationRequested();
+            context.キャンセル通知.ThrowIfCancellationRequested();
             if (
-                syntaxReference.GetSyntax(context.CancellationToken)
+                syntaxReference.GetSyntax(context.キャンセル通知)
                 is not ClassDeclarationSyntax declaration
             )
             {
                 continue;
             }
 
-            var semanticModel = context.Project.意味モデルを取得する(declaration.SyntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(
+                declaration.SyntaxTree
+            );
             foreach (
                 var access in declaration.DescendantNodes().OfType<MemberAccessExpressionSyntax>()
             )
             {
-                context.CancellationToken.ThrowIfCancellationRequested();
+                context.キャンセル通知.ThrowIfCancellationRequested();
                 AddUsage(
                     memberAccessesByReceiver,
-                    semanticModel
-                        .GetSymbolInfo(access.Expression, context.CancellationToken)
-                        .Symbol,
-                    semanticModel.GetSymbolInfo(access, context.CancellationToken).Symbol
+                    semanticModel.GetSymbolInfo(access.Expression, context.キャンセル通知).Symbol,
+                    semanticModel.GetSymbolInfo(access, context.キャンセル通知).Symbol
                 );
             }
 
             foreach (var argument in declaration.DescendantNodes().OfType<ArgumentSyntax>())
             {
-                context.CancellationToken.ThrowIfCancellationRequested();
+                context.キャンセル通知.ThrowIfCancellationRequested();
                 AddUsage(
                     argumentsBySymbol,
+                    semanticModel.GetSymbolInfo(argument.Expression, context.キャンセル通知).Symbol,
                     semanticModel
-                        .GetSymbolInfo(argument.Expression, context.CancellationToken)
-                        .Symbol,
-                    semanticModel
-                        .GetTypeInfo(argument.Expression, context.CancellationToken)
+                        .GetTypeInfo(argument.Expression, context.キャンセル通知)
                         .ConvertedType
                 );
             }
@@ -158,9 +156,9 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
                     .OfType<ConstructorDeclarationSyntax>()
             )
             {
-                context.CancellationToken.ThrowIfCancellationRequested();
+                context.キャンセル通知.ThrowIfCancellationRequested();
                 if (
-                    semanticModel.GetDeclaredSymbol(constructor, context.CancellationToken)
+                    semanticModel.GetDeclaredSymbol(constructor, context.キャンセル通知)
                     is not IMethodSymbol constructorSymbol
                 )
                 {
@@ -174,10 +172,10 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
                 )
                 {
                     var valueSymbol = semanticModel
-                        .GetSymbolInfo(assignment.Right, context.CancellationToken)
+                        .GetSymbolInfo(assignment.Right, context.キャンセル通知)
                         .Symbol;
                     var targetSymbol = semanticModel
-                        .GetSymbolInfo(assignment.Left, context.CancellationToken)
+                        .GetSymbolInfo(assignment.Left, context.キャンセル通知)
                         .Symbol;
                     if (
                         valueSymbol is not null
@@ -255,7 +253,7 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
     }
 
     private static bool RequiresConcreteArgumentType(
-        AnalysisContext context,
+        解析文脈 context,
         ConsumerTypeUsage consumerTypeUsage,
         HashSet<ISymbol> trackedSymbols,
         INamedTypeSymbol abstraction
@@ -277,7 +275,10 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
             {
                 if (
                     !context
-                        .Project.コンパイル結果.ClassifyConversion(abstraction, convertedType)
+                        .対象プロジェクト.コンパイル結果.ClassifyConversion(
+                            abstraction,
+                            convertedType
+                        )
                         .IsImplicit
                 )
                 {

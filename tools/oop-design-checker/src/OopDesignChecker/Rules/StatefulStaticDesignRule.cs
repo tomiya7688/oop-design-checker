@@ -10,11 +10,11 @@ internal sealed class StatefulStaticDesignRule : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP105", "Stateful static design", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
@@ -22,7 +22,7 @@ internal sealed class StatefulStaticDesignRule : I解析規則
                 if (
                     semanticModel.GetDeclaredSymbol(declaration)
                         is not INamedTypeSymbol { IsStatic: true } symbol
-                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
+                    || !シンボル操作器.主宣言である(symbol, declaration)
                 )
                 {
                     continue;

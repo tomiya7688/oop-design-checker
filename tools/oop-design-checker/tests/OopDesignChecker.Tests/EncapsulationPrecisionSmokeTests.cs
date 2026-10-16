@@ -295,7 +295,7 @@ internal static class EncapsulationPrecisionSmokeTests
 
     private static void AssertNone(I解析規則 rule, string source, string ruleId)
     {
-        var diagnostics = rule.解析する(TestProjectFactory.Create(source)).ToArray();
+        var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
         if (diagnostics.Length == 0)
         {
             return;
@@ -312,7 +312,7 @@ internal static class EncapsulationPrecisionSmokeTests
         DesignDiagnosticSeverity severity
     )
     {
-        var diagnostics = rule.解析する(TestProjectFactory.Create(source)).ToArray();
+        var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
         if (
             diagnostics.Length != 1
             || diagnostics[0].Rule.Id != ruleId

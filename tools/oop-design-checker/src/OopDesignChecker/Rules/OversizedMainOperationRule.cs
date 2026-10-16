@@ -7,17 +7,17 @@ namespace OopDesignChecker.Rules;
 
 internal sealed class OversizedMainOperationRule : I解析規則
 {
-    private const int MinimumStatementCount = 20;
+    private const int Minimum文数 = 20;
     private const int WarningScore = 4;
 
     public RuleDescriptor 規則情報 { get; } =
         new("OOP201", "Oversized main operation", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var method in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
@@ -30,14 +30,10 @@ internal sealed class OversizedMainOperationRule : I解析規則
                     continue;
                 }
 
-                var metrics = OperationMetricsCalculator.Calculate(
-                    method,
-                    methodSymbol,
-                    semanticModel
-                );
+                var metrics = 処理量指標計算器.計算する(method, methodSymbol, semanticModel);
                 if (
-                    metrics.StatementCount < MinimumStatementCount
-                    || CalculateOversizeScore(metrics) < WarningScore
+                    metrics.文数 < Minimum文数
+                    || 過大スコアを計算する(metrics) < WarningScore
                     || IsPrivateHelper(context, methodSymbol)
                 )
                 {
@@ -47,7 +43,7 @@ internal sealed class OversizedMainOperationRule : I解析規則
                 yield return 診断生成器.生成する(
                     規則情報,
                     method.Identifier.GetLocation(),
-                    $"This primary operation is structurally large: {metrics.LineCount} lines, {metrics.StatementCount} statements, complexity {metrics.CyclomaticComplexity}, nesting {metrics.MaxNestingDepth}. Split meaningful processing phases into methods.",
+                    $"This primary operation is structurally large: {metrics.行数} lines, {metrics.文数} statements, complexity {metrics.循環的複雑度}, nesting {metrics.最大ネスト深度}. Split meaningful processing phases into methods.",
                     methodSymbol.ToDisplayString()
                 );
             }
@@ -59,45 +55,45 @@ internal sealed class OversizedMainOperationRule : I解析規則
         || FrameworkContractClassifier.HasFrameworkContractAttribute(method.ContainingType)
         || FrameworkContractClassifier.HasFrameworkContractAttribute(method);
 
-    private static int CalculateOversizeScore(OperationMetrics metrics)
+    private static int 過大スコアを計算する(処理量指標 metrics)
     {
         var score = 0;
 
-        score += metrics.LineCount switch
+        score += metrics.行数 switch
         {
             >= 120 => 2,
             >= 70 => 1,
             _ => 0,
         };
-        score += metrics.CyclomaticComplexity switch
+        score += metrics.循環的複雑度 switch
         {
             >= 18 => 2,
             >= 10 => 1,
             _ => 0,
         };
-        score += metrics.MaxNestingDepth switch
+        score += metrics.最大ネスト深度 switch
         {
             >= 4 => 2,
             >= 3 => 1,
             _ => 0,
         };
 
-        if (metrics.StatementCount >= 40)
+        if (metrics.文数 >= 40)
         {
             score++;
         }
 
-        if (metrics.LocalVariableCount >= 10)
+        if (metrics.ローカル変数数 >= 10)
         {
             score++;
         }
 
-        if (metrics.StateMemberCount >= 5)
+        if (metrics.状態メンバー数 >= 5)
         {
             score++;
         }
 
-        if (metrics.TopLevelStatementCount >= 15)
+        if (metrics.トップレベル文数 >= 15)
         {
             score++;
         }
@@ -105,16 +101,16 @@ internal sealed class OversizedMainOperationRule : I解析規則
         return score;
     }
 
-    private static bool IsPrivateHelper(AnalysisContext context, IMethodSymbol target)
+    private static bool IsPrivateHelper(解析文脈 context, IMethodSymbol target)
     {
         if (target.DeclaredAccessibility != Accessibility.Private)
         {
             return false;
         }
 
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             foreach (
                 var invocation in syntaxTree
                     .GetRoot()

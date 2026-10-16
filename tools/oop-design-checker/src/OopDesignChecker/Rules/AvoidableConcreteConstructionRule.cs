@@ -57,7 +57,7 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
     /*
     {
       "責務": {
-        "Analyze": "所有範囲外にある置換可能な具象型生成を診断する"
+        "解析する": "所有範囲外にある置換可能な具象型生成を診断する"
       },
       "処理": [
         "解析対象の構文木から具象型の生成式を取得する",
@@ -71,12 +71,12 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
       "戻り値": "検出したOOP306診断の列挙"
     }
     */
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
             // 構文木に対応する意味モデルを使い、生成式の型と所属を解決する。
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             // new式ごとに具象型依存の候補かを判定する。

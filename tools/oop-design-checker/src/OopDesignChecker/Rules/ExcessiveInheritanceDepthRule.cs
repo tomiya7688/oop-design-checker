@@ -26,24 +26,24 @@ internal sealed class ExcessiveInheritanceDepthRule : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP304", "Excessive inheritance depth", DesignDiagnosticSeverity.Attention);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var declaration in root.DescendantNodes().OfType<TypeDeclarationSyntax>())
             {
                 if (
                     semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
+                    || !シンボル操作器.主宣言である(symbol, declaration)
                 )
                 {
                     continue;
                 }
 
-                var depth = SymbolUtilities.GetInheritanceDepth(symbol, context.Projects);
+                var depth = シンボル操作器.継承深度を取得する(symbol, context.対象プロジェクト群);
                 if (depth < _warningDepth)
                 {
                     continue;

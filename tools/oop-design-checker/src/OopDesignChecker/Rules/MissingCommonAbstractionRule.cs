@@ -13,10 +13,10 @@ internal sealed class MissingCommonAbstractionRule : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP001", "Missing common abstraction", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
         var candidates = context
-            .Project.構文木群.SelectMany(tree => FindCandidates(context, tree))
+            .対象プロジェクト.構文木群.SelectMany(tree => FindCandidates(context, tree))
             .ToArray();
 
         foreach (
@@ -42,18 +42,18 @@ internal sealed class MissingCommonAbstractionRule : I解析規則
     }
 
     private static IEnumerable<AbstractionCandidate> FindCandidates(
-        AnalysisContext context,
+        解析文脈 context,
         SyntaxTree syntaxTree
     )
     {
-        var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+        var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
         var root = syntaxTree.GetRoot();
 
         foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
         {
             if (
                 semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                || !SymbolUtilities.IsPrimaryDeclaration(symbol, declaration)
+                || !シンボル操作器.主宣言である(symbol, declaration)
                 || HasProjectAbstraction(symbol)
             )
             {
@@ -87,15 +87,15 @@ internal sealed class MissingCommonAbstractionRule : I解析規則
     }
 
     private static bool HasSharedUsageContext(
-        AnalysisContext context,
+        解析文脈 context,
         IReadOnlyList<AbstractionCandidate> related
     )
     {
         var methods = new List<IMethodSymbol>();
 
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             foreach (
                 var declaration in syntaxTree
                     .GetRoot()

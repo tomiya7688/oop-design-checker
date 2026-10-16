@@ -6,7 +6,7 @@ namespace OopDesignChecker.Tests;
 
 internal static class TestProjectFactory
 {
-    public static AnalysisContext Create(string source)
+    public static 解析文脈 解析文脈を作る(string source)
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(source, path: "Test.cs");
         var compilation = CSharpCompilation.Create(
@@ -41,6 +41,6 @@ internal static class TestProjectFactory
             semanticModels
         );
 
-        return new AnalysisContext(project);
+        return new 解析文脈(project);
     }
 }

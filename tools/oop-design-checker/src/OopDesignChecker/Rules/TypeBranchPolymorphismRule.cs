@@ -11,11 +11,11 @@ internal sealed class TypeBranchPolymorphismRule : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP002", "Polymorphism bypassed by type branching", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
     {
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var ifStatement in root.DescendantNodes().OfType<IfStatementSyntax>())
@@ -131,7 +131,7 @@ internal sealed class TypeBranchPolymorphismRule : I解析規則
 
         foreach (var candidate in EnumerateSourceClassContracts(types[0]))
         {
-            if (types.Skip(1).All(type => SymbolUtilities.IsSameOrBaseType(candidate, type)))
+            if (types.Skip(1).All(type => シンボル操作器.同じ型か基底型である(candidate, type)))
             {
                 return true;
             }

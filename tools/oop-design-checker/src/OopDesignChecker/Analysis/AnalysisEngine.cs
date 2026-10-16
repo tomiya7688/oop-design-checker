@@ -2,21 +2,21 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Analysis;
 
-internal sealed class AnalysisEngine
+internal sealed class 解析実行器
 {
     private readonly IReadOnlyList<I解析規則> _rules;
 
-    public AnalysisEngine(IReadOnlyList<I解析規則> rules)
+    public 解析実行器(IReadOnlyList<I解析規則> rules)
     {
         _rules = rules;
     }
 
-    public IReadOnlyList<DesignDiagnostic> Analyze(
+    public IReadOnlyList<DesignDiagnostic> 解析する(
         解析対象プロジェクト project,
         CancellationToken cancellationToken = default
-    ) => Analyze([project], cancellationToken);
+    ) => 解析する([project], cancellationToken);
 
-    public IReadOnlyList<DesignDiagnostic> Analyze(
+    public IReadOnlyList<DesignDiagnostic> 解析する(
         IReadOnlyList<解析対象プロジェクト> projects,
         CancellationToken cancellationToken = default
     )
@@ -24,14 +24,14 @@ internal sealed class AnalysisEngine
         cancellationToken.ThrowIfCancellationRequested();
 
         var diagnostics = projects
-            .SelectMany(project => AnalyzeProject(project, projects, cancellationToken))
-            .DistinctBy(CreateDiagnosticIdentity, DiagnosticIdentityComparer.Instance)
+            .SelectMany(project => プロジェクトを解析する(project, projects, cancellationToken))
+            .DistinctBy(診断識別情報を作る, 診断識別情報比較器.Instance)
             .ToArray();
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        return DiagnosticCoordinator
-            .Reduce(diagnostics)
+        return 診断調整器
+            .集約する(diagnostics)
             .OrderBy(
                 diagnostic => 診断ファイルパス.正規化する(diagnostic.Location.FilePath),
                 パス比較規則.文字列比較子
@@ -42,13 +42,13 @@ internal sealed class AnalysisEngine
             .ToArray();
     }
 
-    private IEnumerable<DesignDiagnostic> AnalyzeProject(
+    private IEnumerable<DesignDiagnostic> プロジェクトを解析する(
         解析対象プロジェクト project,
         IReadOnlyList<解析対象プロジェクト> projects,
         CancellationToken cancellationToken
     )
     {
-        var context = new AnalysisContext(project, projects, cancellationToken);
+        var context = new 解析文脈(project, projects, cancellationToken);
         foreach (var rule in _rules)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -60,7 +60,7 @@ internal sealed class AnalysisEngine
         }
     }
 
-    private static DiagnosticIdentity CreateDiagnosticIdentity(DesignDiagnostic diagnostic) =>
+    private static 診断識別情報 診断識別情報を作る(DesignDiagnostic diagnostic) =>
         new(
             診断ファイルパス.正規化する(diagnostic.Location.FilePath),
             diagnostic.Location.Line,
@@ -69,7 +69,7 @@ internal sealed class AnalysisEngine
             diagnostic.SymbolName
         );
 
-    private readonly record struct DiagnosticIdentity(
+    private readonly record struct 診断識別情報(
         string FilePath,
         int Line,
         int Column,
@@ -77,18 +77,18 @@ internal sealed class AnalysisEngine
         string? SymbolName
     );
 
-    private sealed class DiagnosticIdentityComparer : IEqualityComparer<DiagnosticIdentity>
+    private sealed class 診断識別情報比較器 : IEqualityComparer<診断識別情報>
     {
-        public static DiagnosticIdentityComparer Instance { get; } = new();
+        public static 診断識別情報比較器 Instance { get; } = new();
 
-        public bool Equals(DiagnosticIdentity left, DiagnosticIdentity right) =>
+        public bool Equals(診断識別情報 left, 診断識別情報 right) =>
             パス比較規則.文字列比較子.Equals(left.FilePath, right.FilePath)
             && left.Line == right.Line
             && left.Column == right.Column
             && string.Equals(left.RuleId, right.RuleId, StringComparison.Ordinal)
             && string.Equals(left.SymbolName, right.SymbolName, StringComparison.Ordinal);
 
-        public int GetHashCode(DiagnosticIdentity identity)
+        public int GetHashCode(診断識別情報 identity)
         {
             var hash = new HashCode();
             hash.Add(identity.FilePath, パス比較規則.文字列比較子);

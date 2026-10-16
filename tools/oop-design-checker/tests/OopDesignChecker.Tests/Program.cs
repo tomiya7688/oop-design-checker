@@ -23,15 +23,15 @@ internal static class Program
         ),
         new(
             "checker service analyzes SDK-style project folders",
-            CheckerServiceAnalyzesSdkProjectFolder
+            CheckerServiceがSDK形式のプロジェクトフォルダーを解析する
         ),
         new(
             "project loader analyzes solution root folders",
-            ProjectLoaderAnalyzesSolutionRootFolder
+            プロジェクト読み込み器がソリューションルートを読み込む
         ),
         new(
             "diagnostic identity preserves platform path case semantics",
-            DiagnosticIdentityPreservesPlatformPathCase
+            診断識別情報がパスの大文字小文字規則を維持する
         ),
         new(
             "OOP101 detects public classes confined to an inheritance hierarchy",
@@ -128,7 +128,7 @@ internal static class Program
             );
         }
 
-        if (project.構文木群.Any(tree => PathFilter.ShouldIgnore(tree.FilePath)))
+        if (project.構文木群.Any(tree => パス除外判定器.無視する(tree.FilePath)))
         {
             throw new InvalidOperationException(
                 "Generated bin/obj source leaked into rule traversal."
@@ -184,7 +184,7 @@ internal static class Program
         }
     }
 
-    private static void CheckerServiceAnalyzesSdkProjectFolder()
+    private static void CheckerServiceがSDK形式のプロジェクトフォルダーを解析する()
     {
         var temporaryDirectory = Path.Combine(
             Path.GetTempPath(),
@@ -217,7 +217,7 @@ internal static class Program
         }
     }
 
-    private static void ProjectLoaderAnalyzesSolutionRootFolder()
+    private static void プロジェクト読み込み器がソリューションルートを読み込む()
     {
         var repositoryRoot = FindRepositoryRoot();
         var projects = new CSharpプロジェクト読み込み器().プロジェクト群を読み込む(repositoryRoot);
@@ -229,7 +229,7 @@ internal static class Program
         }
     }
 
-    private static void DiagnosticIdentityPreservesPlatformPathCase()
+    private static void 診断識別情報がパスの大文字小文字規則を維持する()
     {
         var root = Path.Combine(Path.GetTempPath(), $"oop-checker-case-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
@@ -238,8 +238,8 @@ internal static class Program
         {
             var upper = CreateProjectForPath(Path.Combine(root, "Foo.cs"));
             var lower = CreateProjectForPath(Path.Combine(root, "foo.cs"));
-            var diagnostics = new AnalysisEngine([new EncapsulationLeakRule()])
-                .Analyze([upper, lower])
+            var diagnostics = new 解析実行器([new EncapsulationLeakRule()])
+                .解析する([upper, lower])
                 .Where(diagnostic => diagnostic.Rule.Id == "OOP106")
                 .ToArray();
 
@@ -545,7 +545,7 @@ internal static class Program
     }
 
     private static DesignDiagnostic[] Run(I解析規則 rule, string source) =>
-        rule.解析する(TestProjectFactory.Create(source)).ToArray();
+        rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
 
     private static string FindRepositoryRoot()
     {

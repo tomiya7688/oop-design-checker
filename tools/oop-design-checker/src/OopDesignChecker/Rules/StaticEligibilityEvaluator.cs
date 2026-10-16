@@ -81,7 +81,7 @@ internal static class StaticEligibilityEvaluator
 
             if (
                 pair.Syntax.ExplicitInterfaceSpecifier is not null
-                || InstanceUsageInspector.UsesInstanceState(
+                || インスタンス使用検査器.インスタンス状態を使う(
                     pair.Syntax,
                     methodSymbol,
                     semanticModel

@@ -6,17 +6,14 @@ namespace OopDesignChecker.Rules;
 
 internal static class PropertyWriteInspector
 {
-    public static PropertyWriteScope GetWriteScope(
-        AnalysisContext context,
-        IPropertySymbol property
-    )
+    public static PropertyWriteScope GetWriteScope(解析文脈 context, IPropertySymbol property)
     {
         var hasInternalWrite = false;
         var hasExternalWrite = false;
 
-        foreach (var syntaxTree in context.Project.構文木群)
+        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
+            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var assignment in root.DescendantNodes().OfType<AssignmentExpressionSyntax>())

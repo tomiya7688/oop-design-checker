@@ -4,13 +4,13 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace OopDesignChecker.Analysis;
 
-internal static class MethodComplexityCalculator
+internal static class メソッド複雑度計算器
 {
-    public static int Calculate(MethodDeclarationSyntax method)
+    public static int 計算する(MethodDeclarationSyntax method)
     {
         var complexity = 1;
 
-        foreach (var node in GetOperationNodes(method))
+        foreach (var node in 処理構文ノード群を取得する(method))
         {
             complexity += node switch
             {
@@ -35,7 +35,9 @@ internal static class MethodComplexityCalculator
         return complexity;
     }
 
-    internal static IEnumerable<SyntaxNode> GetOperationNodes(MethodDeclarationSyntax method) =>
+    internal static IEnumerable<SyntaxNode> 処理構文ノード群を取得する(
+        MethodDeclarationSyntax method
+    ) =>
         method.DescendantNodes(descendIntoChildren: node =>
             node is not AnonymousFunctionExpressionSyntax and not LocalFunctionStatementSyntax
         );
