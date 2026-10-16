@@ -4,244 +4,250 @@ using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Gui;
 
-internal sealed class MainWindowMenu : Menu
+internal sealed class メインメニュー : Menu
 {
     protected override Type StyleKeyOverride => typeof(Menu);
 
-    internal MenuItem FileMenu { get; } = new();
-    internal MenuItem AnalyzeMenu { get; } = new();
-    internal MenuItem ViewMenu { get; } = new();
+    internal MenuItem ファイルメニュー { get; } = new();
+    internal MenuItem 解析メニュー { get; } = new();
+    internal MenuItem 表示メニュー { get; } = new();
 
-    internal MenuItem TargetFileItem { get; } = new();
-    internal MenuItem TargetFolderItem { get; } = new();
-    internal MenuItem ConfigurationItem { get; } = new();
-    internal MenuItem EditConfigurationItem { get; } = new();
-    internal MenuItem ClearConfigurationItem { get; } = new();
-    internal MenuItem ExportJsonItem { get; } = new();
-    internal MenuItem ExportSarifItem { get; } = new();
-    internal MenuItem ExitItem { get; } = new();
+    internal MenuItem 対象ファイル項目 { get; } = new();
+    internal MenuItem 対象フォルダー項目 { get; } = new();
+    internal MenuItem 設定項目 { get; } = new();
+    internal MenuItem 設定編集項目 { get; } = new();
+    internal MenuItem 設定消去項目 { get; } = new();
+    internal MenuItem JSON出力項目 { get; } = new();
+    internal MenuItem SARIF出力項目 { get; } = new();
+    internal MenuItem 終了項目 { get; } = new();
 
-    internal MenuItem AnalyzeItem { get; } = new();
-    internal MenuItem CancelItem { get; } = new();
-    internal MenuItem OpenSourceItem { get; } = new();
+    internal MenuItem 解析項目 { get; } = new();
+    internal MenuItem キャンセル項目 { get; } = new();
+    internal MenuItem ソースを開く項目 { get; } = new();
 
-    internal MenuItem SearchItem { get; } = new();
-    internal MenuItem DangerFilterItem { get; } = new();
-    internal MenuItem WarningFilterItem { get; } = new();
-    internal MenuItem AttentionFilterItem { get; } = new();
-    internal MenuItem LanguageMenu { get; } = new();
-    internal MenuItem JapaneseLanguageItem { get; } = new();
-    internal MenuItem EnglishLanguageItem { get; } = new();
-    internal MenuItem ThemeMenu { get; } = new();
-    internal MenuItem DarkThemeItem { get; } = new();
-    internal MenuItem LightThemeItem { get; } = new();
+    internal MenuItem 検索項目 { get; } = new();
+    internal MenuItem 危険絞り込み項目 { get; } = new();
+    internal MenuItem 警告絞り込み項目 { get; } = new();
+    internal MenuItem 注意絞り込み項目 { get; } = new();
+    internal MenuItem 言語メニュー { get; } = new();
+    internal MenuItem 日本語項目 { get; } = new();
+    internal MenuItem 英語項目 { get; } = new();
+    internal MenuItem テーマメニュー { get; } = new();
+    internal MenuItem ダークテーマ項目 { get; } = new();
+    internal MenuItem ライトテーマ項目 { get; } = new();
 
-    public MainWindowMenu()
+    public メインメニュー()
     {
         MinHeight = 28;
 
-        AddItems(
-            FileMenu,
-            TargetFileItem,
-            TargetFolderItem,
+        項目を追加する(
+            ファイルメニュー,
+            対象ファイル項目,
+            対象フォルダー項目,
             new Separator(),
-            ConfigurationItem,
-            EditConfigurationItem,
-            ClearConfigurationItem,
+            設定項目,
+            設定編集項目,
+            設定消去項目,
             new Separator(),
-            ExportJsonItem,
-            ExportSarifItem,
+            JSON出力項目,
+            SARIF出力項目,
             new Separator(),
-            ExitItem
+            終了項目
         );
 
-        AddItems(AnalyzeMenu, AnalyzeItem, CancelItem, new Separator(), OpenSourceItem);
+        項目を追加する(解析メニュー, 解析項目, キャンセル項目, new Separator(), ソースを開く項目);
 
-        AddItems(LanguageMenu, JapaneseLanguageItem, EnglishLanguageItem);
-        AddItems(ThemeMenu, DarkThemeItem, LightThemeItem);
-        AddItems(
-            ViewMenu,
-            SearchItem,
+        項目を追加する(言語メニュー, 日本語項目, 英語項目);
+        項目を追加する(テーマメニュー, ダークテーマ項目, ライトテーマ項目);
+        項目を追加する(
+            表示メニュー,
+            検索項目,
             new Separator(),
-            DangerFilterItem,
-            WarningFilterItem,
-            AttentionFilterItem,
+            危険絞り込み項目,
+            警告絞り込み項目,
+            注意絞り込み項目,
             new Separator(),
-            LanguageMenu,
-            ThemeMenu
+            言語メニュー,
+            テーマメニュー
         );
 
-        AddItems(this, FileMenu, AnalyzeMenu, ViewMenu);
+        項目を追加する(this, ファイルメニュー, 解析メニュー, 表示メニュー);
 
-        DangerFilterItem.ToggleType = MenuItemToggleType.CheckBox;
-        WarningFilterItem.ToggleType = MenuItemToggleType.CheckBox;
-        AttentionFilterItem.ToggleType = MenuItemToggleType.CheckBox;
+        危険絞り込み項目.ToggleType = MenuItemToggleType.CheckBox;
+        警告絞り込み項目.ToggleType = MenuItemToggleType.CheckBox;
+        注意絞り込み項目.ToggleType = MenuItemToggleType.CheckBox;
 
-        JapaneseLanguageItem.ToggleType = MenuItemToggleType.Radio;
-        JapaneseLanguageItem.GroupName = "Language";
-        EnglishLanguageItem.ToggleType = MenuItemToggleType.Radio;
-        EnglishLanguageItem.GroupName = "Language";
+        日本語項目.ToggleType = MenuItemToggleType.Radio;
+        日本語項目.GroupName = "Language";
+        英語項目.ToggleType = MenuItemToggleType.Radio;
+        英語項目.GroupName = "Language";
 
-        DarkThemeItem.ToggleType = MenuItemToggleType.Radio;
-        DarkThemeItem.GroupName = "Theme";
-        LightThemeItem.ToggleType = MenuItemToggleType.Radio;
-        LightThemeItem.GroupName = "Theme";
+        ダークテーマ項目.ToggleType = MenuItemToggleType.Radio;
+        ダークテーマ項目.GroupName = "Theme";
+        ライトテーマ項目.ToggleType = MenuItemToggleType.Radio;
+        ライトテーマ項目.GroupName = "Theme";
 
-        AnalyzeItem.InputGesture = GuiCommands.Analyze.PrimaryShortcut?.ToKeyGesture();
-        CancelItem.InputGesture = GuiCommands.Cancel.PrimaryShortcut?.ToKeyGesture();
-        SearchItem.InputGesture = GuiCommands.Search.PrimaryShortcut?.ToKeyGesture();
+        解析項目.InputGesture = GUIコマンド.解析開始.主ショートカット?.キー操作に変換する();
+        キャンセル項目.InputGesture =
+            GUIコマンド.解析キャンセル.主ショートカット?.キー操作に変換する();
+        検索項目.InputGesture = GUIコマンド.診断検索.主ショートカット?.キー操作に変換する();
 
-        ConfigureAutomation();
-        ApplyLanguage(UserInterfaceLanguage.Japanese);
+        自動化設定を適用する();
+        表示言語を適用する(UserInterfaceLanguage.Japanese);
     }
 
-    internal void ApplyLanguage(UserInterfaceLanguage language)
+    internal void 表示言語を適用する(UserInterfaceLanguage language)
     {
-        SetTopLevelHeader(
-            FileMenu,
-            GuiText.Get(GuiTextKey.FileMenu, language),
-            GuiCommands.FileMenu,
+        最上位メニュー見出しを設定する(
+            ファイルメニュー,
+            GUI文言.取得する(GUI文言キー.ファイルメニュー, language),
+            GUIコマンド.ファイルメニュー,
             language
         );
-        SetTopLevelHeader(
-            AnalyzeMenu,
-            GuiText.Get(GuiTextKey.AnalyzeMenu, language),
-            GuiCommands.AnalyzeMenu,
+        最上位メニュー見出しを設定する(
+            解析メニュー,
+            GUI文言.取得する(GUI文言キー.解析メニュー, language),
+            GUIコマンド.解析メニュー,
             language
         );
-        SetTopLevelHeader(
-            ViewMenu,
-            GuiText.Get(GuiTextKey.ViewMenu, language),
-            GuiCommands.ViewMenu,
-            language
-        );
-
-        SetHeader(
-            TargetFileItem,
-            GuiText.Get(GuiTextKey.FileButton, language),
-            GuiCommands.TargetFile,
-            language
-        );
-        SetHeader(
-            TargetFolderItem,
-            GuiText.Get(GuiTextKey.FolderButton, language),
-            GuiCommands.TargetFolder,
-            language
-        );
-        SetHeader(
-            ConfigurationItem,
-            GuiText.Get(GuiTextKey.ConfigurationButton, language),
-            GuiCommands.PickConfiguration,
-            language
-        );
-        SetHeader(
-            EditConfigurationItem,
-            GuiText.Get(GuiTextKey.EditButton, language),
-            GuiCommands.EditConfiguration,
-            language
-        );
-        SetHeader(
-            ClearConfigurationItem,
-            GuiText.Get(GuiTextKey.ClearButton, language),
-            GuiCommands.ClearConfiguration,
-            language
-        );
-        SetHeader(
-            ExportJsonItem,
-            GuiText.Get(GuiTextKey.ExportJsonButton, language),
-            GuiCommands.ExportJson,
-            language
-        );
-        SetHeader(
-            ExportSarifItem,
-            GuiText.Get(GuiTextKey.ExportSarifButton, language),
-            GuiCommands.ExportSarif,
-            language
-        );
-        SetHeader(ExitItem, GuiText.Get(GuiTextKey.ExitMenu, language), GuiCommands.Exit, language);
-
-        SetHeader(
-            AnalyzeItem,
-            GuiText.Get(GuiTextKey.AnalyzeButton, language),
-            GuiCommands.Analyze,
-            language
-        );
-        SetHeader(
-            CancelItem,
-            GuiText.Get(GuiTextKey.CancelButton, language),
-            GuiCommands.Cancel,
-            language
-        );
-        SetHeader(
-            OpenSourceItem,
-            GuiText.Get(GuiTextKey.OpenSourceButton, language),
-            GuiCommands.OpenSource,
+        最上位メニュー見出しを設定する(
+            表示メニュー,
+            GUI文言.取得する(GUI文言キー.表示メニュー, language),
+            GUIコマンド.表示メニュー,
             language
         );
 
-        SetHeader(
-            SearchItem,
-            GuiText.Get(GuiTextKey.SearchMenu, language),
-            GuiCommands.Search,
+        項目見出しを設定する(
+            対象ファイル項目,
+            GUI文言.取得する(GUI文言キー.ファイルボタン, language),
+            GUIコマンド.対象ファイル選択,
             language
         );
-        SetHeader(
-            DangerFilterItem,
-            GuiText.Get(GuiTextKey.Danger, language),
-            GuiCommands.DangerFilter,
+        項目見出しを設定する(
+            対象フォルダー項目,
+            GUI文言.取得する(GUI文言キー.フォルダーボタン, language),
+            GUIコマンド.対象フォルダー選択,
             language
         );
-        SetHeader(
-            WarningFilterItem,
-            GuiText.Get(GuiTextKey.Warning, language),
-            GuiCommands.WarningFilter,
+        項目見出しを設定する(
+            設定項目,
+            GUI文言.取得する(GUI文言キー.設定ボタン文言, language),
+            GUIコマンド.設定選択,
             language
         );
-        SetHeader(
-            AttentionFilterItem,
-            GuiText.Get(GuiTextKey.Attention, language),
-            GuiCommands.AttentionFilter,
+        項目見出しを設定する(
+            設定編集項目,
+            GUI文言.取得する(GUI文言キー.編集ボタン, language),
+            GUIコマンド.設定編集,
             language
         );
-        SetHeader(
-            LanguageMenu,
-            GuiText.Get(GuiTextKey.LanguageLabel, language).TrimEnd(':'),
-            GuiCommands.LanguageMenu,
+        項目見出しを設定する(
+            設定消去項目,
+            GUI文言.取得する(GUI文言キー.消去ボタン, language),
+            GUIコマンド.設定消去,
             language
         );
-        SetHeader(
-            JapaneseLanguageItem,
-            GuiText.Get(GuiTextKey.JapaneseLanguage, language),
-            GuiCommands.JapaneseLanguage,
+        項目見出しを設定する(
+            JSON出力項目,
+            GUI文言.取得する(GUI文言キー.JSON出力ボタン, language),
+            GUIコマンド.JSON出力,
             language
         );
-        SetHeader(
-            EnglishLanguageItem,
-            GuiText.Get(GuiTextKey.EnglishLanguage, language),
-            GuiCommands.EnglishLanguage,
+        項目見出しを設定する(
+            SARIF出力項目,
+            GUI文言.取得する(GUI文言キー.SARIF出力ボタン, language),
+            GUIコマンド.SARIF出力,
             language
         );
-        SetHeader(
-            ThemeMenu,
-            GuiText.Get(GuiTextKey.ThemeLabel, language).TrimEnd(':'),
-            GuiCommands.ThemeMenu,
+        項目見出しを設定する(
+            終了項目,
+            GUI文言.取得する(GUI文言キー.終了メニュー, language),
+            GUIコマンド.終了,
             language
         );
-        SetHeader(
-            DarkThemeItem,
-            GuiText.Get(GuiTextKey.DarkTheme, language),
-            GuiCommands.DarkTheme,
+
+        項目見出しを設定する(
+            解析項目,
+            GUI文言.取得する(GUI文言キー.解析ボタン, language),
+            GUIコマンド.解析開始,
             language
         );
-        SetHeader(
-            LightThemeItem,
-            GuiText.Get(GuiTextKey.LightTheme, language),
-            GuiCommands.LightTheme,
+        項目見出しを設定する(
+            キャンセル項目,
+            GUI文言.取得する(GUI文言キー.キャンセルボタン, language),
+            GUIコマンド.解析キャンセル,
+            language
+        );
+        項目見出しを設定する(
+            ソースを開く項目,
+            GUI文言.取得する(GUI文言キー.ソースを開くボタン, language),
+            GUIコマンド.ソースを開く,
+            language
+        );
+
+        項目見出しを設定する(
+            検索項目,
+            GUI文言.取得する(GUI文言キー.検索メニュー, language),
+            GUIコマンド.診断検索,
+            language
+        );
+        項目見出しを設定する(
+            危険絞り込み項目,
+            GUI文言.取得する(GUI文言キー.危険, language),
+            GUIコマンド.危険絞り込み,
+            language
+        );
+        項目見出しを設定する(
+            警告絞り込み項目,
+            GUI文言.取得する(GUI文言キー.警告, language),
+            GUIコマンド.警告絞り込み,
+            language
+        );
+        項目見出しを設定する(
+            注意絞り込み項目,
+            GUI文言.取得する(GUI文言キー.注意, language),
+            GUIコマンド.注意絞り込み,
+            language
+        );
+        項目見出しを設定する(
+            言語メニュー,
+            GUI文言.取得する(GUI文言キー.言語ラベル, language).TrimEnd(':'),
+            GUIコマンド.言語メニュー,
+            language
+        );
+        項目見出しを設定する(
+            日本語項目,
+            GUI文言.取得する(GUI文言キー.日本語表示, language),
+            GUIコマンド.日本語表示,
+            language
+        );
+        項目見出しを設定する(
+            英語項目,
+            GUI文言.取得する(GUI文言キー.英語表示, language),
+            GUIコマンド.英語表示,
+            language
+        );
+        項目見出しを設定する(
+            テーマメニュー,
+            GUI文言.取得する(GUI文言キー.テーマラベル, language).TrimEnd(':'),
+            GUIコマンド.テーマメニュー,
+            language
+        );
+        項目見出しを設定する(
+            ダークテーマ項目,
+            GUI文言.取得する(GUI文言キー.ダークテーマ, language),
+            GUIコマンド.ダークテーマ,
+            language
+        );
+        項目見出しを設定する(
+            ライトテーマ項目,
+            GUI文言.取得する(GUI文言キー.ライトテーマ, language),
+            GUIコマンド.ライトテーマ,
             language
         );
     }
 
-    private static void AddItems(ItemsControl parent, params object[] items)
+    private static void 項目を追加する(ItemsControl parent, params object[] items)
     {
         foreach (var item in items)
         {
@@ -249,34 +255,34 @@ internal sealed class MainWindowMenu : Menu
         }
     }
 
-    private void ConfigureAutomation()
+    private void 自動化設定を適用する()
     {
-        var items = new (MenuItem Item, string Id)[]
+        var items = new (MenuItem Item, string 識別子)[]
         {
-            (FileMenu, "FileMenu"),
-            (AnalyzeMenu, "AnalyzeMenu"),
-            (ViewMenu, "ViewMenu"),
-            (TargetFileItem, "TargetFileMenuItem"),
-            (TargetFolderItem, "TargetFolderMenuItem"),
-            (ConfigurationItem, "ConfigurationMenuItem"),
-            (EditConfigurationItem, "EditConfigurationMenuItem"),
-            (ClearConfigurationItem, "ClearConfigurationMenuItem"),
-            (ExportJsonItem, "ExportJsonMenuItem"),
-            (ExportSarifItem, "ExportSarifMenuItem"),
-            (ExitItem, "ExitMenuItem"),
-            (AnalyzeItem, "AnalyzeMenuItem"),
-            (CancelItem, "CancelMenuItem"),
-            (OpenSourceItem, "OpenSourceMenuItem"),
-            (SearchItem, "SearchMenuItem"),
-            (DangerFilterItem, "DangerFilterMenuItem"),
-            (WarningFilterItem, "WarningFilterMenuItem"),
-            (AttentionFilterItem, "AttentionFilterMenuItem"),
-            (LanguageMenu, "LanguageMenu"),
-            (JapaneseLanguageItem, "JapaneseLanguageMenuItem"),
-            (EnglishLanguageItem, "EnglishLanguageMenuItem"),
-            (ThemeMenu, "ThemeMenu"),
-            (DarkThemeItem, "DarkThemeMenuItem"),
-            (LightThemeItem, "LightThemeMenuItem"),
+            (ファイルメニュー, "FileMenu"),
+            (解析メニュー, "AnalyzeMenu"),
+            (表示メニュー, "ViewMenu"),
+            (対象ファイル項目, "TargetFileMenuItem"),
+            (対象フォルダー項目, "TargetFolderMenuItem"),
+            (設定項目, "ConfigurationMenuItem"),
+            (設定編集項目, "EditConfigurationMenuItem"),
+            (設定消去項目, "ClearConfigurationMenuItem"),
+            (JSON出力項目, "ExportJsonMenuItem"),
+            (SARIF出力項目, "ExportSarifMenuItem"),
+            (終了項目, "ExitMenuItem"),
+            (解析項目, "AnalyzeMenuItem"),
+            (キャンセル項目, "CancelMenuItem"),
+            (ソースを開く項目, "OpenSourceMenuItem"),
+            (検索項目, "SearchMenuItem"),
+            (危険絞り込み項目, "DangerFilterMenuItem"),
+            (警告絞り込み項目, "WarningFilterMenuItem"),
+            (注意絞り込み項目, "AttentionFilterMenuItem"),
+            (言語メニュー, "LanguageMenu"),
+            (日本語項目, "JapaneseLanguageMenuItem"),
+            (英語項目, "EnglishLanguageMenuItem"),
+            (テーマメニュー, "ThemeMenu"),
+            (ダークテーマ項目, "DarkThemeMenuItem"),
+            (ライトテーマ項目, "LightThemeMenuItem"),
         };
 
         AutomationProperties.SetAutomationId(this, "MainMenu");
@@ -286,42 +292,44 @@ internal sealed class MainWindowMenu : Menu
         }
     }
 
-    private static void SetTopLevelHeader(
+    private static void 最上位メニュー見出しを設定する(
         MenuItem item,
         string text,
-        GuiCommandDefinition command,
+        GUIコマンド定義 command,
         UserInterfaceLanguage language
     )
     {
-        var accessKey = AccessKey(command);
+        var accessKey = アクセスキーを取得する(command);
         var header =
             language == UserInterfaceLanguage.English
-                ? PrefixAccessKey(text, accessKey)
+                ? アクセスキー付き見出しを作る(text, accessKey)
                 : $"{text} (_{accessKey})";
         item.Header = header;
         AutomationProperties.SetName(item, text);
-        command.ApplyHelp(item, language);
+        command.ヘルプを適用する(item, language);
     }
 
-    private static void SetHeader(
+    private static void 項目見出しを設定する(
         MenuItem item,
         string text,
-        GuiCommandDefinition command,
+        GUIコマンド定義 command,
         UserInterfaceLanguage language
     )
     {
-        var accessKey = AccessKey(command);
+        var accessKey = アクセスキーを取得する(command);
         item.Header = $"{text} (_{accessKey})";
         AutomationProperties.SetName(item, text);
-        command.ApplyHelp(item, language);
+        command.ヘルプを適用する(item, language);
     }
 
-    private static string AccessKey(GuiCommandDefinition command) =>
-        command.MenuAccessKey is { } key
-            ? GuiShortcut.FormatKey(key)
-            : throw new InvalidOperationException($"Command {command.Id} has no menu access key.");
+    private static string アクセスキーを取得する(GUIコマンド定義 command) =>
+        command.メニューアクセスキー is { } key
+            ? GUIショートカット.キー名を整形する(key)
+            : throw new InvalidOperationException(
+                $"Command {command.識別子} has no menu access key."
+            );
 
-    private static string PrefixAccessKey(string text, string accessKey)
+    private static string アクセスキー付き見出しを作る(string text, string accessKey)
     {
         var index = text.IndexOf(accessKey, StringComparison.OrdinalIgnoreCase);
         return index < 0 ? $"{text} (_{accessKey})" : text.Insert(index, "_");

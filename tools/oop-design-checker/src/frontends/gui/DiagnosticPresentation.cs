@@ -56,8 +56,8 @@ public static class DiagnosticFilter
         DiagnosticFilterOptions options
     ) =>
         diagnostics
-            .Where(row => IncludesSeverity(row.Severity, options))
-            .Where(row => MatchesSearch(row, options.SearchText))
+            .Where(row => 重要度を含む(row.Severity, options))
+            .Where(row => 検索文字列に一致する(row, options.SearchText))
             .OrderByDescending(row => row.Severity)
             .ThenBy(row => row.FilePath, StringComparer.OrdinalIgnoreCase)
             .ThenBy(row => row.Line)
@@ -65,7 +65,7 @@ public static class DiagnosticFilter
             .ThenBy(row => row.RuleId, StringComparer.Ordinal)
             .ToArray();
 
-    private static bool IncludesSeverity(
+    private static bool 重要度を含む(
         DesignDiagnosticSeverity severity,
         DiagnosticFilterOptions options
     ) =>
@@ -77,7 +77,7 @@ public static class DiagnosticFilter
             _ => false,
         };
 
-    private static bool MatchesSearch(DiagnosticRow row, string searchText)
+    private static bool 検索文字列に一致する(DiagnosticRow row, string searchText)
     {
         var term = searchText.Trim();
         if (term.Length == 0)

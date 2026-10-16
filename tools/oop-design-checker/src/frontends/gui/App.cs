@@ -5,7 +5,7 @@ using Avalonia.Themes.Fluent;
 
 namespace OopDesignChecker.Gui;
 
-internal sealed class App : Avalonia.Application
+internal sealed class GUIアプリ : Avalonia.Application
 {
     public override void OnFrameworkInitializationCompleted()
     {
@@ -20,7 +20,7 @@ internal sealed class App : Avalonia.Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow();
+            desktop.MainWindow = new メインウィンドウ();
         }
 
         base.OnFrameworkInitializationCompleted();

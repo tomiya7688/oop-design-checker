@@ -9,29 +9,29 @@ using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Gui;
 
-internal sealed class ConfigurationEditorWindow : Window
+internal sealed class 設定編集画面 : Window
 {
-    private readonly TextBox _editor = new();
-    private readonly TextBlock _status = new();
-    private readonly UserInterfaceLanguage _language;
+    private readonly TextBox _編集欄 = new();
+    private readonly TextBlock _状態欄 = new();
+    private readonly UserInterfaceLanguage _表示言語;
 
-    public ConfigurationEditorWindow(string initialJson, UserInterfaceLanguage language)
+    public 設定編集画面(string initialJson, UserInterfaceLanguage language)
     {
-        _language = language;
-        Title = GuiText.Get(GuiTextKey.EditorTitle, language);
+        _表示言語 = language;
+        Title = GUI文言.取得する(GUI文言キー.編集画面タイトル, language);
         Width = 760;
         Height = 620;
         MinWidth = 560;
         MinHeight = 420;
         AutomationProperties.SetAutomationId(this, "ConfigurationEditorWindow");
 
-        _editor.Text = initialJson;
-        _editor.AcceptsReturn = true;
-        _editor.TextWrapping = TextWrapping.NoWrap;
-        AutomationProperties.SetAutomationId(_editor, "ConfigurationEditor");
-        AutomationProperties.SetAutomationId(_status, "ConfigurationEditorStatus");
+        _編集欄.Text = initialJson;
+        _編集欄.AcceptsReturn = true;
+        _編集欄.TextWrapping = TextWrapping.NoWrap;
+        AutomationProperties.SetAutomationId(_編集欄, "ConfigurationEditor");
+        AutomationProperties.SetAutomationId(_状態欄, "ConfigurationEditorStatus");
 
-        Content = BuildContent();
+        Content = 内容を構築する();
         KeyDown += (_, args) =>
         {
             if (args.Key != Key.Escape)
@@ -44,7 +44,7 @@ internal sealed class ConfigurationEditorWindow : Window
         };
     }
 
-    private Grid BuildContent()
+    private Grid 内容を構築する()
     {
         var root = new Grid
         {
@@ -61,31 +61,37 @@ internal sealed class ConfigurationEditorWindow : Window
 
         var description = new TextBlock
         {
-            Text = GuiText.Get(GuiTextKey.EditorDescription, _language),
+            Text = GUI文言.取得する(GUI文言キー.編集画面説明, _表示言語),
             TextWrapping = TextWrapping.Wrap,
         };
         Add(root, description, 0);
-        Add(root, _editor, 1);
-        Add(root, _status, 2);
-        Add(root, BuildActions(), 3);
+        Add(root, _編集欄, 1);
+        Add(root, _状態欄, 2);
+        Add(root, 操作欄を構築する(), 3);
         return root;
     }
 
-    private StackPanel BuildActions()
+    private StackPanel 操作欄を構築する()
     {
         var validateButton = new Button
         {
-            Content = GuiText.Get(GuiTextKey.ValidateButton, _language),
+            Content = GUI文言.取得する(GUI文言キー.検証ボタン, _表示言語),
         };
-        var saveButton = new Button { Content = GuiText.Get(GuiTextKey.SaveButton, _language) };
-        var cancelButton = new Button { Content = GuiText.Get(GuiTextKey.CancelButton, _language) };
+        var saveButton = new Button
+        {
+            Content = GUI文言.取得する(GUI文言キー.保存ボタン, _表示言語),
+        };
+        var cancelButton = new Button
+        {
+            Content = GUI文言.取得する(GUI文言キー.キャンセルボタン, _表示言語),
+        };
 
         AutomationProperties.SetAutomationId(validateButton, "ValidateConfigurationButton");
         AutomationProperties.SetAutomationId(saveButton, "SaveConfigurationButton");
         AutomationProperties.SetAutomationId(cancelButton, "CancelConfigurationButton");
 
-        validateButton.Click += (_, _) => ValidateEditor();
-        saveButton.Click += (_, _) => SaveAndClose();
+        validateButton.Click += (_, _) => 編集内容を検証する();
+        saveButton.Click += (_, _) => 保存して閉じる();
         cancelButton.Click += (_, _) => Close(null);
 
         return new StackPanel
@@ -97,22 +103,22 @@ internal sealed class ConfigurationEditorWindow : Window
         };
     }
 
-    private void ValidateEditor()
+    private void 編集内容を検証する()
     {
         try
         {
-            _ = CheckerConfigurationJson.Parse(_editor.Text ?? string.Empty);
-            _status.Text = GuiText.Get(GuiTextKey.ConfigurationValid, _language);
+            _ = CheckerConfigurationJson.Parse(_編集欄.Text ?? string.Empty);
+            _状態欄.Text = GUI文言.取得する(GUI文言キー.設定有効, _表示言語);
         }
         catch (InvalidOperationException)
         {
-            _status.Text = GuiText.Get(GuiTextKey.OperationFailed, _language);
+            _状態欄.Text = GUI文言.取得する(GUI文言キー.操作失敗, _表示言語);
         }
     }
 
-    private void SaveAndClose()
+    private void 保存して閉じる()
     {
-        var json = _editor.Text ?? string.Empty;
+        var json = _編集欄.Text ?? string.Empty;
         try
         {
             _ = CheckerConfigurationJson.Parse(json);
@@ -120,7 +126,7 @@ internal sealed class ConfigurationEditorWindow : Window
         }
         catch (InvalidOperationException)
         {
-            _status.Text = GuiText.Get(GuiTextKey.OperationFailed, _language);
+            _状態欄.Text = GUI文言.取得する(GUI文言キー.操作失敗, _表示言語);
         }
     }
 

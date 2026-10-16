@@ -12,141 +12,146 @@ using OopDesignChecker.Output;
 
 namespace OopDesignChecker.Gui;
 
-internal sealed class MainWindow : Window
+internal sealed class メインウィンドウ : Window
 {
-    private readonly MainWindowView _view = new();
-    private DiagnosticRow[] _allRows = [];
-    private CheckerRunResult? _lastResult;
-    private CancellationTokenSource? _analysisCancellation;
-    private UserInterfaceLanguage _language = UserInterfaceLanguage.Japanese;
-    private bool _analysisInProgress;
+    private readonly メイン画面 _画面 = new();
+    private DiagnosticRow[] _全診断行 = [];
+    private CheckerRunResult? _前回解析結果;
+    private CancellationTokenSource? _解析キャンセル;
+    private UserInterfaceLanguage _表示言語 = UserInterfaceLanguage.Japanese;
+    private bool _解析中;
 
-    public MainWindow()
+    public メインウィンドウ()
     {
-        Title = GuiText.Get(GuiTextKey.WindowTitle, _language);
+        Title = GUI文言.取得する(GUI文言キー.ウィンドウタイトル, _表示言語);
         Width = 1280;
         Height = 820;
         MinWidth = 900;
         MinHeight = 600;
-        Content = _view;
+        Content = _画面;
 
-        WireEvents();
-        UpdateSummary();
-        _view.Status.Text = GuiText.Get(GuiTextKey.Ready, _language);
-        UpdateActionAvailability();
+        イベントを接続する();
+        集計を更新する();
+        _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.準備完了, _表示言語);
+        操作の有効状態を更新する();
     }
 
-    internal MainWindowView TestView => _view;
+    internal メイン画面 テスト用画面 => _画面;
 
-    internal void PresentResultForTesting(CheckerRunResult result) => ShowResult(result);
+    internal void テスト用解析結果を表示する(CheckerRunResult result) => 解析結果を表示する(result);
 
-    internal void PresentErrorForTesting(string message) => ShowError(message);
+    internal void テスト用エラーを表示する(string message) => エラーを表示する(message);
 
-    internal void ApplyFiltersForTesting() => ApplyFilters();
+    internal void テスト用絞り込みを適用する() => 絞り込みを適用する();
 
-    internal void UpdateSelectedDiagnosticForTesting() => UpdateSelectedDiagnostic();
+    internal void テスト用選択診断を更新する() => 選択した診断を更新する();
 
-    internal void SetLanguageForTesting(UserInterfaceLanguage language)
+    internal void テスト用表示言語を設定する(UserInterfaceLanguage language)
     {
-        _view.LanguageSelector.SelectedIndex = language == UserInterfaceLanguage.English ? 1 : 0;
-        ChangeLanguage();
+        _画面.表示言語選択.SelectedIndex = language == UserInterfaceLanguage.English ? 1 : 0;
+        表示言語を変更する();
     }
 
-    internal void SetThemeForTesting(ThemeVariant theme)
+    internal void テスト用テーマを設定する(ThemeVariant theme)
     {
-        _view.ThemeSelector.SelectedIndex = theme == ThemeVariant.Light ? 1 : 0;
-        ChangeTheme();
+        _画面.テーマ選択.SelectedIndex = theme == ThemeVariant.Light ? 1 : 0;
+        テーマを変更する();
     }
 
-    private void WireEvents()
+    private void イベントを接続する()
     {
-        _view.AnalyzeButton.Click += async (_, _) => await AnalyzeAsync();
-        _view.CancelButton.Click += (_, _) => CancelAnalysis();
-        _view.TargetFileButton.Click += async (_, _) => await PickTargetFileAsync();
-        _view.TargetFolderButton.Click += async (_, _) => await PickTargetFolderAsync();
-        _view.ConfigurationButton.Click += async (_, _) => await PickConfigurationAsync();
-        _view.EditConfigurationButton.Click += async (_, _) => await EditConfigurationAsync();
-        _view.ClearConfigurationButton.Click += (_, _) => ClearConfiguration();
-        _view.DangerFilter.Click += (_, _) => FilterStateChanged();
-        _view.WarningFilter.Click += (_, _) => FilterStateChanged();
-        _view.AttentionFilter.Click += (_, _) => FilterStateChanged();
-        _view.SearchFilter.TextChanged += (_, _) => ApplyFilters();
-        _view.LanguageSelector.SelectionChanged += (_, _) => ChangeLanguage();
-        _view.ThemeSelector.SelectionChanged += (_, _) => ChangeTheme();
-        _view.DiagnosticsGrid.SelectionChanged += (_, _) => UpdateSelectedDiagnostic();
-        _view.DiagnosticsGrid.DoubleTapped += async (_, _) => await OpenSelectedSourceAsync();
-        _view.CopySelectedButton.Click += async (_, _) => await CopySelectedAsync();
-        _view.CopyAllButton.Click += async (_, _) => await CopyAllAsync();
-        _view.OpenSourceButton.Click += async (_, _) => await OpenSelectedSourceAsync();
-        _view.ExportJsonButton.Click += async (_, _) =>
-            await ExportAsync(DiagnosticExportFormat.Json);
-        _view.ExportSarifButton.Click += async (_, _) =>
-            await ExportAsync(DiagnosticExportFormat.Sarif);
+        _画面.解析ボタン.Click += async (_, _) => await 解析する非同期();
+        _画面.キャンセルボタン.Click += (_, _) => 解析をキャンセルする();
+        _画面.対象ファイルボタン.Click += async (_, _) => await 解析対象ファイルを選択する非同期();
+        _画面.対象フォルダーボタン.Click += async (_, _) =>
+            await 解析対象フォルダーを選択する非同期();
+        _画面.設定選択ボタン.Click += async (_, _) => await 設定ファイルを選択する非同期();
+        _画面.設定編集ボタン.Click += async (_, _) => await 設定を編集する非同期();
+        _画面.設定消去ボタン.Click += (_, _) => 設定消去();
+        _画面.危険絞り込み.Click += (_, _) => 絞り込み状態が変更された();
+        _画面.警告絞り込み.Click += (_, _) => 絞り込み状態が変更された();
+        _画面.注意絞り込み.Click += (_, _) => 絞り込み状態が変更された();
+        _画面.検索絞り込み.TextChanged += (_, _) => 絞り込みを適用する();
+        _画面.表示言語選択.SelectionChanged += (_, _) => 表示言語を変更する();
+        _画面.テーマ選択.SelectionChanged += (_, _) => テーマを変更する();
+        _画面.診断一覧.SelectionChanged += (_, _) => 選択した診断を更新する();
+        _画面.診断一覧.DoubleTapped += async (_, _) => await 選択箇所を開く非同期();
+        _画面.選択項目コピー.Click += async (_, _) => await 選択項目をコピーする非同期();
+        _画面.全件コピー.Click += async (_, _) => await すべてコピーする非同期();
+        _画面.ソースを開くボタン.Click += async (_, _) => await 選択箇所を開く非同期();
+        _画面.JSON出力ボタン.Click += async (_, _) =>
+            await 診断を出力する非同期(DiagnosticExportFormat.Json);
+        _画面.SARIF出力ボタン.Click += async (_, _) =>
+            await 診断を出力する非同期(DiagnosticExportFormat.Sarif);
 
-        _view.MainMenu.TargetFileItem.Click += async (_, _) => await PickTargetFileAsync();
-        _view.MainMenu.TargetFolderItem.Click += async (_, _) => await PickTargetFolderAsync();
-        _view.MainMenu.ConfigurationItem.Click += async (_, _) => await PickConfigurationAsync();
-        _view.MainMenu.EditConfigurationItem.Click += async (_, _) =>
-            await EditConfigurationAsync();
-        _view.MainMenu.ClearConfigurationItem.Click += (_, _) => ClearConfiguration();
-        _view.MainMenu.ExportJsonItem.Click += async (_, _) =>
-            await ExportAsync(DiagnosticExportFormat.Json);
-        _view.MainMenu.ExportSarifItem.Click += async (_, _) =>
-            await ExportAsync(DiagnosticExportFormat.Sarif);
-        _view.MainMenu.ExitItem.Click += (_, _) => Close();
+        _画面.メインメニュー部品.対象ファイル項目.Click += async (_, _) =>
+            await 解析対象ファイルを選択する非同期();
+        _画面.メインメニュー部品.対象フォルダー項目.Click += async (_, _) =>
+            await 解析対象フォルダーを選択する非同期();
+        _画面.メインメニュー部品.設定項目.Click += async (_, _) =>
+            await 設定ファイルを選択する非同期();
+        _画面.メインメニュー部品.設定編集項目.Click += async (_, _) => await 設定を編集する非同期();
+        _画面.メインメニュー部品.設定消去項目.Click += (_, _) => 設定消去();
+        _画面.メインメニュー部品.JSON出力項目.Click += async (_, _) =>
+            await 診断を出力する非同期(DiagnosticExportFormat.Json);
+        _画面.メインメニュー部品.SARIF出力項目.Click += async (_, _) =>
+            await 診断を出力する非同期(DiagnosticExportFormat.Sarif);
+        _画面.メインメニュー部品.終了項目.Click += (_, _) => Close();
 
-        _view.MainMenu.AnalyzeItem.Click += async (_, _) => await AnalyzeAsync();
-        _view.MainMenu.CancelItem.Click += (_, _) => CancelAnalysis();
-        _view.MainMenu.OpenSourceItem.Click += async (_, _) => await OpenSelectedSourceAsync();
+        _画面.メインメニュー部品.解析項目.Click += async (_, _) => await 解析する非同期();
+        _画面.メインメニュー部品.キャンセル項目.Click += (_, _) => 解析をキャンセルする();
+        _画面.メインメニュー部品.ソースを開く項目.Click += async (_, _) =>
+            await 選択箇所を開く非同期();
 
-        _view.MainMenu.SearchItem.Click += (_, _) => FocusSearch();
-        _view.MainMenu.DangerFilterItem.Click += (_, _) => ToggleFilterFromMenu(_view.DangerFilter);
-        _view.MainMenu.WarningFilterItem.Click += (_, _) =>
-            ToggleFilterFromMenu(_view.WarningFilter);
-        _view.MainMenu.AttentionFilterItem.Click += (_, _) =>
-            ToggleFilterFromMenu(_view.AttentionFilter);
-        _view.MainMenu.JapaneseLanguageItem.Click += (_, _) =>
-            _view.LanguageSelector.SelectedIndex = 0;
-        _view.MainMenu.EnglishLanguageItem.Click += (_, _) =>
-            _view.LanguageSelector.SelectedIndex = 1;
-        _view.MainMenu.DarkThemeItem.Click += (_, _) => _view.ThemeSelector.SelectedIndex = 0;
-        _view.MainMenu.LightThemeItem.Click += (_, _) => _view.ThemeSelector.SelectedIndex = 1;
+        _画面.メインメニュー部品.検索項目.Click += (_, _) => 検索へフォーカスする();
+        _画面.メインメニュー部品.危険絞り込み項目.Click += (_, _) =>
+            メニューから絞り込みを切り替える(_画面.危険絞り込み);
+        _画面.メインメニュー部品.警告絞り込み項目.Click += (_, _) =>
+            メニューから絞り込みを切り替える(_画面.警告絞り込み);
+        _画面.メインメニュー部品.注意絞り込み項目.Click += (_, _) =>
+            メニューから絞り込みを切り替える(_画面.注意絞り込み);
+        _画面.メインメニュー部品.日本語項目.Click += (_, _) => _画面.表示言語選択.SelectedIndex = 0;
+        _画面.メインメニュー部品.英語項目.Click += (_, _) => _画面.表示言語選択.SelectedIndex = 1;
+        _画面.メインメニュー部品.ダークテーマ項目.Click += (_, _) =>
+            _画面.テーマ選択.SelectedIndex = 0;
+        _画面.メインメニュー部品.ライトテーマ項目.Click += (_, _) =>
+            _画面.テーマ選択.SelectedIndex = 1;
 
-        _view.TargetPath.KeyDown += OnEditableKeyDown;
-        _view.ConfigurationPath.KeyDown += OnEditableKeyDown;
-        _view.SearchFilter.KeyDown += OnEditableKeyDown;
+        _画面.対象パス欄.KeyDown += 編集欄キー押下時;
+        _画面.設定パス欄.KeyDown += 編集欄キー押下時;
+        _画面.検索絞り込み.KeyDown += 編集欄キー押下時;
         AddHandler(
             InputElement.KeyDownEvent,
-            OnPreviewKeyDown,
+            キー押下プレビュー時,
             RoutingStrategies.Tunnel,
             handledEventsToo: true
         );
-        KeyDown += OnKeyDown;
+        KeyDown += キー押下時;
     }
 
-    private void ChangeLanguage()
+    private void 表示言語を変更する()
     {
-        _language =
-            _view.LanguageSelector.SelectedIndex == 1
+        _表示言語 =
+            _画面.表示言語選択.SelectedIndex == 1
                 ? UserInterfaceLanguage.English
                 : UserInterfaceLanguage.Japanese;
-        Title = GuiText.Get(GuiTextKey.WindowTitle, _language);
-        _view.ApplyLanguage(_language);
-        if (_lastResult is not null)
+        Title = GUI文言.取得する(GUI文言キー.ウィンドウタイトル, _表示言語);
+        _画面.表示言語を適用する(_表示言語);
+        if (_前回解析結果 is not null)
         {
-            _allRows = _lastResult
-                .Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _language))
+            _全診断行 = _前回解析結果
+                .Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _表示言語))
                 .ToArray();
-            ApplyFilters();
+            絞り込みを適用する();
         }
 
-        UpdateSummary();
-        UpdateSelectedDiagnostic();
-        UpdateLocalizedStatus();
-        UpdateActionAvailability();
+        集計を更新する();
+        選択した診断を更新する();
+        言語別状態表示を更新する();
+        操作の有効状態を更新する();
     }
 
-    private void ChangeTheme()
+    private void テーマを変更する()
     {
         if (Avalonia.Application.Current is not { } application)
         {
@@ -154,37 +159,37 @@ internal sealed class MainWindow : Window
         }
 
         application.RequestedThemeVariant =
-            _view.ThemeSelector.SelectedIndex == 1 ? ThemeVariant.Light : ThemeVariant.Dark;
-        UpdateActionAvailability();
+            _画面.テーマ選択.SelectedIndex == 1 ? ThemeVariant.Light : ThemeVariant.Dark;
+        操作の有効状態を更新する();
     }
 
-    private async Task AnalyzeAsync()
+    private async Task 解析する非同期()
     {
-        if (_analysisInProgress)
+        if (_解析中)
         {
             return;
         }
 
-        var targetPath = _view.TargetPath.Text?.Trim();
+        var targetPath = _画面.対象パス欄.Text?.Trim();
         if (string.IsNullOrWhiteSpace(targetPath))
         {
-            _view.Status.Text = GuiText.Get(GuiTextKey.TargetRequired, _language);
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.対象必須, _表示言語);
             return;
         }
 
         using var cancellation = new CancellationTokenSource();
-        _analysisCancellation = cancellation;
-        SetBusy(true);
+        _解析キャンセル = cancellation;
+        処理中状態を設定する(true);
 
         try
         {
-            var automationDelay = UiAutomationSettings.AnalysisDelayMilliseconds;
+            var automationDelay = UI自動化設定.解析遅延ミリ秒;
             if (automationDelay > 0)
             {
                 await Task.Delay(automationDelay, cancellation.Token);
             }
 
-            var configurationPath = NormalizeOptionalPath(_view.ConfigurationPath.Text);
+            var configurationPath = 省略可能なパスを正規化する(_画面.設定パス欄.Text);
             var result = await Task.Run(
                 () =>
                     CheckerService.Analyze(
@@ -194,11 +199,11 @@ internal sealed class MainWindow : Window
                     ),
                 cancellation.Token
             );
-            ShowResult(result);
+            解析結果を表示する(result);
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            _view.Status.Text = GuiText.Get(GuiTextKey.AnalysisCancelled, _language);
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析キャンセル済み, _表示言語);
         }
         catch (Exception exception)
             when (exception
@@ -207,201 +212,197 @@ internal sealed class MainWindow : Window
                         or InvalidOperationException
             )
         {
-            ShowError(LocalizedText.AnalysisFailed(_language, exception.Message));
+            エラーを表示する(LocalizedText.AnalysisFailed(_表示言語, exception.Message));
         }
         finally
         {
-            if (ReferenceEquals(_analysisCancellation, cancellation))
+            if (ReferenceEquals(_解析キャンセル, cancellation))
             {
-                _analysisCancellation = null;
+                _解析キャンセル = null;
             }
 
-            SetBusy(false);
+            処理中状態を設定する(false);
         }
     }
 
-    private void CancelAnalysis()
+    private void 解析をキャンセルする()
     {
-        if (_analysisCancellation is null || _analysisCancellation.IsCancellationRequested)
+        if (_解析キャンセル is null || _解析キャンセル.IsCancellationRequested)
         {
             return;
         }
 
-        _analysisCancellation.Cancel();
-        _view.Status.Text = GuiText.Get(GuiTextKey.Cancelling, _language);
-        UpdateActionAvailability();
+        _解析キャンセル.Cancel();
+        _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.キャンセル中, _表示言語);
+        操作の有効状態を更新する();
     }
 
-    private void ShowResult(CheckerRunResult result)
+    private void 解析結果を表示する(CheckerRunResult result)
     {
-        _lastResult = result;
-        _allRows = result
-            .Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _language))
+        _前回解析結果 = result;
+        _全診断行 = result
+            .Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _表示言語))
             .ToArray();
-        ApplyFilters();
-        UpdateSummary();
-        _view.Status.Text = GuiText.Format(GuiTextKey.Completed, _language, _allRows.Length);
-        _view.ConfigurationPath.Text = result.ConfigurationPath ?? _view.ConfigurationPath.Text;
-        UpdateActionAvailability();
+        絞り込みを適用する();
+        集計を更新する();
+        _画面.状態表示.Text = GUI文言.書式化する(GUI文言キー.完了, _表示言語, _全診断行.Length);
+        _画面.設定パス欄.Text = result.ConfigurationPath ?? _画面.設定パス欄.Text;
+        操作の有効状態を更新する();
     }
 
-    private void ShowError(string message)
+    private void エラーを表示する(string message)
     {
-        _lastResult = null;
-        _allRows = [];
-        _view.DiagnosticsGrid.ItemsSource = Array.Empty<DiagnosticRow>();
-        _view.DiagnosticsGrid.SelectedItem = null;
-        _view.ClearDetails(_language);
-        UpdateSummary();
-        _view.Status.Text = message;
-        UpdateActionAvailability();
+        _前回解析結果 = null;
+        _全診断行 = [];
+        _画面.診断一覧.ItemsSource = Array.Empty<DiagnosticRow>();
+        _画面.診断一覧.SelectedItem = null;
+        _画面.詳細を消去する(_表示言語);
+        集計を更新する();
+        _画面.状態表示.Text = message;
+        操作の有効状態を更新する();
     }
 
-    private void ApplyFilters()
+    private void 絞り込みを適用する()
     {
         var options = new DiagnosticFilterOptions(
-            _view.DangerFilter.IsChecked == true,
-            _view.WarningFilter.IsChecked == true,
-            _view.AttentionFilter.IsChecked == true,
-            _view.SearchFilter.Text ?? string.Empty
+            _画面.危険絞り込み.IsChecked == true,
+            _画面.警告絞り込み.IsChecked == true,
+            _画面.注意絞り込み.IsChecked == true,
+            _画面.検索絞り込み.Text ?? string.Empty
         );
-        _view.DiagnosticsGrid.ItemsSource = DiagnosticFilter.Apply(_allRows, options);
-        SyncMenuState();
+        _画面.診断一覧.ItemsSource = DiagnosticFilter.Apply(_全診断行, options);
+        メニュー状態を同期する();
     }
 
-    private void UpdateSummary()
+    private void 集計を更新する()
     {
-        _view.DangerCount.Text =
-            $"{GuiText.Get(GuiTextKey.Danger, _language)}: {Count(DesignDiagnosticSeverity.Danger)}";
-        _view.WarningCount.Text =
-            $"{GuiText.Get(GuiTextKey.Warning, _language)}: {Count(DesignDiagnosticSeverity.Warning)}";
-        _view.AttentionCount.Text =
-            $"{GuiText.Get(GuiTextKey.Attention, _language)}: {Count(DesignDiagnosticSeverity.Attention)}";
+        _画面.危険件数表示.Text =
+            $"{GUI文言.取得する(GUI文言キー.危険, _表示言語)}: {件数を数える(DesignDiagnosticSeverity.Danger)}";
+        _画面.警告件数表示.Text =
+            $"{GUI文言.取得する(GUI文言キー.警告, _表示言語)}: {件数を数える(DesignDiagnosticSeverity.Warning)}";
+        _画面.注意件数表示.Text =
+            $"{GUI文言.取得する(GUI文言キー.注意, _表示言語)}: {件数を数える(DesignDiagnosticSeverity.Attention)}";
 
-        if (_lastResult is null)
+        if (_前回解析結果 is null)
         {
-            _view.ConfigurationSummary.Text = GuiText.Get(GuiTextKey.ConfigNotLoaded, _language);
+            _画面.設定概要.Text = GUI文言.取得する(GUI文言キー.設定未読込, _表示言語);
             return;
         }
 
-        var configuration = _lastResult.Configuration;
-        var configName = _lastResult.ConfigurationPath is null
-            ? GuiText.Get(GuiTextKey.ConfigDefaults, _language)
-            : Path.GetFileName(_lastResult.ConfigurationPath);
-        _view.ConfigurationSummary.Text = GuiText.Format(
-            GuiTextKey.ConfigSummary,
-            _language,
+        var configuration = _前回解析結果.Configuration;
+        var configName = _前回解析結果.ConfigurationPath is null
+            ? GUI文言.取得する(GUI文言キー.設定既定値, _表示言語)
+            : Path.GetFileName(_前回解析結果.ConfigurationPath);
+        _画面.設定概要.Text = GUI文言.書式化する(
+            GUI文言キー.設定概要文,
+            _表示言語,
             configName,
-            LocalizedText.SeverityName(_language, _lastResult.FailureThreshold),
+            LocalizedText.SeverityName(_表示言語, _前回解析結果.FailureThreshold),
             configuration.DisabledRules.Count,
             configuration.IgnoredPaths.Count
         );
     }
 
-    private int Count(DesignDiagnosticSeverity severity) =>
-        _allRows.Count(row => row.Severity == severity);
+    private int 件数を数える(DesignDiagnosticSeverity severity) =>
+        _全診断行.Count(row => row.Severity == severity);
 
-    private void UpdateSelectedDiagnostic()
+    private void 選択した診断を更新する()
     {
-        if (_view.DiagnosticsGrid.SelectedItem is not DiagnosticRow row)
+        if (_画面.診断一覧.SelectedItem is not DiagnosticRow row)
         {
-            _view.ClearDetails(_language);
-            UpdateActionAvailability();
+            _画面.詳細を消去する(_表示言語);
+            操作の有効状態を更新する();
             return;
         }
 
-        _view.DetailSeverity.Text = GuiText.Format(
-            GuiTextKey.SeverityDetail,
-            _language,
-            LocalizedText.SeverityName(_language, row.Severity)
+        _画面.詳細重要度.Text = GUI文言.書式化する(
+            GUI文言キー.重要度詳細,
+            _表示言語,
+            LocalizedText.SeverityName(_表示言語, row.Severity)
         );
-        _view.DetailRule.Text = GuiText.Format(
-            GuiTextKey.RuleDetail,
-            _language,
+        _画面.詳細規則.Text = GUI文言.書式化する(
+            GUI文言キー.規則詳細,
+            _表示言語,
             $"{row.RuleId} — {row.RuleTitle}"
         );
-        _view.DetailSymbol.Text = GuiText.Format(
-            GuiTextKey.SymbolDetail,
-            _language,
+        _画面.詳細シンボル.Text = GUI文言.書式化する(
+            GUI文言キー.シンボル詳細,
+            _表示言語,
             row.SymbolName ?? "-"
         );
-        _view.DetailLocation.Text = GuiText.Format(
-            GuiTextKey.LocationDetail,
-            _language,
-            row.LocationText
-        );
-        _view.DetailMessage.Text = row.Message;
-        UpdateActionAvailability();
+        _画面.詳細位置.Text = GUI文言.書式化する(GUI文言キー.位置詳細, _表示言語, row.LocationText);
+        _画面.詳細メッセージ.Text = row.Message;
+        操作の有効状態を更新する();
     }
 
-    private async Task PickTargetFileAsync()
+    private async Task 解析対象ファイルを選択する非同期()
     {
         var files = await StorageProvider.OpenFilePickerAsync(
             new FilePickerOpenOptions
             {
-                Title = GuiText.Get(GuiTextKey.ChooseAnalysisTarget, _language),
+                Title = GUI文言.取得する(GUI文言キー.解析対象選択, _表示言語),
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
-                    new FilePickerFileType(GuiText.Get(GuiTextKey.CSharpTargetType, _language))
+                    new FilePickerFileType(GUI文言.取得する(GUI文言キー.CSharp対象種別, _表示言語))
                     {
                         Patterns = ["*.cs", "*.csproj", "*.sln", "*.slnx"],
                     },
                 ],
             }
         );
-        SetPathFromSelection(files.Count == 0 ? null : files[0], _view.TargetPath);
+        選択項目からパスを設定する(files.Count == 0 ? null : files[0], _画面.対象パス欄);
     }
 
-    private async Task PickTargetFolderAsync()
+    private async Task 解析対象フォルダーを選択する非同期()
     {
         var folders = await StorageProvider.OpenFolderPickerAsync(
             new FolderPickerOpenOptions
             {
-                Title = GuiText.Get(GuiTextKey.ChooseProjectDirectory, _language),
+                Title = GUI文言.取得する(GUI文言キー.プロジェクトフォルダー選択, _表示言語),
                 AllowMultiple = false,
             }
         );
-        SetPathFromSelection(folders.Count == 0 ? null : folders[0], _view.TargetPath);
+        選択項目からパスを設定する(folders.Count == 0 ? null : folders[0], _画面.対象パス欄);
     }
 
-    private async Task PickConfigurationAsync()
+    private async Task 設定ファイルを選択する非同期()
     {
         var files = await StorageProvider.OpenFilePickerAsync(
             new FilePickerOpenOptions
             {
-                Title = GuiText.Get(GuiTextKey.ChooseCheckerConfiguration, _language),
+                Title = GUI文言.取得する(GUI文言キー.チェッカー設定選択, _表示言語),
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
-                    new FilePickerFileType(GuiText.Get(GuiTextKey.JsonConfigurationType, _language))
+                    new FilePickerFileType(GUI文言.取得する(GUI文言キー.JSON設定種別, _表示言語))
                     {
                         Patterns = ["*.json"],
                     },
                 ],
             }
         );
-        SetPathFromSelection(files.Count == 0 ? null : files[0], _view.ConfigurationPath);
+        選択項目からパスを設定する(files.Count == 0 ? null : files[0], _画面.設定パス欄);
     }
 
-    private async Task EditConfigurationAsync()
+    private async Task 設定を編集する非同期()
     {
-        if (_analysisInProgress)
+        if (_解析中)
         {
             return;
         }
 
         try
         {
-            var configurationPath = ResolveConfigurationEditorPath();
+            var configurationPath = 設定編集パスを解決する();
             var initialJson =
                 configurationPath is not null && File.Exists(configurationPath)
                     ? await File.ReadAllTextAsync(configurationPath)
                     : CheckerConfigurationJson.Serialize(
-                        _lastResult?.Configuration ?? new CheckerConfiguration()
+                        _前回解析結果?.Configuration ?? new CheckerConfiguration()
                     );
 
-            var editor = new ConfigurationEditorWindow(initialJson, _language);
+            var editor = new 設定編集画面(initialJson, _表示言語);
             var editedJson = await editor.ShowDialog<string?>(this);
             if (editedJson is null)
             {
@@ -409,15 +410,15 @@ internal sealed class MainWindow : Window
             }
 
             _ = CheckerConfigurationJson.Parse(editedJson);
-            configurationPath ??= await PickConfigurationSavePathAsync();
+            configurationPath ??= await 設定保存先を選択する非同期();
             if (configurationPath is null)
             {
                 return;
             }
 
             await File.WriteAllTextAsync(configurationPath, editedJson);
-            _view.ConfigurationPath.Text = configurationPath;
-            _view.Status.Text = GuiText.Get(GuiTextKey.ConfigurationSaved, _language);
+            _画面.設定パス欄.Text = configurationPath;
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.設定保存済み, _表示言語);
         }
         catch (Exception exception)
             when (exception
@@ -426,35 +427,35 @@ internal sealed class MainWindow : Window
                         or InvalidOperationException
             )
         {
-            _view.Status.Text = GuiText.Get(GuiTextKey.OperationFailed, _language);
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.操作失敗, _表示言語);
         }
     }
 
-    private string? ResolveConfigurationEditorPath()
+    private string? 設定編集パスを解決する()
     {
-        var configuredPath = NormalizeOptionalPath(_view.ConfigurationPath.Text);
+        var configuredPath = 省略可能なパスを正規化する(_画面.設定パス欄.Text);
         if (configuredPath is null)
         {
-            return _lastResult?.ConfigurationPath;
+            return _前回解析結果?.ConfigurationPath;
         }
 
         return CheckerConfigurationPathResolver.ResolveExplicit(
-            NormalizeOptionalPath(_view.TargetPath.Text),
+            省略可能なパスを正規化する(_画面.対象パス欄.Text),
             configuredPath
         );
     }
 
-    private async Task<string?> PickConfigurationSavePathAsync()
+    private async Task<string?> 設定保存先を選択する非同期()
     {
         var file = await StorageProvider.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = GuiText.Get(GuiTextKey.SaveCheckerConfiguration, _language),
+                Title = GUI文言.取得する(GUI文言キー.チェッカー設定保存, _表示言語),
                 SuggestedFileName = "oop-design-checker.json",
                 DefaultExtension = "json",
                 FileTypeChoices =
                 [
-                    new FilePickerFileType(GuiText.Get(GuiTextKey.JsonConfigurationType, _language))
+                    new FilePickerFileType(GUI文言.取得する(GUI文言キー.JSON設定種別, _表示言語))
                     {
                         Patterns = ["*.json"],
                     },
@@ -464,29 +465,29 @@ internal sealed class MainWindow : Window
         return file?.TryGetLocalPath();
     }
 
-    private async Task ExportAsync(DiagnosticExportFormat format)
+    private async Task 診断を出力する非同期(DiagnosticExportFormat format)
     {
-        if (_lastResult is null)
+        if (_前回解析結果 is null)
         {
-            _view.Status.Text = GuiText.Get(GuiTextKey.RunBeforeExport, _language);
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.出力前解析, _表示言語);
             return;
         }
 
         var extension = format == DiagnosticExportFormat.Sarif ? "sarif" : "json";
         var description = format == DiagnosticExportFormat.Sarif ? "SARIF" : "JSON";
-        var outputPath = UiAutomationSettings.ExportPath(format);
+        var outputPath = UI自動化設定.出力先パス(format);
         if (string.IsNullOrWhiteSpace(outputPath))
         {
             var file = await StorageProvider.SaveFilePickerAsync(
                 new FilePickerSaveOptions
                 {
-                    Title = GuiText.Format(GuiTextKey.ExportDiagnosticsAs, _language, description),
+                    Title = GUI文言.書式化する(GUI文言キー.診断形式出力, _表示言語, description),
                     SuggestedFileName = $"oop-design-checker-results.{extension}",
                     DefaultExtension = extension,
                     FileTypeChoices =
                     [
                         new FilePickerFileType(
-                            GuiText.Format(GuiTextKey.DiagnosticsFileType, _language, description)
+                            GUI文言.書式化する(GUI文言キー.診断ファイル種別, _表示言語, description)
                         )
                         {
                             Patterns = [$"*.{extension}"],
@@ -510,21 +511,21 @@ internal sealed class MainWindow : Window
             }
 
             await Task.Run(() =>
-                DiagnosticExportService.Export(_lastResult.Diagnostics, outputPath, format)
+                DiagnosticExportService.Export(_前回解析結果.Diagnostics, outputPath, format)
             );
-            _view.Status.Text = GuiText.Format(
-                GuiTextKey.ExportedDiagnostics,
-                _language,
+            _画面.状態表示.Text = GUI文言.書式化する(
+                GUI文言キー.診断出力済み,
+                _表示言語,
                 outputPath
             );
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            _view.Status.Text = GuiText.Get(GuiTextKey.OperationFailed, _language);
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.操作失敗, _表示言語);
         }
     }
 
-    private static void SetPathFromSelection(IStorageItem? item, TextBox destination)
+    private static void 選択項目からパスを設定する(IStorageItem? item, TextBox destination)
     {
         var path = item?.TryGetLocalPath();
         if (!string.IsNullOrWhiteSpace(path))
@@ -533,43 +534,47 @@ internal sealed class MainWindow : Window
         }
     }
 
-    private async Task CopySelectedAsync()
+    private async Task 選択項目をコピーする非同期()
     {
-        if (_view.DiagnosticsGrid.SelectedItem is DiagnosticRow row)
+        if (_画面.診断一覧.SelectedItem is DiagnosticRow row)
         {
-            await CopyTextAsync(row.CopyText);
+            await テキストをコピーする非同期(row.CopyText);
         }
     }
 
-    private async Task CopyAllAsync()
+    private async Task すべてコピーする非同期()
     {
-        if (_allRows.Length == 0)
+        if (_全診断行.Length == 0)
         {
             return;
         }
 
-        await CopyTextAsync(string.Join(Environment.NewLine, _allRows.Select(row => row.CopyText)));
+        await テキストをコピーする非同期(
+            string.Join(Environment.NewLine, _全診断行.Select(row => row.CopyText))
+        );
     }
 
-    private async Task CopyTextAsync(string text)
+    private async Task テキストをコピーする非同期(string text)
     {
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard is null)
         {
-            _view.Status.Text = GuiText.Get(GuiTextKey.ClipboardUnavailable, _language);
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.クリップボード利用不可, _表示言語);
             return;
         }
 
-        var copied = await ClipboardOperation.TrySetTextAsync(() => clipboard.SetTextAsync(text));
-        _view.Status.Text = GuiText.Get(
-            copied ? GuiTextKey.CopiedToClipboard : GuiTextKey.ClipboardCopyFailed,
-            _language
+        var copied = await クリップボード操作.テキスト設定を試す非同期(() =>
+            clipboard.SetTextAsync(text)
+        );
+        _画面.状態表示.Text = GUI文言.取得する(
+            copied ? GUI文言キー.クリップボードコピー済み : GUI文言キー.クリップボードコピー失敗,
+            _表示言語
         );
     }
 
-    private async Task OpenSelectedSourceAsync()
+    private async Task 選択箇所を開く非同期()
     {
-        if (_view.DiagnosticsGrid.SelectedItem is not DiagnosticRow row)
+        if (_画面.診断一覧.SelectedItem is not DiagnosticRow row)
         {
             return;
         }
@@ -582,22 +587,22 @@ internal sealed class MainWindow : Window
         catch (Exception exception)
             when (exception is ArgumentException or NotSupportedException or IOException)
         {
-            await CopySourceLocationFallbackAsync(row.LocationText);
-            _view.Status.Text = GuiText.Get(GuiTextKey.InvalidSourcePathCopied, _language);
+            await ソース位置をコピーする非同期(row.LocationText);
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.不正ソースパスコピー済み, _表示言語);
             return;
         }
 
         if (!File.Exists(sourcePath))
         {
-            await CopySourceLocationFallbackAsync(row.LocationText);
-            _view.Status.Text = GuiText.Get(GuiTextKey.SourceNotFoundCopied, _language);
+            await ソース位置をコピーする非同期(row.LocationText);
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.ソース不在コピー済み, _表示言語);
             return;
         }
 
         try
         {
             Process.Start(new ProcessStartInfo(sourcePath) { UseShellExecute = true });
-            _view.Status.Text = GuiText.Get(GuiTextKey.OpenedSource, _language);
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.ソース表示済み, _表示言語);
         }
         catch (Exception exception)
             when (exception
@@ -607,63 +612,66 @@ internal sealed class MainWindow : Window
                         or UnauthorizedAccessException
             )
         {
-            await CopySourceLocationFallbackAsync(row.LocationText);
-            _view.Status.Text = GuiText.Get(GuiTextKey.CouldNotOpenCopied, _language);
+            await ソース位置をコピーする非同期(row.LocationText);
+            _画面.状態表示.Text = GUI文言.取得する(
+                GUI文言キー.ソースを開けない場合のコピー,
+                _表示言語
+            );
         }
     }
 
-    private async Task CopySourceLocationFallbackAsync(string locationText)
+    private async Task ソース位置をコピーする非同期(string locationText)
     {
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard is not null)
         {
-            _ = await ClipboardOperation.TrySetTextAsync(() =>
+            _ = await クリップボード操作.テキスト設定を試す非同期(() =>
                 clipboard.SetTextAsync(locationText)
             );
         }
     }
 
-    private void ClearConfiguration()
+    private void 設定消去()
     {
-        _view.ConfigurationPath.Text = string.Empty;
+        _画面.設定パス欄.Text = string.Empty;
     }
 
-    private void FilterStateChanged()
+    private void 絞り込み状態が変更された()
     {
-        ApplyFilters();
-        SyncMenuState();
+        絞り込みを適用する();
+        メニュー状態を同期する();
     }
 
-    private void ToggleFilterFromMenu(CheckBox filter)
+    private void メニューから絞り込みを切り替える(CheckBox filter)
     {
         filter.IsChecked = filter.IsChecked != true;
-        FilterStateChanged();
+        絞り込み状態が変更された();
     }
 
-    private void FocusSearch()
+    private void 検索へフォーカスする()
     {
-        _view.SearchFilter.Focus();
+        _画面.検索絞り込み.Focus();
     }
 
-    private void OnEditableKeyDown(object? sender, KeyEventArgs e)
+    private void 編集欄キー押下時(object? sender, KeyEventArgs e)
     {
-        if (!GuiCommands.Cancel.Matches(e))
+        if (!GUIコマンド.解析キャンセル.一致する(e))
         {
             return;
         }
 
         e.Handled = true;
-        if (_analysisInProgress)
+        if (_解析中)
         {
-            _view.CancelButton.Focus();
+            _画面.キャンセルボタン.Focus();
         }
         else
         {
-            _view.AnalyzeButton.Focus();
+            _画面.解析ボタン.Focus();
         }
     }
 
-    private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
+    private void キー押下プレビュー時(object? sender, KeyEventArgs e)
     {
         if (e.Key is Key.LeftAlt or Key.RightAlt)
         {
@@ -671,53 +679,53 @@ internal sealed class MainWindow : Window
             return;
         }
 
-        if (GuiCommands.Cancel.Matches(e) && AnyTopLevelMenuOpen())
+        if (GUIコマンド.解析キャンセル.一致する(e) && 最上位メニューが開いている())
         {
-            CloseTopLevelMenus();
+            最上位メニューを閉じる();
             e.Handled = true;
             return;
         }
 
         if (
             e.KeyModifiers == KeyModifiers.None
-            && AnyTopLevelMenuOpen()
-            && TryHandleOpenMenuAccessKey(e.Key)
+            && 最上位メニューが開いている()
+            && メニューアクセスキーを処理する(e.Key)
         )
         {
             e.Handled = true;
             return;
         }
 
-        if (TryHandleAltAccessKey(e))
+        if (Altアクセスキーを処理する(e))
         {
             e.Handled = true;
         }
     }
 
-    private async void OnKeyDown(object? sender, KeyEventArgs e)
+    private async void キー押下時(object? sender, KeyEventArgs e)
     {
-        if (GuiCommands.Cancel.Matches(e) && _analysisInProgress)
+        if (GUIコマンド.解析キャンセル.一致する(e) && _解析中)
         {
             e.Handled = true;
-            CancelAnalysis();
+            解析をキャンセルする();
             return;
         }
 
-        if (GuiCommands.Analyze.Matches(e))
+        if (GUIコマンド.解析開始.一致する(e))
         {
             e.Handled = true;
-            await AnalyzeAsync();
+            await 解析する非同期();
             return;
         }
 
-        if (GuiCommands.Search.Matches(e))
+        if (GUIコマンド.診断検索.一致する(e))
         {
             e.Handled = true;
-            FocusSearch();
+            検索へフォーカスする();
             return;
         }
 
-        if (GuiCommands.CopySelected.Matches(e))
+        if (GUIコマンド.選択項目コピー.一致する(e))
         {
             if (FocusManager?.GetFocusedElement() is TextBox)
             {
@@ -725,169 +733,169 @@ internal sealed class MainWindow : Window
             }
 
             e.Handled = true;
-            await CopySelectedAsync();
+            await 選択項目をコピーする非同期();
         }
     }
 
-    private bool TryHandleOpenMenuAccessKey(Key key)
+    private bool メニューアクセスキーを処理する(Key key)
     {
-        var menu = _view.MainMenu;
+        var menu = _画面.メインメニュー部品;
 
-        if (menu.LanguageMenu.IsSubMenuOpen)
+        if (menu.言語メニュー.IsSubMenuOpen)
         {
-            if (MatchesMenuAccessKey(GuiCommands.JapaneseLanguage, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.日本語表示, key))
             {
-                CloseTopLevelMenus();
-                _view.LanguageSelector.SelectedIndex = 0;
+                最上位メニューを閉じる();
+                _画面.表示言語選択.SelectedIndex = 0;
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.EnglishLanguage, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.英語表示, key))
             {
-                CloseTopLevelMenus();
-                _view.LanguageSelector.SelectedIndex = 1;
+                最上位メニューを閉じる();
+                _画面.表示言語選択.SelectedIndex = 1;
                 return true;
             }
         }
 
-        if (menu.ThemeMenu.IsSubMenuOpen)
+        if (menu.テーマメニュー.IsSubMenuOpen)
         {
-            if (MatchesMenuAccessKey(GuiCommands.DarkTheme, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.ダークテーマ, key))
             {
-                CloseTopLevelMenus();
-                _view.ThemeSelector.SelectedIndex = 0;
+                最上位メニューを閉じる();
+                _画面.テーマ選択.SelectedIndex = 0;
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.LightTheme, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.ライトテーマ, key))
             {
-                CloseTopLevelMenus();
-                _view.ThemeSelector.SelectedIndex = 1;
+                最上位メニューを閉じる();
+                _画面.テーマ選択.SelectedIndex = 1;
                 return true;
             }
         }
 
-        if (menu.FileMenu.IsSubMenuOpen)
+        if (menu.ファイルメニュー.IsSubMenuOpen)
         {
-            if (MatchesMenuAccessKey(GuiCommands.TargetFile, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.対象ファイル選択, key))
             {
-                CloseTopLevelMenus();
-                _ = PickTargetFileAsync();
+                最上位メニューを閉じる();
+                _ = 解析対象ファイルを選択する非同期();
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.TargetFolder, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.対象フォルダー選択, key))
             {
-                CloseTopLevelMenus();
-                _ = PickTargetFolderAsync();
+                最上位メニューを閉じる();
+                _ = 解析対象フォルダーを選択する非同期();
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.PickConfiguration, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.設定選択, key))
             {
-                CloseTopLevelMenus();
-                _ = PickConfigurationAsync();
+                最上位メニューを閉じる();
+                _ = 設定ファイルを選択する非同期();
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.EditConfiguration, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.設定編集, key))
             {
-                CloseTopLevelMenus();
-                _ = EditConfigurationAsync();
+                最上位メニューを閉じる();
+                _ = 設定を編集する非同期();
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.ClearConfiguration, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.設定消去, key))
             {
-                CloseTopLevelMenus();
-                ClearConfiguration();
+                最上位メニューを閉じる();
+                設定消去();
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.ExportJson, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.JSON出力, key))
             {
-                CloseTopLevelMenus();
-                _ = ExportAsync(DiagnosticExportFormat.Json);
+                最上位メニューを閉じる();
+                _ = 診断を出力する非同期(DiagnosticExportFormat.Json);
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.ExportSarif, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.SARIF出力, key))
             {
-                CloseTopLevelMenus();
-                _ = ExportAsync(DiagnosticExportFormat.Sarif);
+                最上位メニューを閉じる();
+                _ = 診断を出力する非同期(DiagnosticExportFormat.Sarif);
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.Exit, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.終了, key))
             {
                 Close();
                 return true;
             }
         }
 
-        if (menu.AnalyzeMenu.IsSubMenuOpen)
+        if (menu.解析メニュー.IsSubMenuOpen)
         {
-            if (MatchesMenuAccessKey(GuiCommands.Analyze, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.解析開始, key))
             {
-                CloseTopLevelMenus();
-                _ = AnalyzeAsync();
+                最上位メニューを閉じる();
+                _ = 解析する非同期();
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.Cancel, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.解析キャンセル, key))
             {
-                CloseTopLevelMenus();
-                CancelAnalysis();
+                最上位メニューを閉じる();
+                解析をキャンセルする();
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.OpenSource, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.ソースを開く, key))
             {
-                CloseTopLevelMenus();
-                _ = OpenSelectedSourceAsync();
+                最上位メニューを閉じる();
+                _ = 選択箇所を開く非同期();
                 return true;
             }
         }
 
-        if (menu.ViewMenu.IsSubMenuOpen)
+        if (menu.表示メニュー.IsSubMenuOpen)
         {
-            if (MatchesMenuAccessKey(GuiCommands.Search, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.診断検索, key))
             {
-                CloseTopLevelMenus();
-                FocusSearch();
+                最上位メニューを閉じる();
+                検索へフォーカスする();
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.DangerFilter, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.危険絞り込み, key))
             {
-                CloseTopLevelMenus();
-                ToggleFilterFromMenu(_view.DangerFilter);
+                最上位メニューを閉じる();
+                メニューから絞り込みを切り替える(_画面.危険絞り込み);
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.WarningFilter, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.警告絞り込み, key))
             {
-                CloseTopLevelMenus();
-                ToggleFilterFromMenu(_view.WarningFilter);
+                最上位メニューを閉じる();
+                メニューから絞り込みを切り替える(_画面.警告絞り込み);
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.AttentionFilter, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.注意絞り込み, key))
             {
-                CloseTopLevelMenus();
-                ToggleFilterFromMenu(_view.AttentionFilter);
+                最上位メニューを閉じる();
+                メニューから絞り込みを切り替える(_画面.注意絞り込み);
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.LanguageMenu, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.言語メニュー, key))
             {
-                OpenSubMenu(menu.LanguageMenu);
+                サブメニューを開く(menu.言語メニュー);
                 return true;
             }
 
-            if (MatchesMenuAccessKey(GuiCommands.ThemeMenu, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.テーマメニュー, key))
             {
-                OpenSubMenu(menu.ThemeMenu);
+                サブメニューを開く(menu.テーマメニュー);
                 return true;
             }
         }
@@ -895,148 +903,147 @@ internal sealed class MainWindow : Window
         return false;
     }
 
-    private static void OpenSubMenu(MenuItem menu)
+    private static void サブメニューを開く(MenuItem menu)
     {
         menu.Open();
     }
 
-    private bool TryHandleAltAccessKey(KeyEventArgs e)
+    private bool Altアクセスキーを処理する(KeyEventArgs e)
     {
-        if (MatchesTopLevelAccessKey(GuiCommands.FileMenu, e))
+        if (最上位アクセスキーが一致する(GUIコマンド.ファイルメニュー, e))
         {
-            OpenTopLevelMenu(_view.MainMenu.FileMenu);
+            最上位メニューを開く(_画面.メインメニュー部品.ファイルメニュー);
             return true;
         }
 
-        if (MatchesTopLevelAccessKey(GuiCommands.AnalyzeMenu, e))
+        if (最上位アクセスキーが一致する(GUIコマンド.解析メニュー, e))
         {
-            OpenTopLevelMenu(_view.MainMenu.AnalyzeMenu);
+            最上位メニューを開く(_画面.メインメニュー部品.解析メニュー);
             return true;
         }
 
-        if (MatchesTopLevelAccessKey(GuiCommands.ViewMenu, e))
+        if (最上位アクセスキーが一致する(GUIコマンド.表示メニュー, e))
         {
-            OpenTopLevelMenu(_view.MainMenu.ViewMenu);
+            最上位メニューを開く(_画面.メインメニュー部品.表示メニュー);
             return true;
         }
 
-        if (GuiCommands.TargetFocus.Matches(e))
+        if (GUIコマンド.対象欄フォーカス.一致する(e))
         {
-            _view.TargetPath.Focus();
+            _画面.対象パス欄.Focus();
             return true;
         }
 
-        if (GuiCommands.ConfigurationFocus.Matches(e))
+        if (GUIコマンド.設定欄フォーカス.一致する(e))
         {
-            _view.ConfigurationPath.Focus();
+            _画面.設定パス欄.Focus();
             return true;
         }
 
         return false;
     }
 
-    private static bool MatchesMenuAccessKey(GuiCommandDefinition command, Key key) =>
-        command.MenuAccessKey == key;
+    private static bool メニューアクセスキーが一致する(GUIコマンド定義 command, Key key) =>
+        command.メニューアクセスキー == key;
 
-    private static bool MatchesTopLevelAccessKey(GuiCommandDefinition command, KeyEventArgs e) =>
+    private static bool 最上位アクセスキーが一致する(GUIコマンド定義 command, KeyEventArgs e) =>
         e.KeyModifiers == KeyModifiers.Alt
-        && command.MenuPath.Count == 1
-        && command.MenuPath[0] == e.Key;
+        && command.メニュー経路.Count == 1
+        && command.メニュー経路[0] == e.Key;
 
-    private bool AnyTopLevelMenuOpen() =>
-        _view.MainMenu.FileMenu.IsSubMenuOpen
-        || _view.MainMenu.AnalyzeMenu.IsSubMenuOpen
-        || _view.MainMenu.ViewMenu.IsSubMenuOpen;
+    private bool 最上位メニューが開いている() =>
+        _画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen
+        || _画面.メインメニュー部品.解析メニュー.IsSubMenuOpen
+        || _画面.メインメニュー部品.表示メニュー.IsSubMenuOpen;
 
-    private void CloseTopLevelMenus()
+    private void 最上位メニューを閉じる()
     {
-        _view.MainMenu.FileMenu.IsSubMenuOpen = false;
-        _view.MainMenu.AnalyzeMenu.IsSubMenuOpen = false;
-        _view.MainMenu.ViewMenu.IsSubMenuOpen = false;
+        _画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen = false;
+        _画面.メインメニュー部品.解析メニュー.IsSubMenuOpen = false;
+        _画面.メインメニュー部品.表示メニュー.IsSubMenuOpen = false;
     }
 
-    private void OpenTopLevelMenu(MenuItem menu)
+    private void 最上位メニューを開く(MenuItem menu)
     {
-        CloseTopLevelMenus();
+        最上位メニューを閉じる();
         menu.Open();
     }
 
-    private void SetBusy(bool isBusy)
+    private void 処理中状態を設定する(bool isBusy)
     {
-        _analysisInProgress = isBusy;
-        _view.Progress.IsVisible = isBusy;
-        UpdateActionAvailability();
+        _解析中 = isBusy;
+        _画面.進捗表示.IsVisible = isBusy;
+        操作の有効状態を更新する();
         if (isBusy)
         {
-            _view.Status.Text = GuiText.Get(GuiTextKey.Analyzing, _language);
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析中, _表示言語);
         }
     }
 
-    private void UpdateActionAvailability()
+    private void 操作の有効状態を更新する()
     {
-        var canEdit = !_analysisInProgress;
-        var canCancel =
-            _analysisInProgress && _analysisCancellation is { IsCancellationRequested: false };
-        var hasResult = _lastResult is not null;
-        var hasSelection = _view.DiagnosticsGrid.SelectedItem is DiagnosticRow;
+        var canEdit = !_解析中;
+        var canCancel = _解析中 && _解析キャンセル is { IsCancellationRequested: false };
+        var hasResult = _前回解析結果 is not null;
+        var hasSelection = _画面.診断一覧.SelectedItem is DiagnosticRow;
 
-        _view.AnalyzeButton.IsEnabled = canEdit;
-        _view.CancelButton.IsEnabled = canCancel;
-        _view.TargetFileButton.IsEnabled = canEdit;
-        _view.TargetFolderButton.IsEnabled = canEdit;
-        _view.ConfigurationButton.IsEnabled = canEdit;
-        _view.EditConfigurationButton.IsEnabled = canEdit;
-        _view.ClearConfigurationButton.IsEnabled = canEdit;
-        _view.ExportJsonButton.IsEnabled = canEdit && hasResult;
-        _view.ExportSarifButton.IsEnabled = canEdit && hasResult;
-        _view.OpenSourceButton.IsEnabled = canEdit && hasSelection;
-        _view.CopySelectedButton.IsEnabled = hasSelection;
-        _view.CopyAllButton.IsEnabled = hasResult;
-        _view.LanguageSelector.IsEnabled = canEdit;
-        _view.ThemeSelector.IsEnabled = canEdit;
+        _画面.解析ボタン.IsEnabled = canEdit;
+        _画面.キャンセルボタン.IsEnabled = canCancel;
+        _画面.対象ファイルボタン.IsEnabled = canEdit;
+        _画面.対象フォルダーボタン.IsEnabled = canEdit;
+        _画面.設定選択ボタン.IsEnabled = canEdit;
+        _画面.設定編集ボタン.IsEnabled = canEdit;
+        _画面.設定消去ボタン.IsEnabled = canEdit;
+        _画面.JSON出力ボタン.IsEnabled = canEdit && hasResult;
+        _画面.SARIF出力ボタン.IsEnabled = canEdit && hasResult;
+        _画面.ソースを開くボタン.IsEnabled = canEdit && hasSelection;
+        _画面.選択項目コピー.IsEnabled = hasSelection;
+        _画面.全件コピー.IsEnabled = hasResult;
+        _画面.表示言語選択.IsEnabled = canEdit;
+        _画面.テーマ選択.IsEnabled = canEdit;
 
-        var menu = _view.MainMenu;
-        menu.TargetFileItem.IsEnabled = canEdit;
-        menu.TargetFolderItem.IsEnabled = canEdit;
-        menu.ConfigurationItem.IsEnabled = canEdit;
-        menu.EditConfigurationItem.IsEnabled = canEdit;
-        menu.ClearConfigurationItem.IsEnabled = canEdit;
-        menu.ExportJsonItem.IsEnabled = canEdit && hasResult;
-        menu.ExportSarifItem.IsEnabled = canEdit && hasResult;
-        menu.AnalyzeItem.IsEnabled = canEdit;
-        menu.CancelItem.IsEnabled = canCancel;
-        menu.OpenSourceItem.IsEnabled = canEdit && hasSelection;
-        menu.LanguageMenu.IsEnabled = canEdit;
-        menu.ThemeMenu.IsEnabled = canEdit;
+        var menu = _画面.メインメニュー部品;
+        menu.対象ファイル項目.IsEnabled = canEdit;
+        menu.対象フォルダー項目.IsEnabled = canEdit;
+        menu.設定項目.IsEnabled = canEdit;
+        menu.設定編集項目.IsEnabled = canEdit;
+        menu.設定消去項目.IsEnabled = canEdit;
+        menu.JSON出力項目.IsEnabled = canEdit && hasResult;
+        menu.SARIF出力項目.IsEnabled = canEdit && hasResult;
+        menu.解析項目.IsEnabled = canEdit;
+        menu.キャンセル項目.IsEnabled = canCancel;
+        menu.ソースを開く項目.IsEnabled = canEdit && hasSelection;
+        menu.言語メニュー.IsEnabled = canEdit;
+        menu.テーマメニュー.IsEnabled = canEdit;
 
-        SyncMenuState();
+        メニュー状態を同期する();
     }
 
-    private void SyncMenuState()
+    private void メニュー状態を同期する()
     {
-        var menu = _view.MainMenu;
-        menu.DangerFilterItem.IsChecked = _view.DangerFilter.IsChecked == true;
-        menu.WarningFilterItem.IsChecked = _view.WarningFilter.IsChecked == true;
-        menu.AttentionFilterItem.IsChecked = _view.AttentionFilter.IsChecked == true;
-        menu.JapaneseLanguageItem.IsChecked = _view.LanguageSelector.SelectedIndex != 1;
-        menu.EnglishLanguageItem.IsChecked = _view.LanguageSelector.SelectedIndex == 1;
-        menu.DarkThemeItem.IsChecked = _view.ThemeSelector.SelectedIndex != 1;
-        menu.LightThemeItem.IsChecked = _view.ThemeSelector.SelectedIndex == 1;
+        var menu = _画面.メインメニュー部品;
+        menu.危険絞り込み項目.IsChecked = _画面.危険絞り込み.IsChecked == true;
+        menu.警告絞り込み項目.IsChecked = _画面.警告絞り込み.IsChecked == true;
+        menu.注意絞り込み項目.IsChecked = _画面.注意絞り込み.IsChecked == true;
+        menu.日本語項目.IsChecked = _画面.表示言語選択.SelectedIndex != 1;
+        menu.英語項目.IsChecked = _画面.表示言語選択.SelectedIndex == 1;
+        menu.ダークテーマ項目.IsChecked = _画面.テーマ選択.SelectedIndex != 1;
+        menu.ライトテーマ項目.IsChecked = _画面.テーマ選択.SelectedIndex == 1;
     }
 
-    private void UpdateLocalizedStatus()
+    private void 言語別状態表示を更新する()
     {
-        if (_analysisInProgress)
+        if (_解析中)
         {
-            _view.Status.Text = GuiText.Get(GuiTextKey.Analyzing, _language);
+            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析中, _表示言語);
             return;
         }
 
-        _view.Status.Text = _lastResult is null
-            ? GuiText.Get(GuiTextKey.Ready, _language)
-            : GuiText.Format(GuiTextKey.Completed, _language, _allRows.Length);
+        _画面.状態表示.Text = _前回解析結果 is null
+            ? GUI文言.取得する(GUI文言キー.準備完了, _表示言語)
+            : GUI文言.書式化する(GUI文言キー.完了, _表示言語, _全診断行.Length);
     }
 
-    private static string? NormalizeOptionalPath(string? path) =>
+    private static string? 省略可能なパスを正規化する(string? path) =>
         string.IsNullOrWhiteSpace(path) ? null : path.Trim();
 }

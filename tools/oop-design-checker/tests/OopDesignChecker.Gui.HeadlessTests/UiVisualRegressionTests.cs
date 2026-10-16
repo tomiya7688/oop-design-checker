@@ -16,7 +16,7 @@ using Xunit;
 
 namespace OopDesignChecker.Gui.HeadlessTests;
 
-public sealed class UiVisualRegressionTests
+public sealed class 画面視覚回帰テスト
 {
     private const string VisualRegressionEnvironmentVariable =
         "OOP_DESIGN_CHECKER_UI_VISUAL_REGRESSION";
@@ -25,23 +25,23 @@ public sealed class UiVisualRegressionTests
     private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void ReadyStateRendersJapaneseAtSupportedSizes()
+    public void 対応サイズで日本語の準備画面を描画する()
     {
-        CaptureReadyState("ready-ja-small", 900, 600);
-        CaptureReadyState("ready-ja-default", 1280, 820);
-        CaptureReadyState("ready-ja-large", 1600, 1000);
+        準備画面を撮影する("ready-ja-small", 900, 600);
+        準備画面を撮影する("ready-ja-default", 1280, 820);
+        準備画面を撮影する("ready-ja-large", 1600, 1000);
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void EnglishStateRendersWithoutClipping()
+    public void 英語画面を欠けずに描画する()
     {
-        var window = CreateWindow(1280, 820);
+        var window = ウィンドウを作る(1280, 820);
         try
         {
-            window.SetLanguageForTesting(UserInterfaceLanguage.English);
-            Flush();
-            AssertMainWindowLayout(window);
-            Capture(window, "ready-en-default", "en");
+            window.テスト用表示言語を設定する(UserInterfaceLanguage.English);
+            画面更新を完了する();
+            メイン画面配置を確認する(window);
+            画面を撮影する(window, "ready-en-default", "en");
         }
         finally
         {
@@ -50,73 +50,73 @@ public sealed class UiVisualRegressionTests
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void ThemeSwitchPreservesAnalysisAndFilterState()
+    public void テーマ切り替え後も解析と絞り込み状態を保つ()
     {
-        var fixtureRoot = FixtureRoot();
+        var fixtureRoot = fixtureルートを取得する();
         var result = CheckerService.Analyze(fixtureRoot);
-        var window = CreateWindow(1280, 820);
+        var window = ウィンドウを作る(1280, 820);
 
         try
         {
             Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
 
-            window.SetThemeForTesting(ThemeVariant.Light);
-            Flush();
+            window.テスト用テーマを設定する(ThemeVariant.Light);
+            画面更新を完了する();
             Assert.Equal(ThemeVariant.Light, Avalonia.Application.Current!.RequestedThemeVariant);
             Assert.Equal(ThemeVariant.Light, window.ActualThemeVariant);
-            Assert.Equal(1, window.TestView.ThemeSelector.SelectedIndex);
-            Capture(window, "ready-light-default", "ja");
+            Assert.Equal(1, window.テスト用画面.テーマ選択.SelectedIndex);
+            画面を撮影する(window, "ready-light-default", "ja");
 
-            window.PresentResultForTesting(result);
-            window.TestView.DangerFilter.IsChecked = false;
-            window.TestView.WarningFilter.IsChecked = true;
-            window.TestView.AttentionFilter.IsChecked = false;
-            window.TestView.SearchFilter.Text = "OOP106";
-            window.ApplyFiltersForTesting();
-            Flush();
+            window.テスト用解析結果を表示する(result);
+            window.テスト用画面.危険絞り込み.IsChecked = false;
+            window.テスト用画面.警告絞り込み.IsChecked = true;
+            window.テスト用画面.注意絞り込み.IsChecked = false;
+            window.テスト用画面.検索絞り込み.Text = "OOP106";
+            window.テスト用絞り込みを適用する();
+            画面更新を完了する();
 
-            var rows = VisibleRows(window);
+            var rows = 表示行を取得する(window);
             Assert.NotEmpty(rows);
             Assert.All(rows, row => Assert.Equal("OOP106", row.RuleId));
-            Assert.Equal("OOP106", window.TestView.SearchFilter.Text);
-            AssertSummaryMatches(window, result.Diagnostics);
-            Capture(window, "fixture-light-default", "ja");
+            Assert.Equal("OOP106", window.テスト用画面.検索絞り込み.Text);
+            集計を照合する(window, result.Diagnostics);
+            画面を撮影する(window, "fixture-light-default", "ja");
 
-            window.SetThemeForTesting(ThemeVariant.Dark);
-            Flush();
+            window.テスト用テーマを設定する(ThemeVariant.Dark);
+            画面更新を完了する();
             Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
-            Assert.Equal("OOP106", window.TestView.SearchFilter.Text);
-            Assert.NotEmpty(VisibleRows(window));
+            Assert.Equal("OOP106", window.テスト用画面.検索絞り込み.Text);
+            Assert.NotEmpty(表示行を取得する(window));
         }
         finally
         {
-            window.SetThemeForTesting(ThemeVariant.Dark);
+            window.テスト用テーマを設定する(ThemeVariant.Dark);
             window.Close();
         }
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void AltAccessKeysOpenMenusInBothLanguages()
+    public void 両言語でAltアクセスキーからメニューを開く()
     {
-        var window = CreateWindow(1280, 820);
+        var window = ウィンドウを作る(1280, 820);
         try
         {
-            window.TestView.TargetPath.Focus();
-            PressKey(window, Key.F, PhysicalKey.F, RawInputModifiers.Alt, "f");
-            Assert.True(window.TestView.MainMenu.FileMenu.IsSubMenuOpen);
-            Capture(window, "menu-file-open-ja", "ja");
-            PressKey(window, Key.Escape, PhysicalKey.Escape);
-            Assert.False(window.TestView.MainMenu.FileMenu.IsSubMenuOpen);
+            window.テスト用画面.対象パス欄.Focus();
+            キーを押す(window, Key.F, PhysicalKey.F, RawInputModifiers.Alt, "f");
+            Assert.True(window.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
+            画面を撮影する(window, "menu-file-open-ja", "ja");
+            キーを押す(window, Key.Escape, PhysicalKey.Escape);
+            Assert.False(window.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
 
-            PressKey(window, Key.A, PhysicalKey.A, RawInputModifiers.Alt, "a");
-            Assert.True(window.TestView.MainMenu.AnalyzeMenu.IsSubMenuOpen);
-            PressKey(window, Key.Escape, PhysicalKey.Escape);
+            キーを押す(window, Key.A, PhysicalKey.A, RawInputModifiers.Alt, "a");
+            Assert.True(window.テスト用画面.メインメニュー部品.解析メニュー.IsSubMenuOpen);
+            キーを押す(window, Key.Escape, PhysicalKey.Escape);
 
-            window.SetLanguageForTesting(UserInterfaceLanguage.English);
-            window.TestView.SearchFilter.Focus();
-            PressKey(window, Key.V, PhysicalKey.V, RawInputModifiers.Alt, "v");
-            Assert.True(window.TestView.MainMenu.ViewMenu.IsSubMenuOpen);
-            PressKey(window, Key.Escape, PhysicalKey.Escape);
+            window.テスト用表示言語を設定する(UserInterfaceLanguage.English);
+            window.テスト用画面.検索絞り込み.Focus();
+            キーを押す(window, Key.V, PhysicalKey.V, RawInputModifiers.Alt, "v");
+            Assert.True(window.テスト用画面.メインメニュー部品.表示メニュー.IsSubMenuOpen);
+            キーを押す(window, Key.Escape, PhysicalKey.Escape);
         }
         finally
         {
@@ -125,44 +125,41 @@ public sealed class UiVisualRegressionTests
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void DirectFocusShortcutsPreserveTextAndOrdinaryTypingDoesNotTriggerActions()
+    public void 直接フォーカス操作で入力を保ち通常入力から操作を起動しない()
     {
-        var window = CreateWindow(1280, 820);
+        var window = ウィンドウを作る(1280, 820);
         try
         {
-            window.TestView.TargetPath.Text = "target-value";
-            window.TestView.ConfigurationPath.Text = "config-value";
-            window.TestView.SearchFilter.Text = "search-value";
+            window.テスト用画面.対象パス欄.Text = "target-value";
+            window.テスト用画面.設定パス欄.Text = "config-value";
+            window.テスト用画面.検索絞り込み.Text = "search-value";
 
-            window.TestView.TargetPath.Focus();
+            window.テスト用画面.対象パス欄.Focus();
             window.KeyTextInput("f");
-            Flush();
-            var typedTarget = window.TestView.TargetPath.Text ?? string.Empty;
+            画面更新を完了する();
+            var typedTarget = window.テスト用画面.対象パス欄.Text ?? string.Empty;
             Assert.Equal("target-value".Length + 1, typedTarget.Length);
             Assert.Equal(
                 "target-value",
                 typedTarget.Replace("f", string.Empty, StringComparison.Ordinal)
             );
-            Assert.False(window.TestView.MainMenu.FileMenu.IsSubMenuOpen);
+            Assert.False(window.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
 
-            window.TestView.SearchFilter.Focus();
-            PressKey(window, Key.LeftAlt, PhysicalKey.AltLeft);
-            Assert.False(window.TestView.MainMenu.FileMenu.IsSubMenuOpen);
+            window.テスト用画面.検索絞り込み.Focus();
+            キーを押す(window, Key.LeftAlt, PhysicalKey.AltLeft);
+            Assert.False(window.テスト用画面.メインメニュー部品.ファイルメニュー.IsSubMenuOpen);
 
-            PressKey(window, Key.T, PhysicalKey.T, RawInputModifiers.Alt, "t");
-            Assert.Same(window.TestView.TargetPath, window.FocusManager?.GetFocusedElement());
-            Assert.Equal(typedTarget, window.TestView.TargetPath.Text);
+            キーを押す(window, Key.T, PhysicalKey.T, RawInputModifiers.Alt, "t");
+            Assert.Same(window.テスト用画面.対象パス欄, window.FocusManager?.GetFocusedElement());
+            Assert.Equal(typedTarget, window.テスト用画面.対象パス欄.Text);
 
-            PressKey(window, Key.C, PhysicalKey.C, RawInputModifiers.Alt, "c");
-            Assert.Same(
-                window.TestView.ConfigurationPath,
-                window.FocusManager?.GetFocusedElement()
-            );
-            Assert.Equal("config-value", window.TestView.ConfigurationPath.Text);
+            キーを押す(window, Key.C, PhysicalKey.C, RawInputModifiers.Alt, "c");
+            Assert.Same(window.テスト用画面.設定パス欄, window.FocusManager?.GetFocusedElement());
+            Assert.Equal("config-value", window.テスト用画面.設定パス欄.Text);
 
-            PressKey(window, Key.F, PhysicalKey.F, RawInputModifiers.Control, "f");
-            Assert.Same(window.TestView.SearchFilter, window.FocusManager?.GetFocusedElement());
-            Assert.Equal("search-value", window.TestView.SearchFilter.Text);
+            キーを押す(window, Key.F, PhysicalKey.F, RawInputModifiers.Control, "f");
+            Assert.Same(window.テスト用画面.検索絞り込み, window.FocusManager?.GetFocusedElement());
+            Assert.Equal("search-value", window.テスト用画面.検索絞り込み.Text);
         }
         finally
         {
@@ -171,33 +168,36 @@ public sealed class UiVisualRegressionTests
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void EscapeLeavesEditingBeforeCancellingAnalysis()
+    public void Escapeで編集を抜けてから解析をキャンセルする()
     {
         const string delayVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS";
         var previousDelay = Environment.GetEnvironmentVariable(delayVariable);
         Environment.SetEnvironmentVariable(delayVariable, "30000");
 
-        var window = CreateWindow(1280, 820);
+        var window = ウィンドウを作る(1280, 820);
         try
         {
-            window.TestView.SearchFilter.Text = "OOP106";
-            window.TestView.SearchFilter.Focus();
-            window.TestView.AnalyzeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            Flush();
+            window.テスト用画面.検索絞り込み.Text = "OOP106";
+            window.テスト用画面.検索絞り込み.Focus();
+            window.テスト用画面.解析ボタン.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            画面更新を完了する();
 
-            Assert.True(window.TestView.CancelButton.IsEnabled);
-            Assert.Same(window.TestView.SearchFilter, window.FocusManager?.GetFocusedElement());
+            Assert.True(window.テスト用画面.キャンセルボタン.IsEnabled);
+            Assert.Same(window.テスト用画面.検索絞り込み, window.FocusManager?.GetFocusedElement());
 
-            PressKey(window, Key.Escape, PhysicalKey.Escape);
-            Assert.Equal("OOP106", window.TestView.SearchFilter.Text);
-            Assert.NotSame(window.TestView.SearchFilter, window.FocusManager?.GetFocusedElement());
-            Assert.True(window.TestView.CancelButton.IsEnabled);
+            キーを押す(window, Key.Escape, PhysicalKey.Escape);
+            Assert.Equal("OOP106", window.テスト用画面.検索絞り込み.Text);
+            Assert.NotSame(
+                window.テスト用画面.検索絞り込み,
+                window.FocusManager?.GetFocusedElement()
+            );
+            Assert.True(window.テスト用画面.キャンセルボタン.IsEnabled);
 
-            PressKey(window, Key.Escape, PhysicalKey.Escape);
-            Assert.False(window.TestView.CancelButton.IsEnabled);
-            WaitUntil(
+            キーを押す(window, Key.Escape, PhysicalKey.Escape);
+            Assert.False(window.テスト用画面.キャンセルボタン.IsEnabled);
+            条件成立まで待つ(
                 () =>
-                    (window.TestView.Status.Text ?? string.Empty).Contains(
+                    (window.テスト用画面.状態表示.Text ?? string.Empty).Contains(
                         "キャンセル",
                         StringComparison.OrdinalIgnoreCase
                     ),
@@ -212,108 +212,108 @@ public sealed class UiVisualRegressionTests
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void ShortcutPresentationMatchesCommandMetadataAcrossLanguages()
+    public void 両言語のショートカット表示をコマンド定義と一致させる()
     {
-        var window = CreateWindow(1280, 820);
+        var window = ウィンドウを作る(1280, 820);
         try
         {
-            var view = window.TestView;
+            var view = window.テスト用画面;
             Assert.Contains(
-                GuiCommands.Analyze.PrimaryHint,
-                view.ShortcutHints.Text,
+                GUIコマンド.解析開始.主操作の案内,
+                view.ショートカット案内.Text,
                 StringComparison.Ordinal
             );
             Assert.Contains(
-                GuiCommands.Cancel.PrimaryHint,
-                view.ShortcutHints.Text,
+                GUIコマンド.解析キャンセル.主操作の案内,
+                view.ショートカット案内.Text,
                 StringComparison.Ordinal
             );
             Assert.Contains(
-                GuiCommands.Search.PrimaryHint,
-                view.ShortcutHints.Text,
-                StringComparison.Ordinal
-            );
-
-            AssertCommandHelp(
-                view.AnalyzeButton,
-                GuiCommands.Analyze,
-                UserInterfaceLanguage.Japanese
-            );
-            AssertCommandHelp(
-                view.CancelButton,
-                GuiCommands.Cancel,
-                UserInterfaceLanguage.Japanese
-            );
-            AssertCommandHelp(
-                view.SearchFilter,
-                GuiCommands.Search,
-                UserInterfaceLanguage.Japanese
-            );
-            AssertCommandHelp(
-                view.TargetPath,
-                GuiCommands.TargetFocus,
-                UserInterfaceLanguage.Japanese
-            );
-            AssertCommandHelp(
-                view.ConfigurationPath,
-                GuiCommands.ConfigurationFocus,
-                UserInterfaceLanguage.Japanese
-            );
-            AssertCommandHelp(
-                view.TargetFileButton,
-                GuiCommands.TargetFile,
-                UserInterfaceLanguage.Japanese
-            );
-            AssertCommandHelp(
-                view.ExportJsonButton,
-                GuiCommands.ExportJson,
-                UserInterfaceLanguage.Japanese
-            );
-
-            Assert.False(view.CancelButton.IsEnabled);
-            Assert.Contains(
-                GuiCommands.Cancel.ShortcutText,
-                AutomationProperties.GetHelpText(view.CancelButton),
+                GUIコマンド.診断検索.主操作の案内,
+                view.ショートカット案内.Text,
                 StringComparison.Ordinal
             );
 
-            AssertInputGestureMatches(
-                view.MainMenu.AnalyzeItem,
-                GuiCommands.Analyze.PrimaryShortcut!.Value
+            コマンドヘルプを確認する(
+                view.解析ボタン,
+                GUIコマンド.解析開始,
+                UserInterfaceLanguage.Japanese
             );
-            AssertInputGestureMatches(
-                view.MainMenu.CancelItem,
-                GuiCommands.Cancel.PrimaryShortcut!.Value
+            コマンドヘルプを確認する(
+                view.キャンセルボタン,
+                GUIコマンド.解析キャンセル,
+                UserInterfaceLanguage.Japanese
             );
-            AssertInputGestureMatches(
-                view.MainMenu.SearchItem,
-                GuiCommands.Search.PrimaryShortcut!.Value
+            コマンドヘルプを確認する(
+                view.検索絞り込み,
+                GUIコマンド.診断検索,
+                UserInterfaceLanguage.Japanese
+            );
+            コマンドヘルプを確認する(
+                view.対象パス欄,
+                GUIコマンド.対象欄フォーカス,
+                UserInterfaceLanguage.Japanese
+            );
+            コマンドヘルプを確認する(
+                view.設定パス欄,
+                GUIコマンド.設定欄フォーカス,
+                UserInterfaceLanguage.Japanese
+            );
+            コマンドヘルプを確認する(
+                view.対象ファイルボタン,
+                GUIコマンド.対象ファイル選択,
+                UserInterfaceLanguage.Japanese
+            );
+            コマンドヘルプを確認する(
+                view.JSON出力ボタン,
+                GUIコマンド.JSON出力,
+                UserInterfaceLanguage.Japanese
             );
 
-            var japaneseHelp = AutomationProperties.GetHelpText(view.AnalyzeButton);
-            window.SetLanguageForTesting(UserInterfaceLanguage.English);
-            Flush();
+            Assert.False(view.キャンセルボタン.IsEnabled);
+            Assert.Contains(
+                GUIコマンド.解析キャンセル.ショートカット表示,
+                AutomationProperties.GetHelpText(view.キャンセルボタン),
+                StringComparison.Ordinal
+            );
+
+            入力操作を照合する(
+                view.メインメニュー部品.解析項目,
+                GUIコマンド.解析開始.主ショートカット!.Value
+            );
+            入力操作を照合する(
+                view.メインメニュー部品.キャンセル項目,
+                GUIコマンド.解析キャンセル.主ショートカット!.Value
+            );
+            入力操作を照合する(
+                view.メインメニュー部品.検索項目,
+                GUIコマンド.診断検索.主ショートカット!.Value
+            );
+
+            var japaneseHelp = AutomationProperties.GetHelpText(view.解析ボタン);
+            window.テスト用表示言語を設定する(UserInterfaceLanguage.English);
+            画面更新を完了する();
 
             Assert.Contains(
-                GuiCommands.Analyze.PrimaryHint,
-                view.ShortcutHints.Text,
+                GUIコマンド.解析開始.主操作の案内,
+                view.ショートカット案内.Text,
                 StringComparison.Ordinal
             );
             Assert.Contains(
-                GuiCommands.TargetFocus.PrimaryHint,
-                AutomationProperties.GetHelpText(view.TargetPath),
+                GUIコマンド.対象欄フォーカス.主操作の案内,
+                AutomationProperties.GetHelpText(view.対象パス欄),
                 StringComparison.Ordinal
             );
-            AssertCommandHelp(
-                view.AnalyzeButton,
-                GuiCommands.Analyze,
+            コマンドヘルプを確認する(
+                view.解析ボタン,
+                GUIコマンド.解析開始,
                 UserInterfaceLanguage.English
             );
-            var englishHelp = AutomationProperties.GetHelpText(view.AnalyzeButton);
+            var englishHelp = AutomationProperties.GetHelpText(view.解析ボタン);
             Assert.NotEqual(japaneseHelp, englishHelp);
             Assert.Contains("Start analysis.", englishHelp, StringComparison.Ordinal);
             Assert.Contains(
-                GuiCommands.Analyze.ShortcutText,
+                GUIコマンド.解析開始.ショートカット表示,
                 englishHelp,
                 StringComparison.Ordinal
             );
@@ -325,107 +325,107 @@ public sealed class UiVisualRegressionTests
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void MenuStateTracksFiltersLanguageThemeAndResultAvailability()
+    public void メニュー状態を絞り込みと言語とテーマと結果有無へ同期する()
     {
-        var fixtureRoot = FixtureRoot();
+        var fixtureRoot = fixtureルートを取得する();
         var result = CheckerService.Analyze(fixtureRoot);
-        var window = CreateWindow(1280, 820);
+        var window = ウィンドウを作る(1280, 820);
 
         try
         {
-            var menu = window.TestView.MainMenu;
-            Assert.True(menu.AnalyzeItem.IsEnabled);
-            Assert.False(menu.CancelItem.IsEnabled);
-            Assert.False(menu.ExportJsonItem.IsEnabled);
-            Assert.False(menu.OpenSourceItem.IsEnabled);
-            Assert.True(menu.DangerFilterItem.IsChecked);
-            Assert.True(menu.WarningFilterItem.IsChecked);
-            Assert.True(menu.AttentionFilterItem.IsChecked);
+            var menu = window.テスト用画面.メインメニュー部品;
+            Assert.True(menu.解析項目.IsEnabled);
+            Assert.False(menu.キャンセル項目.IsEnabled);
+            Assert.False(menu.JSON出力項目.IsEnabled);
+            Assert.False(menu.ソースを開く項目.IsEnabled);
+            Assert.True(menu.危険絞り込み項目.IsChecked);
+            Assert.True(menu.警告絞り込み項目.IsChecked);
+            Assert.True(menu.注意絞り込み項目.IsChecked);
 
-            menu.WarningFilterItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
-            Flush();
-            Assert.False(window.TestView.WarningFilter.IsChecked);
-            Assert.False(menu.WarningFilterItem.IsChecked);
+            menu.警告絞り込み項目.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            画面更新を完了する();
+            Assert.False(window.テスト用画面.警告絞り込み.IsChecked);
+            Assert.False(menu.警告絞り込み項目.IsChecked);
 
-            menu.LightThemeItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
-            Flush();
-            Assert.Equal(1, window.TestView.ThemeSelector.SelectedIndex);
-            Assert.True(menu.LightThemeItem.IsChecked);
+            menu.ライトテーマ項目.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            画面更新を完了する();
+            Assert.Equal(1, window.テスト用画面.テーマ選択.SelectedIndex);
+            Assert.True(menu.ライトテーマ項目.IsChecked);
             Assert.Equal(ThemeVariant.Light, Avalonia.Application.Current!.RequestedThemeVariant);
 
-            menu.EnglishLanguageItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
-            Flush();
-            Assert.Equal(1, window.TestView.LanguageSelector.SelectedIndex);
-            Assert.True(menu.EnglishLanguageItem.IsChecked);
+            menu.英語項目.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            画面更新を完了する();
+            Assert.Equal(1, window.テスト用画面.表示言語選択.SelectedIndex);
+            Assert.True(menu.英語項目.IsChecked);
 
-            window.PresentResultForTesting(result);
-            Flush();
-            Assert.True(menu.ExportJsonItem.IsEnabled);
+            window.テスト用解析結果を表示する(result);
+            画面更新を完了する();
+            Assert.True(menu.JSON出力項目.IsEnabled);
 
-            var row = VisibleRows(window).First();
-            window.TestView.DiagnosticsGrid.SelectedItem = row;
-            window.UpdateSelectedDiagnosticForTesting();
-            Flush();
-            Assert.True(menu.OpenSourceItem.IsEnabled);
+            var row = 表示行を取得する(window).First();
+            window.テスト用画面.診断一覧.SelectedItem = row;
+            window.テスト用選択診断を更新する();
+            画面更新を完了する();
+            Assert.True(menu.ソースを開く項目.IsEnabled);
         }
         finally
         {
-            window.SetThemeForTesting(ThemeVariant.Dark);
+            window.テスト用テーマを設定する(ThemeVariant.Dark);
             window.Close();
         }
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void ReleaseFixtureRendersExpectedRowsFilterAndDetail()
+    public void リリース用fixtureの行と絞り込みと詳細を描画する()
     {
-        var fixtureRoot = FixtureRoot();
-        var expectedCount = ReadExpectedDiagnosticCount(fixtureRoot);
+        var fixtureRoot = fixtureルートを取得する();
+        var expectedCount = 期待する診断件数を読む(fixtureRoot);
         var result = CheckerService.Analyze(fixtureRoot);
 
         Assert.Equal(expectedCount, result.Diagnostics.Count);
 
-        var window = CreateWindow(1280, 820);
+        var window = ウィンドウを作る(1280, 820);
         try
         {
-            window.PresentResultForTesting(result);
-            Flush();
+            window.テスト用解析結果を表示する(result);
+            画面更新を完了する();
 
-            var rows = VisibleRows(window);
+            var rows = 表示行を取得する(window);
             Assert.Equal(expectedCount, rows.Length);
-            AssertSummaryMatches(window, result.Diagnostics);
-            AssertMainWindowLayout(window);
-            Capture(window, "fixture-ja-default", "ja");
+            集計を照合する(window, result.Diagnostics);
+            メイン画面配置を確認する(window);
+            画面を撮影する(window, "fixture-ja-default", "ja");
 
-            window.TestView.DangerFilter.IsChecked = false;
-            window.TestView.WarningFilter.IsChecked = true;
-            window.TestView.AttentionFilter.IsChecked = false;
-            window.TestView.SearchFilter.Text = "OOP106";
-            window.ApplyFiltersForTesting();
-            Flush();
+            window.テスト用画面.危険絞り込み.IsChecked = false;
+            window.テスト用画面.警告絞り込み.IsChecked = true;
+            window.テスト用画面.注意絞り込み.IsChecked = false;
+            window.テスト用画面.検索絞り込み.Text = "OOP106";
+            window.テスト用絞り込みを適用する();
+            画面更新を完了する();
 
-            rows = VisibleRows(window);
+            rows = 表示行を取得する(window);
             Assert.NotEmpty(rows);
             Assert.All(rows, row => Assert.Equal("OOP106", row.RuleId));
 
-            window.TestView.DiagnosticsGrid.SelectedItem = rows[0];
-            window.UpdateSelectedDiagnosticForTesting();
-            Flush();
-            Assert.Contains("OOP106", window.TestView.DetailRule.Text, StringComparison.Ordinal);
-            StabilizeFixtureLocationForVisualBaseline(window, fixtureRoot, rows[0].FilePath);
-            Capture(window, "filter-detail-oop106-ja", "ja");
+            window.テスト用画面.診断一覧.SelectedItem = rows[0];
+            window.テスト用選択診断を更新する();
+            画面更新を完了する();
+            Assert.Contains("OOP106", window.テスト用画面.詳細規則.Text, StringComparison.Ordinal);
+            画像基準用fixture位置を固定する(window, fixtureRoot, rows[0].FilePath);
+            画面を撮影する(window, "filter-detail-oop106-ja", "ja");
 
-            window.TestView.DangerFilter.IsChecked = true;
-            window.TestView.WarningFilter.IsChecked = true;
-            window.TestView.AttentionFilter.IsChecked = true;
-            window.TestView.SearchFilter.Text = string.Empty;
-            window.ApplyFiltersForTesting();
-            window.SetLanguageForTesting(UserInterfaceLanguage.English);
-            Flush();
+            window.テスト用画面.危険絞り込み.IsChecked = true;
+            window.テスト用画面.警告絞り込み.IsChecked = true;
+            window.テスト用画面.注意絞り込み.IsChecked = true;
+            window.テスト用画面.検索絞り込み.Text = string.Empty;
+            window.テスト用絞り込みを適用する();
+            window.テスト用表示言語を設定する(UserInterfaceLanguage.English);
+            画面更新を完了する();
 
-            Assert.Equal(expectedCount, VisibleRows(window).Length);
-            AssertSummaryMatches(window, result.Diagnostics);
-            AssertMainWindowLayout(window);
-            Capture(window, "fixture-en-default", "en");
+            Assert.Equal(expectedCount, 表示行を取得する(window).Length);
+            集計を照合する(window, result.Diagnostics);
+            メイン画面配置を確認する(window);
+            画面を撮影する(window, "fixture-en-default", "en");
         }
         finally
         {
@@ -434,26 +434,26 @@ public sealed class UiVisualRegressionTests
     }
 
     [Avalonia.Headless.XUnit.AvaloniaFact]
-    public void ErrorAndConfigurationEditorStatesRender()
+    public void エラーと設定編集画面を描画する()
     {
-        var window = CreateWindow(1280, 820);
+        var window = ウィンドウを作る(1280, 820);
         try
         {
             const string error = "Release UI validation error";
-            window.PresentErrorForTesting(error);
-            Flush();
+            window.テスト用エラーを表示する(error);
+            画面更新を完了する();
 
-            Assert.Equal(error, window.TestView.Status.Text);
-            Assert.Empty(VisibleRows(window));
-            AssertMainWindowLayout(window);
-            Capture(window, "error-ja-default", "ja");
+            Assert.Equal(error, window.テスト用画面.状態表示.Text);
+            Assert.Empty(表示行を取得する(window));
+            メイン画面配置を確認する(window);
+            画面を撮影する(window, "error-ja-default", "ja");
         }
         finally
         {
             window.Close();
         }
 
-        var editor = new ConfigurationEditorWindow(
+        var editor = new 設定編集画面(
             """
             {
               "disabledRules": ["OOP103"],
@@ -465,10 +465,10 @@ public sealed class UiVisualRegressionTests
         editor.Show();
         try
         {
-            Flush();
+            画面更新を完了する();
             Assert.True(editor.ClientSize.Width >= 560);
             Assert.True(editor.ClientSize.Height >= 420);
-            Capture(editor, "config-editor-ja-default", "ja");
+            画面を撮影する(editor, "config-editor-ja-default", "ja");
         }
         finally
         {
@@ -476,16 +476,16 @@ public sealed class UiVisualRegressionTests
         }
     }
 
-    private static void CaptureReadyState(string scenario, double width, double height)
+    private static void 準備画面を撮影する(string scenario, double width, double height)
     {
-        var window = CreateWindow(width, height);
+        var window = ウィンドウを作る(width, height);
         try
         {
             Assert.Equal(ThemeVariant.Dark, Avalonia.Application.Current!.RequestedThemeVariant);
             Assert.Equal(ThemeVariant.Dark, window.ActualThemeVariant);
-            Assert.Equal(0, window.TestView.ThemeSelector.SelectedIndex);
-            AssertMainWindowLayout(window);
-            Capture(window, scenario, "ja");
+            Assert.Equal(0, window.テスト用画面.テーマ選択.SelectedIndex);
+            メイン画面配置を確認する(window);
+            画面を撮影する(window, scenario, "ja");
         }
         finally
         {
@@ -493,25 +493,25 @@ public sealed class UiVisualRegressionTests
         }
     }
 
-    private static void AssertCommandHelp(
+    private static void コマンドヘルプを確認する(
         Control control,
-        GuiCommandDefinition command,
+        GUIコマンド定義 command,
         UserInterfaceLanguage language
     )
     {
-        var expected = command.HelpText(language);
+        var expected = command.ヘルプ文(language);
         Assert.Equal(expected, AutomationProperties.GetHelpText(control));
         Assert.Equal(expected, ToolTip.GetTip(control)?.ToString());
     }
 
-    private static void AssertInputGestureMatches(MenuItem item, GuiShortcut expected)
+    private static void 入力操作を照合する(MenuItem item, GUIショートカット expected)
     {
         var gesture = Assert.IsType<KeyGesture>(item.InputGesture);
         Assert.Equal(expected.Key, gesture.Key);
         Assert.Equal(expected.Modifiers, gesture.KeyModifiers);
     }
 
-    private static void PressKey(
+    private static void キーを押す(
         Window window,
         Key key,
         PhysicalKey physicalKey,
@@ -521,15 +521,15 @@ public sealed class UiVisualRegressionTests
     {
         window.KeyPress(key, modifiers, physicalKey, keySymbol);
         window.KeyRelease(key, modifiers, physicalKey, keySymbol);
-        Flush();
+        画面更新を完了する();
     }
 
-    private static void WaitUntil(Func<bool> predicate, int timeoutMilliseconds)
+    private static void 条件成立まで待つ(Func<bool> predicate, int timeoutMilliseconds)
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMilliseconds);
         while (DateTime.UtcNow < deadline)
         {
-            Flush();
+            画面更新を完了する();
             if (predicate())
             {
                 return;
@@ -541,29 +541,29 @@ public sealed class UiVisualRegressionTests
         Assert.True(predicate(), "Timed out waiting for UI state.");
     }
 
-    private static MainWindow CreateWindow(double width, double height)
+    private static メインウィンドウ ウィンドウを作る(double width, double height)
     {
-        var window = new MainWindow { Width = width, Height = height };
+        var window = new メインウィンドウ { Width = width, Height = height };
         window.Show();
-        Flush();
+        画面更新を完了する();
         return window;
     }
 
-    private static void Flush()
+    private static void 画面更新を完了する()
     {
         Dispatcher.UIThread.RunJobs();
         AvaloniaHeadlessPlatform.ForceRenderTimerTick();
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static DiagnosticRow[] VisibleRows(MainWindow window)
+    private static DiagnosticRow[] 表示行を取得する(メインウィンドウ window)
     {
-        var source = window.TestView.DiagnosticsGrid.ItemsSource as IEnumerable;
+        var source = window.テスト用画面.診断一覧.ItemsSource as IEnumerable;
         return source?.Cast<object>().OfType<DiagnosticRow>().ToArray() ?? [];
     }
 
-    private static void AssertSummaryMatches(
-        MainWindow window,
+    private static void 集計を照合する(
+        メインウィンドウ window,
         IReadOnlyList<DesignDiagnostic> diagnostics
     )
     {
@@ -573,41 +573,45 @@ public sealed class UiVisualRegressionTests
             item.Severity == DesignDiagnosticSeverity.Attention
         );
 
-        Assert.EndsWith($": {danger}", window.TestView.DangerCount.Text, StringComparison.Ordinal);
+        Assert.EndsWith(
+            $": {danger}",
+            window.テスト用画面.危険件数表示.Text,
+            StringComparison.Ordinal
+        );
         Assert.EndsWith(
             $": {warning}",
-            window.TestView.WarningCount.Text,
+            window.テスト用画面.警告件数表示.Text,
             StringComparison.Ordinal
         );
         Assert.EndsWith(
             $": {attention}",
-            window.TestView.AttentionCount.Text,
+            window.テスト用画面.注意件数表示.Text,
             StringComparison.Ordinal
         );
     }
 
-    private static void AssertMainWindowLayout(MainWindow window)
+    private static void メイン画面配置を確認する(メインウィンドウ window)
     {
         var controls = new Control[]
         {
-            window.TestView.MainMenu,
-            window.TestView.TargetPath,
-            window.TestView.TargetFileButton,
-            window.TestView.TargetFolderButton,
-            window.TestView.ConfigurationPath,
-            window.TestView.ConfigurationButton,
-            window.TestView.EditConfigurationButton,
-            window.TestView.ClearConfigurationButton,
-            window.TestView.DangerFilter,
-            window.TestView.WarningFilter,
-            window.TestView.AttentionFilter,
-            window.TestView.SearchFilter,
-            window.TestView.AnalyzeButton,
-            window.TestView.CancelButton,
-            window.TestView.LanguageSelector,
-            window.TestView.ThemeSelector,
-            window.TestView.DiagnosticsGrid,
-            window.TestView.Status,
+            window.テスト用画面.メインメニュー部品,
+            window.テスト用画面.対象パス欄,
+            window.テスト用画面.対象ファイルボタン,
+            window.テスト用画面.対象フォルダーボタン,
+            window.テスト用画面.設定パス欄,
+            window.テスト用画面.設定選択ボタン,
+            window.テスト用画面.設定編集ボタン,
+            window.テスト用画面.設定消去ボタン,
+            window.テスト用画面.危険絞り込み,
+            window.テスト用画面.警告絞り込み,
+            window.テスト用画面.注意絞り込み,
+            window.テスト用画面.検索絞り込み,
+            window.テスト用画面.解析ボタン,
+            window.テスト用画面.キャンセルボタン,
+            window.テスト用画面.表示言語選択,
+            window.テスト用画面.テーマ選択,
+            window.テスト用画面.診断一覧,
+            window.テスト用画面.状態表示,
         };
 
         foreach (var control in controls)
@@ -631,29 +635,32 @@ public sealed class UiVisualRegressionTests
             );
         }
 
-        AssertNoOverlap(
+        コントロールの重なりがないことを確認する(
             window,
             [
-                window.TestView.DangerFilter,
-                window.TestView.WarningFilter,
-                window.TestView.AttentionFilter,
-                window.TestView.SearchFilter,
-                window.TestView.AnalyzeButton,
-                window.TestView.CancelButton,
-                window.TestView.LanguageSelector,
-                window.TestView.ThemeSelector,
+                window.テスト用画面.危険絞り込み,
+                window.テスト用画面.警告絞り込み,
+                window.テスト用画面.注意絞り込み,
+                window.テスト用画面.検索絞り込み,
+                window.テスト用画面.解析ボタン,
+                window.テスト用画面.キャンセルボタン,
+                window.テスト用画面.表示言語選択,
+                window.テスト用画面.テーマ選択,
             ]
         );
     }
 
-    private static void AssertNoOverlap(MainWindow window, IReadOnlyList<Control> controls)
+    private static void コントロールの重なりがないことを確認する(
+        メインウィンドウ window,
+        IReadOnlyList<Control> controls
+    )
     {
         for (var leftIndex = 0; leftIndex < controls.Count; leftIndex++)
         {
-            var left = RelativeBounds(window, controls[leftIndex]);
+            var left = 相対境界を取得する(window, controls[leftIndex]);
             for (var rightIndex = leftIndex + 1; rightIndex < controls.Count; rightIndex++)
             {
-                var right = RelativeBounds(window, controls[rightIndex]);
+                var right = 相対境界を取得する(window, controls[rightIndex]);
                 var intersection = left.Intersect(right);
                 Assert.True(
                     intersection.Width <= 1 || intersection.Height <= 1,
@@ -663,36 +670,36 @@ public sealed class UiVisualRegressionTests
         }
     }
 
-    private static Rect RelativeBounds(Window window, Control control)
+    private static Rect 相対境界を取得する(Window window, Control control)
     {
         var origin = control.TranslatePoint(new Point(0, 0), window);
         Assert.True(origin.HasValue);
         return new Rect(origin!.Value, control.Bounds.Size);
     }
 
-    private static void Capture(Window window, string scenario, string language)
+    private static void 画面を撮影する(Window window, string scenario, string language)
     {
-        Flush();
+        画面更新を完了する();
 
-        if (!VisualRegressionRequested())
+        if (!画像回帰確認が要求されている())
         {
             return;
         }
 
-        EnsureCanonicalVisualEnvironment();
+        標準画像環境を確認する();
 
         var frame = window.CaptureRenderedFrame();
         Assert.NotNull(frame);
 
-        var baselinePath = Path.Combine(BaselineRoot(), $"{scenario}.png");
-        var evidenceDirectory = Path.Combine(EvidenceRoot(), scenario);
+        var baselinePath = Path.Combine(画像基準ルートを取得する(), $"{scenario}.png");
+        var evidenceDirectory = Path.Combine(証跡ルートを取得する(), scenario);
         Directory.CreateDirectory(evidenceDirectory);
 
         var actualPath = Path.Combine(evidenceDirectory, "actual.png");
         var diffPath = Path.Combine(evidenceDirectory, "diff.png");
         frame.Save(actualPath, PngBitmapEncoderOptions.Default);
 
-        WriteUiState(window, scenario, language, evidenceDirectory);
+        UI状態を書き出す(window, scenario, language, evidenceDirectory);
 
         if (Environment.GetEnvironmentVariable("UPDATE_VISUAL_BASELINES") == "1")
         {
@@ -702,7 +709,7 @@ public sealed class UiVisualRegressionTests
         }
 
         Assert.True(File.Exists(baselinePath), $"Missing visual baseline: {baselinePath}");
-        var changedRatio = CreateDiff(baselinePath, actualPath, diffPath);
+        var changedRatio = 差分画像を作る(baselinePath, actualPath, diffPath);
         Assert.True(
             changedRatio <= MaximumChangedPixelRatio,
             $"Visual regression for {scenario}: {changedRatio:P3} pixels changed; "
@@ -710,21 +717,21 @@ public sealed class UiVisualRegressionTests
         );
     }
 
-    private static void StabilizeFixtureLocationForVisualBaseline(
-        MainWindow window,
+    private static void 画像基準用fixture位置を固定する(
+        メインウィンドウ window,
         string fixtureRoot,
         string sourcePath
     )
     {
-        if (!VisualRegressionRequested())
+        if (!画像回帰確認が要求されている())
         {
             return;
         }
 
-        // Golden images should validate UI layout, not the repository folder used to store
-        // the fixture. Keep the pre-migration visual path stable so moving the checker
-        // under tools/ does not create a false visual regression.
-        var repositoryRoot = Path.GetFullPath(Path.Combine(RepositoryRoot(), "..", ".."));
+        // fixtureの保存先ではなく画面レイアウトを画像で検証し、移行による誤検出を防ぐ。
+        var repositoryRoot = Path.GetFullPath(
+            Path.Combine(リポジトリルートを取得する(), "..", "..")
+        );
         var relativePath = Path.GetRelativePath(fixtureRoot, sourcePath);
         var stablePath = Path.Combine(
             repositoryRoot,
@@ -733,16 +740,16 @@ public sealed class UiVisualRegressionTests
             "release-validation-csharp",
             relativePath
         );
-        window.TestView.DetailLocation.Text = (
-            window.TestView.DetailLocation.Text ?? string.Empty
+        window.テスト用画面.詳細位置.Text = (
+            window.テスト用画面.詳細位置.Text ?? string.Empty
         ).Replace(sourcePath, stablePath, StringComparison.Ordinal);
     }
 
-    private static bool VisualRegressionRequested() =>
+    private static bool 画像回帰確認が要求されている() =>
         Environment.GetEnvironmentVariable(VisualRegressionEnvironmentVariable) == "1"
         || Environment.GetEnvironmentVariable("UPDATE_VISUAL_BASELINES") == "1";
 
-    private static void EnsureCanonicalVisualEnvironment()
+    private static void 標準画像環境を確認する()
     {
         if (OperatingSystem.IsLinux())
         {
@@ -756,7 +763,7 @@ public sealed class UiVisualRegressionTests
         );
     }
 
-    private static double CreateDiff(string expectedPath, string actualPath, string diffPath)
+    private static double 差分画像を作る(string expectedPath, string actualPath, string diffPath)
     {
         using var expected = SKBitmap.Decode(expectedPath);
         using var actual = SKBitmap.Decode(actualPath);
@@ -816,7 +823,7 @@ public sealed class UiVisualRegressionTests
         return totalPixels == 0 ? 0 : (double)changedPixels / totalPixels;
     }
 
-    private static void WriteUiState(
+    private static void UI状態を書き出す(
         Window window,
         string scenario,
         string language,
@@ -831,23 +838,27 @@ public sealed class UiVisualRegressionTests
             height = window.ClientSize.Height,
             title = window.Title,
             theme = window.ActualThemeVariant.ToString(),
-            visibleRowCount = window is MainWindow main ? VisibleRows(main).Length : (int?)null,
-            status = window is MainWindow statusWindow ? statusWindow.TestView.Status.Text : null,
-            selectedRule = window is MainWindow selectedWindow
-            && selectedWindow.TestView.DiagnosticsGrid.SelectedItem is DiagnosticRow row
+            visibleRowCount = window is メインウィンドウ main
+                ? 表示行を取得する(main).Length
+                : (int?)null,
+            status = window is メインウィンドウ statusWindow
+                ? statusWindow.テスト用画面.状態表示.Text
+                : null,
+            selectedRule = window is メインウィンドウ selectedWindow
+            && selectedWindow.テスト用画面.診断一覧.SelectedItem is DiagnosticRow row
                 ? row.RuleId
                 : null,
-            selectedFile = window is MainWindow selectedFileWindow
-            && selectedFileWindow.TestView.DiagnosticsGrid.SelectedItem is DiagnosticRow fileRow
+            selectedFile = window is メインウィンドウ selectedFileWindow
+            && selectedFileWindow.テスト用画面.診断一覧.SelectedItem is DiagnosticRow fileRow
                 ? fileRow.FileName
                 : null,
-            summary = window is MainWindow summaryWindow
+            summary = window is メインウィンドウ summaryWindow
                 ? new
                 {
-                    danger = summaryWindow.TestView.DangerCount.Text,
-                    warning = summaryWindow.TestView.WarningCount.Text,
-                    attention = summaryWindow.TestView.AttentionCount.Text,
-                    configuration = summaryWindow.TestView.ConfigurationSummary.Text,
+                    danger = summaryWindow.テスト用画面.危険件数表示.Text,
+                    warning = summaryWindow.テスト用画面.警告件数表示.Text,
+                    attention = summaryWindow.テスト用画面.注意件数表示.Text,
+                    configuration = summaryWindow.テスト用画面.設定概要.Text,
                 }
                 : null,
         };
@@ -858,7 +869,7 @@ public sealed class UiVisualRegressionTests
         );
     }
 
-    private static int ReadExpectedDiagnosticCount(string fixtureRoot)
+    private static int 期待する診断件数を読む(string fixtureRoot)
     {
         using var document = JsonDocument.Parse(
             File.ReadAllText(Path.Combine(fixtureRoot, "expected-diagnostics.json"))
@@ -866,13 +877,23 @@ public sealed class UiVisualRegressionTests
         return document.RootElement.GetProperty("exactDiagnostics").GetArrayLength();
     }
 
-    private static string FixtureRoot() =>
-        Path.Combine(RepositoryRoot(), "tests", "fixtures", "release-validation-csharp");
+    private static string fixtureルートを取得する() =>
+        Path.Combine(
+            リポジトリルートを取得する(),
+            "tests",
+            "fixtures",
+            "release-validation-csharp"
+        );
 
-    private static string BaselineRoot() =>
-        Path.Combine(RepositoryRoot(), "tests", "OopDesignChecker.Gui.HeadlessTests", "Baselines");
+    private static string 画像基準ルートを取得する() =>
+        Path.Combine(
+            リポジトリルートを取得する(),
+            "tests",
+            "OopDesignChecker.Gui.HeadlessTests",
+            "Baselines"
+        );
 
-    private static string EvidenceRoot()
+    private static string 証跡ルートを取得する()
     {
         var configured = Environment.GetEnvironmentVariable("UI_EVIDENCE_DIR");
         return string.IsNullOrWhiteSpace(configured)
@@ -880,7 +901,7 @@ public sealed class UiVisualRegressionTests
             : configured;
     }
 
-    private static string RepositoryRoot()
+    private static string リポジトリルートを取得する()
     {
         foreach (
             var candidate in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }

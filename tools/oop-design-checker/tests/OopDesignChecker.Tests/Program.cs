@@ -62,7 +62,7 @@ internal static class Program
         new("Japanese and English UI localization", LocalizationSmokeTests.Run),
         new(
             "GUI configuration, export, and cancellation workflow",
-            GuiWorkflowPhase2SmokeTests.Run
+            GUIワークフロー第2段階スモークテスト.実行する
         ),
         new("configuration disables selected rules", 設定動作テスト.無効化した規則の診断を抑制する),
         new("configuration ignores matching paths", 設定動作テスト.無視対象のパスを除外する),

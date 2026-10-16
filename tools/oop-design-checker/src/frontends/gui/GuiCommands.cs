@@ -5,13 +5,16 @@ using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Gui;
 
-internal readonly record struct GuiShortcut(Key Key, KeyModifiers Modifiers = KeyModifiers.None)
+internal readonly record struct GUIショートカット(
+    Key Key,
+    KeyModifiers Modifiers = KeyModifiers.None
+)
 {
-    internal bool Matches(KeyEventArgs args) => args.Key == Key && args.KeyModifiers == Modifiers;
+    internal bool 一致する(KeyEventArgs args) => args.Key == Key && args.KeyModifiers == Modifiers;
 
-    internal KeyGesture ToKeyGesture() => new(Key, Modifiers);
+    internal KeyGesture キー操作に変換する() => new(Key, Modifiers);
 
-    internal string DisplayText
+    internal string 表示文字列
     {
         get
         {
@@ -31,12 +34,12 @@ internal readonly record struct GuiShortcut(Key Key, KeyModifiers Modifiers = Ke
                 parts.Add("Shift");
             }
 
-            parts.Add(FormatKey(Key));
+            parts.Add(キー名を整形する(Key));
             return string.Join("+", parts);
         }
     }
 
-    internal static string FormatKey(Key key) =>
+    internal static string キー名を整形する(Key key) =>
         key switch
         {
             Key.Escape => "Esc",
@@ -44,76 +47,77 @@ internal readonly record struct GuiShortcut(Key Key, KeyModifiers Modifiers = Ke
         };
 }
 
-internal sealed record GuiCommandDefinition(
-    string Id,
-    GuiShortcut? PrimaryShortcut,
-    GuiShortcut? AlternateShortcut,
-    IReadOnlyList<Key> MenuPath,
-    string JapaneseDescription,
-    string EnglishDescription
+internal sealed record GUIコマンド定義(
+    string 識別子,
+    GUIショートカット? 主ショートカット,
+    GUIショートカット? 代替ショートカット,
+    IReadOnlyList<Key> メニュー経路,
+    string 日本語説明,
+    string 英語説明
 )
 {
-    internal bool Matches(KeyEventArgs args) =>
-        PrimaryShortcut?.Matches(args) == true || AlternateShortcut?.Matches(args) == true;
+    internal bool 一致する(KeyEventArgs args) =>
+        主ショートカット?.一致する(args) == true || 代替ショートカット?.一致する(args) == true;
 
-    internal string Description(UserInterfaceLanguage language) =>
-        language == UserInterfaceLanguage.Japanese ? JapaneseDescription : EnglishDescription;
+    internal string 説明文(UserInterfaceLanguage language) =>
+        language == UserInterfaceLanguage.Japanese ? 日本語説明 : 英語説明;
 
-    internal string DirectShortcutText =>
+    internal string 直接操作の表示 =>
         string.Join(
             " / ",
-            new[] { PrimaryShortcut, AlternateShortcut }
+            new[] { 主ショートカット, 代替ショートカット }
                 .Where(shortcut => shortcut is not null)
-                .Select(shortcut => shortcut!.Value.DisplayText)
+                .Select(shortcut => shortcut!.Value.表示文字列)
         );
 
-    internal string MenuPathText =>
-        MenuPath.Count == 0
+    internal string メニュー経路の表示 =>
+        メニュー経路.Count == 0
             ? string.Empty
             : string.Join(
                 " → ",
-                MenuPath.Select(
+                メニュー経路.Select(
                     (key, index) =>
                         index == 0
-                            ? $"Alt+{GuiShortcut.FormatKey(key)}"
-                            : GuiShortcut.FormatKey(key)
+                            ? $"Alt+{GUIショートカット.キー名を整形する(key)}"
+                            : GUIショートカット.キー名を整形する(key)
                 )
             );
 
-    internal string ShortcutText =>
+    internal string ショートカット表示 =>
         string.Join(
             " · ",
-            new[] { DirectShortcutText, MenuPathText }.Where(text =>
+            new[] { 直接操作の表示, メニュー経路の表示 }.Where(text =>
                 !string.IsNullOrWhiteSpace(text)
             )
         );
 
-    internal string PrimaryHint =>
-        PrimaryShortcut?.DisplayText ?? (MenuPath.Count == 1 ? MenuPathText : string.Empty);
+    internal string 主操作の案内 =>
+        主ショートカット?.表示文字列
+        ?? (メニュー経路.Count == 1 ? メニュー経路の表示 : string.Empty);
 
-    internal Key? MenuAccessKey => MenuPath.Count == 0 ? null : MenuPath[^1];
+    internal Key? メニューアクセスキー => メニュー経路.Count == 0 ? null : メニュー経路[^1];
 
-    internal string HelpText(UserInterfaceLanguage language)
+    internal string ヘルプ文(UserInterfaceLanguage language)
     {
-        var description = Description(language);
-        if (string.IsNullOrWhiteSpace(ShortcutText))
+        var description = 説明文(language);
+        if (string.IsNullOrWhiteSpace(ショートカット表示))
         {
             return description;
         }
 
         var keyboardLabel = language == UserInterfaceLanguage.Japanese ? "キーボード" : "Keyboard";
-        return $"{description}{Environment.NewLine}{keyboardLabel}: {ShortcutText}";
+        return $"{description}{Environment.NewLine}{keyboardLabel}: {ショートカット表示}";
     }
 
-    internal void ApplyHelp(Control control, UserInterfaceLanguage language)
+    internal void ヘルプを適用する(Control control, UserInterfaceLanguage language)
     {
-        var helpText = HelpText(language);
+        var helpText = ヘルプ文(language);
         ToolTip.SetTip(control, helpText);
         AutomationProperties.SetHelpText(control, helpText);
 
         var accessKey =
-            PrimaryShortcut?.DisplayText
-            ?? (!string.IsNullOrWhiteSpace(MenuPathText) ? MenuPathText : null);
+            主ショートカット?.表示文字列
+            ?? (!string.IsNullOrWhiteSpace(メニュー経路の表示) ? メニュー経路の表示 : null);
         if (accessKey is not null)
         {
             AutomationProperties.SetAccessKey(control, accessKey);
@@ -121,59 +125,59 @@ internal sealed record GuiCommandDefinition(
     }
 }
 
-internal static class GuiCommands
+internal static class GUIコマンド
 {
-    internal static GuiCommandDefinition Analyze { get; } =
+    internal static GUIコマンド定義 解析開始 { get; } =
         new(
             "analyze",
-            new GuiShortcut(Key.F5),
-            new GuiShortcut(Key.Enter, KeyModifiers.Control),
+            new GUIショートカット(Key.F5),
+            new GUIショートカット(Key.Enter, KeyModifiers.Control),
             [Key.A, Key.R],
             "解析を開始します。",
             "Start analysis."
         );
 
-    internal static GuiCommandDefinition Cancel { get; } =
+    internal static GUIコマンド定義 解析キャンセル { get; } =
         new(
             "cancel",
-            new GuiShortcut(Key.Escape),
+            new GUIショートカット(Key.Escape),
             null,
             [Key.A, Key.C],
             "Escは入力やメニューを閉じ、解析中はキャンセルします。",
             "Escape leaves editing or closes menus; while analyzing it cancels."
         );
 
-    internal static GuiCommandDefinition Search { get; } =
+    internal static GUIコマンド定義 診断検索 { get; } =
         new(
             "search",
-            new GuiShortcut(Key.F, KeyModifiers.Control),
+            new GUIショートカット(Key.F, KeyModifiers.Control),
             null,
             [Key.V, Key.F],
             "診断検索へフォーカスします。",
             "Focus diagnostic search."
         );
 
-    internal static GuiCommandDefinition TargetFocus { get; } =
+    internal static GUIコマンド定義 対象欄フォーカス { get; } =
         new(
             "target-focus",
-            new GuiShortcut(Key.T, KeyModifiers.Alt),
+            new GUIショートカット(Key.T, KeyModifiers.Alt),
             null,
             [],
             "解析対象pathへフォーカスします。",
             "Focus the analysis target path."
         );
 
-    internal static GuiCommandDefinition ConfigurationFocus { get; } =
+    internal static GUIコマンド定義 設定欄フォーカス { get; } =
         new(
             "configuration-focus",
-            new GuiShortcut(Key.C, KeyModifiers.Alt),
+            new GUIショートカット(Key.C, KeyModifiers.Alt),
             null,
             [],
             "checker設定pathへフォーカスします。",
             "Focus the checker configuration path."
         );
 
-    internal static GuiCommandDefinition FileMenu { get; } =
+    internal static GUIコマンド定義 ファイルメニュー { get; } =
         new(
             "file-menu",
             null,
@@ -183,7 +187,7 @@ internal static class GuiCommands
             "Open the File menu."
         );
 
-    internal static GuiCommandDefinition AnalyzeMenu { get; } =
+    internal static GUIコマンド定義 解析メニュー { get; } =
         new(
             "analyze-menu",
             null,
@@ -193,10 +197,10 @@ internal static class GuiCommands
             "Open the Analyze menu."
         );
 
-    internal static GuiCommandDefinition ViewMenu { get; } =
+    internal static GUIコマンド定義 表示メニュー { get; } =
         new("view-menu", null, null, [Key.V], "表示メニューを開きます。", "Open the View menu.");
 
-    internal static GuiCommandDefinition TargetFile { get; } =
+    internal static GUIコマンド定義 対象ファイル選択 { get; } =
         new(
             "target-file",
             null,
@@ -206,7 +210,7 @@ internal static class GuiCommands
             "Choose an analysis target file."
         );
 
-    internal static GuiCommandDefinition TargetFolder { get; } =
+    internal static GUIコマンド定義 対象フォルダー選択 { get; } =
         new(
             "target-folder",
             null,
@@ -216,7 +220,7 @@ internal static class GuiCommands
             "Choose an analysis target folder."
         );
 
-    internal static GuiCommandDefinition PickConfiguration { get; } =
+    internal static GUIコマンド定義 設定選択 { get; } =
         new(
             "configuration-pick",
             null,
@@ -226,7 +230,7 @@ internal static class GuiCommands
             "Choose a checker configuration file."
         );
 
-    internal static GuiCommandDefinition EditConfiguration { get; } =
+    internal static GUIコマンド定義 設定編集 { get; } =
         new(
             "configuration-edit",
             null,
@@ -236,7 +240,7 @@ internal static class GuiCommands
             "Edit the checker configuration."
         );
 
-    internal static GuiCommandDefinition ClearConfiguration { get; } =
+    internal static GUIコマンド定義 設定消去 { get; } =
         new(
             "configuration-clear",
             null,
@@ -246,7 +250,7 @@ internal static class GuiCommands
             "Clear the checker configuration path."
         );
 
-    internal static GuiCommandDefinition ExportJson { get; } =
+    internal static GUIコマンド定義 JSON出力 { get; } =
         new(
             "export-json",
             null,
@@ -256,7 +260,7 @@ internal static class GuiCommands
             "Export diagnostics as JSON."
         );
 
-    internal static GuiCommandDefinition ExportSarif { get; } =
+    internal static GUIコマンド定義 SARIF出力 { get; } =
         new(
             "export-sarif",
             null,
@@ -266,10 +270,10 @@ internal static class GuiCommands
             "Export diagnostics as SARIF."
         );
 
-    internal static GuiCommandDefinition Exit { get; } =
+    internal static GUIコマンド定義 終了 { get; } =
         new("exit", null, null, [Key.F, Key.X], "GUIを終了します。", "Exit the GUI.");
 
-    internal static GuiCommandDefinition OpenSource { get; } =
+    internal static GUIコマンド定義 ソースを開く { get; } =
         new(
             "open-source",
             null,
@@ -279,20 +283,20 @@ internal static class GuiCommands
             "Open the selected diagnostic source."
         );
 
-    internal static GuiCommandDefinition CopySelected { get; } =
+    internal static GUIコマンド定義 選択項目コピー { get; } =
         new(
             "copy-selected",
-            new GuiShortcut(Key.C, KeyModifiers.Control),
+            new GUIショートカット(Key.C, KeyModifiers.Control),
             null,
             [],
             "選択した診断をコピーします。",
             "Copy the selected diagnostic."
         );
 
-    internal static GuiCommandDefinition CopyAll { get; } =
+    internal static GUIコマンド定義 全件コピー { get; } =
         new("copy-all", null, null, [], "すべての診断をコピーします。", "Copy all diagnostics.");
 
-    internal static GuiCommandDefinition DangerFilter { get; } =
+    internal static GUIコマンド定義 危険絞り込み { get; } =
         new(
             "danger-filter",
             null,
@@ -302,7 +306,7 @@ internal static class GuiCommands
             "Toggle Danger diagnostics."
         );
 
-    internal static GuiCommandDefinition WarningFilter { get; } =
+    internal static GUIコマンド定義 警告絞り込み { get; } =
         new(
             "warning-filter",
             null,
@@ -312,7 +316,7 @@ internal static class GuiCommands
             "Toggle Warning diagnostics."
         );
 
-    internal static GuiCommandDefinition AttentionFilter { get; } =
+    internal static GUIコマンド定義 注意絞り込み { get; } =
         new(
             "attention-filter",
             null,
@@ -322,7 +326,7 @@ internal static class GuiCommands
             "Toggle Attention diagnostics."
         );
 
-    internal static GuiCommandDefinition LanguageMenu { get; } =
+    internal static GUIコマンド定義 言語メニュー { get; } =
         new(
             "language-menu",
             null,
@@ -332,7 +336,7 @@ internal static class GuiCommands
             "Open the UI language menu."
         );
 
-    internal static GuiCommandDefinition ThemeMenu { get; } =
+    internal static GUIコマンド定義 テーマメニュー { get; } =
         new(
             "theme-menu",
             null,
@@ -342,7 +346,7 @@ internal static class GuiCommands
             "Open the theme menu."
         );
 
-    internal static GuiCommandDefinition JapaneseLanguage { get; } =
+    internal static GUIコマンド定義 日本語表示 { get; } =
         new(
             "language-ja",
             null,
@@ -352,7 +356,7 @@ internal static class GuiCommands
             "Switch the UI language to Japanese."
         );
 
-    internal static GuiCommandDefinition EnglishLanguage { get; } =
+    internal static GUIコマンド定義 英語表示 { get; } =
         new(
             "language-en",
             null,
@@ -362,7 +366,7 @@ internal static class GuiCommands
             "Switch the UI language to English."
         );
 
-    internal static GuiCommandDefinition DarkTheme { get; } =
+    internal static GUIコマンド定義 ダークテーマ { get; } =
         new(
             "theme-dark",
             null,
@@ -372,7 +376,7 @@ internal static class GuiCommands
             "Switch to the Dark theme."
         );
 
-    internal static GuiCommandDefinition LightTheme { get; } =
+    internal static GUIコマンド定義 ライトテーマ { get; } =
         new(
             "theme-light",
             null,

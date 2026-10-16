@@ -232,14 +232,14 @@ internal static class LocalizationSmokeTests
             LocalizedText.OutputRequiresPath(UserInterfaceLanguage.Japanese),
             LocalizedText.UnknownOption(UserInterfaceLanguage.Japanese, "--unknown"),
             LocalizedText.OnlyOneTarget(UserInterfaceLanguage.Japanese),
-            GuiText.Get(GuiTextKey.TargetRequired, UserInterfaceLanguage.Japanese),
-            GuiText.Get(GuiTextKey.SearchPlaceholder, UserInterfaceLanguage.Japanese),
-            GuiText.Get(GuiTextKey.SearchMenu, UserInterfaceLanguage.Japanese),
-            GuiText.Get(GuiTextKey.OpenSourceButton, UserInterfaceLanguage.Japanese),
-            GuiText.Get(GuiTextKey.RunBeforeExport, UserInterfaceLanguage.Japanese),
-            GuiText.Get(GuiTextKey.ClipboardUnavailable, UserInterfaceLanguage.Japanese),
-            GuiText.Get(GuiTextKey.ChooseAnalysisTarget, UserInterfaceLanguage.Japanese),
-            GuiText.Get(GuiTextKey.ChooseCheckerConfiguration, UserInterfaceLanguage.Japanese),
+            GUI文言.取得する(GUI文言キー.対象必須, UserInterfaceLanguage.Japanese),
+            GUI文言.取得する(GUI文言キー.検索入力案内, UserInterfaceLanguage.Japanese),
+            GUI文言.取得する(GUI文言キー.検索メニュー, UserInterfaceLanguage.Japanese),
+            GUI文言.取得する(GUI文言キー.ソースを開くボタン, UserInterfaceLanguage.Japanese),
+            GUI文言.取得する(GUI文言キー.出力前解析, UserInterfaceLanguage.Japanese),
+            GUI文言.取得する(GUI文言キー.クリップボード利用不可, UserInterfaceLanguage.Japanese),
+            GUI文言.取得する(GUI文言キー.解析対象選択, UserInterfaceLanguage.Japanese),
+            GUI文言.取得する(GUI文言キー.チェッカー設定選択, UserInterfaceLanguage.Japanese),
         };
 
         if (

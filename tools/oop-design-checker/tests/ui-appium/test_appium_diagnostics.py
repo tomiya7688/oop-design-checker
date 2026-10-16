@@ -4,18 +4,18 @@ import unittest
 from pathlib import Path
 
 from appium_diagnostics import (
-    build_failure_report,
-    build_wait_context,
-    capture_evidence,
-    format_failure_report,
-    write_failure_report,
+    失敗報告を組み立てる,
+    待機状況を組み立てる,
+    証跡を取得する,
+    失敗報告を書式化する,
+    失敗報告を書き出す,
 )
 
 
-class AppiumDiagnosticsTests(unittest.TestCase):
-    def test_empty_exception_message_still_reports_type_and_traceback(self):
+class Appium診断テスト(unittest.TestCase):
+    def test_例外メッセージが空でも型と追跡情報を報告する(self):
         error = TimeoutError("")
-        wait_context = build_wait_context(
+        wait_context = 待機状況を組み立てる(
             {
                 "scenario": "09-keyboard-menu",
                 "lastSuccessfulAction": "visible-shortcut-hints",
@@ -25,13 +25,13 @@ class AppiumDiagnosticsTests(unittest.TestCase):
             20,
             "run_appium.py:537",
         )
-        report = build_failure_report(
+        report = 失敗報告を組み立てる(
             error,
             "Traceback (most recent call last):\n  TimeoutError\n",
             context=wait_context,
         )
 
-        formatted = format_failure_report(report)
+        formatted = 失敗報告を書式化する(report)
         self.assertTrue(report["messageIsEmpty"])
         self.assertIn("Exception: TimeoutError: (empty message)", formatted)
         self.assertIn("Scenario: 09-keyboard-menu", formatted)
@@ -41,8 +41,8 @@ class AppiumDiagnosticsTests(unittest.TestCase):
         self.assertIn("Traceback (most recent call last)", formatted)
         self.assertEqual("visible-shortcut-hints", report["lastSuccessfulAction"])
 
-    def test_failure_report_writes_json_with_context_and_evidence_paths(self):
-        report = build_failure_report(
+    def test_失敗報告へ状況と証跡のパスをJSONで書き出す(self):
+        report = 失敗報告を組み立てる(
             RuntimeError("driver disconnected"),
             "RuntimeError: driver disconnected",
             context={
@@ -64,7 +64,7 @@ class AppiumDiagnosticsTests(unittest.TestCase):
         path = repository_root / f".appium-failure-test-{os.getpid()}.json"
         self.assertEqual(repository_root, path.resolve().parent)
         try:
-            write_failure_report(path, report)
+            失敗報告を書き出す(path, report)
             saved = json.loads(path.read_text(encoding="utf-8"))
         finally:
             path.unlink(missing_ok=True)
@@ -78,14 +78,14 @@ class AppiumDiagnosticsTests(unittest.TestCase):
             ["screenshot: session already closed"], saved["evidenceErrors"]
         )
 
-    def test_evidence_capture_error_does_not_replace_primary_exception(self):
+    def test_証跡取得の失敗で元の例外を置き換えない(self):
         primary = RuntimeError("primary UI failure")
 
-        def fail_to_capture():
+        def 証跡取得に失敗する():
             raise PermissionError("closed session")
 
-        evidence_error = capture_evidence("page source", fail_to_capture)
-        report = build_failure_report(
+        evidence_error = 証跡を取得する("page source", 証跡取得に失敗する)
+        report = 失敗報告を組み立てる(
             primary,
             "RuntimeError: primary UI failure",
             evidence_errors=[evidence_error],

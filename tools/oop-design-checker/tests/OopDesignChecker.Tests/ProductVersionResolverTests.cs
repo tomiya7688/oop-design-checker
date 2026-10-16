@@ -38,14 +38,14 @@ internal static class ProductVersionResolverTests
     private static void GuiVersionUsesGuiAssembly()
     {
         var expected = ProductVersionResolver.Resolve(
-            typeof(OopDesignChecker.Gui.Program).Assembly
+            typeof(OopDesignChecker.Gui.GUI起動処理).Assembly
         );
         var originalOut = Console.Out;
         using var output = new StringWriter();
         try
         {
             Console.SetOut(output);
-            OopDesignChecker.Gui.Program.Main(["--version"]);
+            OopDesignChecker.Gui.GUI起動処理.Main(["--version"]);
         }
         finally
         {

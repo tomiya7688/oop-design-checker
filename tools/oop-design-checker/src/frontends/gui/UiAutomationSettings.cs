@@ -2,13 +2,13 @@ using OopDesignChecker.Output;
 
 namespace OopDesignChecker.Gui;
 
-internal static class UiAutomationSettings
+internal static class UI自動化設定
 {
     private const string ExportDirectoryVariable = "OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR";
     private const string AnalysisDelayVariable =
         "OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS";
 
-    internal static int AnalysisDelayMilliseconds
+    internal static int 解析遅延ミリ秒
     {
         get
         {
@@ -17,7 +17,7 @@ internal static class UiAutomationSettings
         }
     }
 
-    internal static string? ExportPath(DiagnosticExportFormat format)
+    internal static string? 出力先パス(DiagnosticExportFormat format)
     {
         var directory = Environment.GetEnvironmentVariable(ExportDirectoryVariable);
         if (string.IsNullOrWhiteSpace(directory))
