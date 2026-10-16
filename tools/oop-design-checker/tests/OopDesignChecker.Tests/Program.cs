@@ -542,8 +542,8 @@ internal static class Program
         AssertSingleRule(diagnostics, "OOP304", DesignDiagnosticSeverity.Attention);
     }
 
-    private static DesignDiagnostic[] Run(IAnalysisRule rule, string source) =>
-        rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+    private static DesignDiagnostic[] Run(I解析規則 rule, string source) =>
+        rule.解析する(TestProjectFactory.Create(source)).ToArray();
 
     private static string FindRepositoryRoot()
     {

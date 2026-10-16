@@ -6,15 +6,15 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class AnemicObjectRule : IAnalysisRule
+internal sealed class AnemicObjectRule : I解析規則
 {
     private const int MinimumStateProperties = 3;
     private const int MinimumExternallyUsedMembers = 3;
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP402", "Anemic object candidate", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -39,8 +39,8 @@ internal sealed class AnemicObjectRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     declaration.Identifier.GetLocation(),
                     $"{symbol.Name} mostly exposes state while {externalBehavior.Name} performs behavior by directly using several of its members. Consider moving state-owning behavior into the object.",
                     symbol.ToDisplayString()

@@ -248,13 +248,13 @@ internal static class CoreRuleSmokeTests
     }
 
     private static void AssertSingle(
-        IAnalysisRule rule,
+        I解析規則 rule,
         string source,
         string ruleId,
         DesignDiagnosticSeverity severity
     )
     {
-        var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+        var diagnostics = rule.解析する(TestProjectFactory.Create(source)).ToArray();
         if (
             diagnostics.Length != 1
             || diagnostics[0].Rule.Id != ruleId
@@ -273,7 +273,7 @@ internal static class CoreRuleSmokeTests
 
     private static void AssertNone(MultipleObjectsInClassRule rule, string source, string ruleId)
     {
-        var diagnostics = rule.Analyze(TestProjectFactory.Create(source)).ToArray();
+        var diagnostics = rule.解析する(TestProjectFactory.Create(source)).ToArray();
         if (diagnostics.Length == 0)
         {
             return;

@@ -6,12 +6,12 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class EncapsulationLeakRule : IAnalysisRule
+internal sealed class EncapsulationLeakRule : I解析規則
 {
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP106", "Encapsulation leak", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -36,8 +36,8 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
 
                 if (ExposesMutableStoredValue(property, propertySymbol, semanticModel))
                 {
-                    yield return DiagnosticFactory.Create(
-                        Descriptor,
+                    yield return 診断生成器.生成する(
+                        規則情報,
                         property.Identifier.GetLocation(),
                         "This property exposes mutable internal storage directly. Prefer a read-only view, copy, or behavior-oriented API.",
                         propertySymbol.ToDisplayString(),
@@ -47,8 +47,8 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
 
                 if (HasUnnecessarilyPublicSetter(context, property, propertySymbol))
                 {
-                    yield return DiagnosticFactory.Create(
-                        Descriptor,
+                    yield return 診断生成器.生成する(
+                        規則情報,
                         property.Identifier.GetLocation(),
                         "This public setter is only used by the declaring object. Narrow the setter visibility.",
                         propertySymbol.ToDisplayString()
@@ -88,8 +88,8 @@ internal sealed class EncapsulationLeakRule : IAnalysisRule
                 ? "A public field exposes the object's representation. Prefer a property or behavior-oriented API."
                 : "A public mutable field allows callers to bypass encapsulation.";
 
-            yield return DiagnosticFactory.Create(
-                Descriptor,
+            yield return 診断生成器.生成する(
+                規則情報,
                 variable.GetLocation(),
                 message,
                 field.ToDisplayString(),

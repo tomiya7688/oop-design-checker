@@ -5,12 +5,12 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ExcessiveVisibilityRule : IAnalysisRule
+internal sealed class ExcessiveVisibilityRule : I解析規則
 {
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP101", "Excessive visibility", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         if (!context.Project.IsApplication)
         {
@@ -46,8 +46,8 @@ internal sealed class ExcessiveVisibilityRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     declaration.Identifier.GetLocation(),
                     "This public class is referenced only inside its inheritance hierarchy. A narrower visibility is likely sufficient.",
                     symbol.ToDisplayString()

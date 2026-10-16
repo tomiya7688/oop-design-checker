@@ -5,15 +5,15 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
+internal sealed class ExcessiveUnrelatedDependenciesRule : I解析規則
 {
     private const int MinimumClusters = 3;
     private const int MinimumDependenciesPerCluster = 2;
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP403", "Excessive unrelated dependencies", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -41,8 +41,8 @@ internal sealed class ExcessiveUnrelatedDependenciesRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     declaration.Identifier.GetLocation(),
                     $"This object contains {clusters} independent groups of project dependencies. Distinct dependency clusters often indicate several separate object concerns are being coordinated inside one object.",
                     symbol.ToDisplayString()

@@ -2,9 +2,9 @@ using OopDesignChecker.Analysis;
 
 namespace OopDesignChecker.Core;
 
-internal interface IAnalysisRule
+internal interface I解析規則
 {
-    RuleDescriptor Descriptor { get; }
+    RuleDescriptor 規則情報 { get; }
 
-    IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context);
+    IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context);
 }

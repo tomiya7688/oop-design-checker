@@ -6,12 +6,12 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class TypeBranchPolymorphismRule : IAnalysisRule
+internal sealed class TypeBranchPolymorphismRule : I解析規則
 {
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP002", "Polymorphism bypassed by type branching", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -39,8 +39,8 @@ internal sealed class TypeBranchPolymorphismRule : IAnalysisRule
                     ", ",
                     suspiciousGroup.Select(test => test.Type.Name).Distinct(StringComparer.Ordinal)
                 );
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     ifStatement.IfKeyword.GetLocation(),
                     $"Repeated runtime type branching ({typeNames}) bypasses a shared source-defined type contract and may be replaceable with polymorphic behavior."
                 );

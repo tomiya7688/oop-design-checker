@@ -163,7 +163,7 @@ internal static class ObjectNavigationRuleTests
 
     private static DesignDiagnostic[] Analyze(string source) =>
         new ExcessiveObjectNavigationRule()
-            .Analyze(TestProjectFactory.Create(source))
+            .解析する(TestProjectFactory.Create(source))
             .Where(diagnostic => diagnostic.Rule.Id == "OOP404")
             .ToArray();
 }

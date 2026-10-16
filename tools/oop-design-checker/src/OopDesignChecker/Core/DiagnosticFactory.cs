@@ -2,9 +2,9 @@ using Microsoft.CodeAnalysis;
 
 namespace OopDesignChecker.Core;
 
-internal static class DiagnosticFactory
+internal static class 診断生成器
 {
-    public static DesignDiagnostic Create(
+    public static DesignDiagnostic 生成する(
         RuleDescriptor descriptor,
         Location location,
         string message,

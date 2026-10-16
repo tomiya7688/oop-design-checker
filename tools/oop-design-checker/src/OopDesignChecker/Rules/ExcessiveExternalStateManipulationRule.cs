@@ -5,14 +5,14 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ExcessiveExternalStateManipulationRule : IAnalysisRule
+internal sealed class ExcessiveExternalStateManipulationRule : I解析規則
 {
     private const int MinimumDistinctMembers = 3;
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP108", "Excessive external state manipulation", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -50,8 +50,8 @@ internal sealed class ExcessiveExternalStateManipulationRule : IAnalysisRule
                         continue;
                     }
 
-                    yield return DiagnosticFactory.Create(
-                        Descriptor,
+                    yield return 診断生成器.生成する(
+                        規則情報,
                         methodDeclaration.Identifier.GetLocation(),
                         $"This method directly writes {distinctMembers.Length} members of {group.Key.TargetType.Name} through {group.Key.Receiver}. Prefer asking that object to perform the state transition itself.",
                         method.ToDisplayString()

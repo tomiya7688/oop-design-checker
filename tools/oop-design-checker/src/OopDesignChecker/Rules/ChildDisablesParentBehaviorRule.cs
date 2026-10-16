@@ -5,12 +5,12 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ChildDisablesParentBehaviorRule : IAnalysisRule
+internal sealed class ChildDisablesParentBehaviorRule : I解析規則
 {
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP303", "Child disables parent behavior", DesignDiagnosticSeverity.Danger);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -33,8 +33,8 @@ internal sealed class ChildDisablesParentBehaviorRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     method.Identifier.GetLocation(),
                     $"This override disables required or supported inherited behavior by always throwing {thrownType}.",
                     methodSymbol.ToDisplayString()

@@ -5,15 +5,15 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class OversizedMainOperationRule : IAnalysisRule
+internal sealed class OversizedMainOperationRule : I解析規則
 {
     private const int MinimumStatementCount = 20;
     private const int WarningScore = 4;
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP201", "Oversized main operation", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -44,8 +44,8 @@ internal sealed class OversizedMainOperationRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     method.Identifier.GetLocation(),
                     $"This primary operation is structurally large: {metrics.LineCount} lines, {metrics.StatementCount} statements, complexity {metrics.CyclomaticComplexity}, nesting {metrics.MaxNestingDepth}. Split meaningful processing phases into methods.",
                     methodSymbol.ToDisplayString()

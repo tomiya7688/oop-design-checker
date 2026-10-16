@@ -6,12 +6,12 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ObjectInvariantBypassRule : IAnalysisRule
+internal sealed class ObjectInvariantBypassRule : I解析規則
 {
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP107", "Object invariant can be bypassed", DesignDiagnosticSeverity.Danger);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -56,8 +56,8 @@ internal sealed class ObjectInvariantBypassRule : IAnalysisRule
                         continue;
                     }
 
-                    yield return DiagnosticFactory.Create(
-                        Descriptor,
+                    yield return 診断生成器.生成する(
+                        規則情報,
                         propertyDeclaration.Identifier.GetLocation(),
                         $"{property.Name} has a public setter even though {guardedMutation.Identifier.ValueText} validates values before assigning it. Callers can bypass the object's invariant through the setter.",
                         property.ToDisplayString()

@@ -7,14 +7,14 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class SuspiciousInheritanceRelationshipRule : IAnalysisRule
+internal sealed class SuspiciousInheritanceRelationshipRule : I解析規則
 {
     private const int MinimumHiddenMembers = 2;
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP301", "Suspicious inheritance relationship", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -45,8 +45,8 @@ internal sealed class SuspiciousInheritanceRelationshipRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     declaration.Identifier.GetLocation(),
                     $"This child type replaces {hiddenMembers.Length} inherited instance members from the project-owned {baseType.Name} hierarchy. Repeatedly replacing the parent-visible surface suggests the inheritance relationship may not model a stable is-a relationship.",
                     symbol.ToDisplayString()

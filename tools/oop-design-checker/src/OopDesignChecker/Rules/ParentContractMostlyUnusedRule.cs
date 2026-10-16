@@ -5,14 +5,14 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class ParentContractMostlyUnusedRule : IAnalysisRule
+internal sealed class ParentContractMostlyUnusedRule : I解析規則
 {
     private const int MinimumNoOpOverrides = 2;
 
-    public RuleDescriptor Descriptor { get; } =
+    public RuleDescriptor 規則情報 { get; } =
         new("OOP302", "Parent contract mostly unused", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context)
+    public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
         foreach (var syntaxTree in context.Project.SyntaxTrees)
         {
@@ -38,8 +38,8 @@ internal sealed class ParentContractMostlyUnusedRule : IAnalysisRule
                     continue;
                 }
 
-                yield return DiagnosticFactory.Create(
-                    Descriptor,
+                yield return 診断生成器.生成する(
+                    規則情報,
                     declaration.Identifier.GetLocation(),
                     $"This child type neutralizes {neutralizedOperations.Length} required or supported inherited operations with no-op/default implementations. The parent contract may be broader than this object can meaningfully support.",
                     symbol.ToDisplayString()

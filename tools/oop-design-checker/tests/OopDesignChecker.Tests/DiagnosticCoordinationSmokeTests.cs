@@ -271,18 +271,18 @@ internal static class DiagnosticCoordinationSmokeTests
         );
     }
 
-    private sealed class FixedDiagnosticsRule : IAnalysisRule
+    private sealed class FixedDiagnosticsRule : I解析規則
     {
         private readonly IReadOnlyList<DesignDiagnostic> _diagnostics;
 
         public FixedDiagnosticsRule(IReadOnlyList<DesignDiagnostic> diagnostics)
         {
             _diagnostics = diagnostics;
-            Descriptor = diagnostics[0].Rule;
+            規則情報 = diagnostics[0].Rule;
         }
 
-        public RuleDescriptor Descriptor { get; }
+        public RuleDescriptor 規則情報 { get; }
 
-        public IEnumerable<DesignDiagnostic> Analyze(AnalysisContext context) => _diagnostics;
+        public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context) => _diagnostics;
     }
 }
