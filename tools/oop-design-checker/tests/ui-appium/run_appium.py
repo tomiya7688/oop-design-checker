@@ -861,6 +861,7 @@ def main():
         )
 
         find(driver, "ClearConfigurationButton").click()
+        wait_until(driver, lambda: find(driver, "AnalyzeButton").is_enabled(), timeout=20)
         find(driver, "AnalyzeButton").click()
         wait_until(driver, lambda: summary_matches(driver, expected_counts), timeout=120)
         record("06-export", "reanalyze-defaults")

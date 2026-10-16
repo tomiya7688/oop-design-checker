@@ -2,13 +2,13 @@ using System.Xml.Linq;
 
 namespace OopDesignChecker.Analysis;
 
-internal static class ProjectTypeDetector
+internal static class プロジェクト種別判定器
 {
-    public static bool IsApplication(string rootPath)
+    public static bool アプリケーションか(string ルートパス)
     {
         foreach (
             var projectFile in Directory.EnumerateFiles(
-                rootPath,
+                ルートパス,
                 "*.csproj",
                 SearchOption.AllDirectories
             )

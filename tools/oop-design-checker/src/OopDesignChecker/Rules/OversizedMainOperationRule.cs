@@ -15,9 +15,9 @@ internal sealed class OversizedMainOperationRule : I解析規則
 
     public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        foreach (var syntaxTree in context.Project.構文木群)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot();
 
             foreach (var method in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
@@ -112,9 +112,9 @@ internal sealed class OversizedMainOperationRule : I解析規則
             return false;
         }
 
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        foreach (var syntaxTree in context.Project.構文木群)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
             foreach (
                 var invocation in syntaxTree
                     .GetRoot()

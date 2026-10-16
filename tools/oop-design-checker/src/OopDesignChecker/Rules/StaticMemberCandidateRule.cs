@@ -12,9 +12,9 @@ internal sealed class StaticMemberCandidateRule : I解析規則
 
     public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        foreach (var syntaxTree in context.Project.構文木群)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
             foreach (
                 var declaration in syntaxTree
                     .GetRoot()

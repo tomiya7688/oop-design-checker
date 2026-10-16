@@ -12,19 +12,19 @@ internal sealed class SealingCandidateRule : I解析規則
 
     public IEnumerable<DesignDiagnostic> 解析する(AnalysisContext context)
     {
-        if (!context.Project.IsApplication)
+        if (!context.Project.アプリケーションである)
         {
             yield break;
         }
 
         var declarations = context
-            .Project.SyntaxTrees.SelectMany(tree =>
+            .Project.構文木群.SelectMany(tree =>
                 tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>()
             )
             .Select(declaration => new TypeDeclaration(
                 declaration,
                 context
-                    .Project.GetSemanticModel(declaration.SyntaxTree)
+                    .Project.意味モデルを取得する(declaration.SyntaxTree)
                     .GetDeclaredSymbol(declaration) as INamedTypeSymbol
             ))
             .Where(item => item.Symbol is not null)

@@ -12,12 +12,12 @@ internal sealed class AnalysisEngine
     }
 
     public IReadOnlyList<DesignDiagnostic> Analyze(
-        SourceProject project,
+        解析対象プロジェクト project,
         CancellationToken cancellationToken = default
     ) => Analyze([project], cancellationToken);
 
     public IReadOnlyList<DesignDiagnostic> Analyze(
-        IReadOnlyList<SourceProject> projects,
+        IReadOnlyList<解析対象プロジェクト> projects,
         CancellationToken cancellationToken = default
     )
     {
@@ -43,8 +43,8 @@ internal sealed class AnalysisEngine
     }
 
     private IEnumerable<DesignDiagnostic> AnalyzeProject(
-        SourceProject project,
-        IReadOnlyList<SourceProject> projects,
+        解析対象プロジェクト project,
+        IReadOnlyList<解析対象プロジェクト> projects,
         CancellationToken cancellationToken
     )
     {

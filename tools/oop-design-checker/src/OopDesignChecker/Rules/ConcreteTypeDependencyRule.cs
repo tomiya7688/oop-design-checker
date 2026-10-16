@@ -16,9 +16,9 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
             SymbolEqualityComparer.Default
         );
 
-        foreach (var syntaxTree in context.Project.SyntaxTrees)
+        foreach (var syntaxTree in context.Project.構文木群)
         {
-            var semanticModel = context.Project.GetSemanticModel(syntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(syntaxTree);
             var root = syntaxTree.GetRoot(context.CancellationToken);
 
             foreach (
@@ -123,7 +123,7 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
                 continue;
             }
 
-            var semanticModel = context.Project.GetSemanticModel(declaration.SyntaxTree);
+            var semanticModel = context.Project.意味モデルを取得する(declaration.SyntaxTree);
             foreach (
                 var access in declaration.DescendantNodes().OfType<MemberAccessExpressionSyntax>()
             )
@@ -277,7 +277,7 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
             {
                 if (
                     !context
-                        .Project.Compilation.ClassifyConversion(abstraction, convertedType)
+                        .Project.コンパイル結果.ClassifyConversion(abstraction, convertedType)
                         .IsImplicit
                 )
                 {
