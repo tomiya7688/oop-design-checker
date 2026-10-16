@@ -123,7 +123,7 @@ internal static class ExtendedRuleSmokeTests
             """;
 
         AssertSingle(
-            new SuspiciousInheritanceRelationshipRule(),
+            new 疑わしい継承関係規則(),
             source,
             "OOP301",
             DesignDiagnosticSeverity.Warning
@@ -146,12 +146,7 @@ internal static class ExtendedRuleSmokeTests
             }
             """;
 
-        AssertSingle(
-            new ParentContractMostlyUnusedRule(),
-            source,
-            "OOP302",
-            DesignDiagnosticSeverity.Warning
-        );
+        AssertSingle(new 親契約未使用規則(), source, "OOP302", DesignDiagnosticSeverity.Warning);
     }
 
     private static void ImplementationReuseInheritanceIsAttention()

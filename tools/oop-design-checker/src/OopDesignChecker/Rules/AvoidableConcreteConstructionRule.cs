@@ -93,9 +93,7 @@ internal sealed class AvoidableConcreteConstructionRule : I解析規則
                     continue;
                 }
 
-                var abstraction = ProjectAbstractionClassifier.FindMeaningfulAbstraction(
-                    concreteType
-                );
+                var abstraction = プロジェクト抽象判定器.意味のある抽象候補を探す(concreteType);
                 if (abstraction is null || !HasBehavior(concreteType))
                 {
                     continue;

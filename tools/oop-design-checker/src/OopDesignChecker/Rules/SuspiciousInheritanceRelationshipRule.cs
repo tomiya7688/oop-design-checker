@@ -7,76 +7,78 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
-internal sealed class SuspiciousInheritanceRelationshipRule : I解析規則
+internal sealed class 疑わしい継承関係規則 : I解析規則
 {
-    private const int MinimumHiddenMembers = 2;
+    private const int 最小隠蔽メンバー数 = 2;
 
     public RuleDescriptor 規則情報 { get; } =
         new("OOP301", "Suspicious inheritance relationship", DesignDiagnosticSeverity.Warning);
 
-    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 context)
+    public IEnumerable<DesignDiagnostic> 解析する(解析文脈 解析文脈)
     {
-        foreach (var syntaxTree in context.対象プロジェクト.構文木群)
+        foreach (var 構文木 in 解析文脈.対象プロジェクト.構文木群)
         {
-            var semanticModel = context.対象プロジェクト.意味モデルを取得する(syntaxTree);
-            var root = syntaxTree.GetRoot();
+            var 意味モデル = 解析文脈.対象プロジェクト.意味モデルを取得する(構文木);
+            var 構文根 = 構文木.GetRoot();
 
-            foreach (var declaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
+            foreach (var 宣言 in 構文根.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
                 if (
-                    semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol symbol
-                    || !シンボル操作器.主宣言である(symbol, declaration)
-                    || symbol.BaseType
-                        is not { SpecialType: not SpecialType.System_Object } baseType
-                    || !baseType.Locations.Any(location => location.IsInSource)
+                    意味モデル.GetDeclaredSymbol(宣言) is not INamedTypeSymbol シンボル
+                    || !シンボル操作器.主宣言である(シンボル, 宣言)
+                    || シンボル.BaseType
+                        is not { SpecialType: not SpecialType.System_Object } 基底型
+                    || !基底型.Locations.Any(location => location.IsInSource)
                 )
                 {
                     continue;
                 }
 
-                var hiddenMembers = declaration
-                    .Members.Where(member => member.Modifiers.Any(SyntaxKind.NewKeyword))
-                    .Select(member => semanticModel.GetDeclaredSymbol(member))
-                    .Where(member => member is not null && IsRelevantInstanceSurface(member))
-                    .Where(member => HidesMatchingProjectMember(member!, baseType))
+                var 隠蔽メンバー群 = 宣言
+                    .Members.Where(メンバー => メンバー.Modifiers.Any(SyntaxKind.NewKeyword))
+                    .Select(メンバー => 意味モデル.GetDeclaredSymbol(メンバー))
+                    .Where(メンバー =>
+                        メンバー is not null && 対象となるインスタンス公開面である(メンバー)
+                    )
+                    .Where(メンバー => 同じ形のプロジェクトメンバーを隠す(メンバー!, 基底型))
                     .ToArray();
-                if (hiddenMembers.Length < MinimumHiddenMembers)
+                if (隠蔽メンバー群.Length < 最小隠蔽メンバー数)
                 {
                     continue;
                 }
 
                 yield return 診断生成器.生成する(
                     規則情報,
-                    declaration.Identifier.GetLocation(),
-                    $"This child type replaces {hiddenMembers.Length} inherited instance members from the project-owned {baseType.Name} hierarchy. Repeatedly replacing the parent-visible surface suggests the inheritance relationship may not model a stable is-a relationship.",
-                    symbol.ToDisplayString()
+                    宣言.Identifier.GetLocation(),
+                    $"This child type replaces {隠蔽メンバー群.Length} inherited instance members from the project-owned {基底型.Name} hierarchy. Repeatedly replacing the parent-visible surface suggests the inheritance relationship may not model a stable is-a relationship.",
+                    シンボル.ToDisplayString()
                 );
             }
         }
     }
 
-    private static bool IsRelevantInstanceSurface(ISymbol member) =>
-        member switch
+    private static bool 対象となるインスタンス公開面である(ISymbol メンバー) =>
+        メンバー switch
         {
-            IMethodSymbol method => !method.IsStatic && method.MethodKind == MethodKind.Ordinary,
+            IMethodSymbol メソッド => !メソッド.IsStatic
+                && メソッド.MethodKind == MethodKind.Ordinary,
             IPropertySymbol property => !property.IsStatic,
             IEventSymbol @event => !@event.IsStatic,
             _ => false,
         };
 
-    private static bool HidesMatchingProjectMember(ISymbol member, INamedTypeSymbol baseType)
+    private static bool 同じ形のプロジェクトメンバーを隠す(
+        ISymbol メンバー,
+        INamedTypeSymbol 基底型
+    )
     {
         for (
-            var current = baseType;
-            current is not null && current.Locations.Any(location => location.IsInSource);
-            current = current.BaseType
+            var 現在の基底型 = 基底型;
+            現在の基底型 is not null && 現在の基底型.Locations.Any(location => location.IsInSource);
+            現在の基底型 = 現在の基底型.BaseType
         )
         {
-            if (
-                current
-                    .GetMembers(member.Name)
-                    .Any(candidate => HasMatchingShape(member, candidate))
-            )
+            if (現在の基底型.GetMembers(メンバー.Name).Any(候補 => 同じ形である(メンバー, 候補)))
             {
                 return true;
             }
@@ -85,21 +87,21 @@ internal sealed class SuspiciousInheritanceRelationshipRule : I解析規則
         return false;
     }
 
-    private static bool HasMatchingShape(ISymbol childMember, ISymbol baseMember) =>
-        (childMember, baseMember) switch
+    private static bool 同じ形である(ISymbol 子メンバー, ISymbol 親メンバー) =>
+        (子メンバー, 親メンバー) switch
         {
             (IMethodSymbol child, IMethodSymbol parent) => !parent.IsStatic
                 && parent.MethodKind == MethodKind.Ordinary
                 && child.Arity == parent.Arity
-                && ParametersMatch(child.Parameters, parent.Parameters),
+                && 引数が一致する(child.Parameters, parent.Parameters),
             (IPropertySymbol child, IPropertySymbol parent) => !parent.IsStatic
                 && child.IsIndexer == parent.IsIndexer
-                && ParametersMatch(child.Parameters, parent.Parameters),
+                && 引数が一致する(child.Parameters, parent.Parameters),
             (IEventSymbol, IEventSymbol parent) => !parent.IsStatic,
             _ => false,
         };
 
-    private static bool ParametersMatch(
+    private static bool 引数が一致する(
         ImmutableArray<IParameterSymbol> childParameters,
         ImmutableArray<IParameterSymbol> parentParameters
     )
@@ -109,13 +111,13 @@ internal sealed class SuspiciousInheritanceRelationshipRule : I解析規則
             return false;
         }
 
-        for (var index = 0; index < childParameters.Length; index++)
+        for (var 引数位置 = 0; 引数位置 < childParameters.Length; 引数位置++)
         {
             if (
-                childParameters[index].RefKind != parentParameters[index].RefKind
+                childParameters[引数位置].RefKind != parentParameters[引数位置].RefKind
                 || !SymbolEqualityComparer.Default.Equals(
-                    childParameters[index].Type,
-                    parentParameters[index].Type
+                    childParameters[引数位置].Type,
+                    parentParameters[引数位置].Type
                 )
             )
             {

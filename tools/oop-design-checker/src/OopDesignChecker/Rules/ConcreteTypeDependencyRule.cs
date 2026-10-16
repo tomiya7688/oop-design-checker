@@ -37,7 +37,7 @@ internal sealed class ConcreteTypeDependencyRule : I解析規則
                         continue;
                     }
 
-                    var abstractions = ProjectAbstractionClassifier.FindMeaningfulAbstractions(
+                    var abstractions = プロジェクト抽象判定器.意味のある抽象候補群を探す(
                         concreteType
                     );
                     if (abstractions.Count == 0)

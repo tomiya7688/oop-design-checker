@@ -10,19 +10,19 @@ internal static class InheritanceDepthPrecisionSmokeTests
 {
     public static void Run()
     {
-        DefaultDepthFourIsAttention();
-        DepthBelowDefaultIsAllowed();
-        CustomDepthChangesTriggerPoint();
-        ConfiguredDepthIsAppliedByCheckerService();
-        InvalidConfiguredDepthIsRejected();
-        ExternalAncestryIsNotCounted();
-        CrossProjectInheritanceIsCounted();
-        CrossProjectChainStopsAtExternalBase();
-        PartialClassProducesSingleDiagnosticAtPrimaryDeclaration();
-        PartialClassAcrossProjectBoundaryStopsAtExternalBase();
+        既定の深度4を注意とする();
+        既定未満の深度を許可する();
+        設定した深度を適用する();
+        CheckerServiceで設定深度を適用する();
+        不正な深度設定を拒否する();
+        外部継承を数えない();
+        プロジェクトをまたぐ継承を数える();
+        外部基底型で継承計測を止める();
+        部分型宣言で主宣言に診断を1件出す();
+        プロジェクト外の基底型で部分型の計測を止める();
     }
 
-    private static void DefaultDepthFourIsAttention()
+    private static void 既定の深度4を注意とする()
     {
         const string source = """
             internal class A { }
@@ -32,14 +32,14 @@ internal static class InheritanceDepthPrecisionSmokeTests
             internal sealed class E : D { }
             """;
 
-        AssertSingle(
-            new ExcessiveInheritanceDepthRule(),
+        診断が1件であることを確認する(
+            new 継承深度過剰規則(),
             TestProjectFactory.解析文脈を作る(source),
             expectedDepth: 4
         );
     }
 
-    private static void DepthBelowDefaultIsAllowed()
+    private static void 既定未満の深度を許可する()
     {
         const string source = """
             internal class A { }
@@ -48,10 +48,10 @@ internal static class InheritanceDepthPrecisionSmokeTests
             internal sealed class D : C { }
             """;
 
-        AssertNone(new ExcessiveInheritanceDepthRule(), TestProjectFactory.解析文脈を作る(source));
+        診断がないことを確認する(new 継承深度過剰規則(), TestProjectFactory.解析文脈を作る(source));
     }
 
-    private static void CustomDepthChangesTriggerPoint()
+    private static void 設定した深度を適用する()
     {
         const string source = """
             internal class A { }
@@ -60,16 +60,16 @@ internal static class InheritanceDepthPrecisionSmokeTests
             internal sealed class D : C { }
             """;
 
-        AssertSingle(
-            new ExcessiveInheritanceDepthRule(warningDepth: 3),
+        診断が1件であることを確認する(
+            new 継承深度過剰規則(警告深度: 3),
             TestProjectFactory.解析文脈を作る(source),
             expectedDepth: 3
         );
     }
 
-    private static void ConfiguredDepthIsAppliedByCheckerService()
+    private static void CheckerServiceで設定深度を適用する()
     {
-        WithTemporaryProject(rootPath =>
+        一時プロジェクトを使って実行する(rootPath =>
         {
             File.WriteAllText(
                 Path.Combine(rootPath, "Sample.cs"),
@@ -110,9 +110,9 @@ internal static class InheritanceDepthPrecisionSmokeTests
         });
     }
 
-    private static void InvalidConfiguredDepthIsRejected()
+    private static void 不正な深度設定を拒否する()
     {
-        WithTemporaryProject(rootPath =>
+        一時プロジェクトを使って実行する(rootPath =>
         {
             File.WriteAllText(
                 Path.Combine(rootPath, "Sample.cs"),
@@ -151,7 +151,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
         });
     }
 
-    private static void ExternalAncestryIsNotCounted()
+    private static void 外部継承を数えない()
     {
         const string source = """
             internal class A : System.Exception { }
@@ -160,10 +160,10 @@ internal static class InheritanceDepthPrecisionSmokeTests
             internal class D : C { }
             """;
 
-        AssertNone(new ExcessiveInheritanceDepthRule(), TestProjectFactory.解析文脈を作る(source));
+        診断がないことを確認する(new 継承深度過剰規則(), TestProjectFactory.解析文脈を作る(source));
     }
 
-    private static void CrossProjectInheritanceIsCounted()
+    private static void プロジェクトをまたぐ継承を数える()
     {
         var 基底プロジェクト = 解析対象プロジェクトを作る(
             "BaseProject",
@@ -183,10 +183,10 @@ internal static class InheritanceDepthPrecisionSmokeTests
         );
         var context = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
 
-        AssertSingle(new ExcessiveInheritanceDepthRule(), context, expectedDepth: 4);
+        診断が1件であることを確認する(new 継承深度過剰規則(), context, expectedDepth: 4);
     }
 
-    private static void CrossProjectChainStopsAtExternalBase()
+    private static void 外部基底型で継承計測を止める()
     {
         var 基底プロジェクト = 解析対象プロジェクトを作る(
             "BaseProject",
@@ -205,10 +205,10 @@ internal static class InheritanceDepthPrecisionSmokeTests
         );
         var context = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
 
-        AssertNone(new ExcessiveInheritanceDepthRule(), context);
+        診断がないことを確認する(new 継承深度過剰規則(), context);
     }
 
-    private static void PartialClassProducesSingleDiagnosticAtPrimaryDeclaration()
+    private static void 部分型宣言で主宣言に診断を1件出す()
     {
         var project = ソース群から解析対象プロジェクトを作る(
             "PartialProject",
@@ -240,15 +240,15 @@ internal static class InheritanceDepthPrecisionSmokeTests
             ]
         );
 
-        AssertSingle(
-            new ExcessiveInheritanceDepthRule(),
+        診断が1件であることを確認する(
+            new 継承深度過剰規則(),
             new 解析文脈(project),
             expectedDepth: 4,
             expectedFileName: "Partial.Primary.cs"
         );
     }
 
-    private static void PartialClassAcrossProjectBoundaryStopsAtExternalBase()
+    private static void プロジェクト外の基底型で部分型の計測を止める()
     {
         var 基底プロジェクト = 解析対象プロジェクトを作る(
             "ExternalBoundaryBaseProject",
@@ -287,8 +287,8 @@ internal static class InheritanceDepthPrecisionSmokeTests
         );
         var context = new 解析文脈(派生プロジェクト, [基底プロジェクト, 派生プロジェクト]);
 
-        AssertSingle(
-            new ExcessiveInheritanceDepthRule(),
+        診断が1件であることを確認する(
+            new 継承深度過剰規則(),
             context,
             expectedDepth: 4,
             expectedFileName: "Derived.Primary.cs"
@@ -349,7 +349,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
         );
     }
 
-    private static void WithTemporaryProject(Action<string> action)
+    private static void 一時プロジェクトを使って実行する(Action<string> action)
     {
         var rootPath = Path.Combine(
             Path.GetTempPath(),
@@ -371,8 +371,8 @@ internal static class InheritanceDepthPrecisionSmokeTests
         }
     }
 
-    private static void AssertSingle(
-        ExcessiveInheritanceDepthRule rule,
+    private static void 診断が1件であることを確認する(
+        継承深度過剰規則 rule,
         解析文脈 context,
         int expectedDepth,
         string? expectedFileName = null
@@ -410,7 +410,7 @@ internal static class InheritanceDepthPrecisionSmokeTests
         );
     }
 
-    private static void AssertNone(ExcessiveInheritanceDepthRule rule, 解析文脈 context)
+    private static void 診断がないことを確認する(継承深度過剰規則 rule, 解析文脈 context)
     {
         var diagnostics = rule.解析する(context).Where(item => item.Rule.Id == "OOP304").ToArray();
         if (diagnostics.Length == 0)

@@ -55,12 +55,7 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(
-            new MissingCommonAbstractionRule(),
-            source,
-            "OOP001",
-            DesignDiagnosticSeverity.Warning
-        );
+        AssertSingle(new 共通抽象不足規則(), source, "OOP001", DesignDiagnosticSeverity.Warning);
     }
 
     private static void SealingCandidateIsAttention()
@@ -73,12 +68,7 @@ internal static class CoreRuleSmokeTests
             }
             """;
 
-        AssertSingle(
-            new SealingCandidateRule(),
-            source,
-            "OOP102",
-            DesignDiagnosticSeverity.Attention
-        );
+        AssertSingle(new 封止候補規則(), source, "OOP102", DesignDiagnosticSeverity.Attention);
     }
 
     private static void StatefulStaticDesignIsWarning()

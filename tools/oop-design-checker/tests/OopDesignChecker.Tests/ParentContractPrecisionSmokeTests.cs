@@ -7,15 +7,15 @@ internal static class ParentContractPrecisionSmokeTests
 {
     public static void Run()
     {
-        MeaningfulParentOperationsNeutralizedAreWarning();
-        OptionalNoOpHooksAreAllowed();
-        AbstractParentOperationRejectedIsDanger();
-        SupportedParentOperationRejectedIsDanger();
-        AlreadyRejectedParentOperationIsAllowed();
-        ExternalAbstractOperationRejectedIsDanger();
+        意味のある親操作を無効化した場合に警告する();
+        任意の空実装フックを許可する();
+        抽象親操作の拒否を危険とする();
+        実装済み親操作の拒否を危険とする();
+        既に拒否される親操作を許可する();
+        外部抽象操作の拒否を危険とする();
     }
 
-    private static void MeaningfulParentOperationsNeutralizedAreWarning()
+    private static void 意味のある親操作を無効化した場合に警告する()
     {
         const string source = """
             internal class Base
@@ -33,15 +33,15 @@ internal static class ParentContractPrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
-            new ParentContractMostlyUnusedRule(),
+        診断が1件であることを確認する(
+            new 親契約未使用規則(),
             source,
             "OOP302",
             DesignDiagnosticSeverity.Warning
         );
     }
 
-    private static void OptionalNoOpHooksAreAllowed()
+    private static void 任意の空実装フックを許可する()
     {
         const string source = """
             internal class Template
@@ -57,10 +57,10 @@ internal static class ParentContractPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new ParentContractMostlyUnusedRule(), source, "OOP302");
+        診断がないことを確認する(new 親契約未使用規則(), source, "OOP302");
     }
 
-    private static void AbstractParentOperationRejectedIsDanger()
+    private static void 抽象親操作の拒否を危険とする()
     {
         const string source = """
             internal abstract class Base
@@ -74,15 +74,15 @@ internal static class ParentContractPrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
-            new ChildDisablesParentBehaviorRule(),
+        診断が1件であることを確認する(
+            new 子型による親動作無効化規則(),
             source,
             "OOP303",
             DesignDiagnosticSeverity.Danger
         );
     }
 
-    private static void SupportedParentOperationRejectedIsDanger()
+    private static void 実装済み親操作の拒否を危険とする()
     {
         const string source = """
             internal class Base
@@ -97,15 +97,15 @@ internal static class ParentContractPrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
-            new ChildDisablesParentBehaviorRule(),
+        診断が1件であることを確認する(
+            new 子型による親動作無効化規則(),
             source,
             "OOP303",
             DesignDiagnosticSeverity.Danger
         );
     }
 
-    private static void AlreadyRejectedParentOperationIsAllowed()
+    private static void 既に拒否される親操作を許可する()
     {
         const string source = """
             internal class Base
@@ -119,10 +119,10 @@ internal static class ParentContractPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new ChildDisablesParentBehaviorRule(), source, "OOP303");
+        診断がないことを確認する(new 子型による親動作無効化規則(), source, "OOP303");
     }
 
-    private static void ExternalAbstractOperationRejectedIsDanger()
+    private static void 外部抽象操作の拒否を危険とする()
     {
         const string source = """
             using System;
@@ -139,15 +139,15 @@ internal static class ParentContractPrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
-            new ChildDisablesParentBehaviorRule(),
+        診断が1件であることを確認する(
+            new 子型による親動作無効化規則(),
             source,
             "OOP303",
             DesignDiagnosticSeverity.Danger
         );
     }
 
-    private static void AssertSingle(
+    private static void 診断が1件であることを確認する(
         I解析規則 rule,
         string source,
         string ruleId,
@@ -173,7 +173,7 @@ internal static class ParentContractPrecisionSmokeTests
         );
     }
 
-    private static void AssertNone(I解析規則 rule, string source, string ruleId)
+    private static void 診断がないことを確認する(I解析規則 rule, string source, string ruleId)
     {
         var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
         if (diagnostics.Length == 0)

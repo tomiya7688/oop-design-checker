@@ -7,13 +7,13 @@ internal static class PolymorphismPrecisionSmokeTests
 {
     public static void Run()
     {
-        MatchingShapesWithoutSharedUsageAreAllowed();
-        UnrelatedTypeBranchesAreAllowed();
-        MarkerInterfaceIsNotUnnecessaryAbstraction();
-        PublicSingleImplementationInterfaceIsExtensionPoint();
+        共通利用がない同形クラスを許可する();
+        無関係な型の分岐を許可する();
+        マーカーインターフェースを不要な抽象としない();
+        実装が1つのpublicインターフェースを拡張点とする();
     }
 
-    private static void MatchingShapesWithoutSharedUsageAreAllowed()
+    private static void 共通利用がない同形クラスを許可する()
     {
         const string source = """
             internal sealed class CacheEntry
@@ -35,10 +35,10 @@ internal static class PolymorphismPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new MissingCommonAbstractionRule(), source, "OOP001");
+        診断がないことを確認する(new 共通抽象不足規則(), source, "OOP001");
     }
 
-    private static void UnrelatedTypeBranchesAreAllowed()
+    private static void 無関係な型の分岐を許可する()
     {
         const string source = """
             internal sealed class Command
@@ -63,10 +63,10 @@ internal static class PolymorphismPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new TypeBranchPolymorphismRule(), source, "OOP002");
+        診断がないことを確認する(new 型分岐ポリモーフィズム規則(), source, "OOP002");
     }
 
-    private static void MarkerInterfaceIsNotUnnecessaryAbstraction()
+    private static void マーカーインターフェースを不要な抽象としない()
     {
         const string source = """
             internal interface IMarker
@@ -78,10 +78,10 @@ internal static class PolymorphismPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new UnnecessaryAbstractionRule(), source, "OOP003");
+        診断がないことを確認する(new UnnecessaryAbstractionRule(), source, "OOP003");
     }
 
-    private static void PublicSingleImplementationInterfaceIsExtensionPoint()
+    private static void 実装が1つのpublicインターフェースを拡張点とする()
     {
         const string source = """
             public interface IPlugin
@@ -95,10 +95,10 @@ internal static class PolymorphismPrecisionSmokeTests
             }
             """;
 
-        AssertNone(new UnnecessaryAbstractionRule(), source, "OOP003");
+        診断がないことを確認する(new UnnecessaryAbstractionRule(), source, "OOP003");
     }
 
-    private static void AssertNone(I解析規則 rule, string source, string ruleId)
+    private static void 診断がないことを確認する(I解析規則 rule, string source, string ruleId)
     {
         var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
         if (diagnostics.Length == 0)

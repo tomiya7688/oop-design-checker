@@ -65,8 +65,8 @@ internal sealed class StaticMemberCandidateRule : I解析規則
         if (
             semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol classSymbol
             || HasUnresolvedBaseContract(declaration, semanticModel)
-            || FrameworkContractClassifier.HasExternalBaseTypeContract(classSymbol)
-            || FrameworkContractClassifier.HasFrameworkContractAttribute(classSymbol)
+            || フレームワーク契約判定器.外部基底型契約を持つ(classSymbol)
+            || フレームワーク契約判定器.フレームワーク契約属性を持つ(classSymbol)
         )
         {
             return false;
@@ -92,7 +92,7 @@ internal sealed class StaticMemberCandidateRule : I解析規則
             || methodSymbol.IsVirtual
             || methodSymbol.IsOverride
             || method.ExplicitInterfaceSpecifier is not null
-            || FrameworkContractClassifier.HasFrameworkContractAttribute(methodSymbol)
+            || フレームワーク契約判定器.フレームワーク契約属性を持つ(methodSymbol)
             || シンボル操作器.インターフェースメンバーを実装している(
                 methodSymbol,
                 declaration,

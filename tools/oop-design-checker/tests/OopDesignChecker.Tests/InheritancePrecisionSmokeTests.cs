@@ -8,31 +8,31 @@ internal static class InheritancePrecisionSmokeTests
 {
     public static void Run()
     {
-        MarkerInterfaceDoesNotCreateConcreteDependencyWarning();
-        InaccessibleInterfaceMembersDoNotCreateAbstractions();
-        InheritedInstanceContractRemainsMeaningful();
-        InternalInstanceContractIsAccessibleWithinProject();
-        AbstractionOnlyConsumerIsConcreteDependencyWarning();
-        LaterMeaningfulAbstractionMatchesConsumerUsage();
-        MultipleMatchingAbstractionsChooseDeterministically();
-        ManyConstructorParametersReusePartialConsumerUsage();
-        ConcreteOnlyBehaviorJustifiesConcreteDependency();
-        MarkerInterfaceDoesNotCreateConstructionWarning();
-        OwnedFactoryConstructionIsAllowed();
-        NestedObjectGraphConstructionIsAllowed();
-        MainLocalWiringIsAllowed();
-        CompositionRootLocalWiringIsAllowed();
-        BusinessMethodLocalWiringIsWarning();
-        BusinessExpressionConstructionIsWarning();
-        ProjectSurfaceReplacementIsSuspicious();
-        ExternalBaseSurfaceReplacementIsAllowed();
-        ImplementationReuseInheritanceIsAttention();
-        ConstructorOnlyProtectedUseIsAllowed();
-        ValidSpecializationIsNotCompositionCandidate();
+        マーカーインターフェースだけでは具象依存の警告を出さない();
+        アクセス不能なインターフェースメンバーを抽象候補にしない();
+        継承したインスタンス契約を意味のある抽象とみなす();
+        internalなインスタンス契約を同一プロジェクト内で利用できる();
+        抽象のみを使う利用者へ具象依存を警告する();
+        後続の意味ある抽象と利用者の使用を照合する();
+        複数の抽象候補を決定的に選ぶ();
+        多数のコンストラクター引数で利用状況を再利用する();
+        具象型だけの振る舞いを具象依存の根拠にする();
+        マーカーインターフェースだけでは生成警告を出さない();
+        所有するファクトリーでの生成を許可する();
+        入れ子のオブジェクト生成を許可する();
+        main内の依存構築を許可する();
+        コンポジションルート内の依存構築を許可する();
+        業務メソッド内の依存構築を警告する();
+        業務式内の具象生成を警告する();
+        プロジェクト内の継承公開面置換を検出する();
+        外部基底型の公開面置換を許可する();
+        実装再利用目的の継承を注意とする();
+        コンストラクターだけのprotected利用を許可する();
+        正当な特化をコンポジション候補にしない();
         ParentContractPrecisionSmokeTests.Run();
     }
 
-    private static void MarkerInterfaceDoesNotCreateConcreteDependencyWarning()
+    private static void マーカーインターフェースだけでは具象依存の警告を出さない()
     {
         const string source = """
             internal interface IMarker
@@ -50,10 +50,10 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertNone(new ConcreteTypeDependencyRule(), source, "OOP305");
+        診断がないことを確認する(new ConcreteTypeDependencyRule(), source, "OOP305");
     }
 
-    private static void InaccessibleInterfaceMembersDoNotCreateAbstractions()
+    private static void アクセス不能なインターフェースメンバーを抽象候補にしない()
     {
         const string source = """
             internal interface IPrivateHelperOnly
@@ -94,11 +94,11 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertNone(new ConcreteTypeDependencyRule(), source, "OOP305");
-        AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new ConcreteTypeDependencyRule(), source, "OOP305");
+        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
     }
 
-    private static void InheritedInstanceContractRemainsMeaningful()
+    private static void 継承したインスタンス契約を意味のある抽象とみなす()
     {
         const string source = """
             internal interface IReadOnlyClock
@@ -139,13 +139,13 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
+        診断が1件であることを確認する(
             new ConcreteTypeDependencyRule(),
             source,
             "OOP305",
             DesignDiagnosticSeverity.Warning
         );
-        AssertSingle(
+        診断が1件であることを確認する(
             new AvoidableConcreteConstructionRule(),
             source,
             "OOP306",
@@ -153,7 +153,7 @@ internal static class InheritancePrecisionSmokeTests
         );
     }
 
-    private static void InternalInstanceContractIsAccessibleWithinProject()
+    private static void internalなインスタンス契約を同一プロジェクト内で利用できる()
     {
         const string source = """
             internal interface IAssemblyContract
@@ -177,7 +177,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
+        診断が1件であることを確認する(
             new AvoidableConcreteConstructionRule(),
             source,
             "OOP306",
@@ -185,7 +185,7 @@ internal static class InheritancePrecisionSmokeTests
         );
     }
 
-    private static void AbstractionOnlyConsumerIsConcreteDependencyWarning()
+    private static void 抽象のみを使う利用者へ具象依存を警告する()
     {
         const string source = """
             internal interface IClock
@@ -212,7 +212,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
+        診断が1件であることを確認する(
             new ConcreteTypeDependencyRule(),
             source,
             "OOP305",
@@ -220,7 +220,7 @@ internal static class InheritancePrecisionSmokeTests
         );
     }
 
-    private static void LaterMeaningfulAbstractionMatchesConsumerUsage()
+    private static void 後続の意味ある抽象と利用者の使用を照合する()
     {
         const string source = """
             internal interface IClock
@@ -252,7 +252,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
+        診断が1件であることを確認する(
             new ConcreteTypeDependencyRule(),
             source,
             "OOP305",
@@ -260,7 +260,7 @@ internal static class InheritancePrecisionSmokeTests
         );
     }
 
-    private static void MultipleMatchingAbstractionsChooseDeterministically()
+    private static void 複数の抽象候補を決定的に選ぶ()
     {
         const string source = """
             internal interface IZeta
@@ -302,7 +302,7 @@ internal static class InheritancePrecisionSmokeTests
         }
     }
 
-    private static void ConcreteOnlyBehaviorJustifiesConcreteDependency()
+    private static void 具象型だけの振る舞いを具象依存の根拠にする()
     {
         const string source = """
             internal interface IClock
@@ -335,10 +335,10 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertNone(new ConcreteTypeDependencyRule(), source, "OOP305");
+        診断がないことを確認する(new ConcreteTypeDependencyRule(), source, "OOP305");
     }
 
-    private static void ManyConstructorParametersReusePartialConsumerUsage()
+    private static void 多数のコンストラクター引数で利用状況を再利用する()
     {
         var source = new System.Text.StringBuilder();
         const int dependencyCount = 8;
@@ -407,7 +407,7 @@ internal static class InheritancePrecisionSmokeTests
         }
     }
 
-    private static void MarkerInterfaceDoesNotCreateConstructionWarning()
+    private static void マーカーインターフェースだけでは生成警告を出さない()
     {
         const string source = """
             internal interface IMarker
@@ -425,10 +425,10 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
     }
 
-    private static void OwnedFactoryConstructionIsAllowed()
+    private static void 所有するファクトリーでの生成を許可する()
     {
         const string source = """
             internal interface IClock
@@ -452,10 +452,10 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
     }
 
-    private static void NestedObjectGraphConstructionIsAllowed()
+    private static void 入れ子のオブジェクト生成を許可する()
     {
         const string source = """
             internal interface IClock
@@ -479,10 +479,10 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
     }
 
-    private static void MainLocalWiringIsAllowed()
+    private static void main内の依存構築を許可する()
     {
         const string source = """
             internal interface IClock
@@ -510,10 +510,10 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
     }
 
-    private static void CompositionRootLocalWiringIsAllowed()
+    private static void コンポジションルート内の依存構築を許可する()
     {
         const string source = """
             internal interface IClock
@@ -541,10 +541,10 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertNone(new AvoidableConcreteConstructionRule(), source, "OOP306");
+        診断がないことを確認する(new AvoidableConcreteConstructionRule(), source, "OOP306");
     }
 
-    private static void BusinessMethodLocalWiringIsWarning()
+    private static void 業務メソッド内の依存構築を警告する()
     {
         const string source = """
             internal interface IClock
@@ -572,7 +572,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
+        診断が1件であることを確認する(
             new AvoidableConcreteConstructionRule(),
             source,
             "OOP306",
@@ -580,7 +580,7 @@ internal static class InheritancePrecisionSmokeTests
         );
     }
 
-    private static void BusinessExpressionConstructionIsWarning()
+    private static void 業務式内の具象生成を警告する()
     {
         const string source = """
             internal interface IClock
@@ -599,7 +599,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
+        診断が1件であることを確認する(
             new AvoidableConcreteConstructionRule(),
             source,
             "OOP306",
@@ -607,7 +607,7 @@ internal static class InheritancePrecisionSmokeTests
         );
     }
 
-    private static void ProjectSurfaceReplacementIsSuspicious()
+    private static void プロジェクト内の継承公開面置換を検出する()
     {
         const string source = """
             internal class Device
@@ -623,15 +623,15 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
-            new SuspiciousInheritanceRelationshipRule(),
+        診断が1件であることを確認する(
+            new 疑わしい継承関係規則(),
             source,
             "OOP301",
             DesignDiagnosticSeverity.Warning
         );
     }
 
-    private static void ExternalBaseSurfaceReplacementIsAllowed()
+    private static void 外部基底型の公開面置換を許可する()
     {
         const string source = """
             internal sealed class CustomException : System.Exception
@@ -645,10 +645,10 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertNone(new SuspiciousInheritanceRelationshipRule(), source, "OOP301");
+        診断がないことを確認する(new 疑わしい継承関係規則(), source, "OOP301");
     }
 
-    private static void ImplementationReuseInheritanceIsAttention()
+    private static void 実装再利用目的の継承を注意とする()
     {
         const string source = """
             internal class CalculatorBase
@@ -663,7 +663,7 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertSingle(
+        診断が1件であることを確認する(
             new CompositionCandidateRule(),
             source,
             "OOP307",
@@ -671,7 +671,7 @@ internal static class InheritancePrecisionSmokeTests
         );
     }
 
-    private static void ConstructorOnlyProtectedUseIsAllowed()
+    private static void コンストラクターだけのprotected利用を許可する()
     {
         const string source = """
             internal class ConfigurationBase
@@ -690,10 +690,10 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertNone(new CompositionCandidateRule(), source, "OOP307");
+        診断がないことを確認する(new CompositionCandidateRule(), source, "OOP307");
     }
 
-    private static void ValidSpecializationIsNotCompositionCandidate()
+    private static void 正当な特化をコンポジション候補にしない()
     {
         const string source = """
             internal class Processor
@@ -709,10 +709,10 @@ internal static class InheritancePrecisionSmokeTests
             }
             """;
 
-        AssertNone(new CompositionCandidateRule(), source, "OOP307");
+        診断がないことを確認する(new CompositionCandidateRule(), source, "OOP307");
     }
 
-    private static void AssertSingle(
+    private static void 診断が1件であることを確認する(
         I解析規則 rule,
         string source,
         string ruleId,
@@ -738,7 +738,7 @@ internal static class InheritancePrecisionSmokeTests
         );
     }
 
-    private static void AssertNone(I解析規則 rule, string source, string ruleId)
+    private static void 診断がないことを確認する(I解析規則 rule, string source, string ruleId)
     {
         var diagnostics = rule.解析する(TestProjectFactory.解析文脈を作る(source)).ToArray();
         if (diagnostics.Length == 0)
