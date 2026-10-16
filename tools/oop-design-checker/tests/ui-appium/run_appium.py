@@ -212,7 +212,7 @@ def コントロールが値を含む(driver, automation_id, expected_values):
         f'identifier="{automation_id}"',
     )
     for marker in markers:
-        index = source.要素を探す(marker)
+        index = source.find(marker)
         if index < 0:
             continue
         segment = source[index : index + 3000].lower()
