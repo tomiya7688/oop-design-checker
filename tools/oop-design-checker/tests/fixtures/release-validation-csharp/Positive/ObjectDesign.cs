@@ -31,7 +31,7 @@ internal sealed class Position
 
 internal sealed class PositionService
 {
-    public int Magnitude(Position position) => position.X + position.Y + position.Z;
+    public int Advance(Position position) => position.X += position.Y + position.Z;
 }
 
 internal sealed class DepA

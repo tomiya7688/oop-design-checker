@@ -115,6 +115,8 @@ Data-centered types can be legitimate, including:
 
 The important distinction is whether being a data carrier is the intended role, or whether behavior and invariants that belong to an object were accidentally pushed outside it.
 
+Type names and property counts alone cannot establish that role. Reading, aggregation, formatting, and projection alone do not prove that behavior has been misplaced. Updating an existing object using several of its state members provides evidence to review ownership. When intent cannot be established, the checker reports candidates supported by observed usage rather than treating a data shape itself as a violation.
+
 ## What this project does not equate with OOP
 
 None of the following, by itself, defines OOP here:

@@ -168,7 +168,11 @@ static classが可変な共有状態を蓄積し、global stateとして振る�
 
 DTO、serialization model、database recordなど、役割が明示されたdata carrierは正当なケースとして扱います。
 
-data carrierの除外判定は共通classifierで行います。明示的なserialization/data-contract属性（例: `Serializable`、`DataContract`、XML/JSON/MessagePack/ProtoBuf系の既知marker）は強い肯定signalとして扱います。型名の`Dto`、`Request`、`Message`、`Model`などは補助signalに留め、名前だけでは除外しません。命名signalを使う場合は、publicなstateを持ち、publicな通常methodによる意味のある振る舞いを持たないdata-shaped typeであることも必要です。通常のdomain objectがpublic stateを公開している場合は、名前がそれらしいだけでOOP106/OOP107/OOP108/OOP402/OOP405等から除外しません。
+名前やプロパティの一覧だけでは、この違反を判定しません。1.0.0では、単純な公開状態プロパティが3個以上、公開の通常メソッドが1個以下のクラスについて、外部の同一メソッドが同じ引数の状態を更新し、異なるメンバーを3個以上使う場合を候補にします。読み取りだけの集計、表示、投影は、この規則の警告対象にしません。別の引数への書き込みを、読み取り元の振る舞いと混同しません。
+
+状態更新は、解析対象プロジェクトに含まれる通常メソッド内の代入、複合代入、増減、フィールドの`ref`/`out`渡しから確認します。コンストラクター、オブジェクト初期化子、レコードの`with`による構築は除外します。別名経由の更新、呼び出し先内部の副作用、別プロジェクトからの更新までは推論しません。意図を確定できない読み取り専用のドメイン処理を見逃す場合がありますが、データ型の誤検知を避ける方針です。
+
+明示的なserialization/data-contract属性（例: `Serializable`、`DataContract`、XML/JSON/MessagePack/ProtoBuf系の既知marker）は、共通の属性判定で除外します。OOP402/OOP405では、`Dto`、`Request`、`Message`、`Model`などの名前を除外理由にしません。名前によらず、構造と状態更新の利用を確認します。他の規則が使う既存の「属性、または命名とデータ形状」の判定は、この変更では広げません。
 
 ## OOP403 無関係な依存の過剰保持
 
@@ -187,6 +191,10 @@ object境界を跨ぐnavigationを意味的に検出することを優先しま�
 classの大部分が単純なgetter/setterで構成され、そのstateに対する意味のある操作が外部で実装されている場合に注意します。
 
 これはOOP402を補助するsignalであり、自動的なDangerではありません。明示的なdata carrierはOOP402と同じ共通classifierで除外します。
+
+1.0.0では、単純な公開状態プロパティが4個以上、公開の通常メソッドが1個以下であることに加えて、通常メソッド内でその型の構築後の状態が更新される利用を必要とします。型自身の更新処理も含めます。`get`、`init`、`private set`や通常の`set`を持つプロパティ一覧でも、構築と読み取りだけなら報告しません。独自属性や型名の接尾辞は必要ありません。`AccountModel`のような名前でも、状態を更新する通常メソッドがあれば候補として扱います。
+
+この追加の判定はOOP402/OOP405だけに適用します。OOP106/OOP107/OOP108/OOP404のデータ型除外は広げません。確認する場合は、読み取り用の型と更新用の型をそれぞれ解析し、規則IDを比較してください。固定例は`tests/fixtures/release-validation-csharp`にあります。
 
 ## metricを使った補助signal
 

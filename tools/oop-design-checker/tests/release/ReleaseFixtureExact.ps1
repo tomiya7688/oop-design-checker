@@ -41,7 +41,7 @@ function Normalize-JsonDiagnostics {
                 [pscustomobject]@{
                     ruleId = $_.ruleId
                     severity = $_.severity
-                    file = [IO.Path]::GetRelativePath($Root, $_.file).Replace("\\", "/")
+                    file = [IO.Path]::GetRelativePath($Root, $_.file).Replace('\', '/')
                     symbol = $_.symbol
                     line = [int]$_.line
                     column = [int]$_.column

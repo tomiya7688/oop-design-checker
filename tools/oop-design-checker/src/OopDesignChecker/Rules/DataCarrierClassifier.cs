@@ -47,7 +47,15 @@ internal static class データ保持型判定器
             );
     }
 
-    private static bool データ保持属性がある(INamedTypeSymbol 型) =>
+    /*
+    {
+      "責務": "命名からの推測を含めず、既知の属性によるデータ契約を確認します。",
+      "処理": ["宣言属性を既知の完全修飾名と照合します。"],
+      "引数": {"型": "データ契約を確認する型です。"},
+      "戻り値": "シリアル化などのデータ保持属性がある場合にtrueです。"
+    }
+    */
+    public static bool データ保持属性がある(INamedTypeSymbol 型) =>
         型.GetAttributes()
             .Any(attribute =>
                 attribute.AttributeClass?.ToDisplayString()

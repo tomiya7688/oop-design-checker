@@ -168,7 +168,11 @@ Warn when an object mainly stores state while nearly all meaningful behavior tha
 
 DTOs, serialization models, database records, and other explicit data-carrier types must remain valid cases.
 
-Data-carrier exemptions use one shared classifier. Explicit serialization/data-contract attributes (for example `Serializable`, `DataContract`, and known XML/JSON/MessagePack/ProtoBuf markers) are strong positive signals. Naming such as `Dto`, `Request`, `Message`, or `Model` is only a supporting signal and is not sufficient by itself. When naming contributes to the exemption, the type must also be data-shaped: it exposes public state and has no ordinary public behavior methods. An ordinary domain object with public state is still eligible for OOP106/OOP107/OOP108/OOP402/OOP405 even when its name resembles a data carrier.
+Names and property lists alone do not establish this violation. In 1.0.0, a candidate class has at least three trivial public state properties and at most one ordinary public method. The same external method must update the same parameter's state and use at least three distinct members. Read-only aggregation, formatting, and projection do not trigger this rule. Writing to another parameter does not establish behavior ownership for the input parameter.
+
+State updates are observed in ordinary methods in the analyzed project: assignments, compound assignments, increments/decrements, and field `ref`/`out` arguments. Constructors, object initializers, and record `with` construction are excluded. Updates through aliases, effects inside called methods, and updates in other projects are not inferred. This conservative policy may miss read-only domain computations whose role cannot be established, in order to avoid reporting legitimate data shapes.
+
+Explicit serialization/data-contract attributes (for example `Serializable`, `DataContract`, and known XML/JSON/MessagePack/ProtoBuf markers) remain exempt through shared attribute checks. OOP402/OOP405 do not use names such as `Dto`, `Request`, `Message`, or `Model` as exemptions. They combine structure with observed state updates regardless of naming. The existing attribute-or-name-and-shape classifier used by other rules is not broadened by this change.
 
 ## OOP403 Excessive unrelated dependencies
 
@@ -187,6 +191,10 @@ Prefer semantic detection of repeated navigation across object boundaries.
 Attention when a class is overwhelmingly composed of trivial getters and setters while meaningful operations on its state are implemented elsewhere.
 
 This is a supporting signal for OOP402 rather than an automatic Danger. Explicit data-carrier types are exempt through the same shared classifier used by OOP402.
+
+In 1.0.0, at least four trivial public state properties and at most one ordinary public method are required, along with an observed update to an existing instance's state in an ordinary method. Updates inside the type itself count. Property lists with `get`, `init`, `private set`, or ordinary `set` accessors remain valid when they are only constructed and read. No custom annotation or name suffix is required. A name such as `AccountModel` does not exempt a type with an ordinary state-updating method.
+
+These additional criteria apply only to OOP402/OOP405. They do not broaden data-carrier exemptions for OOP106/OOP107/OOP108/OOP404. To verify the distinction, analyze read-only and state-updating examples and compare their rule IDs. Fixed examples are in `tests/fixtures/release-validation-csharp`.
 
 ## Metric-assisted signals
 

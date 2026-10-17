@@ -6,6 +6,12 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
+/*
+{
+  "責務": "状態更新の利用があるのに、単純な状態公開へ偏るオブジェクトを検出します。",
+  "フィールド": {"最小状態プロパティ数": "候補に必要な単純プロパティ数です。", "最大振る舞いメソッド数": "状態公開に偏るとみなす公開メソッド数の上限です。"}
+}
+*/
 internal sealed class 取得設定のみオブジェクト規則 : I解析規則
 {
     private const int 最小状態プロパティ数 = 4;
@@ -14,8 +20,17 @@ internal sealed class 取得設定のみオブジェクト規則 : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP405", "Getter/setter-only object candidate", DesignDiagnosticSeverity.Attention);
 
+    /*
+    {
+      "責務": "プロパティ一覧だけでは報告せず、構築後の状態更新がある候補を確認します。",
+      "処理": ["状態更新の索引を作ります。", "型の構造と更新利用を組み合わせて診断します。"],
+      "引数": {"文脈": "解析対象のプロジェクトです。"},
+      "戻り値": "状態と振る舞いの所有を確認するための診断です。"
+    }
+    */
     public IEnumerable<DesignDiagnostic> 解析する(解析文脈 文脈)
     {
+        var 更新索引 = new 状態更新利用索引(文脈);
         foreach (var 構文木 in 文脈.対象プロジェクト.構文木群)
         {
             var 意味モデル = 文脈.対象プロジェクト.意味モデルを取得する(構文木);
@@ -25,7 +40,8 @@ internal sealed class 取得設定のみオブジェクト規則 : I解析規則
             {
                 if (
                     意味モデル.GetDeclaredSymbol(宣言) is not INamedTypeSymbol 記号
-                    || データ保持型判定器.明示的データ保持型である(記号)
+                    || データ保持型判定器.データ保持属性がある(記号)
+                    || !更新索引.状態更新がある(記号)
                 )
                 {
                     continue;

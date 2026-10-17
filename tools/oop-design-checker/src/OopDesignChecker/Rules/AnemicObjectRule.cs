@@ -6,6 +6,12 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
+/*
+{
+  "責務": "複数の状態を使う更新処理が外部へ置かれたオブジェクトを検出します。",
+  "フィールド": {"最小状態プロパティ数": "候補に必要な状態の数です。", "最小外部使用メンバー数": "外部処理が使う異なるメンバーの下限です。"}
+}
+*/
 internal sealed class 貧血オブジェクト規則 : I解析規則
 {
     private const int 最小状態プロパティ数 = 3;
@@ -14,8 +20,17 @@ internal sealed class 貧血オブジェクト規則 : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP402", "Anemic object candidate", DesignDiagnosticSeverity.Warning);
 
+    /*
+    {
+      "責務": "読み取り専用のデータ利用を除き、外部の状態更新を持つ候補を報告します。",
+      "処理": ["状態更新の索引を作ります。", "候補型と更新する外部メソッドを照合します。"],
+      "引数": {"文脈": "解析対象のプロジェクトです。"},
+      "戻り値": "振る舞いの所有者を見直すための診断です。"
+    }
+    */
     public IEnumerable<DesignDiagnostic> 解析する(解析文脈 文脈)
     {
+        var 更新索引 = new 状態更新利用索引(文脈);
         foreach (var 構文木 in 文脈.対象プロジェクト.構文木群)
         {
             var 意味モデル = 文脈.対象プロジェクト.意味モデルを取得する(構文木);
@@ -25,7 +40,8 @@ internal sealed class 貧血オブジェクト規則 : I解析規則
             {
                 if (
                     意味モデル.GetDeclaredSymbol(宣言) is not INamedTypeSymbol 記号
-                    || データ保持型判定器.明示的データ保持型である(記号)
+                    || データ保持型判定器.データ保持属性がある(記号)
+                    || !更新索引.状態更新がある(記号)
                     || 公開状態プロパティ数を数える(宣言) < 最小状態プロパティ数
                     || 公開振る舞いメソッド数を数える(宣言, 意味モデル) > 1
                 )
@@ -33,7 +49,7 @@ internal sealed class 貧血オブジェクト規則 : I解析規則
                     continue;
                 }
 
-                var 外部振る舞い = 外部の振る舞いを探す(文脈, 記号);
+                var 外部振る舞い = 外部の振る舞いを探す(文脈, 記号, 更新索引);
                 if (外部振る舞い is null)
                 {
                     continue;
@@ -76,7 +92,19 @@ internal sealed class 貧血オブジェクト規則 : I解析規則
                     }
             );
 
-    private static IMethodSymbol? 外部の振る舞いを探す(解析文脈 文脈, INamedTypeSymbol 候補型)
+    /*
+    {
+      "責務": "同じ引数の状態を更新し、複数のメンバーを使う外部処理を探します。",
+      "処理": ["外部メソッドの引数と更新の有無を確認します。", "異なる使用メンバー数が下限を満たす処理を選びます。"],
+      "引数": {"文脈": "検索するプロジェクトです。", "候補型": "状態の所有者です。", "更新索引": "型と引数ごとの状態更新です。"},
+      "戻り値": "該当するメソッド、または見つからない場合にnullです。"
+    }
+    */
+    private static IMethodSymbol? 外部の振る舞いを探す(
+        解析文脈 文脈,
+        INamedTypeSymbol 候補型,
+        状態更新利用索引 更新索引
+    )
     {
         foreach (var 構文木 in 文脈.対象プロジェクト.構文木群)
         {
@@ -99,6 +127,7 @@ internal sealed class 貧血オブジェクト規則 : I解析規則
                     if (
                         意味モデル.GetDeclaredSymbol(引数) is not IParameterSymbol 引数記号
                         || !SymbolEqualityComparer.Default.Equals(引数記号.Type, 候補型)
+                        || !更新索引.引数の状態を更新する(メソッド記号, 引数記号)
                     )
                     {
                         continue;

@@ -177,6 +177,14 @@ internal static class 拡張規則スモークテスト
         );
     }
 
+    /*
+    {
+      "責務": "複数の状態を使う更新が外部へ置かれたケースを検証します。",
+      "処理": ["外部更新のあるソースを解析します。", "OOP402の警告を確認します。"],
+      "引数": [],
+      "戻り値": []
+    }
+    */
     private static void 外部振る舞いを持つ貧血オブジェクトを警告する()
     {
         const string ソース = """
@@ -189,9 +197,9 @@ internal static class 拡張規則スモークテスト
 
             internal sealed class PositionService
             {
-                public int Magnitude(Position position)
+                public int Advance(Position position)
                 {
-                    return position.X + position.Y + position.Z;
+                    return position.X += position.Y + position.Z;
                 }
             }
             """;
@@ -437,6 +445,14 @@ internal static class 拡張規則スモークテスト
         );
     }
 
+    /*
+    {
+      "責務": "状態更新がある型で、単純な状態公開への偏りを検証します。",
+      "処理": ["更新メソッドと4つのプロパティを持つ型を解析します。", "OOP405の注意を確認します。"],
+      "引数": [],
+      "戻り値": []
+    }
+    */
     private static void 取得設定のみオブジェクトを注意として検出する()
     {
         const string ソース = """
@@ -446,6 +462,7 @@ internal static class 拡張規則スモークテスト
                 public int Age { get; set; }
                 public string City { get; set; } = string.Empty;
                 public string Country { get; set; } = string.Empty;
+                public void HaveBirthday() => Age++;
             }
             """;
 
