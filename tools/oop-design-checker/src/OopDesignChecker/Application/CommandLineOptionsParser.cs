@@ -201,9 +201,30 @@ internal static class コマンドライン引数解析器
             return 成功を返す(out エラー内容);
         }
 
+        /*
+        {
+          "責務": {
+            "次の値を読む": "次のトークンが値として有効な場合だけ位置を進めます。既知のオプションは消費しません。"
+          },
+          "処理": [
+            "次のトークンが値として有効な場合だけ位置を進めます。既知のオプションは消費しません。"
+          ],
+          "引数": {
+            "args": "CLIの引数一覧です。",
+            "位置": "現在のオプション位置です。成功時だけ値の位置へ進めます。",
+            "値": "取得できた値、または失敗時のnullです。"
+          },
+          "戻り値": "値を消費できた場合にtrueです。"
+        }
+        */
         private static bool 次の値を読む(IReadOnlyList<string> args, ref int 位置, out string? 値)
         {
-            if (位置 + 1 >= args.Count)
+            // オプションと同名のファイルは ./--verbose のような明示的なパスで渡します。
+            if (
+                位置 + 1 >= args.Count
+                || string.IsNullOrWhiteSpace(args[位置 + 1])
+                || 既知のオプションか(args[位置 + 1])
+            )
             {
                 値 = null;
                 return false;
@@ -213,6 +234,34 @@ internal static class コマンドライン引数解析器
             値 = args[位置];
             return !string.IsNullOrWhiteSpace(値);
         }
+
+        /*
+        {
+          "責務": {
+            "既知のオプションか": "値が必要なオプションに続く既知のオプションを識別し、値として消費することを防ぎます。"
+          },
+          "処理": [
+            "値が必要なオプションに続く既知のオプションを識別し、値として消費することを防ぎます。"
+          ],
+          "引数": {
+            "引数": "値と区別するトークンです。"
+          },
+          "戻り値": "既知オプションであればtrueです。"
+        }
+        */
+        private static bool 既知のオプションか(string 引数) =>
+            引数
+                is "--config"
+                    or "--fail-on"
+                    or "--format"
+                    or "--output"
+                    or "--language"
+                    or "--warnings-as-errors"
+                    or "--verbose"
+                    or "--help"
+                    or "-h"
+                    or "--version"
+                    or "-V";
 
         private static bool 重要度を解析する(string? 値, out DesignDiagnosticSeverity 重要度)
         {

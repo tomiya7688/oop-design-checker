@@ -31,7 +31,7 @@ When the E2E run fails, the artifact also includes `failure.json` and `traceback
 
 The production GUI behaves normally unless these environment variables are explicitly set by the native UI workflow:
 
-- `OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS` - bounded delay before analysis, used to make cancellation deterministic
+- `OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS` - delay before analysis in milliseconds, used to make cancellation deterministic. Accepts integers from 0 through 30000 inclusive, including surrounding whitespace. Unset, empty, non-integer, negative, overflowing, and over-limit values use 0 (no delay). The 30-second limit prevents accidentally prolonged runs.
 - `OOP_DESIGN_CHECKER_UI_AUTOMATION_EXPORT_DIR` - fixed export destination used instead of a native save picker
 
 Normal runs do not set either variable.
