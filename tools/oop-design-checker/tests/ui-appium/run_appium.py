@@ -254,6 +254,14 @@ def 入力欄を書き換える(driver, automation_id, value):
     return element
 
 
+def 入力欄の値を取得する(driver, platform, automation_id):
+    # Windowsの編集欄はNameやtextに値を公開しないため、ValuePatternを読み取ります。
+    element = 要素を探す(driver, automation_id)
+    if platform == "windows":
+        return driver.execute_script("windows: getValue", element)
+    return element.get_attribute("value")
+
+
 def 画面を撮影する(driver, path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     driver.save_screenshot(str(path))
@@ -635,12 +643,15 @@ def main():
 
         # 解析中に無効な操作をキーから実行しても、設定と言語が変わらないことを確認します。
         入力欄を書き換える(driver, "ConfigurationPath", "busy-menu-check.json")
+        操作前の設定パス = 入力欄の値を取得する(driver, args.platform, "ConfigurationPath")
+        if not 操作前の設定パス:
+            raise AssertionError("The disabled-menu test requires a nonempty configuration path.")
         メニューアクセス経路を実行する(driver, "a", "r")
         記録する("01-cancel", "analyze", result="started", accessKey="Alt+A,R")
         条件成立まで待つ(driver, lambda: 要素を探す(driver, "CancelButton").is_enabled(), timeout=20)
         メニューアクセス経路を実行する(driver, "f", "l")
         メニューアクセスキーを押す(driver, Keys.ESCAPE)
-        if not コントロールが値を含む(driver, "ConfigurationPath", ("busy-menu-check.json",)):
+        if 入力欄の値を取得する(driver, args.platform, "ConfigurationPath") != 操作前の設定パス:
             raise AssertionError("Disabled configuration clear executed through Alt+F,L.")
         メニューアクセス経路を実行する(driver, "v", "l", "j")
         メニューアクセスキーを押す(driver, Keys.ESCAPE)
