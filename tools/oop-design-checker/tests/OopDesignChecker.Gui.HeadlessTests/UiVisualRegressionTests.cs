@@ -16,7 +16,7 @@ using Xunit;
 
 namespace OopDesignChecker.Gui.HeadlessTests;
 
-public sealed class 画面視覚回帰テスト
+public sealed partial class 画面視覚回帰テスト
 {
     private const string VisualRegressionEnvironmentVariable =
         "OOP_DESIGN_CHECKER_UI_VISUAL_REGRESSION";

@@ -234,6 +234,8 @@ These boundaries prevent omitted projects and uncontrolled failures from invalid
 
 The GUI automation variable `OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS` accepts integers from 0 through 30000 milliseconds, including surrounding whitespace. Unset, empty, non-integer, negative, over-limit, and overflowing values use 0 milliseconds. Zero adds no wait; the 30000-millisecond limit prevents long waits caused by incorrect test settings. Set this variable only when making cancellation checks deterministic.
 
+Menu actions disabled during analysis, or because no result or selection exists, cannot execute through access keys. Buttons and menus derive availability from the same window state, and keyboard dispatch checks the target menu item's effective enabled state. Actions become available through the same access keys after analysis finishes.
+
 ## Severity model
 
 - `DANGER`: a structurally clear violation of a rule this project considers fundamental to claiming OOP design. These fail CI by default.

@@ -13,7 +13,7 @@ The workflow first creates the same archive layout used by the GUI release packa
 
 Evidence is grouped under stable scenario IDs:
 
-- `01-cancel` - start analysis and cancel it
+- `01-cancel` - start analysis, verify disabled configuration/language actions cannot run through menu access keys, and cancel it
 - `02-fixture-analysis` - analyze the release-validation fixture and verify severity counts
 - `03-filter-detail` - filter/select OOP106 and verify detail state
 - `04-language-resize` - switch to English and resize/maximize

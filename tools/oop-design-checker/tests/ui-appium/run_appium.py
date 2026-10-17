@@ -479,7 +479,10 @@ def main():
         シナリオ状態を書き出す(driver, directory, scenario, extra)
 
     for scenario, expected in {
-        "01-cancel": {"status": "Analysis cancelled."},
+        "01-cancel": {
+            "status": "Analysis cancelled.",
+            "disabledAccessKeys": ["Alt+F,L", "Alt+V,L,J"],
+        },
         "02-fixture-analysis": {"count": len(diagnostics), "summary": expected_counts},
         "03-filter-detail": {"ruleId": "OOP106"},
         "04-language-resize": {"language": "en"},
@@ -630,9 +633,22 @@ def main():
             extra={"accessKeys": ["Alt+F", "Alt+A", "Alt+V", "Alt+T", "Alt+C"]},
         )
 
+        # 解析中に無効な操作をキーから実行しても、設定と言語が変わらないことを確認します。
+        入力欄を書き換える(driver, "ConfigurationPath", "busy-menu-check.json")
         メニューアクセス経路を実行する(driver, "a", "r")
         記録する("01-cancel", "analyze", result="started", accessKey="Alt+A,R")
         条件成立まで待つ(driver, lambda: 要素を探す(driver, "CancelButton").is_enabled(), timeout=20)
+        メニューアクセス経路を実行する(driver, "f", "l")
+        メニューアクセスキーを押す(driver, Keys.ESCAPE)
+        if not コントロールが値を含む(driver, "ConfigurationPath", ("busy-menu-check.json",)):
+            raise AssertionError("Disabled configuration clear executed through Alt+F,L.")
+        メニューアクセス経路を実行する(driver, "v", "l", "j")
+        メニューアクセスキーを押す(driver, Keys.ESCAPE)
+        if not コントロールが値を含む(driver, "LanguageSelector", ("English",)):
+            raise AssertionError("Disabled language menu changed the language during analysis.")
+        if not 要素を探す(driver, "CancelButton").is_enabled():
+            raise AssertionError("Analysis ended before the disabled-menu checks completed.")
+        記録する("01-cancel", "disabled-menu-access", accessKeys=["Alt+F,L", "Alt+V,L,J"])
         メニューアクセス経路を実行する(driver, "a", "c")
         条件成立まで待つ(
             driver,
@@ -643,6 +659,7 @@ def main():
         記録する("01-cancel", "cancel", accessKey="Alt+A,C")
         証跡を撮影する(driver, "01-cancel")
         条件成立まで待つ(driver, lambda: 要素を探す(driver, "AnalyzeButton").is_enabled(), timeout=20)
+        入力欄を書き換える(driver, "ConfigurationPath", "")
 
         要素を探す(driver, "AnalyzeButton").click()
         記録する("02-fixture-analysis", "analyze", result="started")
