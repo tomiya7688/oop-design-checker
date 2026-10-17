@@ -6,7 +6,7 @@ using Xunit;
 
 namespace OopDesignChecker.ContractTests;
 
-public sealed class CLI契約テスト
+public sealed partial class CLI契約テスト
 {
     [Fact]
     public void 対象を作業ディレクトリに設定する()

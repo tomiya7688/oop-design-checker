@@ -51,6 +51,8 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-pa
 
 `<target-path>` can be a loose `.cs` file, a `.csproj`, a `.sln`, a `.slnx`, or a directory. A directory containing multiple C# projects is analyzed as a project set: each project keeps its own MSBuild compilation and the resulting diagnostics are aggregated and deduplicated.
 
+Without a solution, directory discovery includes nested projects even when `.csproj` files exist directly in the target directory. A solution in that directory takes priority and defines the project set. An explicit loose `.cs` file is analyzed independently, without reading nearby `.csproj` files.
+
 Show the product version:
 
 ```bash
@@ -135,6 +137,8 @@ Supported formats:
 - `github` - emits `::notice`, `::warning`, and `::error` workflow commands so findings appear as GitHub Actions annotations
 
 `--output <file>` can be used with `text`, `json`, and `sarif`. GitHub annotations intentionally always go to stdout. Output format never changes the process exit code: `--fail-on` continues to control CI failure independently.
+
+A known option immediately after an option requiring a value produces a missing-value error. For example, `--output --verbose` does not treat `--verbose` as the output path. Dash-prefixed filenames such as `-report.json` remain valid values. Use a relative path for a filename matching an option, for example `--output ./--verbose`.
 
 ## Configuration
 

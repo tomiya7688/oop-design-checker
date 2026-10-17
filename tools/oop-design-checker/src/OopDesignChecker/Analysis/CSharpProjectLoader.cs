@@ -1,4 +1,3 @@
-using System.Xml.Linq;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -9,6 +8,9 @@ namespace OopDesignChecker.Analysis;
 internal sealed class CSharpプロジェクト読み込み器 : Iプロジェクト読み込み器
 {
     private static readonly object MSBuild登録ロック = new();
+
+    // 巨大なコンパイル失敗で出力を埋めないため、エラー本文は先頭20件に制限します。
+    private const int コンパイルエラー表示上限 = 20;
     private readonly IReadOnlyList<string> _無視対象パス群;
 
     public CSharpプロジェクト読み込み器(IReadOnlyList<string>? 無視対象パス群 = null)
@@ -115,6 +117,21 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         return projects;
     }
 
+    /*
+    {
+      "責務": {
+        "Slnxプロジェクト群を読み込む": "SLNXの形式検証後に除外と重複排除を適用し、列挙されたC#プロジェクトだけを読み込みます。"
+      },
+      "処理": [
+        "SLNXの形式検証後に除外と重複排除を適用し、列挙されたC#プロジェクトだけを読み込みます。"
+      ],
+      "引数": {
+        "solutionFile": "SLNXの絶対パスです。",
+        "キャンセル通知": "解析を中止する通知です。"
+      },
+      "戻り値": "解析対象となるC#プロジェクト群です。"
+    }
+    */
     private 解析対象プロジェクト[] Slnxプロジェクト群を読み込む(
         string solutionFile,
         CancellationToken キャンセル通知
@@ -126,14 +143,8 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             ?? throw new InvalidOperationException(
                 $"Could not determine solution directory for {solutionFile}."
             );
-        var document = XDocument.Load(solutionFile, LoadOptions.None);
-        キャンセル通知.ThrowIfCancellationRequested();
-        var projectFiles = document
-            .Descendants()
-            .Where(element => element.Name.LocalName == "Project")
-            .Select(element => element.Attribute("Path")?.Value)
-            .Where(path => !string.IsNullOrWhiteSpace(path))
-            .Select(path => Slnxプロジェクトパスを解決する(rootPath, path!))
+        var projectFiles = Slnxプロジェクト一覧読み取り器
+            .読み込む(solutionFile, キャンセル通知)
             .Where(path =>
                 string.Equals(Path.GetExtension(path), ".csproj", パス比較規則.文字列比較方式)
             )
@@ -144,7 +155,8 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
 
         if (projectFiles.Length == 0)
         {
-            throw new InvalidOperationException(
+            throw new 解析入力例外(
+                $"ソリューションに解析対象のC#プロジェクトがありません: {solutionFile}",
                 $"No analyzable C# projects were found in solution: {solutionFile}"
             );
         }
@@ -155,8 +167,11 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             .ToArray();
         if (存在しないプロジェクトファイル群.Length > 0)
         {
-            throw new InvalidOperationException(
+            throw new 解析入力例外(
+                $"ソリューションが参照するC#プロジェクトが見つかりません: {solutionFile}\n"
+                    + string.Join("\n", 存在しないプロジェクトファイル群),
                 "Solution references missing C# project files:\n"
+                    + $"Solution: {solutionFile}\n"
                     + string.Join("\n", 存在しないプロジェクトファイル群)
             );
         }
@@ -279,6 +294,21 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         );
     }
 
+    /*
+    {
+      "責務": {
+        "個別ソース群を読み込む": "単体またはプロジェクトを持たないソース群を独立したコンパイルとして解析します。周辺のプロジェクト情報は推測しません。"
+      },
+      "処理": [
+        "単体またはプロジェクトを持たないソース群を独立したコンパイルとして解析します。周辺のプロジェクト情報は推測しません。"
+      ],
+      "引数": {
+        "対象パス": "単体ソースまたはプロジェクトのないディレクトリです。",
+        "キャンセル通知": "解析を中止する通知です。"
+      },
+      "戻り値": "周辺プロジェクトから独立した解析対象です。"
+    }
+    */
     private 解析対象プロジェクト 個別ソース群を読み込む(
         string 対象パス,
         CancellationToken キャンセル通知
@@ -325,7 +355,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
 
         return new 解析対象プロジェクト(
             rootPath,
-            プロジェクト種別判定器.アプリケーションか(rootPath),
+            アプリケーションである: false,
             compilation,
             semanticModels,
             syntaxTrees
@@ -358,24 +388,28 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         };
     }
 
+    /*
+    {
+      "責務": {
+        "プロジェクトファイル群を探す": "対象ディレクトリ全体から除外外のプロジェクトを探索し、安定した順序で重複なく返します。"
+      },
+      "処理": [
+        "対象ディレクトリ全体から除外外のプロジェクトを探索し、安定した順序で重複なく返します。"
+      ],
+      "引数": {
+        "targetDirectory": "探索するディレクトリです。",
+        "キャンセル通知": "探索を中止する通知です。"
+      },
+      "戻り値": "除外と重複排除後のプロジェクトパス群です。"
+    }
+    */
     private string[] プロジェクトファイル群を探す(
         string targetDirectory,
         CancellationToken キャンセル通知
     )
     {
         キャンセル通知.ThrowIfCancellationRequested();
-        var 直下のプロジェクトファイル群 = Directory
-            .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.TopDirectoryOnly)
-            .Where(path => !パス除外判定器.無視する(path, targetDirectory, _無視対象パス群))
-            .OrderBy(path => path, パス比較規則.文字列比較子)
-            .ToArray();
-
-        if (直下のプロジェクトファイル群.Length > 0)
-        {
-            return 直下のプロジェクトファイル群;
-        }
-
-        キャンセル通知.ThrowIfCancellationRequested();
+        // 直下にプロジェクトがあっても、配下の独立したプロジェクトを解析から落としません。
         return Directory
             .EnumerateFiles(targetDirectory, "*.csproj", SearchOption.AllDirectories)
             .Where(path => !パス除外判定器.無視する(path, targetDirectory, _無視対象パス群))
@@ -428,14 +462,6 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             }
         });
 
-    private static string Slnxプロジェクトパスを解決する(string rootPath, string projectPath)
-    {
-        var normalizedPath = projectPath
-            .Replace('\\', Path.DirectorySeparatorChar)
-            .Replace('/', Path.DirectorySeparatorChar);
-        return Path.GetFullPath(Path.Combine(rootPath, normalizedPath));
-    }
-
     private static void 作業領域の失敗を例外にする(string 対象パス, List<string> 作業領域失敗群)
     {
         if (作業領域失敗群.Count == 0)
@@ -449,6 +475,22 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         );
     }
 
+    /*
+    {
+      "責務": {
+        "コンパイル結果を検証する": "コンパイルと読み込みのエラーを判定し、本文を表示上限に制限して省略件数を添えます。"
+      },
+      "処理": [
+        "コンパイルと読み込みのエラーを判定し、本文を表示上限に制限して省略件数を添えます。"
+      ],
+      "引数": {
+        "compilation": "検証するC#コンパイル結果です。",
+        "作業領域失敗群": "MSBuildの読み込み失敗です。",
+        "キャンセル通知": "診断取得を中止する通知です。"
+      },
+      "戻り値": []
+    }
+    */
     private static void コンパイル結果を検証する(
         CSharpCompilation compilation,
         List<string> 作業領域失敗群,
@@ -458,7 +500,6 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         var errors = compilation
             .GetDiagnostics(キャンセル通知)
             .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
-            .Take(20)
             .ToArray();
 
         if (errors.Length == 0 && 作業領域失敗群.Count == 0)
@@ -466,10 +507,27 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             return;
         }
 
-        var details = errors.Select(error => error.ToString()).ToList();
+        var details = errors
+            .Take(コンパイルエラー表示上限)
+            .Select(error => error.ToString())
+            .ToList();
         details.AddRange(作業領域失敗群.Select(message => $"MSBuild: {message}"));
+        var 日本語説明 =
+            "対象のC#コードまたはプロジェクトを読み込めませんでした:\n"
+            + string.Join("\n", details);
+        // 省略件数を示し、20件で全エラーが終わったという誤解を防ぎます。
+        if (errors.Length > コンパイルエラー表示上限)
+        {
+            var 省略数 = errors.Length - コンパイルエラー表示上限;
+            日本語説明 +=
+                $"\nコンパイルエラー {errors.Length}件のうち先頭{コンパイルエラー表示上限}件を表示しました。{省略数}件を省略しました。";
+            details.Add(
+                $"Compilation diagnostics: showing {コンパイルエラー表示上限} of {errors.Length} errors; {省略数} omitted."
+            );
+        }
 
-        throw new InvalidOperationException(
+        throw new 解析入力例外(
+            日本語説明,
             "Target project could not be analyzed reliably because its compilation or project loading contains errors:\n"
                 + string.Join("\n", details)
         );

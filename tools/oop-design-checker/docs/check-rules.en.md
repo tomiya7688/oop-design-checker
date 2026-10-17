@@ -222,6 +222,18 @@ All 24 rules above are implemented by the C# backend in 1.0.0.
 - Framework/runtime/NuGet symbols outside the analyzed project set are not treated as project-owned types.
 - C++, Go, Python, and mixed-language analysis are outside the 1.0.0 implementation scope.
 
+### Input validation and error reporting
+
+These boundaries prevent omitted projects and uncontrolled failures from invalid input:
+
+- Without a solution, directory discovery includes both direct and nested C# projects. It applies `ignoredPaths`, the built-in `bin`, `obj`, `.git`, and `.vs` exclusions, and deduplication.
+- A loose `.cs` file never reads nearby project metadata or infers an application context. Select its `.csproj` or solution to analyze it with application metadata.
+- SLNX requires a `Solution` root without an XML namespace and `Project Path` entries under `Solution` or `Folder`. Invalid XML, empty paths, invalid references, and missing C# projects produce a contextual error and exit code 2. DTDs are rejected.
+- The first 20 C# compilation errors are displayed. When there are more, the total and omitted counts are shown. Fix the displayed errors and run the checker again. MSBuild loading errors are reported separately.
+- A known option immediately after `--config`, `--fail-on`, `--format`, `--output`, or `--language` is rejected as a missing value. Prefix option-shaped paths with `./`, for example `--output ./--verbose`. Other dash-prefixed filenames remain valid values.
+
+The GUI automation variable `OOP_DESIGN_CHECKER_UI_AUTOMATION_ANALYSIS_DELAY_MS` accepts integers from 0 through 30000 milliseconds, including surrounding whitespace. Unset, empty, non-integer, negative, over-limit, and overflowing values use 0 milliseconds. Zero adds no wait; the 30000-millisecond limit prevents long waits caused by incorrect test settings. Set this variable only when making cancellation checks deterministic.
+
 ## Severity model
 
 - `DANGER`: a structurally clear violation of a rule this project considers fundamental to claiming OOP design. These fail CI by default.

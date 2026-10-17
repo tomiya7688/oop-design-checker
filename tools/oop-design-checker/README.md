@@ -51,6 +51,8 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- <target-pa
 
 `<target-path>`には、単体`.cs`、`.csproj`、`.sln`、`.slnx`、directoryを指定できます。複数のC# projectを含むdirectoryでは、各projectのMSBuild compilationを独立して保持したままproject setとして解析し、診断だけを集約・重複除去します。
 
+ソリューションがないフォルダーでは、直下に`.csproj`があっても配下のプロジェクトまで探索します。ソリューションがある場合は、そのソリューションに列挙されたプロジェクトを優先します。単体`.cs`を指定した場合は、周辺の`.csproj`を参照せず独立して解析します。
+
 製品versionの表示:
 
 ```bash
@@ -135,6 +137,8 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --form
 - `github` - `::notice` / `::warning` / `::error` workflow commandを出力し、GitHub Actions annotationとして表示
 
 `--output <file>`は`text`、`json`、`sarif`で利用できます。GitHub annotationは意図的に常にstdoutへ出します。出力形式はprocess exit codeへ影響せず、CI失敗条件は`--fail-on`だけが決めます。
+
+値が必要なオプションの直後に別の既知オプションがある場合は、値の省略としてエラーにします。例えば`--output --verbose`では、`--verbose`を出力先にしません。`-report.json`のようなファイル名は値として使えます。オプションと同名のファイルは、`--output ./--verbose`のように相対パスで指定してください。
 
 ## 設定
 
