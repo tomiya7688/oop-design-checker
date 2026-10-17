@@ -743,14 +743,14 @@ internal sealed class メインウィンドウ : Window
 
         if (menu.言語メニュー.IsSubMenuOpen)
         {
-            if (メニューアクセスキーが一致する(GUIコマンド.日本語表示, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.日本語表示, menu.日本語項目, key))
             {
                 最上位メニューを閉じる();
                 _画面.表示言語選択.SelectedIndex = 0;
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.英語表示, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.英語表示, menu.英語項目, key))
             {
                 最上位メニューを閉じる();
                 _画面.表示言語選択.SelectedIndex = 1;
@@ -760,14 +760,18 @@ internal sealed class メインウィンドウ : Window
 
         if (menu.テーマメニュー.IsSubMenuOpen)
         {
-            if (メニューアクセスキーが一致する(GUIコマンド.ダークテーマ, key))
+            if (
+                メニューアクセスキーが一致する(GUIコマンド.ダークテーマ, menu.ダークテーマ項目, key)
+            )
             {
                 最上位メニューを閉じる();
                 _画面.テーマ選択.SelectedIndex = 0;
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.ライトテーマ, key))
+            if (
+                メニューアクセスキーが一致する(GUIコマンド.ライトテーマ, menu.ライトテーマ項目, key)
+            )
             {
                 最上位メニューを閉じる();
                 _画面.テーマ選択.SelectedIndex = 1;
@@ -777,56 +781,68 @@ internal sealed class メインウィンドウ : Window
 
         if (menu.ファイルメニュー.IsSubMenuOpen)
         {
-            if (メニューアクセスキーが一致する(GUIコマンド.対象ファイル選択, key))
+            if (
+                メニューアクセスキーが一致する(
+                    GUIコマンド.対象ファイル選択,
+                    menu.対象ファイル項目,
+                    key
+                )
+            )
             {
                 最上位メニューを閉じる();
                 _ = 解析対象ファイルを選択する非同期();
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.対象フォルダー選択, key))
+            if (
+                メニューアクセスキーが一致する(
+                    GUIコマンド.対象フォルダー選択,
+                    menu.対象フォルダー項目,
+                    key
+                )
+            )
             {
                 最上位メニューを閉じる();
                 _ = 解析対象フォルダーを選択する非同期();
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.設定選択, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.設定選択, menu.設定項目, key))
             {
                 最上位メニューを閉じる();
                 _ = 設定ファイルを選択する非同期();
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.設定編集, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.設定編集, menu.設定編集項目, key))
             {
                 最上位メニューを閉じる();
                 _ = 設定を編集する非同期();
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.設定消去, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.設定消去, menu.設定消去項目, key))
             {
                 最上位メニューを閉じる();
                 設定消去();
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.JSON出力, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.JSON出力, menu.JSON出力項目, key))
             {
                 最上位メニューを閉じる();
                 _ = 診断を出力する非同期(DiagnosticExportFormat.Json);
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.SARIF出力, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.SARIF出力, menu.SARIF出力項目, key))
             {
                 最上位メニューを閉じる();
                 _ = 診断を出力する非同期(DiagnosticExportFormat.Sarif);
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.終了, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.終了, menu.終了項目, key))
             {
                 Close();
                 return true;
@@ -835,21 +851,25 @@ internal sealed class メインウィンドウ : Window
 
         if (menu.解析メニュー.IsSubMenuOpen)
         {
-            if (メニューアクセスキーが一致する(GUIコマンド.解析開始, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.解析開始, menu.解析項目, key))
             {
                 最上位メニューを閉じる();
                 _ = 解析する非同期();
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.解析キャンセル, key))
+            if (
+                メニューアクセスキーが一致する(GUIコマンド.解析キャンセル, menu.キャンセル項目, key)
+            )
             {
                 最上位メニューを閉じる();
                 解析をキャンセルする();
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.ソースを開く, key))
+            if (
+                メニューアクセスキーが一致する(GUIコマンド.ソースを開く, menu.ソースを開く項目, key)
+            )
             {
                 最上位メニューを閉じる();
                 _ = 選択箇所を開く非同期();
@@ -859,41 +879,49 @@ internal sealed class メインウィンドウ : Window
 
         if (menu.表示メニュー.IsSubMenuOpen)
         {
-            if (メニューアクセスキーが一致する(GUIコマンド.診断検索, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.診断検索, menu.検索項目, key))
             {
                 最上位メニューを閉じる();
                 検索へフォーカスする();
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.危険絞り込み, key))
+            if (
+                メニューアクセスキーが一致する(GUIコマンド.危険絞り込み, menu.危険絞り込み項目, key)
+            )
             {
                 最上位メニューを閉じる();
                 メニューから絞り込みを切り替える(_画面.危険絞り込み);
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.警告絞り込み, key))
+            if (
+                メニューアクセスキーが一致する(GUIコマンド.警告絞り込み, menu.警告絞り込み項目, key)
+            )
             {
                 最上位メニューを閉じる();
                 メニューから絞り込みを切り替える(_画面.警告絞り込み);
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.注意絞り込み, key))
+            if (
+                メニューアクセスキーが一致する(GUIコマンド.注意絞り込み, menu.注意絞り込み項目, key)
+            )
             {
                 最上位メニューを閉じる();
                 メニューから絞り込みを切り替える(_画面.注意絞り込み);
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.言語メニュー, key))
+            if (メニューアクセスキーが一致する(GUIコマンド.言語メニュー, menu.言語メニュー, key))
             {
                 サブメニューを開く(menu.言語メニュー);
                 return true;
             }
 
-            if (メニューアクセスキーが一致する(GUIコマンド.テーマメニュー, key))
+            if (
+                メニューアクセスキーが一致する(GUIコマンド.テーマメニュー, menu.テーマメニュー, key)
+            )
             {
                 サブメニューを開く(menu.テーマメニュー);
                 return true;
@@ -943,8 +971,26 @@ internal sealed class メインウィンドウ : Window
         return false;
     }
 
-    private static bool メニューアクセスキーが一致する(GUIコマンド定義 command, Key key) =>
-        command.メニューアクセスキー == key;
+    /*
+    {
+      "責務": "メニューのキー入力と、マウス操作で共有する項目の利用可否を照合します。",
+      "処理": [
+        "操作のキーを確認します。",
+        "祖先を含めたMenuItemの有効状態を確認します。"
+      ],
+      "引数": {
+        "コマンド": "アクセスキーの定義です。",
+        "項目": "マウス操作に使う同一のMenuItemです。",
+        "キー": "入力されたキーです。"
+      },
+      "戻り値": "キーが一致し、操作が有効な場合にtrueです。"
+    }
+    */
+    private static bool メニューアクセスキーが一致する(
+        GUIコマンド定義 コマンド,
+        MenuItem 項目,
+        Key キー
+    ) => コマンド.メニューアクセスキー == キー && 項目.IsEffectivelyEnabled;
 
     private static bool 最上位アクセスキーが一致する(GUIコマンド定義 command, KeyEventArgs e) =>
         e.KeyModifiers == KeyModifiers.Alt
