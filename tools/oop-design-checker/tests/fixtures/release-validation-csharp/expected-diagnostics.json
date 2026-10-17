@@ -125,6 +125,11 @@
   ],
   "boundaryExpectations": [
     {
+      "scenario": "neutral-name-read-only-property-list",
+      "file": "Boundary/NeutralDataCarrierBoundary.cs",
+      "mustNotContain": ["OOP402", "OOP405"]
+    },
+    {
       "scenario": "matching-shapes-without-shared-usage",
       "file": "Boundary/PolymorphismBoundary.cs",
       "mustNotContain": [
