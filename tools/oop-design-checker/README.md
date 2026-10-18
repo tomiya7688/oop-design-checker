@@ -171,6 +171,25 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --form
 
 コピー可能な例は`oop-design-checker.example.json`を参照してください。
 
+## ライブラリAPIの解析結果
+
+`CheckerService.Analyze(...)`が返す`CheckerRunResult`は、解析完了時点の診断と設定を保持します。入力リストを後から変更しても過去の結果が変わらないよう、診断一覧と設定の`IgnoredPaths` / `DisabledRules`をコピーし、読み取り専用の一覧として公開します。規則設定はinit専用プロパティだけで構成されるため共有します。
+
+結果を利用する場合は、`Diagnostics`で診断を読み取り、`ShouldFail`で失敗判定を確認してください。
+
+```csharp
+var result = CheckerService.Analyze("src");
+foreach (var diagnostic in result.Diagnostics)
+    Console.WriteLine(diagnostic.Message);
+var failed = result.ShouldFail;
+```
+
+- 公開コンストラクターの引数名、`IReadOnlyList<DesignDiagnostic>`型、分解代入、init、`with`を維持します。initと`with`で一覧や設定を差し替える場合もコピーします。入力と結果の一覧・設定の参照同一性には依存しないでください。
+- `FailureThreshold`は上書き指定を反映した実効基準です。`Configuration.FailureThreshold`は元の設定値です。`ShouldFail`は現在の診断と実効基準から毎回計算するため、`with { FailureThreshold = ... }`でも整合します。空一覧では失敗しません。
+- recordの比較では、一覧と設定は従来どおり参照で比較し、内容比較は導入しません。変更のない`with { }`は同じスナップショットを共有し、等価性とハッシュ値を維持します。同じ入力から個別に構築した結果や、一覧・設定を再代入した結果は、新しいコピーの参照を持つため等価とは限りません。
+- コピー時には要素数に比例した時間とメモリを使います。`ShouldFail`の計算量は従来どおり最大で診断数に比例します。コピー中の入力を別スレッドから変更しないでください。
+- nullの診断一覧・設定・設定内リストはコピー時に`ArgumentNullException`で拒否します。設定モデル全体の妥当性検証は、この結果型では行いません。CLI引数、設定JSONのキー、診断出力形式は維持します。
+
 ## GUI
 
 ```bash

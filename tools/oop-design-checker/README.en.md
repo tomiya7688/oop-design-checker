@@ -171,6 +171,25 @@ A different file can be selected with `--config <path>`. Absolute paths are used
 
 See `oop-design-checker.example.json` for a copyable example.
 
+## Library API results
+
+`CheckerService.Analyze(...)` returns a `CheckerRunResult` that retains diagnostics and configuration from the completed run. It copies the diagnostics and the configuration's `IgnoredPaths` / `DisabledRules` into read-only lists so later input mutations cannot change an earlier result. Rule settings contain only init-only properties and are shared.
+
+Read `Diagnostics` to inspect findings and `ShouldFail` to obtain the failure decision:
+
+```csharp
+var result = CheckerService.Analyze("src");
+foreach (var diagnostic in result.Diagnostics)
+    Console.WriteLine(diagnostic.Message);
+var failed = result.ShouldFail;
+```
+
+- Constructor parameter names, `IReadOnlyList<DesignDiagnostic>`, deconstruction, init, and `with` remain available. Assigning diagnostics or configuration through init or `with` also copies the lists. Do not depend on reference identity between inputs and the stored lists or configuration.
+- `FailureThreshold` contains the effective threshold, including an override; `Configuration.FailureThreshold` retains the configured value. `ShouldFail` is evaluated from the current diagnostics and effective threshold on every access, including after `with { FailureThreshold = ... }`. Empty diagnostics never fail.
+- Record equality continues to compare lists and configuration by reference; it does not compare their contents. An unchanged `with { }` shares the snapshot and preserves equality and the hash code. Independently constructed results, or results with reassigned lists/configuration, own new copies and need not compare equal even when their inputs match.
+- Copying takes time and memory proportional to the list sizes. `ShouldFail` continues to take up to linear time in the diagnostic count. Do not mutate an input concurrently while it is being copied.
+- Null diagnostics, configuration, or configuration lists are rejected with `ArgumentNullException` when copied. This result type does not validate the complete configuration model. CLI arguments, configuration JSON keys, and diagnostic output formats are preserved.
+
 ## GUI
 
 ```bash
