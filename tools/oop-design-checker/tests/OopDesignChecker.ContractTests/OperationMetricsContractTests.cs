@@ -58,12 +58,15 @@ public sealed class 処理量指標契約テスト
     [InlineData(115, true)]
     public void 警告の境界と診断文を維持する(int 加算文数, bool 警告する)
     {
-        var 宣言 = string.Join(
-            "\n",
-            new[] { "public int Run()", "{", "var value = 0;" }
-                .Concat(Enumerable.Repeat("value += 1;", 加算文数))
-                .Concat(["return value;", "}"])
-        );
+        var 加算文群 = string.Join("\n", Enumerable.Repeat("value += 1;", 加算文数));
+        var 宣言 = $$"""
+            public int Run()
+            {
+                var value = 0;
+            {{加算文群}}
+                return value;
+            }
+            """;
         var 診断群 = new 過大主処理規則().解析する(解析文脈を作る(宣言)).ToArray();
         if (!警告する)
         {
