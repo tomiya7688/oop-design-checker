@@ -55,7 +55,7 @@ public sealed record CheckerRunResult(
     /*
     {
       "責務": "この結果が使用する設定リストの所有権を分離します。",
-      "処理": ["設定内のリストをコピーします。", "元の失敗基準と、init専用プロパティだけを持つ規則設定を保持します。"],
+      "処理": ["設定モデルのinitへ一覧を渡し、読み取り専用コピーを作ります。", "元の失敗基準と、init専用プロパティだけを持つ規則設定を保持します。"],
       "引数": {"設定": "解析時に使用した非nullの設定です。"},
       "戻り値": "リストの外部変更を受けない設定です。設定モデル全体の妥当性検証は行いません。"
     }
@@ -65,8 +65,8 @@ public sealed record CheckerRunResult(
         ArgumentNullException.ThrowIfNull(設定);
         return new CheckerConfiguration
         {
-            IgnoredPaths = 一覧を固定する(設定.IgnoredPaths),
-            DisabledRules = 一覧を固定する(設定.DisabledRules),
+            IgnoredPaths = 設定.IgnoredPaths,
+            DisabledRules = 設定.DisabledRules,
             FailureThreshold = 設定.FailureThreshold,
             RuleSettings = 設定.RuleSettings,
         };
