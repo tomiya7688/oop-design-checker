@@ -37,6 +37,8 @@ public sealed class 解析ユースケース契約テスト
         var 結果 = 環境.作る().実行する("virtual-input", "requested-config", キャンセル通知: 通知);
 
         Assert.Equal(解析段階の順序, 環境.呼出順序);
+        var 公開記録 = Assert.IsAssignableFrom<IList<string>>(環境.呼出順序);
+        Assert.Throws<NotSupportedException>(() => 公開記録.Clear());
         Assert.Equal("virtual-input", 環境.指定対象);
         Assert.Equal("requested-config", 環境.指定設定パス);
         Assert.Equal("virtual-resolved-target", 環境.読込対象);
