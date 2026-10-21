@@ -205,6 +205,26 @@ var failed = result.ShouldFail;
 - Copying takes time and memory proportional to the list sizes. `ShouldFail` continues to take up to linear time in the diagnostic count. Do not mutate an input concurrently while it is being copied.
 - Null diagnostics or a null configuration passed into the result are rejected with `ArgumentNullException`. Invalid configuration values, including null lists, are rejected by the configuration model at construction as described above. CLI arguments, configuration JSON keys, and diagnostic output formats are preserved.
 
+### Analysis composition for contributors
+
+To keep dependency construction changes separate from the analysis flow, `CheckerService.Analyze` delegates to an `解析ユースケース` created by the default composition. Public parameters, return values, and CLI/GUI usage are preserved.
+
+| Responsibility | Owner |
+| --- | --- |
+| Delegation from the public API | `CheckerService` |
+| Composition of concrete rules, loader, and engine | `既定の解析構成` |
+| Target existence checks, absolute path resolution, and configuration loading | `解析入力読み込み器` |
+| Call order, disabled-rule filtering, effective threshold, and result construction | `解析ユースケース` |
+| Project loading and diagnostic generation | Existing loader and `解析実行器` |
+
+The internal substitution points are four functions passed to the use case constructor: input loading, rule supply, loader creation, and diagnostic generation. The default composition connects existing implementations; use case tests connect in-memory dependencies. Exceptions from those dependencies propagate unchanged to the caller.
+
+After changing composition, run the following from the module root. Seventeen use case tests check argument forwarding and interruption without filesystem or MSBuild access. Two public API tests check the precedence of target validation and pre-cancellation.
+
+```bash
+dotnet run --project tests/OopDesignChecker.ContractTests -c Release -- --filter-class '*解析ユースケース契約テスト' '*公開解析API互換性テスト'
+```
+
 ## GUI
 
 ```bash
