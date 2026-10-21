@@ -171,6 +171,21 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --form
 
 コピー可能な例は`oop-design-checker.example.json`を参照してください。
 
+### ライブラリAPIから設定を作る場合
+
+JSON以外から構築した設定も安全に解析へ渡せるよう、`CheckerConfiguration`と配下の設定型が不変条件を所有します。従来と同じ公開型・initプロパティを使用してください。
+
+```csharp
+var 無視パス = new List<string> { "**/Generated/**" };
+var 設定 = new CheckerConfiguration { IgnoredPaths = 無視パス };
+無視パス.Clear(); // 設定.IgnoredPathsには元のパスが残ります。
+```
+
+- 未定義の`FailureThreshold`、nullのリスト・`RuleSettings`・`Oop304`、1未満の`WarningDepth`は、initで指定した時点で`InvalidOperationException`になります。後から`Validate`や解析を呼ぶまで、不正値を保持することはできません。例外の説明には従来の設定キーを使います。
+- `IgnoredPaths`と`DisabledRules`は、代入時に読み取り専用コピーを作ります。入力元の配列・Listを変更しても、設定は変わりません。公開一覧を`IList<string>`へキャストしても書き換えられません。コピー中に入力を別スレッドから変更しないでください。コピーには要素数に比例する時間とメモリを使います。
+- `CheckerConfigurationJson.Parse`は、JSON入力用の型へ読み込んだ後で設定モデルを生成します。重複キーは従来どおり最後の値を使い、最終値の検証とリストのコピーをモデルへ委譲します。JSONキー・既定値・形式の受理条件・エラー説明は維持します。
+- 公開`CheckerConfigurationJson.Validate`は互換性のため維持します。非nullの設定は生成時に検証済みなので再検証を必要とせず、null引数だけを拒否します。
+
 ## ライブラリAPIの解析結果
 
 `CheckerService.Analyze(...)`が返す`CheckerRunResult`は、解析完了時点の診断と設定を保持します。入力リストを後から変更しても過去の結果が変わらないよう、診断一覧と設定の`IgnoredPaths` / `DisabledRules`をコピーし、読み取り専用の一覧として公開します。規則設定はinit専用プロパティだけで構成されるため共有します。
@@ -188,7 +203,7 @@ var failed = result.ShouldFail;
 - `FailureThreshold`は上書き指定を反映した実効基準です。`Configuration.FailureThreshold`は元の設定値です。`ShouldFail`は現在の診断と実効基準から毎回計算するため、`with { FailureThreshold = ... }`でも整合します。空一覧では失敗しません。
 - recordの比較では、一覧と設定は従来どおり参照で比較し、内容比較は導入しません。変更のない`with { }`は同じスナップショットを共有し、等価性とハッシュ値を維持します。同じ入力から個別に構築した結果や、一覧・設定を再代入した結果は、新しいコピーの参照を持つため等価とは限りません。
 - コピー時には要素数に比例した時間とメモリを使います。`ShouldFail`の計算量は従来どおり最大で診断数に比例します。コピー中の入力を別スレッドから変更しないでください。
-- nullの診断一覧・設定・設定内リストはコピー時に`ArgumentNullException`で拒否します。設定モデル全体の妥当性検証は、この結果型では行いません。CLI引数、設定JSONのキー、診断出力形式は維持します。
+- nullの診断一覧・結果へ渡す設定は、`ArgumentNullException`で拒否します。設定リストなどの不正値は、上記の設定モデルが生成時に拒否します。CLI引数、設定JSONのキー、診断出力形式は維持します。
 
 ## GUI
 

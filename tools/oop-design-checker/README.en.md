@@ -171,6 +171,21 @@ A different file can be selected with `--config <path>`. Absolute paths are used
 
 See `oop-design-checker.example.json` for a copyable example.
 
+### Constructing configuration through the library API
+
+`CheckerConfiguration` and its nested settings own their invariants so configuration created outside JSON is also safe to pass into analysis. Continue using the existing public types and init properties:
+
+```csharp
+var ignoredPaths = new List<string> { "**/Generated/**" };
+var configuration = new CheckerConfiguration { IgnoredPaths = ignoredPaths };
+ignoredPaths.Clear(); // configuration.IgnoredPaths retains the original path.
+```
+
+- Undefined `FailureThreshold` values, null lists / `RuleSettings` / `Oop304`, and `WarningDepth` values below 1 throw `InvalidOperationException` during init. Invalid values cannot be retained until a later call to `Validate` or analysis. Error descriptions retain the existing configuration keys.
+- Assigning `IgnoredPaths` or `DisabledRules` creates a read-only copy. Mutating the original array or List does not affect the configuration; casting the exposed list to `IList<string>` does not permit mutation. Do not mutate inputs concurrently while they are copied. Copying requires time and memory proportional to the list size.
+- `CheckerConfigurationJson.Parse` reads into JSON input types before creating the configuration model. Duplicate keys continue to use the last value; validation of final values and list copying are delegated to the model. JSON keys, defaults, accepted input formats, and error descriptions are preserved.
+- Public `CheckerConfigurationJson.Validate` remains available for compatibility. Non-null settings are valid at construction and need no subsequent validation; this entry point only rejects a null argument.
+
 ## Library API results
 
 `CheckerService.Analyze(...)` returns a `CheckerRunResult` that retains diagnostics and configuration from the completed run. It copies the diagnostics and the configuration's `IgnoredPaths` / `DisabledRules` into read-only lists so later input mutations cannot change an earlier result. Rule settings contain only init-only properties and are shared.
@@ -188,7 +203,7 @@ var failed = result.ShouldFail;
 - `FailureThreshold` contains the effective threshold, including an override; `Configuration.FailureThreshold` retains the configured value. `ShouldFail` is evaluated from the current diagnostics and effective threshold on every access, including after `with { FailureThreshold = ... }`. Empty diagnostics never fail.
 - Record equality continues to compare lists and configuration by reference; it does not compare their contents. An unchanged `with { }` shares the snapshot and preserves equality and the hash code. Independently constructed results, or results with reassigned lists/configuration, own new copies and need not compare equal even when their inputs match.
 - Copying takes time and memory proportional to the list sizes. `ShouldFail` continues to take up to linear time in the diagnostic count. Do not mutate an input concurrently while it is being copied.
-- Null diagnostics, configuration, or configuration lists are rejected with `ArgumentNullException` when copied. This result type does not validate the complete configuration model. CLI arguments, configuration JSON keys, and diagnostic output formats are preserved.
+- Null diagnostics or a null configuration passed into the result are rejected with `ArgumentNullException`. Invalid configuration values, including null lists, are rejected by the configuration model at construction as described above. CLI arguments, configuration JSON keys, and diagnostic output formats are preserved.
 
 ## GUI
 
