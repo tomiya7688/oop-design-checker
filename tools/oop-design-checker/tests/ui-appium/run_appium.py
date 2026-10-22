@@ -675,11 +675,31 @@ def main():
         要素を探す(driver, "AnalyzeButton").click()
         記録する("02-fixture-analysis", "analyze", result="started")
         条件成立まで待つ(driver, lambda: 集計が一致する(driver, expected_counts), timeout=120)
-        記録する("02-fixture-analysis", "analyze", result="pass")
+        if 入力欄の値を取得する(driver, args.platform, "ConfigurationPath"):
+            raise AssertionError("Config-free GUI analysis must keep the configuration field empty.")
+        configuration_summary = 要素の文字列を取得する(driver, "ConfigurationSummary")
+        if not any(
+            marker in configuration_summary.lower()
+            for marker in ("default", "既定値")
+        ):
+            raise AssertionError(
+                f"Config-free GUI analysis did not show built-in defaults: {configuration_summary}"
+            )
+        記録する(
+            "02-fixture-analysis",
+            "analyze",
+            result="pass",
+            configuration="built-in-defaults",
+        )
         証跡を撮影する(
             driver,
             "02-fixture-analysis",
-            extra={"target": str(fixture), "platform": args.platform},
+            extra={
+                "target": str(fixture),
+                "platform": args.platform,
+                "configurationPath": "",
+                "configurationSummary": configuration_summary,
+            },
         )
 
         規則を選択する(driver, args.platform, "OOP106")
