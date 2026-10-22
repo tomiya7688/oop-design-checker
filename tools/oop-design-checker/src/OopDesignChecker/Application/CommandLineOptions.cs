@@ -1,5 +1,6 @@
 using OopDesignChecker.Core;
 using OopDesignChecker.Localization;
+using OopDesignChecker.Output;
 
 namespace OopDesignChecker.Application;
 
