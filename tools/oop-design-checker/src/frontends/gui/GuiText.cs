@@ -148,10 +148,8 @@ internal static class GUI文言
         [GUI文言キー.診断選択案内] = "診断を選択すると詳細を表示します。",
         [GUI文言キー.対象必須] =
             "解析するファイル、プロジェクト、またはフォルダーを指定してください。",
-        [GUI文言キー.解析失敗対象確認] =
-            "解析できませんでした。上の「対象」を確認してください。",
-        [GUI文言キー.解析失敗設定確認] =
-            "解析できませんでした。上の「設定」を確認してください。",
+        [GUI文言キー.解析失敗対象確認] = "解析できませんでした。上の「対象」を確認してください。",
+        [GUI文言キー.解析失敗設定確認] = "解析できませんでした。上の「設定」を確認してください。",
         [GUI文言キー.解析失敗プロジェクト] =
             "対象は見つかりましたが、プロジェクトを読み込めませんでした。上の「対象」の詳細を確認してください。",
         [GUI文言キー.解析失敗コンパイル] =
@@ -250,8 +248,7 @@ internal static class GUI文言
         [GUI文言キー.位置詳細] = "Location: {0}",
         [GUI文言キー.診断選択案内] = "Select a diagnostic to see its full message.",
         [GUI文言キー.対象必須] = "Target path is required.",
-        [GUI文言キー.解析失敗対象確認] =
-            "Analysis could not start. Check the Target field above.",
+        [GUI文言キー.解析失敗対象確認] = "Analysis could not start. Check the Target field above.",
         [GUI文言キー.解析失敗設定確認] =
             "Analysis could not start. Check the Configuration field above.",
         [GUI文言キー.解析失敗プロジェクト] =
