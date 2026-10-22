@@ -317,10 +317,7 @@ internal sealed class メインウィンドウ : Window
         {
             case AnalysisFailureKind.Configuration:
                 _画面.設定エラーを表示する(詳細);
-                _画面.状態表示.Text = GUI文言.取得する(
-                    GUI文言キー.解析失敗設定確認,
-                    _表示言語
-                );
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗設定確認, _表示言語);
                 if (フォーカスする)
                 {
                     _画面.設定パス欄.Focus();
@@ -328,10 +325,7 @@ internal sealed class メインウィンドウ : Window
                 break;
             case AnalysisFailureKind.ProjectLoad:
                 _画面.対象エラーを表示する(詳細);
-                _画面.状態表示.Text = GUI文言.取得する(
-                    GUI文言キー.解析失敗プロジェクト,
-                    _表示言語
-                );
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗プロジェクト, _表示言語);
                 if (フォーカスする)
                 {
                     _画面.対象パス欄.Focus();
@@ -339,10 +333,7 @@ internal sealed class メインウィンドウ : Window
                 break;
             case AnalysisFailureKind.Compilation:
                 _画面.対象エラーを表示する(詳細);
-                _画面.状態表示.Text = GUI文言.取得する(
-                    GUI文言キー.解析失敗コンパイル,
-                    _表示言語
-                );
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗コンパイル, _表示言語);
                 if (フォーカスする)
                 {
                     _画面.対象パス欄.Focus();
@@ -350,10 +341,7 @@ internal sealed class メインウィンドウ : Window
                 break;
             case AnalysisFailureKind.Permission:
                 _画面.対象エラーを表示する(詳細);
-                _画面.状態表示.Text = GUI文言.取得する(
-                    GUI文言キー.解析失敗権限,
-                    _表示言語
-                );
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗権限, _表示言語);
                 if (フォーカスする)
                 {
                     _画面.対象パス欄.Focus();
@@ -361,10 +349,7 @@ internal sealed class メインウィンドウ : Window
                 break;
             case AnalysisFailureKind.Target:
                 _画面.対象エラーを表示する(詳細);
-                _画面.状態表示.Text = GUI文言.取得する(
-                    GUI文言キー.解析失敗対象確認,
-                    _表示言語
-                );
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗対象確認, _表示言語);
                 if (フォーカスする)
                 {
                     _画面.対象パス欄.Focus();
@@ -373,10 +358,7 @@ internal sealed class メインウィンドウ : Window
             case AnalysisFailureKind.Output:
             case AnalysisFailureKind.Internal:
             default:
-                _画面.状態表示.Text = GUI文言.取得する(
-                    GUI文言キー.解析失敗内部,
-                    _表示言語
-                );
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗内部, _表示言語);
                 break;
         }
 
