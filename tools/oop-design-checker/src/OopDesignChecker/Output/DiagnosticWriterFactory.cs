@@ -1,4 +1,3 @@
-using OopDesignChecker.Application;
 using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Output;
@@ -50,4 +49,27 @@ internal static class 診断書き込み器生成器
         UserInterfaceLanguage 表示言語 = UserInterfaceLanguage.Japanese,
         bool 詳細表示 = false
     ) => new コンソール診断書き込み器(出力パス, 表示言語, 詳細表示);
+
+    /*
+    {
+      "責務": {"ファイル保存用を作る": "保存可能なJSONまたはSARIFのwriterを生成し、未定義の保存形式を拒否します。"},
+      "処理": ["公開の保存形式を共有出力形式へ対応付けます。", "指定したファイルを出力先とするwriterを生成します。"],
+      "引数": {"format": "JSONまたはSARIFの保存形式です。", "outputPath": "呼出側で検証した保存先ファイルパスです。"},
+      "戻り値": "指定した保存形式と出力先を持つwriterです。",
+      "エラー": ["未定義の保存形式ではArgumentOutOfRangeExceptionを送出します。"]
+    }
+    */
+    public static 診断書き込み器 ファイル保存用を作る(
+        DiagnosticExportFormat format,
+        string outputPath
+    ) =>
+        Create(
+            format switch
+            {
+                DiagnosticExportFormat.Json => 診断出力形式.Json,
+                DiagnosticExportFormat.Sarif => 診断出力形式.Sarif,
+                _ => throw new ArgumentOutOfRangeException(nameof(format), format, null),
+            },
+            outputPath
+        );
 }

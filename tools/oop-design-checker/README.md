@@ -142,6 +142,19 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --form
 
 値が必要なオプションの直後に別の既知オプションがある場合は、値の省略としてエラーにします。例えば`--output --verbose`では、`--verbose`を出力先にしません。`-report.json`のようなファイル名は値として使えます。オプションと同名のファイルは、`--output ./--verbose`のように相対パスで指定してください。
 
+### 出力契約の責務
+
+CLIとGUIの保存処理を独立して保守できるよう、共有writerの形式と生成処理は`Output`が所有します。`Output`は`Application`の型を参照しません。
+
+| 契約 | 対応形式と責務 |
+|---|---|
+| `Output.診断出力形式` | text・JSON・SARIF・GitHub annotationを表す内部の共有契約です。 |
+| `Application`のCLI引数解析 | `--format`を共有形式へ変換します。未定義値・数値形式を拒否し、GitHub annotationでの`--output`を禁止します。 |
+| `Output.DiagnosticExportFormat` | JSON・SARIFだけを公開する保存専用の契約です。公開型名と数値は維持します。 |
+| `DiagnosticExportService.Export` | 診断一覧と保存先を検証し、`ファイル保存用を作る`から取得したwriterで保存します。未定義形式は書き込み前に拒否します。 |
+
+CLIでは上記の`--format`を指定してください。GUIからはJSONまたはSARIFを選んで保存してください。新しい共有writerを追加するときは、CLIで選択できる形式とGUIで保存できる形式をそれぞれ確認してください。
+
 ## 設定
 
 既定では、target directoryから親directoryへ順に`oop-design-checker.json`を探索し、最も近い設定を使用します。これにより、MSBuildやCIがnested `.csproj`を直接解析する場合でも、repository/solution rootの設定を各projectやbuild outputへ複製せず適用できます。複数存在する場合はtargetに最も近いものが優先です。

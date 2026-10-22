@@ -142,6 +142,19 @@ Use `--format text --verbose` to include rule titles. Verbose mode adds titles o
 
 A known option immediately after an option requiring a value produces a missing-value error. For example, `--output --verbose` does not treat `--verbose` as the output path. Dash-prefixed filenames such as `-report.json` remain valid values. Use a relative path for a filename matching an option, for example `--output ./--verbose`.
 
+### Output contract ownership
+
+`Output` owns shared writer formats and creation so CLI selection and GUI file export can evolve independently. It does not reference types in `Application`.
+
+| Contract | Formats and responsibility |
+|---|---|
+| `Output.診断出力形式` | Internal shared contract for text, JSON, SARIF, and GitHub annotations. |
+| CLI parsing in `Application` | Maps `--format` to the shared contract, rejects undefined/numeric values, and rejects `--output` for GitHub annotations. |
+| `Output.DiagnosticExportFormat` | Public file export contract limited to JSON and SARIF; its type name and numeric values remain unchanged. |
+| `DiagnosticExportService.Export` | Validates diagnostics and the destination, then uses the file export factory path. Undefined formats are rejected before writing. |
+
+Use `--format` in the CLI, or choose JSON/SARIF when exporting from the GUI. When adding a shared writer, check CLI selection and GUI file export capabilities separately.
+
 ## Configuration
 
 By default the checker searches for the nearest `oop-design-checker.json`, starting in the target directory and walking upward through parent directories. This allows a repository- or solution-root configuration to apply when MSBuild or CI invokes the checker against a nested `.csproj` without copying the configuration into each project or build-output directory. If multiple files exist, the nearest one to the target wins.
