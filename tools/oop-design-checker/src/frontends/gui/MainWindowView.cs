@@ -13,6 +13,8 @@ internal sealed class メイン画面 : Grid
     internal メインメニュー メインメニュー部品 { get; } = new();
     internal TextBox 対象パス欄 { get; } = new();
     internal TextBox 設定パス欄 { get; } = new();
+    internal TextBlock 対象エラー { get; } = new();
+    internal TextBlock 設定エラー { get; } = new();
     internal Button 対象ファイルボタン { get; } = new();
     internal Button 対象フォルダーボタン { get; } = new();
     internal Button 設定選択ボタン { get; } = new();
@@ -47,10 +49,13 @@ internal sealed class メイン画面 : Grid
 
     private readonly Label _対象ラベル = new();
     private readonly Label _設定ラベル = new();
+    private readonly Border _対象エラー枠 = new();
+    private readonly Border _設定エラー枠 = new();
     private readonly TextBlock _表示ラベル = new();
     private readonly TextBlock _言語ラベル = new();
     private readonly TextBlock _テーマラベル = new();
     private readonly TextBlock _詳細見出し = new();
+    private UserInterfaceLanguage _表示言語 = UserInterfaceLanguage.Japanese;
 
     public メイン画面()
     {
@@ -76,6 +81,7 @@ internal sealed class メイン画面 : Grid
 
     internal void 表示言語を適用する(UserInterfaceLanguage language)
     {
+        _表示言語 = language;
         メインメニュー部品.表示言語を適用する(language);
         _対象ラベル.Content =
             $"{GUI文言.取得する(GUI文言キー.対象ラベル, language)} (_{GUIショートカット.キー名を整形する(GUIコマンド.対象欄フォーカス.主ショートカット!.Value.Key)})  {GUIコマンド.対象欄フォーカス.主操作の案内}:";
@@ -137,6 +143,8 @@ internal sealed class メイン画面 : Grid
             (_設定ラベル, "ConfigurationPathLabel"),
             (対象パス欄, "TargetPath"),
             (設定パス欄, "ConfigurationPath"),
+            (対象エラー, "TargetError"),
+            (設定エラー, "ConfigurationError"),
             (対象ファイルボタン, "TargetFileButton"),
             (対象フォルダーボタン, "TargetFolderButton"),
             (設定選択ボタン, "ConfigurationButton"),
@@ -205,6 +213,12 @@ internal sealed class メイン画面 : Grid
 
         進捗表示.IsIndeterminate = true;
         進捗表示.IsVisible = false;
+        対象エラー.IsVisible = false;
+        設定エラー.IsVisible = false;
+        対象エラー.TextWrapping = TextWrapping.Wrap;
+        設定エラー.TextWrapping = TextWrapping.Wrap;
+        対象エラー.FontWeight = FontWeight.SemiBold;
+        設定エラー.FontWeight = FontWeight.SemiBold;
         詳細メッセージ.TextWrapping = TextWrapping.Wrap;
         詳細位置.TextWrapping = TextWrapping.Wrap;
         設定概要.TextWrapping = TextWrapping.Wrap;
@@ -310,15 +324,78 @@ internal sealed class メイン画面 : Grid
         section.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
         一覧へ追加する(section, _対象ラベル, 0, 0);
-        一覧へ追加する(section, 対象パス欄, 0, 1);
+        一覧へ追加する(section, 入力欄を構築する(対象パス欄, _対象エラー枠, 対象エラー), 0, 1);
         一覧へ追加する(section, 対象ファイルボタン, 0, 2);
         一覧へ追加する(section, 対象フォルダーボタン, 0, 3);
         一覧へ追加する(section, _設定ラベル, 1, 0);
-        一覧へ追加する(section, 設定パス欄, 1, 1);
+        一覧へ追加する(section, 入力欄を構築する(設定パス欄, _設定エラー枠, 設定エラー), 1, 1);
         一覧へ追加する(section, 設定選択ボタン, 1, 2);
         一覧へ追加する(section, 設定編集ボタン, 1, 3);
         一覧へ追加する(section, 設定消去ボタン, 1, 4);
         return section;
+    }
+
+    internal void 対象エラーを表示する(string? message) =>
+        入力エラーを更新する(
+            対象パス欄,
+            _対象エラー枠,
+            対象エラー,
+            GUIコマンド.対象欄フォーカス,
+            message
+        );
+
+    internal void 設定エラーを表示する(string? message) =>
+        入力エラーを更新する(
+            設定パス欄,
+            _設定エラー枠,
+            設定エラー,
+            GUIコマンド.設定欄フォーカス,
+            message
+        );
+
+    private static StackPanel 入力欄を構築する(
+        TextBox 入力欄,
+        Border エラー枠,
+        TextBlock エラー表示
+    )
+    {
+        エラー枠.BorderThickness = new Thickness(0);
+        エラー枠.Child = 入力欄;
+        var panel = new StackPanel();
+        panel.Children.Add(エラー枠);
+        panel.Children.Add(エラー表示);
+        return panel;
+    }
+
+    private void 入力エラーを更新する(
+        TextBox 入力欄,
+        Border エラー枠,
+        TextBlock エラー表示,
+        GUIコマンド定義 コマンド,
+        string? message
+    )
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            エラー表示.Text = string.Empty;
+            エラー表示.IsVisible = false;
+            エラー枠.BorderBrush = null;
+            エラー枠.BorderThickness = new Thickness(0);
+            AutomationProperties.SetName(エラー表示, string.Empty);
+            コマンド.ヘルプを適用する(入力欄, _表示言語);
+            return;
+        }
+
+        var 表示文 = $"⚠ {message}";
+        エラー表示.Text = 表示文;
+        エラー表示.IsVisible = true;
+        エラー枠.BorderBrush = Brushes.OrangeRed;
+        エラー枠.BorderThickness = new Thickness(2);
+        AutomationProperties.SetName(エラー表示, 表示文);
+        AutomationProperties.SetHelpText(
+            入力欄,
+            $"{コマンド.ヘルプ文(_表示言語)} {表示文}"
+        );
     }
 
     private Grid 絞り込み欄を構築する()
