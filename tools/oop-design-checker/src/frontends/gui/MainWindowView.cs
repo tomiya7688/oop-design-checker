@@ -392,10 +392,7 @@ internal sealed class メイン画面 : Grid
         エラー枠.BorderBrush = Brushes.OrangeRed;
         エラー枠.BorderThickness = new Thickness(2);
         AutomationProperties.SetName(エラー表示, 表示文);
-        AutomationProperties.SetHelpText(
-            入力欄,
-            $"{コマンド.ヘルプ文(_表示言語)} {表示文}"
-        );
+        AutomationProperties.SetHelpText(入力欄, $"{コマンド.ヘルプ文(_表示言語)} {表示文}");
     }
 
     private Grid 絞り込み欄を構築する()
