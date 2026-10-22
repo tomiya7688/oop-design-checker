@@ -38,7 +38,11 @@ public sealed class 解析失敗分類契約テスト
             )
         );
         Assert.Equal(AnalysisFailureKind.Configuration, 設定不在.Kind);
-        Assert.Contains("Configuration file does not exist", 設定不在.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            "Configuration file does not exist",
+            設定不在.Message,
+            StringComparison.Ordinal
+        );
         Assert.Contains(
             "設定ファイル",
             設定不在.GetLocalizedMessage(UserInterfaceLanguage.Japanese),
