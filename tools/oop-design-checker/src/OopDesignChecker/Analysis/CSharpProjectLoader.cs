@@ -577,7 +577,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             .ToList();
         details.AddRange(作業領域失敗群.Select(message => $"MSBuild: {message}"));
         var 日本語説明 =
-            "対象のC#コードまたはプロジェクトを読み込めませんでした:\n"
+            "対象は読み込めましたが、C#コードにコンパイルエラーがあります:\n"
             + string.Join("\n", details);
         // 省略件数を示し、20件で全エラーが終わったという誤解を防ぎます。
         if (errors.Length > コンパイルエラー表示上限)
@@ -603,8 +603,7 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
 
         throw new AnalysisFailureException(
             AnalysisFailureKind.Compilation,
-            "対象は読み込めましたが、C#コードにコンパイルエラーがあります:\n"
-                + string.Join("\n", details),
+            日本語説明,
             "Target project could not be analyzed reliably because its compilation contains errors:\n"
                 + string.Join("\n", details)
         );
