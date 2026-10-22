@@ -87,11 +87,12 @@ public sealed class 解析失敗分類契約テスト
 
     private sealed class 一時失敗環境 : IDisposable
     {
-        public string ルート { get; } = Path.Combine(
-            Path.GetTempPath(),
-            "oop-design-checker-failure-contract",
-            Guid.NewGuid().ToString("N")
-        );
+        public string ルート { get; } =
+            Path.Combine(
+                Path.GetTempPath(),
+                "oop-design-checker-failure-contract",
+                Guid.NewGuid().ToString("N")
+            );
 
         public 一時失敗環境()
         {
