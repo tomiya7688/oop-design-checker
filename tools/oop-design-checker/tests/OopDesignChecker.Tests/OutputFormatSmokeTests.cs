@@ -124,7 +124,7 @@ internal static class 出力形式スモークテスト
         var パス = 一時パスを作る("json");
         try
         {
-            new JSON診断書き込み器(パス).Write([診断を作る()], verbose: true);
+            new JSON診断書き込み器(パス).Write([診断を作る()]);
             using var 文書 = JsonDocument.Parse(File.ReadAllText(パス));
             var ルート = 文書.RootElement;
 
@@ -151,7 +151,7 @@ internal static class 出力形式スモークテスト
         var パス = 一時パスを作る("sarif");
         try
         {
-            new SARIF診断書き込み器(パス).Write([診断を作る()], verbose: false);
+            new SARIF診断書き込み器(パス).Write([診断を作る()]);
             using var 文書 = JsonDocument.Parse(File.ReadAllText(パス));
             var ルート = 文書.RootElement;
             var 結果 = ルート.GetProperty("runs")[0].GetProperty("results")[0];
@@ -176,10 +176,7 @@ internal static class 出力形式スモークテスト
         var パス = 一時パスを作る("sarif");
         try
         {
-            new SARIF診断書き込み器(パス).Write(
-                [診断を作る(ファイルパス: "<unknown>")],
-                verbose: false
-            );
+            new SARIF診断書き込み器(パス).Write([診断を作る(ファイルパス: "<unknown>")]);
 
             using var 文書 = JsonDocument.Parse(File.ReadAllText(パス));
             var 結果 = 文書.RootElement.GetProperty("runs")[0].GetProperty("results")[0];
@@ -215,7 +212,7 @@ internal static class 出力形式スモークテスト
                 ファイルパス: Path.Combine("sample,dir", "file:part.cs"),
                 メッセージ: "first%line\nsecond"
             );
-            new GitHub注釈診断書き込み器().Write([診断], verbose: false);
+            new GitHub注釈診断書き込み器().Write([診断]);
         }
         finally
         {

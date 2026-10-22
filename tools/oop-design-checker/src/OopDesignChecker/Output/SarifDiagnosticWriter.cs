@@ -4,6 +4,13 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Output;
 
+/*
+{
+  "責務": {
+    "SARIF診断書き込み器": "診断をSARIF形式で出力します。"
+  }
+}
+*/
 internal sealed class SARIF診断書き込み器 : 診断書き込み器
 {
     private readonly 診断出力先 _診断出力先;
@@ -13,7 +20,21 @@ internal sealed class SARIF診断書き込み器 : 診断書き込み器
         _診断出力先 = new 診断出力先(outputPath);
     }
 
-    public void Write(IReadOnlyList<DesignDiagnostic> 診断群, bool verbose)
+    /*
+    {
+      "責務": {
+        "Write": "診断をSARIF形式で出力します。"
+      },
+      "処理": [
+        "保持した出力設定に従って診断一覧を書き込みます。"
+      ],
+      "引数": {
+        "診断群": "出力する診断一覧です。"
+      },
+      "戻り値": []
+    }
+    */
+    public void Write(IReadOnlyList<DesignDiagnostic> 診断群)
     {
         var 規則群 = 診断群.GroupBy(診断 => 診断.Rule.Id, StringComparer.Ordinal)
             .Select(同一規則群 => 同一規則群.First())

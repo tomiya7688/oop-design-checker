@@ -138,6 +138,8 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --form
 
 `--output <file>`は`text`、`json`、`sarif`で利用できます。GitHub annotationは意図的に常にstdoutへ出します。出力形式はprocess exit codeへ影響せず、CI失敗条件は`--fail-on`だけが決めます。
 
+規則の見出しも確認する場合は、`--format text --verbose`を指定してください。`--verbose`はtext本文だけに見出しを追加し、JSON・SARIF・GitHub annotationの本文は変更しません。設定ファイルを読み込んだ場合は、そのパスも通知します。通知先はtextの標準出力時にはstdout、それ以外ではstderrです。内部の共通writer契約は診断一覧だけを受け取り、言語と詳細表示はtext writerの生成時に設定します。
+
 値が必要なオプションの直後に別の既知オプションがある場合は、値の省略としてエラーにします。例えば`--output --verbose`では、`--verbose`を出力先にしません。`-report.json`のようなファイル名は値として使えます。オプションと同名のファイルは、`--output ./--verbose`のように相対パスで指定してください。
 
 ## 設定

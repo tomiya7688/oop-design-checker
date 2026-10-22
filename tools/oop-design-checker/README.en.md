@@ -138,6 +138,8 @@ Supported formats:
 
 `--output <file>` can be used with `text`, `json`, and `sarif`. GitHub annotations intentionally always go to stdout. Output format never changes the process exit code: `--fail-on` continues to control CI failure independently.
 
+Use `--format text --verbose` to include rule titles. Verbose mode adds titles only to text diagnostics; JSON, SARIF, and GitHub annotation payloads remain unchanged. When a configuration file is loaded, its path is reported to stdout for text on stdout and to stderr otherwise. Internally, the common writer contract accepts only diagnostics; language and verbosity are configured when creating the text writer.
+
 A known option immediately after an option requiring a value produces a missing-value error. For example, `--output --verbose` does not treat `--verbose` as the output path. Dash-prefixed filenames such as `-report.json` remain valid values. Use a relative path for a filename matching an option, for example `--output ./--verbose`.
 
 ## Configuration
