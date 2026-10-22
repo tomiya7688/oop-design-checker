@@ -42,35 +42,80 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         キャンセル通知.ThrowIfCancellationRequested();
         var fullTargetPath = Path.GetFullPath(対象パス);
 
-        if (File.Exists(fullTargetPath))
+        try
         {
-            return Path.GetExtension(fullTargetPath).ToLowerInvariant() switch
+            if (File.Exists(fullTargetPath))
             {
-                ".cs" => [個別ソース群を読み込む(fullTargetPath, キャンセル通知)],
-                ".csproj" => [MSBuildプロジェクトを読み込む(fullTargetPath, キャンセル通知)],
-                ".sln" => ソリューションを読み込む(fullTargetPath, キャンセル通知),
-                ".slnx" => Slnxプロジェクト群を読み込む(fullTargetPath, キャンセル通知),
-                _ => throw new InvalidOperationException(
-                    "Target file must be a C# source file (.cs), project file (.csproj), or solution file (.sln/.slnx)."
-                ),
-            };
-        }
+                return Path.GetExtension(fullTargetPath).ToLowerInvariant() switch
+                {
+                    ".cs" => [個別ソース群を読み込む(fullTargetPath, キャンセル通知)],
+                    ".csproj" => [MSBuildプロジェクトを読み込む(fullTargetPath, キャンセル通知)],
+                    ".sln" => ソリューションを読み込む(fullTargetPath, キャンセル通知),
+                    ".slnx" => Slnxプロジェクト群を読み込む(fullTargetPath, キャンセル通知),
+                    _ => throw new AnalysisFailureException(
+                        AnalysisFailureKind.Target,
+                        "この種類のファイルは解析できません。.cs / .csproj / .sln / .slnx のいずれかを指定してください。",
+                        "Target file must be a C# source file (.cs), project file (.csproj), or solution file (.sln/.slnx).",
+                        fullTargetPath
+                    ),
+                };
+            }
 
-        if (!Directory.Exists(fullTargetPath))
+            if (!Directory.Exists(fullTargetPath))
+            {
+                throw new AnalysisFailureException(
+                    AnalysisFailureKind.Target,
+                    $"解析する対象が見つかりません: {fullTargetPath}\n対象欄のパスを確認してください。",
+                    $"Target does not exist: {fullTargetPath}",
+                    fullTargetPath
+                );
+            }
+
+            var solutionFile = ソリューションファイルを探す(fullTargetPath, キャンセル通知);
+            if (solutionFile is not null)
+            {
+                return プロジェクト群を読み込む(solutionFile, キャンセル通知);
+            }
+
+            var projectFiles = プロジェクトファイル群を探す(fullTargetPath, キャンセル通知);
+            return projectFiles.Length == 0
+                ? [個別ソース群を読み込む(fullTargetPath, キャンセル通知)]
+                : MSBuildプロジェクト群を読み込む(projectFiles, キャンセル通知);
+        }
+        catch (AnalysisFailureException)
         {
-            throw new InvalidOperationException($"Target does not exist: {fullTargetPath}");
+            throw;
         }
-
-        var solutionFile = ソリューションファイルを探す(fullTargetPath, キャンセル通知);
-        if (solutionFile is not null)
+        catch (UnauthorizedAccessException 例外)
         {
-            return プロジェクト群を読み込む(solutionFile, キャンセル通知);
+            throw new AnalysisFailureException(
+                AnalysisFailureKind.Permission,
+                $"対象を読み取る権限がありません: {fullTargetPath}\nファイルやフォルダーのアクセス権を確認してください。",
+                例外.Message,
+                fullTargetPath,
+                例外
+            );
         }
-
-        var projectFiles = プロジェクトファイル群を探す(fullTargetPath, キャンセル通知);
-        return projectFiles.Length == 0
-            ? [個別ソース群を読み込む(fullTargetPath, キャンセル通知)]
-            : MSBuildプロジェクト群を読み込む(projectFiles, キャンセル通知);
+        catch (IOException 例外)
+        {
+            throw new AnalysisFailureException(
+                AnalysisFailureKind.ProjectLoad,
+                $"対象は見つかりましたが、ファイルを読み込めませんでした: {fullTargetPath}\nファイルが使用中でないか、読み取り可能か確認してください。",
+                例外.Message,
+                fullTargetPath,
+                例外
+            );
+        }
+        catch (InvalidOperationException 例外)
+        {
+            throw new AnalysisFailureException(
+                AnalysisFailureKind.ProjectLoad,
+                $"対象は見つかりましたが、プロジェクトを読み込めませんでした: {fullTargetPath}",
+                例外.Message,
+                fullTargetPath,
+                例外
+            );
+        }
     }
 
     private 解析対象プロジェクト[] ソリューションを読み込む(
@@ -109,8 +154,11 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
 
         if (projects.Length == 0)
         {
-            throw new InvalidOperationException(
-                $"No analyzable C# projects were found in solution: {solutionFile}"
+            throw new AnalysisFailureException(
+                AnalysisFailureKind.ProjectLoad,
+                $"ソリューションに解析できるC#プロジェクトがありません: {solutionFile}",
+                $"No analyzable C# projects were found in solution: {solutionFile}",
+                solutionFile
             );
         }
 
@@ -157,7 +205,9 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         {
             throw new 解析入力例外(
                 $"ソリューションに解析対象のC#プロジェクトがありません: {solutionFile}",
-                $"No analyzable C# projects were found in solution: {solutionFile}"
+                $"No analyzable C# projects were found in solution: {solutionFile}",
+                種別: AnalysisFailureKind.ProjectLoad,
+                パス: solutionFile
             );
         }
 
@@ -172,7 +222,9 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
                     + string.Join("\n", 存在しないプロジェクトファイル群),
                 "Solution references missing C# project files:\n"
                     + $"Solution: {solutionFile}\n"
-                    + string.Join("\n", 存在しないプロジェクトファイル群)
+                    + string.Join("\n", 存在しないプロジェクトファイル群),
+                種別: AnalysisFailureKind.ProjectLoad,
+                パス: solutionFile
             );
         }
 
@@ -322,7 +374,12 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         var sourceFiles = 個別ソースファイル群を探す(対象パス, rootPath, キャンセル通知).ToArray();
         if (sourceFiles.Length == 0)
         {
-            throw new InvalidOperationException("No C# source files were found.");
+            throw new AnalysisFailureException(
+                AnalysisFailureKind.Target,
+                "解析できるC#ファイルが見つかりません。C#ファイル、プロジェクト、またはソリューションを指定してください。",
+                "No C# source files were found.",
+                対象パス
+            );
         }
 
         var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
@@ -382,8 +439,11 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
         {
             0 => null,
             1 => solutionFiles[0],
-            _ => throw new InvalidOperationException(
-                $"Multiple solution files were found under {targetDirectory}. Target a specific .sln or .slnx file."
+            _ => throw new AnalysisFailureException(
+                AnalysisFailureKind.Target,
+                $"このフォルダーには複数のソリューションがあります: {targetDirectory}\n解析する .sln または .slnx を1つ指定してください。",
+                $"Multiple solution files were found under {targetDirectory}. Target a specific .sln or .slnx file.",
+                targetDirectory
             ),
         };
     }
@@ -469,9 +529,13 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             return;
         }
 
-        throw new InvalidOperationException(
+        throw new AnalysisFailureException(
+            AnalysisFailureKind.ProjectLoad,
+            $"対象は見つかりましたが、プロジェクトを読み込めませんでした: {対象パス}\n"
+                + string.Join("\n", 作業領域失敗群.Select(message => $"MSBuild: {message}")),
             $"Target {対象パス} could not be analyzed reliably because project loading contains errors:\n"
-                + string.Join("\n", 作業領域失敗群.Select(message => $"MSBuild: {message}"))
+                + string.Join("\n", 作業領域失敗群.Select(message => $"MSBuild: {message}")),
+            対象パス
         );
     }
 
@@ -526,9 +590,22 @@ internal sealed class CSharpプロジェクト読み込み器 : Iプロジェク
             );
         }
 
-        throw new 解析入力例外(
-            日本語説明,
-            "Target project could not be analyzed reliably because its compilation or project loading contains errors:\n"
+        if (errors.Length == 0)
+        {
+            throw new AnalysisFailureException(
+                AnalysisFailureKind.ProjectLoad,
+                "対象は見つかりましたが、プロジェクトを読み込めませんでした:\n"
+                    + string.Join("\n", details),
+                "Target project could not be analyzed reliably because project loading contains errors:\n"
+                    + string.Join("\n", details)
+            );
+        }
+
+        throw new AnalysisFailureException(
+            AnalysisFailureKind.Compilation,
+            "対象は読み込めましたが、C#コードにコンパイルエラーがあります:\n"
+                + string.Join("\n", details),
+            "Target project could not be analyzed reliably because its compilation contains errors:\n"
                 + string.Join("\n", details)
         );
     }
