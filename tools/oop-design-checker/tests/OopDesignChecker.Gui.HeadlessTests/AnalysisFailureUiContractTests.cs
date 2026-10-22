@@ -127,7 +127,11 @@ public sealed partial class 画面視覚回帰テスト
                 () => 画面.対象エラー.IsVisible && 画面.解析ボタン.IsEnabled,
                 タイムアウト時間: 10000
             );
-            Assert.Contains("プロジェクトを読み込めません", 画面.状態表示.Text, StringComparison.Ordinal);
+            Assert.Contains(
+                "プロジェクトを読み込めません",
+                画面.状態表示.Text,
+                StringComparison.Ordinal
+            );
 
             画面.対象パス欄.Text = 壊れたソース;
             画面.解析ボタン.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
