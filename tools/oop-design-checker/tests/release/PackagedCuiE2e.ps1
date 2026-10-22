@@ -67,6 +67,19 @@ if (
     throw "Expected clean fixture summary to contain only zero counts."
 }
 
+$cleanProjectFile = Join-Path $cleanProject "Clean.csproj"
+$cleanProjectJsonPath = Join-Path $Root "clean-project.json"
+& $Checker $cleanProjectFile --format json --output $cleanProjectJsonPath --fail-on danger
+Assert-ExitCode 0 ".csproj analysis without --config"
+$cleanProjectJson = Read-Json $cleanProjectJsonPath
+if (@($cleanProjectJson.diagnostics).Count -ne 0) {
+    throw "Expected config-free .csproj fixture to have no diagnostics."
+}
+
+$missingConfig = Join-Path $Root "missing-config.json"
+& $Checker $cleanProject --config $missingConfig
+Assert-ExitCode 2 "missing explicit --config"
+
 $dangerProject = Join-Path $Root "danger"
 New-Item -ItemType Directory -Force -Path $dangerProject | Out-Null
 Set-Content -Path (Join-Path $dangerProject "Danger.csproj") -Value @"
