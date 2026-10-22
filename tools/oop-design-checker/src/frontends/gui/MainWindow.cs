@@ -5,6 +5,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
+using OopDesignChecker.Analysis;
 using OopDesignChecker.Configuration;
 using OopDesignChecker.Core;
 using OopDesignChecker.Localization;
@@ -17,6 +18,7 @@ internal sealed class メインウィンドウ : Window
     private readonly メイン画面 _画面 = new();
     private DiagnosticRow[] _全診断行 = [];
     private CheckerRunResult? _前回解析結果;
+    private AnalysisFailureException? _前回解析失敗;
     private CancellationTokenSource? _解析キャンセル;
     private UserInterfaceLanguage _表示言語 = UserInterfaceLanguage.Japanese;
     private bool _解析中;
@@ -68,6 +70,8 @@ internal sealed class メインウィンドウ : Window
         _画面.設定選択ボタン.Click += async (_, _) => await 設定ファイルを選択する非同期();
         _画面.設定編集ボタン.Click += async (_, _) => await 設定を編集する非同期();
         _画面.設定消去ボタン.Click += (_, _) => 設定消去();
+        _画面.対象パス欄.TextChanged += (_, _) => 入力欄変更時(対象欄: true);
+        _画面.設定パス欄.TextChanged += (_, _) => 入力欄変更時(対象欄: false);
         _画面.危険絞り込み.Click += (_, _) => 絞り込み状態が変更された();
         _画面.警告絞り込み.Click += (_, _) => 絞り込み状態が変更された();
         _画面.注意絞り込み.Click += (_, _) => 絞り込み状態が変更された();
@@ -173,9 +177,19 @@ internal sealed class メインウィンドウ : Window
         var targetPath = _画面.対象パス欄.Text?.Trim();
         if (string.IsNullOrWhiteSpace(targetPath))
         {
-            _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.対象必須, _表示言語);
+            解析失敗を表示する(
+                new AnalysisFailureException(
+                    AnalysisFailureKind.Target,
+                    GUI文言.取得する(GUI文言キー.対象必須, UserInterfaceLanguage.Japanese),
+                    GUI文言.取得する(GUI文言キー.対象必須, UserInterfaceLanguage.English)
+                )
+            );
             return;
         }
+
+        _前回解析失敗 = null;
+        _画面.対象エラーを表示する(null);
+        _画面.設定エラーを表示する(null);
 
         using var cancellation = new CancellationTokenSource();
         _解析キャンセル = cancellation;
@@ -205,6 +219,10 @@ internal sealed class メインウィンドウ : Window
         {
             _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析キャンセル済み, _表示言語);
         }
+        catch (AnalysisFailureException 解析失敗)
+        {
+            解析失敗を表示する(解析失敗);
+        }
         catch (Exception exception)
             when (exception
                     is IOException
@@ -212,7 +230,21 @@ internal sealed class メインウィンドウ : Window
                         or InvalidOperationException
             )
         {
-            エラーを表示する(LocalizedText.AnalysisFailed(_表示言語, exception.Message));
+            var 種別 =
+                exception is UnauthorizedAccessException
+                    ? AnalysisFailureKind.Permission
+                    : AnalysisFailureKind.Internal;
+            解析失敗を表示する(
+                new AnalysisFailureException(
+                    種別,
+                    種別 == AnalysisFailureKind.Permission
+                        ? "対象を読み取る権限がありません。ファイルやフォルダーのアクセス権を確認してください。"
+                        : "解析中に予期しない問題が発生しました。入力を確認しても解決しない場合は、checkerの不具合として報告してください。",
+                    exception.Message,
+                    targetPath,
+                    exception
+                )
+            );
         }
         finally
         {
@@ -239,6 +271,9 @@ internal sealed class メインウィンドウ : Window
 
     private void 解析結果を表示する(CheckerRunResult result)
     {
+        _前回解析失敗 = null;
+        _画面.対象エラーを表示する(null);
+        _画面.設定エラーを表示する(null);
         _前回解析結果 = result;
         _全診断行 = result
             .Diagnostics.Select(diagnostic => DiagnosticRow.From(diagnostic, _表示言語))
@@ -252,6 +287,9 @@ internal sealed class メインウィンドウ : Window
 
     private void エラーを表示する(string message)
     {
+        _前回解析失敗 = null;
+        _画面.対象エラーを表示する(null);
+        _画面.設定エラーを表示する(null);
         _前回解析結果 = null;
         _全診断行 = [];
         _画面.診断一覧.ItemsSource = Array.Empty<DiagnosticRow>();
@@ -261,6 +299,103 @@ internal sealed class メインウィンドウ : Window
         _画面.状態表示.Text = message;
         操作の有効状態を更新する();
     }
+
+    private void 解析失敗を表示する(AnalysisFailureException 解析失敗, bool フォーカスする = true)
+    {
+        _前回解析失敗 = 解析失敗;
+        _前回解析結果 = null;
+        _全診断行 = [];
+        _画面.診断一覧.ItemsSource = Array.Empty<DiagnosticRow>();
+        _画面.診断一覧.SelectedItem = null;
+        _画面.詳細を消去する(_表示言語);
+        _画面.対象エラーを表示する(null);
+        _画面.設定エラーを表示する(null);
+        集計を更新する();
+
+        var 詳細 = 解析失敗.GetLocalizedMessage(_表示言語);
+        switch (解析失敗.Kind)
+        {
+            case AnalysisFailureKind.Configuration:
+                _画面.設定エラーを表示する(詳細);
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗設定確認, _表示言語);
+                if (フォーカスする)
+                {
+                    _画面.設定パス欄.Focus();
+                }
+                break;
+            case AnalysisFailureKind.ProjectLoad:
+                _画面.対象エラーを表示する(詳細);
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗プロジェクト, _表示言語);
+                if (フォーカスする)
+                {
+                    _画面.対象パス欄.Focus();
+                }
+                break;
+            case AnalysisFailureKind.Compilation:
+                _画面.対象エラーを表示する(詳細);
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗コンパイル, _表示言語);
+                if (フォーカスする)
+                {
+                    _画面.対象パス欄.Focus();
+                }
+                break;
+            case AnalysisFailureKind.Permission:
+                _画面.対象エラーを表示する(詳細);
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗権限, _表示言語);
+                if (フォーカスする)
+                {
+                    _画面.対象パス欄.Focus();
+                }
+                break;
+            case AnalysisFailureKind.Target:
+                _画面.対象エラーを表示する(詳細);
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗対象確認, _表示言語);
+                if (フォーカスする)
+                {
+                    _画面.対象パス欄.Focus();
+                }
+                break;
+            case AnalysisFailureKind.Output:
+            case AnalysisFailureKind.Internal:
+            default:
+                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗内部, _表示言語);
+                break;
+        }
+
+        操作の有効状態を更新する();
+    }
+
+    private void 入力欄変更時(bool 対象欄)
+    {
+        if (_解析中)
+        {
+            return;
+        }
+
+        if (対象欄)
+        {
+            _画面.対象エラーを表示する(null);
+        }
+        else
+        {
+            _画面.設定エラーを表示する(null);
+        }
+
+        if (_前回解析失敗 is not { } 失敗 || 対象欄 != 失敗が対象欄に属する(失敗.Kind))
+        {
+            return;
+        }
+
+        _前回解析失敗 = null;
+        _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.準備完了, _表示言語);
+    }
+
+    private static bool 失敗が対象欄に属する(AnalysisFailureKind 種別) =>
+        種別
+        is AnalysisFailureKind.Target
+            or AnalysisFailureKind.ProjectLoad
+            or AnalysisFailureKind.Compilation
+            or AnalysisFailureKind.Permission;
 
     private void 絞り込みを適用する()
     {
@@ -1082,6 +1217,12 @@ internal sealed class メインウィンドウ : Window
         if (_解析中)
         {
             _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析中, _表示言語);
+            return;
+        }
+
+        if (_前回解析失敗 is not null)
+        {
+            解析失敗を表示する(_前回解析失敗, フォーカスする: false);
             return;
         }
 
