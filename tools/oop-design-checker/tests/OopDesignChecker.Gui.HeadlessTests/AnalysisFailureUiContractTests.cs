@@ -77,7 +77,11 @@ public sealed partial class 画面視覚回帰テスト
 
             ウィンドウ.テスト用表示言語を設定する(UserInterfaceLanguage.English);
             画面更新を完了する();
-            Assert.Contains("Configuration", 画面.設定エラー.Text, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains(
+                "Configuration",
+                画面.設定エラー.Text,
+                StringComparison.OrdinalIgnoreCase
+            );
             Assert.Contains("Configuration field", 画面.状態表示.Text, StringComparison.Ordinal);
 
             ウィンドウ.テスト用テーマを設定する(ThemeVariant.Light);
@@ -90,7 +94,11 @@ public sealed partial class 画面視覚回帰テスト
                 () => 画面.設定エラー.IsVisible && 画面.解析ボタン.IsEnabled,
                 タイムアウト時間: 10000
             );
-            Assert.Contains("configuration", 画面.設定エラー.Text, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains(
+                "configuration",
+                画面.設定エラー.Text,
+                StringComparison.OrdinalIgnoreCase
+            );
         }
         finally
         {
