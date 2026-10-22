@@ -983,7 +983,9 @@ def main():
             moved_source = None
 
         error_evidence = evidence / "08-error-state"
-        missing_target = error_evidence / "missing-target"
+        missing_target = fixture / "__missing-target__.cs"
+        if missing_target.exists():
+            raise AssertionError(f"Missing-target fixture unexpectedly exists: {missing_target}")
         入力欄を書き換える(driver, "ConfigurationPath", "")
         入力欄を書き換える(driver, "TargetPath", str(missing_target))
         要素を探す(driver, "AnalyzeButton").click()
@@ -998,8 +1000,13 @@ def main():
         if 要素が表示される(driver, "ConfigurationError"):
             raise AssertionError("Missing target incorrectly marked the configuration field.")
         target_error = 要素の文字列を取得する(driver, "TargetError")
-        if "target" not in target_error.lower():
-            raise AssertionError(f"Target error did not explain the target failure: {target_error}")
+        if not target_error.strip():
+            raise AssertionError("Target field did not expose an inline error message.")
+        target_status = 要素の文字列を取得する(driver, "Status")
+        if "target" not in target_status.lower():
+            raise AssertionError(
+                f"Status did not direct the user to the Target field: {target_status}"
+            )
         記録する(
             "08-error-state",
             "missing-target",
