@@ -278,19 +278,28 @@ internal static class 設定動作テスト
                 "internal sealed class Sample { private int _value; public int Value => _value; }"
             );
 
-            var 結果 = CheckerService.Analyze(ルートパス);
-            if (結果.ConfigurationPath is not null)
+            foreach (var 設定パス in new string?[] { null, string.Empty, "  \t  " })
             {
-                throw new InvalidOperationException(
-                    $"Expected built-in defaults with no configuration file, found '{結果.ConfigurationPath}'."
-                );
-            }
+                var 結果 = CheckerService.Analyze(ルートパス, 設定パス);
+                if (結果.ConfigurationPath is not null)
+                {
+                    throw new InvalidOperationException(
+                        $"Expected built-in defaults with no configuration file, found '{結果.ConfigurationPath}'."
+                    );
+                }
 
-            if (結果.FailureThreshold != DesignDiagnosticSeverity.Danger)
-            {
-                throw new InvalidOperationException(
-                    $"Expected default Danger threshold, found {結果.FailureThreshold}."
-                );
+                if (
+                    結果.FailureThreshold != DesignDiagnosticSeverity.Danger
+                    || 結果.Configuration.FailureThreshold != DesignDiagnosticSeverity.Danger
+                    || 結果.Configuration.IgnoredPaths.Count != 0
+                    || 結果.Configuration.DisabledRules.Count != 0
+                    || 結果.Configuration.RuleSettings.Oop304.WarningDepth != 4
+                )
+                {
+                    throw new InvalidOperationException(
+                        "No explicit configuration must use the complete built-in defaults."
+                    );
+                }
             }
         });
     }
