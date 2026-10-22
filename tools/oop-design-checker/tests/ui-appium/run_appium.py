@@ -921,7 +921,7 @@ def main():
 
         要素を探す(driver, "ClearConfigurationButton").click()
         条件成立まで待つ(driver, lambda: 要素を探す(driver, "AnalyzeButton").is_enabled(), timeout=20)
-        要素を探す(driver, "AnalyzeButton").click()
+        メニューアクセスキーを押す(driver, Keys.F5)
         条件成立まで待つ(driver, lambda: 集計が一致する(driver, expected_counts), timeout=120)
         記録する("06-export", "reanalyze-defaults")
 
@@ -988,11 +988,10 @@ def main():
             raise AssertionError(f"Missing-target fixture unexpectedly exists: {missing_target}")
         入力欄を書き換える(driver, "ConfigurationPath", "")
         入力欄を書き換える(driver, "TargetPath", str(missing_target))
-        要素を探す(driver, "AnalyzeButton").click()
+        メニューアクセスキーを押す(driver, Keys.F5)
         条件成立まで待つ(
             driver,
-            lambda: 要素が表示される(driver, "TargetError")
-            and 要素を探す(driver, "AnalyzeButton").is_enabled(),
+            lambda: 要素が表示される(driver, "TargetError"),
             timeout=120,
             expected_condition="TargetError is visible after a missing target",
             automation_id="TargetError",
@@ -1023,11 +1022,10 @@ def main():
         missing_config = error_evidence / "missing-config.json"
         入力欄を書き換える(driver, "TargetPath", str(fixture))
         入力欄を書き換える(driver, "ConfigurationPath", str(missing_config))
-        要素を探す(driver, "AnalyzeButton").click()
+        メニューアクセスキーを押す(driver, Keys.F5)
         条件成立まで待つ(
             driver,
-            lambda: 要素が表示される(driver, "ConfigurationError")
-            and 要素を探す(driver, "AnalyzeButton").is_enabled(),
+            lambda: 要素が表示される(driver, "ConfigurationError"),
             timeout=120,
             expected_condition="ConfigurationError is visible after a missing explicit config",
             automation_id="ConfigurationError",
@@ -1055,11 +1053,10 @@ def main():
         invalid_config = error_evidence / "invalid-config.json"
         invalid_config.write_text("{ not-json", encoding="utf-8")
         入力欄を書き換える(driver, "ConfigurationPath", str(invalid_config))
-        要素を探す(driver, "AnalyzeButton").click()
+        メニューアクセスキーを押す(driver, Keys.F5)
         条件成立まで待つ(
             driver,
-            lambda: 要素が表示される(driver, "ConfigurationError")
-            and 要素を探す(driver, "AnalyzeButton").is_enabled(),
+            lambda: 要素が表示される(driver, "ConfigurationError"),
             timeout=120,
             expected_condition="ConfigurationError is visible after invalid JSON",
             automation_id="ConfigurationError",
