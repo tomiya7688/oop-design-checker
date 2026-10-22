@@ -381,10 +381,7 @@ internal sealed class メインウィンドウ : Window
             _画面.設定エラーを表示する(null);
         }
 
-        if (
-            _前回解析失敗 is not { } 失敗
-            || 対象欄 != 失敗が対象欄に属する(失敗.Kind)
-        )
+        if (_前回解析失敗 is not { } 失敗 || 対象欄 != 失敗が対象欄に属する(失敗.Kind))
         {
             return;
         }
