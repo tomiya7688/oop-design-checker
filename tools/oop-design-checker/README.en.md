@@ -240,6 +240,21 @@ After changing composition, run the following from the module root. Seventeen us
 dotnet run --project tests/OopDesignChecker.ContractTests -c Release -- --filter-class '*解析ユースケース契約テスト' '*公開解析API互換性テスト'
 ```
 
+### Shared method usage for OOP401 and OOP403
+
+`Analysis.同一クラスメソッド利用グラフ` owns ordinary instance method selection, same-type call edges, and reachable member usage so helper traversal stays consistent between both rules. It collects field/property references, then applies each rule's member type and selection predicate.
+
+- OOP401 retains same-type instance state selection and its minimum of three state members and three methods per cluster.
+- OOP403 retains project dependency candidates, shared abstraction connections, and its minimum of three groups with two dependencies each.
+- A visited set handles recursion, cycles, and converging calls without duplicate usage. Mutating returned sets does not affect later queries.
+- Existing scope is preserved: other partial declarations, inherited methods, and static methods are not traversed. Calls on another instance of the same type still count; resolved call symbols are not normalized to OriginalDefinition.
+
+From the module root, run the 25 graph and rule regression cases after changes:
+
+```bash
+dotnet run --project tests/OopDesignChecker.ContractTests -c Release -- --filter-class '*メソッド利用グラフ契約テスト' '*メソッド利用規則回帰テスト'
+```
+
 ## GUI
 
 ```bash

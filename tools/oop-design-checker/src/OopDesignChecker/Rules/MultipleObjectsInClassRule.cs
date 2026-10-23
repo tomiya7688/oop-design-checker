@@ -5,6 +5,13 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
+/*
+{
+  "責務": {
+    "複数オブジェクト混在規則": "状態メンバーと操作の独立したまとまりを判定します。状態の選別と閾値を所有し、helper到達可能性は共有グラフに委譲します。"
+  }
+}
+*/
 internal sealed class 複数オブジェクト混在規則 : I解析規則
 {
     private const int まとまりあたり最小状態メンバー数 = 3;
@@ -13,6 +20,21 @@ internal sealed class 複数オブジェクト混在規則 : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP401", "Possible multiple objects in one class", DesignDiagnosticSeverity.Warning);
 
+    /*
+    {
+      "責務": {
+        "解析する": "状態メンバーと操作の独立したまとまりを判定します。状態の選別と閾値を所有し、helper到達可能性は共有グラフに委譲します。"
+      },
+      "処理": [
+        "対象クラスのメンバー利用を共有グラフで集計します。",
+        "規則固有の接続と閾値を判定して警告を生成します。"
+      ],
+      "引数": {
+        "文脈": "解析するプロジェクトと周辺情報です。"
+      },
+      "戻り値": "条件を満たしたクラスの診断です。"
+    }
+    */
     public IEnumerable<DesignDiagnostic> 解析する(解析文脈 文脈)
     {
         foreach (var 構文木 in 文脈.対象プロジェクト.構文木群)
@@ -30,8 +52,11 @@ internal sealed class 複数オブジェクト混在規則 : I解析規則
                     continue;
                 }
 
-                var メソッド使用状況 = メソッド使用状況を作る(記号, 宣言, 意味モデル);
-                var 状態使用状況 = 有効状態使用状況を作る(メソッド使用状況);
+                // 状態の選別は規則が所有し、helper呼出の追跡は共有グラフに任せます。
+                var 利用グラフ = new 同一クラスメソッド利用グラフ(記号, 宣言, 意味モデル);
+                var 状態使用状況 = 利用グラフ.有効利用を集計する<ISymbol>(メンバー =>
+                    インスタンス状態メンバーである(メンバー, 記号)
+                );
                 var まとまり群 = 独立まとまりを探す(状態使用状況);
                 if (まとまり群.Length < 2)
                 {
@@ -46,108 +71,6 @@ internal sealed class 複数オブジェクト混在規則 : I解析規則
                 );
             }
         }
-    }
-
-    private static Dictionary<IMethodSymbol, メソッド使用状況> メソッド使用状況を作る(
-        INamedTypeSymbol 包含型,
-        ClassDeclarationSyntax 宣言,
-        SemanticModel 意味モデル
-    )
-    {
-        var 結果 = new Dictionary<IMethodSymbol, メソッド使用状況>(SymbolEqualityComparer.Default);
-
-        foreach (var メソッド宣言 in 宣言.Members.OfType<MethodDeclarationSyntax>())
-        {
-            if (
-                意味モデル.GetDeclaredSymbol(メソッド宣言) is not IMethodSymbol メソッド
-                || メソッド.IsStatic
-                || メソッド.MethodKind != MethodKind.Ordinary
-            )
-            {
-                continue;
-            }
-
-            var 状態メンバー群 = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
-            foreach (var 識別子 in メソッド宣言.DescendantNodes().OfType<IdentifierNameSyntax>())
-            {
-                var 参照先記号 = 意味モデル.GetSymbolInfo(識別子).Symbol;
-                if (インスタンス状態メンバーである(参照先記号, 包含型))
-                {
-                    状態メンバー群.Add(参照先記号!);
-                }
-            }
-
-            var 呼び出しメソッド群 = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
-            foreach (
-                var 呼び出し式 in メソッド宣言
-                    .DescendantNodes()
-                    .OfType<InvocationExpressionSyntax>()
-            )
-            {
-                if (
-                    意味モデル.GetSymbolInfo(呼び出し式).Symbol
-                    is not IMethodSymbol 呼び出しメソッド
-                )
-                {
-                    continue;
-                }
-
-                if (
-                    !呼び出しメソッド.IsStatic
-                    && 呼び出しメソッド.MethodKind == MethodKind.Ordinary
-                    && SymbolEqualityComparer.Default.Equals(
-                        呼び出しメソッド.ContainingType,
-                        包含型
-                    )
-                )
-                {
-                    呼び出しメソッド群.Add(呼び出しメソッド);
-                }
-            }
-
-            結果[メソッド] = new メソッド使用状況(状態メンバー群, 呼び出しメソッド群);
-        }
-
-        return 結果;
-    }
-
-    private static Dictionary<IMethodSymbol, HashSet<ISymbol>> 有効状態使用状況を作る(
-        IReadOnlyDictionary<IMethodSymbol, メソッド使用状況> メソッド使用状況
-    )
-    {
-        var 結果 = new Dictionary<IMethodSymbol, HashSet<ISymbol>>(SymbolEqualityComparer.Default);
-
-        foreach (var メソッド in メソッド使用状況.Keys)
-        {
-            var 有効状態群 = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
-            var 訪問済みメソッド群 = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
-            var 待ち行列 = new Queue<IMethodSymbol>();
-            待ち行列.Enqueue(メソッド);
-
-            while (待ち行列.TryDequeue(out var 現在の項目))
-            {
-                if (
-                    !訪問済みメソッド群.Add(現在の項目)
-                    || !メソッド使用状況.TryGetValue(現在の項目, out var 使用状況)
-                )
-                {
-                    continue;
-                }
-
-                有効状態群.UnionWith(使用状況.状態メンバー群);
-                foreach (var 呼び出しメソッド in 使用状況.呼び出しメソッド群)
-                {
-                    待ち行列.Enqueue(呼び出しメソッド);
-                }
-            }
-
-            if (有効状態群.Count > 0)
-            {
-                結果[メソッド] = 有効状態群;
-            }
-        }
-
-        return 結果;
     }
 
     private static bool インスタンス状態メンバーである(ISymbol? 記号, INamedTypeSymbol 包含型) =>
@@ -231,11 +154,6 @@ internal sealed class 複数オブジェクト混在規則 : I解析規則
 
         return 結果;
     }
-
-    private sealed record メソッド使用状況(
-        HashSet<ISymbol> 状態メンバー群,
-        HashSet<IMethodSymbol> 呼び出しメソッド群
-    );
 
     private readonly record struct 状態まとまり(int 状態メンバー数, int メソッド数);
 }
