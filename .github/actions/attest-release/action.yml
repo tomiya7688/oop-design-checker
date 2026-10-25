@@ -1,0 +1,47 @@
+name: Attest and verify final release artifacts
+description: Validate final bytes and verify provenance with exact workflow/source identity
+inputs:
+  directory:
+    required: true
+    description: Flat artifact directory
+  archive:
+    default: ''
+    description: Expected single archive basename
+  release-version:
+    default: ''
+    description: Product version for the complete twelve-archive release
+outputs:
+  bundle-path:
+    description: Sigstore bundle path produced by the attestation action
+    value: ${{ steps.attest.outputs.bundle-path }}
+runs:
+  using: composite
+  steps:
+    - name: Validate exact subjects and checksums
+      id: subjects
+      shell: bash
+      env:
+        ARTIFACT_DIRECTORY: ${{ inputs.directory }}
+        ARCHIVE_NAME: ${{ inputs.archive }}
+        PRODUCT_VERSION: ${{ inputs.release-version }}
+      run: >-
+        python tools/oop-design-checker/tests/release-provenance/verify_release_provenance.py prepare
+        --directory "$ARTIFACT_DIRECTORY" --archive "$ARCHIVE_NAME"
+        --release-version "$PRODUCT_VERSION" --github-output "$GITHUB_OUTPUT"
+    - name: Attest exact subjects
+      id: attest
+      uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+      with:
+        subject-path: ${{ steps.subjects.outputs.subjects }}
+        create-storage-record: false
+    - name: Verify every final subject and identity
+      shell: bash
+      env:
+        ARTIFACT_DIRECTORY: ${{ inputs.directory }}
+        ARCHIVE_NAME: ${{ inputs.archive }}
+        PRODUCT_VERSION: ${{ inputs.release-version }}
+        GH_TOKEN: ${{ github.token }}
+      run: >-
+        python tools/oop-design-checker/tests/release-provenance/verify_release_provenance.py verify
+        --directory "$ARTIFACT_DIRECTORY" --archive "$ARCHIVE_NAME"
+        --release-version "$PRODUCT_VERSION"

@@ -65,3 +65,7 @@ Each checker release is a coverage snapshot describing which parts of the curren
 ## Python tooling updates
 
 See the [Japanese canonical Python update and CA audit guide](tools/oop-design-checker/docs/python-trust.md) for development and CI tooling. Static CA membership checks do not prove rejection of every compromised or cross-signed chain.
+
+## Release authenticity
+
+Publication remains blocked until trusted Windows/macOS signing is implemented. See the [Japanese canonical provenance and release gate guide](tools/oop-design-checker/docs/release-authenticity.md) for artifact inventory, verification, and outstanding work.

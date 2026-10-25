@@ -9,6 +9,7 @@ on:
       - '.github/actions/setup-python-trust/**'
       - 'tools/oop-design-checker/tests/python-security/**'
       - '.github/workflows/release.yml'
+      - '.github/actions/attest-release/**'
       - 'tools/oop-design-checker/Directory.Build.props'
       - 'tools/oop-design-checker/CHANGELOG.md'
       - 'tools/oop-design-checker/CHANGELOG.en.md'
@@ -22,6 +23,11 @@ on:
       - 'docs/**'
       - 'tools/oop-design-checker/docs/**'
   workflow_dispatch:
+    inputs:
+      provenance-smoke-only:
+        description: Run only the harmless provenance fixture; do not build or publish a release
+        type: boolean
+        default: false
   workflow_call:
 
 permissions:
@@ -29,6 +35,7 @@ permissions:
 
 jobs:
   version:
+    if: github.event_name != 'workflow_dispatch' || !inputs.provenance-smoke-only
     name: version
     runs-on: ubuntu-latest
     outputs:
@@ -286,7 +293,7 @@ jobs:
           archive = archives[0]
           digest = sha256(archive.read_bytes()).hexdigest()
           archive.with_name(f'{archive.name}.sha256').write_text(
-              f'{digest}  {archive.name}\n', encoding='utf-8'
+              f'{digest}  {archive.name}\n', encoding='utf-8', newline='\n'
           )
           PY
 
@@ -487,7 +494,7 @@ jobs:
           archive = archives[0]
           digest = sha256(archive.read_bytes()).hexdigest()
           archive.with_name(f'{archive.name}.sha256').write_text(
-              f'{digest}  {archive.name}\n', encoding='utf-8'
+              f'{digest}  {archive.name}\n', encoding='utf-8', newline='\n'
           )
           PY
 
@@ -523,18 +530,33 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
 
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-python-trust
+
       - name: Download packaged binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: oop-design-checker-*
           path: dist
           merge-multiple: true
 
-      - name: Build combined checksum manifest
+      - name: Attest and verify complete release set
+        uses: ./.github/actions/attest-release
+        with:
+          directory: dist
+          release-version: ${{ needs.version.outputs.product-version }}
+
+      - name: Block publication until native signing is implemented
         shell: bash
-        run: cat dist/*.sha256 > dist/SHA256SUMS.txt
+        run: |
+          echo "::error::Release publication is blocked by issue #231: trusted Authenticode with RFC 3161 timestamp and Developer ID/notarization are not implemented."
+          exit 1
 
       - name: Create GitHub Release
         env:
@@ -546,3 +568,88 @@ jobs:
           --verify-tag
           --generate-notes
           --title "oop-design-checker ${GITHUB_REF_NAME}"
+
+  provenance-smoke:
+    name: provenance-smoke
+    if: github.event_name == 'workflow_dispatch' && inputs.provenance-smoke-only
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-python-trust
+      - name: Create harmless fixture archive and checksum
+        shell: python
+        run: |
+          from hashlib import sha256
+          from io import BytesIO
+          from pathlib import Path
+          import tarfile
+
+          directory = Path("provenance-smoke")
+          directory.mkdir()
+          archive = directory / "provenance-test.tar.gz"
+          payload = b"CI provenance fixture; not a product build.\n"
+          with tarfile.open(archive, "w:gz") as output:
+              entry = tarfile.TarInfo("README.txt")
+              entry.size = len(payload)
+              output.addfile(entry, BytesIO(payload))
+          archive.with_name(archive.name + ".sha256").write_text(
+              f"{sha256(archive.read_bytes()).hexdigest()}  {archive.name}\n",
+              encoding="utf-8", newline="\n"
+          )
+      - name: Exercise real keyless attestation and verification
+        id: provenance
+        uses: ./.github/actions/attest-release
+        with:
+          directory: provenance-smoke
+          archive: provenance-test.tar.gz
+      - name: Reject tampered fixture and different source identity
+        shell: python
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          from hashlib import sha256
+          import os
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          archive = Path("provenance-smoke/provenance-test.tar.gz")
+          checksum = archive.with_name(archive.name + ".sha256")
+          original = archive.read_bytes()
+          original_checksum = checksum.read_bytes()
+          command = [sys.executable, "tools/oop-design-checker/tests/release-provenance/verify_release_provenance.py",
+                     "verify", "--directory", "provenance-smoke", "--archive", archive.name]
+          evidence = []
+          try:
+              archive.write_bytes(original + b"tampered")
+              checksum.write_text(f"{sha256(archive.read_bytes()).hexdigest()}  {archive.name}\n", encoding="utf-8", newline="\n")
+              result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+              evidence.append("tampered archive:\n" + result.stdout + result.stderr)
+              if result.returncode == 0:
+                  raise SystemExit("Tampered artifact unexpectedly passed cryptographic verification")
+          finally:
+              archive.write_bytes(original)
+              checksum.write_bytes(original_checksum)
+          environment = dict(os.environ, GITHUB_SHA="0" * 40)
+          result = subprocess.run(command, env=environment, capture_output=True, text=True, timeout=120)
+          evidence.append("wrong source SHA:\n" + result.stdout + result.stderr)
+          if result.returncode == 0:
+              raise SystemExit("Wrong source identity unexpectedly passed verification")
+          report = Path(os.environ["RUNNER_TEMP"]) / "provenance-negative-test.txt"
+          report.write_text("\n".join(evidence), encoding="utf-8")
+          print(report.read_text(encoding="utf-8"))
+      - name: Upload fixture and verification bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: provenance-smoke-fixture
+          path: |
+            provenance-smoke/
+            ${{ steps.provenance.outputs.bundle-path }}
+            ${{ runner.temp }}/provenance-negative-test.txt
+          if-no-files-found: error
