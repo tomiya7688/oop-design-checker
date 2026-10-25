@@ -1,6 +1,7 @@
 """{"責務": "公開停止ゲートと、署名経路をPRで検査する接続を維持します。"}"""
 
 from pathlib import Path
+import re
 import unittest
 
 
@@ -40,6 +41,25 @@ class ReleaseWorkflowTests(unittest.TestCase):
             body = release.split(f"\n  {job}:\n", 1)[1].split(f"\n  {next_job}:\n", 1)[0]
             self.assertNotIn("id-token: write", body)
             self.assertNotIn("attestations: write", body)
+
+    def test_privileged_external_actions_are_pinned(self):
+        """{"責務": "署名権限を持つジョブと共通Python準備の外部actionをcommitへ固定します。"}"""
+        release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+        privileged = release.split("\n  release:\n", 1)[1]
+        setup = (ROOT / ".github/actions/setup-python-trust/action.yml").read_text(encoding="utf-8")
+        references = re.findall(r"uses: (actions/[^\s]+)", privileged + setup)
+        self.assertEqual(5, len(references))
+        for reference in references:
+            self.assertRegex(reference, r"^actions/[\w-]+@[0-9a-f]{40}$")
+        self.assertEqual(2, privileged.count("persist-credentials: false"))
+
+    def test_package_checksums_are_written_with_lf(self):
+        """{"責務": "Windowsを含む両frontendのchecksum生成をLFに固定します。"}"""
+        release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+        self.assertEqual(
+            2,
+            release.count("f'{digest}  {archive.name}\\n', encoding='utf-8', newline='\\n'"),
+        )
 
     def test_action_is_pinned_and_never_ignores_verification_failure(self):
         """{"責務": "署名actionを固定し、gh検証の失敗を無視しない構成を確認します。"}"""

@@ -293,7 +293,7 @@ jobs:
           archive = archives[0]
           digest = sha256(archive.read_bytes()).hexdigest()
           archive.with_name(f'{archive.name}.sha256').write_text(
-              f'{digest}  {archive.name}\n', encoding='utf-8'
+              f'{digest}  {archive.name}\n', encoding='utf-8', newline='\n'
           )
           PY
 
@@ -494,7 +494,7 @@ jobs:
           archive = archives[0]
           digest = sha256(archive.read_bytes()).hexdigest()
           archive.with_name(f'{archive.name}.sha256').write_text(
-              f'{digest}  {archive.name}\n', encoding='utf-8'
+              f'{digest}  {archive.name}\n', encoding='utf-8', newline='\n'
           )
           PY
 
@@ -534,11 +534,13 @@ jobs:
       attestations: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-python-trust
 
       - name: Download packaged binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: oop-design-checker-*
           path: dist
@@ -576,7 +578,9 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-python-trust
       - name: Create harmless fixture archive and checksum
         shell: python
@@ -641,7 +645,7 @@ jobs:
           report.write_text("\n".join(evidence), encoding="utf-8")
           print(report.read_text(encoding="utf-8"))
       - name: Upload fixture and verification bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: provenance-smoke-fixture
           path: |

@@ -76,6 +76,27 @@ class ReleaseProvenanceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ReleaseArtifacts(self.directory, archive="fixture.zip").inspect()
 
+    def test_crlf_sidecar_is_rejected(self):
+        """{"責務": "改行を正規化せず、LF以外のsidecarを拒否します。"}"""
+        self.write_archive("fixture.zip")
+        checksum = self.directory / "fixture.zip.sha256"
+        checksum.write_bytes(checksum.read_bytes().replace(b"\n", b"\r\n"))
+        with self.assertRaisesRegex(ValueError, "Checksum mismatch"):
+            ReleaseArtifacts(self.directory, archive="fixture.zip").inspect()
+
+    def test_crlf_manifest_is_rejected_without_overwriting(self):
+        """{"責務": "CRLFの統合manifestを拒否し、元のバイトを保持します。"}"""
+        artifacts = ReleaseArtifacts(self.directory, release_version="1.2.3")
+        for name in artifacts.archive_names:
+            self.write_archive(name)
+        artifacts.inspect(create_manifest=True)
+        manifest = self.directory / MANIFEST_NAME
+        content = manifest.read_bytes().replace(b"\n", b"\r\n")
+        manifest.write_bytes(content)
+        with self.assertRaisesRegex(ValueError, "manifest mismatch"):
+            artifacts.inspect(create_manifest=True)
+        self.assertEqual(content, manifest.read_bytes())
+
     def test_wrong_manifest_is_not_overwritten(self):
         """{"責務": "不正な統合manifestを作り直して成功にしないことを確認します。"}"""
         artifacts = ReleaseArtifacts(self.directory, release_version="1.2.3")

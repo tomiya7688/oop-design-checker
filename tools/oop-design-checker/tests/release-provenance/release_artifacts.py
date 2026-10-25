@@ -60,7 +60,7 @@ class ReleaseArtifacts:
             with (self.directory / name).open("rb") as archive:
                 digest = hashlib.file_digest(archive, "sha256").hexdigest()
             line = f"{digest}  {name}\n"
-            if (self.directory / f"{name}.sha256").read_text(encoding="utf-8") != line:
+            if (self.directory / f"{name}.sha256").read_bytes() != line.encode("utf-8"):
                 raise ValueError(f"Checksum mismatch: {name}")
             lines.append(line)
 
@@ -69,6 +69,6 @@ class ReleaseArtifacts:
             content = "".join(lines)
             if not manifest.exists() and create_manifest:
                 manifest.write_text(content, encoding="utf-8", newline="\n")
-            elif manifest.read_text(encoding="utf-8") != content:
+            elif manifest.read_bytes() != content.encode("utf-8"):
                 raise ValueError("Combined checksum manifest mismatch")
         return [(self.directory / name).resolve() for name in sorted(expected)]
