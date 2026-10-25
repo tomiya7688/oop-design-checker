@@ -69,3 +69,7 @@ checker releaseは、その時点の本文に対して「どの原則をどのru
 ## 開発時の整形
 
 変更ファイルの整形と確認は[整形手順](tools/formatting/README.md)に従ってください。
+
+## 配布物の真正性
+
+Windows/macOSの信頼された署名が整うまで公開を停止します。[署名・provenanceの検証と残る作業](tools/oop-design-checker/docs/release-authenticity.md)を確認してください。
