@@ -1,0 +1,8 @@
+required-version = "==0.14.0"
+target-version = "py313"
+line-length = 100
+force-exclude = true
+extend-exclude = [".task-worktrees", ".validation-dependencies", ".validation-temp", "bin", "obj", "vendor", "node_modules"]
+
+[format]
+line-ending = "lf"

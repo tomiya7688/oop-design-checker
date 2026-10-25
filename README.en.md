@@ -61,3 +61,7 @@ GitHub Actions remain at the repository root because GitHub requires that locati
 Checker `1.0.0` is a **tool version**. It is not the version of the conceptual OOP definition.
 
 Each checker release is a coverage snapshot describing which parts of the current document are mapped to implemented rules. Updating the document does not automatically mean the checker implements the new or changed principles.
+
+## Python tooling updates
+
+See the [Japanese canonical Python update and CA audit guide](tools/oop-design-checker/docs/python-trust.md) for development and CI tooling. Static CA membership checks do not prove rejection of every compromised or cross-signed chain.

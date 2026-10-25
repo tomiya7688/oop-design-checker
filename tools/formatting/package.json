@@ -1,0 +1,12 @@
+{
+  "name": "oop-design-checker-formatting",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "format": "prettier --config .prettierrc.json --ignore-path .prettierignore --write",
+    "format:check": "prettier --config .prettierrc.json --ignore-path .prettierignore --check"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

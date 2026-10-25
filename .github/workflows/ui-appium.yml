@@ -3,6 +3,8 @@ name: ui-appium
 on:
   pull_request:
     paths:
+      - '.github/actions/setup-python-trust/**'
+      - 'tools/oop-design-checker/tests/python-security/**'
       - '.github/workflows/ui-appium.yml'
       - 'tools/oop-design-checker/src/OopDesignChecker/**'
       - 'tools/oop-design-checker/src/frontends/gui/**'
@@ -48,9 +50,7 @@ jobs:
         with:
           node-version: '24'
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
+      - uses: ./.github/actions/setup-python-trust
 
       - name: Test macOS bundle contract
         shell: bash
@@ -150,6 +150,7 @@ jobs:
         run: |
           npm install --global appium@3
           python -m pip install --requirement tools/oop-design-checker/tests/ui-appium/requirements.txt
+          python tools/oop-design-checker/tests/python-security/audit_python_trust.py
 
       - name: Install Windows Appium driver
         if: matrix.platform == 'windows'

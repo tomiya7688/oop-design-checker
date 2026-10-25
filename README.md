@@ -61,3 +61,11 @@ GitHub ActionsはGitHubの仕様上rootに置き、tool配下を参照します�
 checkerの `1.0.0` は**tool version**です。本文の概念定義をchecker versionと同一視しません。
 
 checker releaseは、その時点の本文に対して「どの原則をどのruleでどこまで補助検査できるか」というcoverage snapshotを持ちます。本文が更新されても、未実装部分をchecker対応済みとはみなしません。
+
+## 開発環境のPython更新
+
+開発・CIで使うPythonは[更新とCA点検の手順](tools/oop-design-checker/docs/python-trust.md)に従って確認してください。静的なCA点検と、問題チェーン全体の拒否確認は区別します。
+
+## 開発時の整形
+
+変更ファイルの整形と確認は[整形手順](tools/formatting/README.md)に従ってください。

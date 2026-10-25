@@ -73,9 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
+      - uses: ./.github/actions/setup-python-trust
 
       - name: Validate 1.0.0 specification contract
         run: python tools/oop-design-checker/tests/release/SpecificationContract.py
@@ -86,6 +84,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-python-trust
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -182,3 +182,45 @@ jobs:
       - name: Check formatting
         working-directory: tools/oop-design-checker
         run: dotnet csharpier check .
+
+  python-security:
+    name: python-security (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-python-trust
+      - name: Test Python trust policy
+        run: python -m unittest discover -s tools/oop-design-checker/tests/python-security -p 'test_*.py' -v
+      - name: Record actual Python trust sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/oop-design-checker/tests/python-security/audit_python_trust.py | tee python-trust-audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python-trust-${{ matrix.os }}
+          path: python-trust-audit.json
+          if-no-files-found: warn
+
+  support-formatting:
+    name: support-formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-python-trust
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned formatters
+        run: |
+          python -m pip install -r tools/formatting/requirements.txt
+          npm ci --prefix tools/formatting --ignore-scripts --no-audit --no-fund
+      - name: Check Python security formatting
+        run: python -m ruff format --check --config tools/formatting/ruff.toml tools/oop-design-checker/tests/python-security
+      - name: Check workflow and documentation formatting
+        run: npm run --prefix tools/formatting format:check -- ../../.github/actions/setup-python-trust/action.yml ../../.github/workflows/ci.yml ../../.github/workflows/release-candidate.yml ../../.github/workflows/release.yml ../../.github/workflows/ui-ai-contract.yml ../../.github/workflows/ui-ai-panel.yml ../../.github/workflows/ui-appium.yml ../../README.md ../../README.en.md ../oop-design-checker/docs/python-trust.md package.json package-lock.json .prettierrc.json README.md
