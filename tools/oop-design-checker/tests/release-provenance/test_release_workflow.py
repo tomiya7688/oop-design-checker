@@ -25,13 +25,21 @@ class ReleaseWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(1, release.count("gh release create"))
 
-    def test_all_final_sets_use_shared_action(self):
-        """{"責務": "CUI・GUI・統合manifestの全経路が共通actionを通ります。"}"""
+    def test_final_release_and_fixture_use_shared_action(self):
+        """{"責務": "最終25件の公開集合と無害なfixtureが共通actionを通ります。"}"""
         release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
-        self.assertEqual(4, release.count("uses: ./.github/actions/attest-release"))
+        self.assertEqual(2, release.count("uses: ./.github/actions/attest-release"))
         self.assertIn("release-version: ${{ needs.version.outputs.product-version }}", release)
         self.assertIn("provenance-smoke-only", release)
         self.assertIn("not a product build", release)
+
+    def test_pull_request_builds_have_no_signing_write_permissions(self):
+        """{"責務": "PRから実行するビルドへ署名用の書込権限を与えません。"}"""
+        release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+        for job, next_job in (("package", "gui-package"), ("gui-package", "release")):
+            body = release.split(f"\n  {job}:\n", 1)[1].split(f"\n  {next_job}:\n", 1)[0]
+            self.assertNotIn("id-token: write", body)
+            self.assertNotIn("attestations: write", body)
 
     def test_action_is_pinned_and_never_ignores_verification_failure(self):
         """{"責務": "署名actionを固定し、gh検証の失敗を無視しない構成を確認します。"}"""

@@ -26,7 +26,7 @@ release.ymlはCUIとGUIをそれぞれ次の6 RIDへビルドします。
 4. gh attestation verifyが全subjectを暗号検証します。repo、release.yml、source SHA、source ref、workflow SHA、GitHub-hosted runnerを制約します。対象0件、CLI未導入、検証不能、失敗、90秒の応答期限超過は失敗にします。
 5. native署名の停止ゲートがGitHub Release作成を止めます。署名のないWindows/macOS配布物をprovenanceだけで公開しません。
 
-OIDC・attestationsの書込権限は関連ジョブだけに与えます。PRでは署名要求を実行せず、単体テストと既存のビルド・package・E2Eを実行します。タグの配布経路と、明示的に選んだ無害なsmoke fixtureだけが署名サービスを使います。
+PRから実行するビルドジョブは読取権限だけで動作します。OIDC・attestationsの書込権限は、タグ専用の最終公開ジョブと、明示的に選んだ無害なsmoke fixtureのジョブだけに与えます。最終25件の署名を公開ジョブへ集約し、個々のビルドでの重複署名を避けます。
 
 GitHubの[公式action](https://github.com/actions/attest)と[CLI検証仕様](https://cli.github.com/manual/gh_attestation_verify)に従います。公開repoでは公開Sigstoreが使われ、provenanceは公開されます。秘密や利用者データをsubjectへ含めないでください。
 
