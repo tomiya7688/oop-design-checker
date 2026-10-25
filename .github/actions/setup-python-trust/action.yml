@@ -21,6 +21,22 @@ runs:
             for name in ("SSL_CERT_FILE", "REQUESTS_CA_BUNDLE", "PIP_CERT"):
                 output.write(f"{name}={certifi.where()}\n")
             output.write("SSL_CERT_DIR=\n")
+    - name: Remove the compromised root from disposable Windows runner stores
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        if ($env:GITHUB_ACTIONS -ne 'true') { throw 'This cleanup is limited to disposable CI runners.' }
+        $blockedSha256 = '86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b'
+        foreach ($store in @('Cert:\CurrentUser\Root', 'Cert:\CurrentUser\CA', 'Cert:\LocalMachine\Root', 'Cert:\LocalMachine\CA')) {
+          foreach ($certificate in @(Get-ChildItem -LiteralPath $store)) {
+            $actualSha256 = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($certificate.RawData)).ToLowerInvariant()
+            if ($actualSha256 -eq $blockedSha256) {
+              Write-Output "Removing blocked certificate from $store (SHA-256 $actualSha256)"
+              Remove-Item -LiteralPath $certificate.PSPath -Force -ErrorAction Stop
+            }
+          }
+        }
     - name: Audit Python and actual CA sources
       shell: bash
       run: python tools/oop-design-checker/tests/python-security/audit_python_trust.py

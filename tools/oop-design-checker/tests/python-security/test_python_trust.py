@@ -128,6 +128,16 @@ class PythonTrustTests(unittest.TestCase):
                     with self.subTest(workflow=workflow.name, job=name):
                         self.assertIn("uses: ./.github/actions/setup-python-trust", body)
 
+    def test_windows_cleanup_is_scoped_and_uses_the_audited_fingerprint(self):
+        """{"責務": "Windows runnerの除去対象が監査と同じDER指紋で限定されることを確認します。"}"""
+        root = Path(__file__).resolve().parents[4]
+        content = (root / ".github/actions/setup-python-trust/action.yml").read_text(encoding="utf-8")
+        self.assertIn("if: runner.os == 'Windows'", content)
+        self.assertIn("$env:GITHUB_ACTIONS -ne 'true'", content)
+        self.assertIn(audit.COMPROMISED_ROOT_SHA256, content)
+        self.assertIn("if ($actualSha256 -eq $blockedSha256)", content)
+        self.assertIn("Remove-Item -LiteralPath $certificate.PSPath", content)
+
     def test_shared_policy_changes_trigger_consumers(self):
         """{"責務": "共通actionだけの変更でも該当PRワークフローが実行されることを確認します。"}"""
         root = Path(__file__).resolve().parents[4]
