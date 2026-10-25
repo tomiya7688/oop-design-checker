@@ -1,0 +1,6 @@
+**/bin/**
+**/obj/**
+**/vendor/**
+**/node_modules/**
+**/.task-worktrees/**
+**/.validation-*/**

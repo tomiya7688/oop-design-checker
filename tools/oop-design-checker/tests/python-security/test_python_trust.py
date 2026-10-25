@@ -136,7 +136,7 @@ class PythonTrustTests(unittest.TestCase):
         self.assertIn("$env:GITHUB_ACTIONS -ne 'true'", content)
         self.assertIn(audit.COMPROMISED_ROOT_SHA256, content)
         self.assertIn("if ($actualSha256 -eq $blockedSha256)", content)
-        self.assertIn("Remove-Item -LiteralPath $certificate.PSPath", content)
+        self.assertIn("$store.Remove($certificate)", content)
 
     def test_shared_policy_changes_trigger_consumers(self):
         """{"責務": "共通actionだけの変更でも該当PRワークフローが実行されることを確認します。"}"""
