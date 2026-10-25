@@ -24,12 +24,18 @@ class PythonTrustTests(unittest.TestCase):
     def test_version_boundaries(self):
         """{"責務": "最低版・古い版・未認識版を区別します。"}"""
         for actual, minimum, expected in [
-            ("26.2.1", "26.2.2", False), ("26.2.2", "26.2.2", True),
-            ("26.10.0", "26.2.2", True), ("26.2.2rc1", "26.2.2", False),
-            ("unknown", "26.2.2", False), ("2026.10.18", "2026.10.19", False),
-            ("2026.10.23", "2026.10.19", True), ("0.13.3", "0.13.4", False),
-            ("0.13.4", "0.13.4", True), ("4.5.0", "4.5.1", False),
-            ("4.5.1", "4.5.1", True), ("26.3", "26.2.2", True),
+            ("26.2.1", "26.2.2", False),
+            ("26.2.2", "26.2.2", True),
+            ("26.10.0", "26.2.2", True),
+            ("26.2.2rc1", "26.2.2", False),
+            ("unknown", "26.2.2", False),
+            ("2026.10.18", "2026.10.19", False),
+            ("2026.10.23", "2026.10.19", True),
+            ("0.13.3", "0.13.4", False),
+            ("0.13.4", "0.13.4", True),
+            ("4.5.0", "4.5.1", False),
+            ("4.5.1", "4.5.1", True),
+            ("26.3", "26.2.2", True),
         ]:
             with self.subTest(actual=actual, minimum=minimum):
                 self.assertEqual(expected, audit.version_meets_minimum(actual, minimum))
@@ -65,7 +71,9 @@ class PythonTrustTests(unittest.TestCase):
 
     def test_required_and_optional_packages(self):
         """{"責務": "必須パッケージの欠落と任意パッケージの未導入を区別します。"}"""
-        with patch.object(importlib.metadata, "version", side_effect=importlib.metadata.PackageNotFoundError):
+        with patch.object(
+            importlib.metadata, "version", side_effect=importlib.metadata.PackageNotFoundError
+        ):
             instance = audit.PythonTrustAudit()
             instance.check_package("uv", required=False)
             self.assertFalse(instance.report["errors"])
@@ -85,10 +93,15 @@ class PythonTrustTests(unittest.TestCase):
         configuration = Mock()
         configuration.items.return_value = [
             ("global.index-url", "https://user:private-password@example.invalid"),
-            ("global.cert", "configured-ca.pem"), ("global.trusted-host", "example.invalid")]
+            ("global.cert", "configured-ca.pem"),
+            ("global.trusted-host", "example.invalid"),
+        ]
         module = types.SimpleNamespace(Configuration=Mock(return_value=configuration))
-        with patch.dict(sys.modules, {"pip._internal.configuration": module}), patch.dict(
-            os.environ, {"PIP_CERT": "env-ca.pem", "SSL_CERT_DIR": "deferred"}, clear=True
+        with (
+            patch.dict(sys.modules, {"pip._internal.configuration": module}),
+            patch.dict(
+                os.environ, {"PIP_CERT": "env-ca.pem", "SSL_CERT_DIR": "deferred"}, clear=True
+            ),
         ):
             instance = audit.PythonTrustAudit()
             with patch.object(instance, "check_bundle") as check:
@@ -100,8 +113,13 @@ class PythonTrustTests(unittest.TestCase):
 
     def test_configuration_error_is_failure(self):
         """{"責務": "pip設定を読めなかった場合に成功と扱わないことを確認します。"}"""
-        module = types.SimpleNamespace(Configuration=Mock(side_effect=RuntimeError("private detail")))
-        with patch.dict(sys.modules, {"pip._internal.configuration": module}), patch.dict(os.environ, {}, clear=True):
+        module = types.SimpleNamespace(
+            Configuration=Mock(side_effect=RuntimeError("private detail"))
+        )
+        with (
+            patch.dict(sys.modules, {"pip._internal.configuration": module}),
+            patch.dict(os.environ, {}, clear=True),
+        ):
             instance = audit.PythonTrustAudit()
             instance.check_overrides()
         self.assertEqual(["pip configuration could not be inspected"], instance.report["errors"])
@@ -109,7 +127,10 @@ class PythonTrustTests(unittest.TestCase):
     def test_cli_exit_code_matches_report(self):
         """{"責務": "検査失敗をJSONと終了コードの両方に反映します。"}"""
         for passed in [False, True]:
-            with self.subTest(passed=passed), patch.object(audit.PythonTrustAudit, "run", return_value={"passed": passed}):
+            with (
+                self.subTest(passed=passed),
+                patch.object(audit.PythonTrustAudit, "run", return_value={"passed": passed}),
+            ):
                 output = io.StringIO()
                 with contextlib.redirect_stdout(output):
                     self.assertEqual(0 if passed else 1, audit.main())
@@ -131,7 +152,9 @@ class PythonTrustTests(unittest.TestCase):
     def test_windows_cleanup_is_scoped_and_uses_the_audited_fingerprint(self):
         """{"責務": "Windows runnerの除去対象が監査と同じDER指紋で限定されることを確認します。"}"""
         root = Path(__file__).resolve().parents[4]
-        content = (root / ".github/actions/setup-python-trust/action.yml").read_text(encoding="utf-8")
+        content = (root / ".github/actions/setup-python-trust/action.yml").read_text(
+            encoding="utf-8"
+        )
         self.assertIn("if: runner.os == 'Windows'", content)
         self.assertIn("$env:GITHUB_ACTIONS -ne 'true'", content)
         self.assertIn(audit.COMPROMISED_ROOT_SHA256, content)

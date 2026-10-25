@@ -18,6 +18,7 @@ COMPROMISED_ROOT_SHA256 = "86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5
 
 def version_meets_minimum(actual, minimum):
     """{"責務": "最低版未満と未認識の版を拒否します。", "処理": ["安定版の数値を比較します。"], "引数": {"actual": "実際の版です。", "minimum": "最低版です。"}, "戻り値": "最低版以上ならtrueです。"}"""
+
     def parts(value):
         """{"責務": "安定版を数値へ変換します。", "処理": ["二要素または三要素の版を解析します。"], "引数": {"value": "版の文字列です。"}, "戻り値": "数値の組、またはnullです。"}"""
         match = re.fullmatch(r"(\d+)\.(\d+)(?:\.(\d+))?", value)
@@ -30,8 +31,13 @@ def version_meets_minimum(actual, minimum):
 def inspect_ca_context(context):
     """{"責務": "実CA集合の問題ルートを調べます。", "処理": ["DERのSHA-256を比較します。"], "引数": {"context": "検査するSSL contextです。"}, "戻り値": "CA数と問題ルートの有無です。"}"""
     certificates = context.get_ca_certs(binary_form=True)
-    return {"ca_count": len(certificates), "compromised_root_present": any(
-        hashlib.sha256(certificate).hexdigest() == COMPROMISED_ROOT_SHA256 for certificate in certificates)}
+    return {
+        "ca_count": len(certificates),
+        "compromised_root_present": any(
+            hashlib.sha256(certificate).hexdigest() == COMPROMISED_ROOT_SHA256
+            for certificate in certificates
+        ),
+    }
 
 
 class PythonTrustAudit:
@@ -39,10 +45,15 @@ class PythonTrustAudit:
 
     def __init__(self):
         """{"責務": "実行環境の識別情報を記録します。", "処理": ["実行中Pythonと空の結果を用意します。"], "引数": {}, "戻り値": null}"""
-        self.report = {"python": sys.executable, "python_version": sys.version.split()[0],
-                       "packages": {}, "trust_sources": [], "errors": [],
-                       "default_verify_paths": ssl.get_default_verify_paths()._asdict(),
-                       "boundary": "Static CA membership only; not a revocation or cross-signed-chain rejection test."}
+        self.report = {
+            "python": sys.executable,
+            "python_version": sys.version.split()[0],
+            "packages": {},
+            "trust_sources": [],
+            "errors": [],
+            "default_verify_paths": ssl.get_default_verify_paths()._asdict(),
+            "boundary": "Static CA membership only; not a revocation or cross-signed-chain rejection test.",
+        }
 
     def check_package(self, name, required=True):
         """{"責務": "パッケージ版を最低版と比較します。", "処理": ["未導入と古い版を区別します。"], "引数": {"name": "パッケージ名です。", "required": "必須かを指定します。"}, "戻り値": null}"""
@@ -78,19 +89,24 @@ class PythonTrustAudit:
     def check_overrides(self):
         """{"責務": "CA上書きとpipのTLS検証回避を調べます。", "処理": ["CAファイルを検査し、遅延ディレクトリとtrusted-hostを拒否します。"], "引数": {}, "戻り値": null}"""
         if os.environ.get("SSL_CERT_DIR"):
-            self.report["errors"].append("SSL_CERT_DIR: lazy CA directory requires separate verification")
+            self.report["errors"].append(
+                "SSL_CERT_DIR: lazy CA directory requires separate verification"
+            )
         for name in ("SSL_CERT_FILE", "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE", "PIP_CERT"):
             if os.environ.get(name):
                 self.check_bundle(name, os.environ[name])
         try:
             from pip._internal.configuration import Configuration
+
             configuration = Configuration(isolated=False)
             configuration.load()
             for key, value in configuration.items():
                 if key.endswith(".cert"):
                     self.check_bundle(f"pip-config:{key}", value)
                 if key.endswith(".trusted-host") and value:
-                    self.report["errors"].append("pip trusted-host disables normal TLS verification")
+                    self.report["errors"].append(
+                        "pip trusted-host disables normal TLS verification"
+                    )
         except Exception:
             # 認証URLや設定値をログへ出さず、検査不能だけを記録します。
             self.report["errors"].append("pip configuration could not be inspected")
@@ -99,7 +115,10 @@ class PythonTrustAudit:
         """{"責務": "パッケージと各実CAを読み取り専用で検査します。", "処理": ["版、CA、既定context、明示上書きを確認します。"], "引数": {}, "戻り値": "検査結果です。"}"""
         for name in MINIMUM_VERSIONS:
             self.check_package(name, required=name in ("pip", "certifi"))
-        for name, module_name in (("certifi", "certifi"), ("pip-vendored-certifi", "pip._vendor.certifi")):
+        for name, module_name in (
+            ("certifi", "certifi"),
+            ("pip-vendored-certifi", "pip._vendor.certifi"),
+        ):
             try:
                 self.check_bundle(name, importlib.import_module(module_name).where())
             except (ImportError, AttributeError):

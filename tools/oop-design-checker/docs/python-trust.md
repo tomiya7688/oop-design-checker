@@ -20,17 +20,17 @@ CI、release、release-candidate、ui-appium、ui-ai-contract、ui-ai-panelのPy
 
 1. 公式のハッシュ付きpipをインストールしてください。
 
-~~~shell
+```shell
 python -m pip install --no-deps --upgrade "pip @ https://files.pythonhosted.org/packages/3f/06/3e4420302363fbb71be3c7f35ce042f54bfca330e3e66b3a2e3c4cca579f/pip-26.2.2-py3-none-any.whl#sha256=fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70"
 python -m pip install --upgrade "certifi>=2026.10.19"
-~~~
+```
 
 2. 必要なrequirementsをインストール後、実環境を点検してください。
 
-~~~shell
+```shell
 python tools/oop-design-checker/tests/python-security/audit_python_trust.py
 python -m unittest discover -s tools/oop-design-checker/tests/python-security -p "test_*.py" -v
-~~~
+```
 
 3. JSONのpython、packages、trust_sources、errorsを確認してください。終了コード0は、この静的検査に合格したことだけを表します。CAパスには利用者名などが含まれるため、共有時は非公開情報を除いてください。
 

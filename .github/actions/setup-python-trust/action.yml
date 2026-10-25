@@ -22,7 +22,7 @@ runs:
                 output.write(f"{name}={certifi.where()}\n")
             output.write("SSL_CERT_DIR=\n")
     - name: Remove the compromised root from disposable Windows runner stores
-      if: runner.os == 'Windows'
+      if: runner.os == 'Windows' && runner.environment == 'github-hosted'
       shell: pwsh
       run: |
         $ErrorActionPreference = 'Stop'
