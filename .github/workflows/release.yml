@@ -6,6 +6,8 @@ on:
       - 'v*'
   pull_request:
     paths:
+      - '.github/actions/setup-python-trust/**'
+      - 'tools/oop-design-checker/tests/python-security/**'
       - '.github/workflows/release.yml'
       - 'tools/oop-design-checker/Directory.Build.props'
       - 'tools/oop-design-checker/CHANGELOG.md'
@@ -133,6 +135,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-python-trust
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -342,6 +346,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-python-trust
 
       - uses: actions/setup-dotnet@v4
         with:
