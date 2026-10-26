@@ -69,3 +69,7 @@ See the [Japanese canonical Python update and CA audit guide](tools/oop-design-c
 ## Release authenticity
 
 Publication remains blocked until trusted Windows/macOS signing is implemented. See the [Japanese canonical provenance and release gate guide](tools/oop-design-checker/docs/release-authenticity.md) for artifact inventory, verification, and outstanding work.
+
+## Local checks before a PR
+
+Run `python check_local.py` from the repository root. See the [canonical Japanese guide](tools/local-check/README.md) for prerequisites, automatic selection and CI boundaries. Missing dependencies or zero targets fail; no automatic restore, installation or fixes run.

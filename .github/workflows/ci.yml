@@ -197,6 +197,8 @@ jobs:
         run: python -m unittest discover -s tools/oop-design-checker/tests/python-security -p 'test_*.py' -v
       - name: Test release artifact and provenance contracts
         run: python -m unittest discover -s tools/oop-design-checker/tests/release-provenance -p 'test_*.py' -v
+      - name: Test local check selection and failure handling
+        run: python -B tools/local-check/run_tests.py tools/local-check
       - name: Record actual Python trust sources
         shell: bash
         run: |
@@ -223,6 +225,6 @@ jobs:
           python -m pip install -r tools/formatting/requirements.txt
           npm ci --prefix tools/formatting --ignore-scripts --no-audit --no-fund
       - name: Check Python security formatting
-        run: python -m ruff format --check --config tools/formatting/ruff.toml tools/oop-design-checker/tests/python-security tools/oop-design-checker/tests/release-provenance
+        run: python -m ruff format --check --config tools/formatting/ruff.toml tools/oop-design-checker/tests/python-security tools/oop-design-checker/tests/release-provenance tools/local-check check_local.py
       - name: Check workflow and documentation formatting
-        run: npm run --prefix tools/formatting format:check -- ../../.github/actions/setup-python-trust/action.yml ../../.github/actions/attest-release/action.yml ../../.github/workflows/ci.yml ../../.github/workflows/release-candidate.yml ../../.github/workflows/release.yml ../../.github/workflows/ui-ai-contract.yml ../../.github/workflows/ui-ai-panel.yml ../../.github/workflows/ui-appium.yml ../../README.md ../../README.en.md ../oop-design-checker/docs/python-trust.md ../oop-design-checker/docs/release-authenticity.md package.json package-lock.json .prettierrc.json README.md
+        run: npm run --prefix tools/formatting format:check -- ../../.github/actions/setup-python-trust/action.yml ../../.github/actions/attest-release/action.yml ../../.github/workflows/ci.yml ../../.github/workflows/release-candidate.yml ../../.github/workflows/release.yml ../../.github/workflows/ui-ai-contract.yml ../../.github/workflows/ui-ai-panel.yml ../../.github/workflows/ui-appium.yml ../../README.md ../../README.en.md ../oop-design-checker/docs/python-trust.md ../oop-design-checker/docs/release-authenticity.md package.json package-lock.json .prettierrc.json README.md ../local-check/README.md
