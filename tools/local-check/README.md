@@ -25,19 +25,19 @@ dotnet restore tools/oop-design-checker/OopDesignChecker.sln
 dotnet tool restore --tool-manifest tools/oop-design-checker/.config/dotnet-tools.json
 ```
 
-選択されたPythonテストに追加依存がある場合は、そのテストのrequirementsを事前に準備してください。依存不足はFAILです。検査スクリプトはインストール、restore、ネットワーク取得、自動整形、git add/resetを行いません。
+選択されたPythonテストに追加依存がある場合は、そのテストのrequirementsを事前に準備してください。依存不足はFAILです。検査スクリプトは依存のインストール、solutionのrestore、ネットワーク取得、自動整形、git add/resetを行いません。既存のC#契約テストは一時fixtureのMSBuild資産を生成します。そのrestoreは一時領域のNuGet.Configで外部feedを無効にし、準備済みのSDK・ローカルキャッシュだけを使います。
 
 ## 自動選択する検査
 
-| 変更                                               | 検査                                                                                                    |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| 全変更                                             | 分岐点との差分・indexの `git diff --check`、この入口の回帰テスト                                        |
-| Python                                             | 実行しない構文検査、固定Ruffの整形確認、同じテストディレクトリの既存unittest                            |
-| C#・project・solution・props/targets・SDK/tool設定 | solution全体のrestoreなしBuildとanalyzer、変更C#のCSharpier、設計規則・CLI契約・headless UIの既存テスト |
-| Markdown・YAML・JSON                               | 固定Prettierの構文・整形確認。JSONは構文も検査します                                                    |
-| TOML・MSBuild XML                                  | 構文検査                                                                                                |
-| workflow・formatter設定・依存指定                  | 上記に加え、既存の短いPythonテスト群                                                                    |
-| 未対応形式                                         | UNVERIFIEDとして失敗。必要な検査を追加するまでPASSにしません                                            |
+| 変更                                               | 検査                                                                                                        |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 全変更                                             | 分岐点との差分・indexの `git diff --check`、この入口の回帰テスト                                            |
+| Python                                             | 実行しない構文検査、固定Ruffの整形確認、同じテストディレクトリの既存unittest                                |
+| C#・project・solution・props/targets・SDK/tool設定 | solution全体のrestoreなしBuildとanalyzer、変更C#のCSharpier、設計規則・短いCLI契約・headless UIの既存テスト |
+| Markdown・YAML・JSON                               | 固定Prettierの構文・整形確認。JSONは構文も検査します                                                        |
+| TOML・MSBuild XML                                  | 構文検査                                                                                                    |
+| workflow・formatter設定・依存指定                  | 上記に加え、既存の短いPythonテスト群                                                                        |
+| 未対応形式                                         | UNVERIFIEDとして失敗。必要な検査を追加するまでPASSにしません                                                |
 
 削除されたファイルも関連テストやビルドの選択に使います。Pythonテストは既存の `test_*.py` を実行し、検出0件を拒否します。コマンドは1件180秒で打ち切り、後続検査と一つの要約へ進みます。
 
@@ -47,6 +47,6 @@ dotnet tool restore --tool-manifest tools/oop-design-checker/.config/dotnet-tool
 
 最後にPASS / FAIL / SKIP / UNVERIFIED、理由、所要時間、再実行コマンドを表示します。必須検査が失敗・開始不能・未対応なら終了コード1になります。依存不足を修正した後も、同じ `python check_local.py` で再実行してください。
 
-Appium実画面、画像比較、複数OS/RIDの配布検査、AI API、署名・公証はCI/releaseの確認事項としてSKIP表示します。ローカルPASSはこれらの成功を意味しません。ローカルの検査結果と所要時間、SKIP/UNVERIFIED、CIの結果を分けてPRへ記録してください。
+全MSBuild探索契約、Appium実画面、画像比較、複数OS/RIDの配布検査、AI API、署名・公証はCI/releaseの確認事項としてSKIP表示します。ローカルPASSはこれらの成功を意味しません。ローカルの検査結果と所要時間、SKIP/UNVERIFIED、CIの結果を分けてPRへ記録してください。
 
 CIではこの入口の回帰テストと固定formatter確認を実行します。C#の合否は既存solution・analyzer・テスト実行体をそのまま使い、独自の判定規則を増やしません。

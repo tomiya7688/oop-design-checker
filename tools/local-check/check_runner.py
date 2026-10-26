@@ -28,7 +28,15 @@ class CheckRunner:
         self.started = time.monotonic()
         self.environment = os.environ.copy()
         temporary = self.root / "tools/local-check/.tmp"
+        if not temporary.resolve().is_relative_to(self.root.resolve()):
+            raise ValueError("Temporary output must stay within repository")
         temporary.mkdir(parents=True, exist_ok=True)
+        # 既存テストのSDK資産生成も外部feedへ接続しないようにします。
+        (temporary / "NuGet.Config").write_text(
+            "<configuration><packageSources><clear /></packageSources>"
+            "<auditSources><clear /></auditSources></configuration>",
+            encoding="utf-8",
+        )
         self.environment.update(
             TEMP=str(temporary),
             TMP=str(temporary),

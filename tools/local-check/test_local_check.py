@@ -187,6 +187,17 @@ class LocalCheckTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(1, runner.finish())
 
+    def test_fixture_restore_has_no_remote_sources(self):
+        """{
+          "責務": "fixtureの復元をローカルだけに制限します。", "処理": ["一時領域のNuGet設定を確認します。"],
+          "引数": {}, "戻り値": null
+        }"""
+        runner = CheckRunner(self.root)
+        config = Path(runner.environment["TEMP"]) / "NuGet.Config"
+        self.assertIn(
+            "<packageSources><clear /></packageSources>", config.read_text(encoding="utf-8")
+        )
+
     def test_real_child_failure_reaches_summary(self):
         """{
           "責務": "実子プロセスの非0終了を集約します。", "処理": ["失敗コマンドを実行します。"],

@@ -121,19 +121,26 @@ class CheckPlan:
             "OopDesignChecker.Gui.HeadlessTests",
         ):
             if built:
-                self.runner.command(
-                    name,
-                    [
-                        "dotnet",
-                        "run",
-                        "--project",
-                        str(TOOL / f"tests/{name}/{name}.csproj"),
-                        "-c",
-                        "Release",
-                        "--no-build",
-                        "--no-restore",
-                    ],
-                )
+                arguments = [
+                    "dotnet",
+                    "run",
+                    "--project",
+                    str(TOOL / f"tests/{name}/{name}.csproj"),
+                    "-c",
+                    "Release",
+                    "--no-build",
+                    "--no-restore",
+                ]
+                if name != "OopDesignChecker.Tests":
+                    arguments += ["--", "--minimum-expected-tests", "1"]
+                if name == "OopDesignChecker.ContractTests":
+                    arguments += ["--filter-class", "OopDesignChecker.ContractTests.CLI契約テスト"]
+                    self.runner.record(
+                        "SKIP",
+                        "Full project-loading contracts",
+                        "Heavy MSBuild contract suites remain in CI",
+                    )
+                self.runner.command(name, arguments)
             else:
                 self.runner.record("UNVERIFIED", name, "Build failed; tests did not run")
 
