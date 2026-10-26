@@ -5,6 +5,7 @@
 import os
 from pathlib import Path
 import subprocess
+import tempfile
 import time
 
 
@@ -31,6 +32,8 @@ class CheckRunner:
         if not temporary.resolve().is_relative_to(self.root.resolve()):
             raise ValueError("Temporary output must stay within repository")
         temporary.mkdir(parents=True, exist_ok=True)
+        # 同時実行のNuGet設定やキャッシュを混在させません。
+        temporary = Path(tempfile.mkdtemp(prefix="run-", dir=temporary))
         # 既存テストのSDK資産生成も外部feedへ接続しないようにします。
         (temporary / "NuGet.Config").write_text(
             "<configuration><packageSources><clear /></packageSources>"

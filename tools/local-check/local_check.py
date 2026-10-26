@@ -60,7 +60,11 @@ def main(root):
       "処理": ["差分を確定します。", "整合性と構文を検査します。", "整形と短いテストを確認します。", "一つの要約を返します。"],
       "引数": {"root": "Gitルートです。"}, "戻り値": "必須検査の成功時のみ0です。"
     }"""
-    runner = CheckRunner(root)
+    try:
+        runner = CheckRunner(root)
+    except (OSError, ValueError) as error:
+        print(f"Local check summary\nFAIL temporary output: {error}\nRe-run: python check_local.py")
+        return 1
     try:
         changes = RepositoryChanges(root)
         base, paths = changes.collect()

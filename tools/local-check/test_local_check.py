@@ -198,6 +198,26 @@ class LocalCheckTests(unittest.TestCase):
             "<packageSources><clear /></packageSources>", config.read_text(encoding="utf-8")
         )
 
+    def test_concurrent_runs_use_separate_temporary_directories(self):
+        """{
+          "責務": "同じworktreeでの実行を一時領域で分離します。", "処理": ["二つの実行環境を比較します。"],
+          "引数": {}, "戻り値": null
+        }"""
+        first, second = CheckRunner(self.root), CheckRunner(self.root)
+        self.assertNotEqual(first.environment["TEMP"], second.environment["TEMP"])
+        for runner in (first, second):
+            self.assertTrue((Path(runner.environment["TEMP"]) / "NuGet.Config").is_file())
+
+    def test_temporary_directory_error_has_a_failure_summary(self):
+        """{
+          "責務": "出力先を準備できない場合も失敗を集約します。", "処理": ["権限不足を注入します。"],
+          "引数": {}, "戻り値": null
+        }"""
+        with patch("local_check.CheckRunner", side_effect=PermissionError("fixture")):
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(1, main(self.root))
+        self.assertIn("FAIL temporary output", output.getvalue())
+
     def test_real_child_failure_reaches_summary(self):
         """{
           "責務": "実子プロセスの非0終了を集約します。", "処理": ["失敗コマンドを実行します。"],

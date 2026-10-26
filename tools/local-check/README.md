@@ -41,7 +41,7 @@ dotnet tool restore --tool-manifest tools/oop-design-checker/.config/dotnet-tool
 
 削除されたファイルも関連テストやビルドの選択に使います。Pythonテストは既存の `test_*.py` を実行し、検出0件を拒否します。コマンドは1件180秒で打ち切り、後続検査と一つの要約へ進みます。
 
-ソースやユーザーデータは書き換えません。Buildの `bin/obj` とテストの一時出力は生成します。一時出力は `tools/local-check/.tmp` に限定し、Gitの対象から除外します。リポジトリは通常の開発時と同じく信頼できるソースを前提とします。
+ソースやユーザーデータは書き換えません。Buildの `bin/obj` とテストの一時出力は生成します。一時出力は実行ごとに `tools/local-check/.tmp/run-*` へ分け、Gitの対象から除外します。リポジトリは通常の開発時と同じく信頼できるソースを前提とします。
 
 ## 結果とCIの分担
 
