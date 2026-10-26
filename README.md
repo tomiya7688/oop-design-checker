@@ -66,6 +66,10 @@ checker releaseは、その時点の本文に対して「どの原則をどのru
 
 開発・CIで使うPythonは[更新とCA点検の手順](tools/oop-design-checker/docs/python-trust.md)に従って確認してください。静的なCA点検と、問題チェーン全体の拒否確認は区別します。
 
+## PR前のローカル確認
+
+リポジトリルートで `python check_local.py` を実行してください。必要な準備、自動選択する検査、結果とCIの分担は[ローカル確認手順](tools/local-check/README.md)に記載しています。
+
 ## 開発時の整形
 
 変更ファイルの整形と確認は[整形手順](tools/formatting/README.md)に従ってください。
