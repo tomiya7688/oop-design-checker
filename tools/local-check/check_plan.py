@@ -90,7 +90,8 @@ class CheckPlan:
           "引数": {}, "戻り値": null
         }"""
         if not any(
-            p.suffix in CSHARP_SUFFIXES or p.name in {"global.json", "dotnet-tools.json"}
+            p.suffix in CSHARP_SUFFIXES
+            or p.name in {"global.json", "dotnet-tools.json", ".editorconfig"}
             for p in self.paths
         ):
             self.runner.record("SKIP", "C# build/tests", "No C# project or source changes")

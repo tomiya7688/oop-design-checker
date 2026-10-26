@@ -29,19 +29,19 @@ dotnet tool restore --tool-manifest tools/oop-design-checker/.config/dotnet-tool
 
 ## 自動選択する検査
 
-| 変更                                               | 検査                                                                                                        |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| 全変更                                             | 分岐点との差分・indexの `git diff --check`、この入口の回帰テスト                                            |
-| Python                                             | 実行しない構文検査、固定Ruffの整形確認、同じテストディレクトリの既存unittest                                |
-| C#・project・solution・props/targets・SDK/tool設定 | solution全体のrestoreなしBuildとanalyzer、変更C#のCSharpier、設計規則・短いCLI契約・headless UIの既存テスト |
-| Markdown・YAML・JSON                               | 固定Prettierの構文・整形確認。JSONは構文も検査します                                                        |
-| TOML・MSBuild XML                                  | 構文検査                                                                                                    |
-| workflow・formatter設定・依存指定                  | 上記に加え、既存の短いPythonテスト群                                                                        |
-| 未対応形式                                         | UNVERIFIEDとして失敗。必要な検査を追加するまでPASSにしません                                                |
+| 変更                                                              | 検査                                                                                                        |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 全変更                                                            | 分岐点との差分・indexの `git diff --check`、この入口の回帰テスト                                            |
+| Python                                                            | 実行しない構文検査、固定Ruffの整形確認、同じテストディレクトリの既存unittest                                |
+| C#・project・solution・props/targets・SDK/tool設定・.editorconfig | solution全体のrestoreなしBuildとanalyzer、変更C#のCSharpier、設計規則・短いCLI契約・headless UIの既存テスト |
+| Markdown・YAML・JSON                                              | 固定Prettierの構文・整形確認。JSONは構文も検査します                                                        |
+| TOML・MSBuild XML                                                 | 構文検査                                                                                                    |
+| workflow・formatter設定・依存指定                                 | 上記に加え、既存の短いPythonテスト群                                                                        |
+| 未対応形式                                                        | UNVERIFIEDとして失敗。必要な検査を追加するまでPASSにしません                                                |
 
 削除されたファイルも関連テストやビルドの選択に使います。Pythonテストは既存の `test_*.py` を実行し、検出0件を拒否します。コマンドは1件180秒で打ち切り、後続検査と一つの要約へ進みます。
 
-ソースやユーザーデータは書き換えません。Buildの `bin/obj` とテストの一時出力は生成します。一時出力は実行ごとに `tools/local-check/.tmp/run-*` へ分け、Gitの対象から除外します。リポジトリは通常の開発時と同じく信頼できるソースを前提とします。
+ソースやユーザーデータは書き換えません。Buildの `bin/obj` とテストの一時出力は生成します。一時出力は実行ごとに `tools/local-check/.tmp/run-*` へ分け、Gitの対象から除外します。終了時には自分の実行領域だけを削除します。ロック等で残った場合はSKIPと場所を表示し、他の実行領域には触れません。リポジトリは通常の開発時と同じく信頼できるソースを前提とします。
 
 ## 結果とCIの分担
 

@@ -218,6 +218,34 @@ class LocalCheckTests(unittest.TestCase):
                 self.assertEqual(1, main(self.root))
         self.assertIn("FAIL temporary output", output.getvalue())
 
+    def test_editorconfig_selects_build_and_existing_short_tests(self):
+        """{
+          "責務": "診断設定だけの変更でもC#検査を選びます。", "処理": ["各階層の設定名で計画します。"],
+          "引数": {}, "戻り値": null
+        }"""
+        for name in (
+            ".editorconfig",
+            "tools/.editorconfig",
+            "tools/oop-design-checker/.editorconfig",
+        ):
+            runner = CheckRunner(self.root)
+            with patch.object(runner, "command", return_value=True) as command:
+                CheckPlan(self.root, [name], runner).csharp_checks()
+            self.assertEqual(4, command.call_count)
+            self.assertEqual(".NET build/analyzers", command.call_args_list[0].args[0])
+
+    def test_cleanup_removes_only_its_own_run(self):
+        """{
+          "責務": "他の実行や親領域を削除しません。", "処理": ["同時実行の片方だけを終了します。"],
+          "引数": {}, "戻り値": null
+        }"""
+        first, second = CheckRunner(self.root), CheckRunner(self.root)
+        first.record("PASS", "fixture", "completed")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(0, first.finish())
+        self.assertFalse(Path(first.environment["TEMP"]).exists())
+        self.assertTrue(Path(second.environment["TEMP"]).is_dir())
+
     def test_real_child_failure_reaches_summary(self):
         """{
           "責務": "実子プロセスの非0終了を集約します。", "処理": ["失敗コマンドを実行します。"],

@@ -15,7 +15,7 @@ COMMAND_TIMEOUT_SECONDS = 180
 class CheckRunner:
     """{
       "責務": "検査結果と実行環境を所有します。",
-      "フィールド": {"root": "検査ルートです。", "results": "状態・名前・原因です。", "environment": "子プロセス専用の環境です。", "started": "開始時刻です。"}
+      "フィールド": {"root": "検査ルートです。", "results": "状態・名前・原因です。", "environment": "子プロセス専用の環境です。", "started": "開始時刻です。", "temporary_directory": "今回だけの一時領域です。"}
     }"""
 
     def __init__(self, root):
@@ -33,7 +33,10 @@ class CheckRunner:
             raise ValueError("Temporary output must stay within repository")
         temporary.mkdir(parents=True, exist_ok=True)
         # 同時実行のNuGet設定やキャッシュを混在させません。
-        temporary = Path(tempfile.mkdtemp(prefix="run-", dir=temporary))
+        self.temporary_directory = tempfile.TemporaryDirectory(
+            prefix="run-", dir=temporary, ignore_cleanup_errors=True
+        )
+        temporary = Path(self.temporary_directory.name)
         # 既存テストのSDK資産生成も外部feedへ接続しないようにします。
         (temporary / "NuGet.Config").write_text(
             "<configuration><packageSources><clear /></packageSources>"
@@ -78,12 +81,30 @@ class CheckRunner:
         self.record("PASS", name, "exit 0")
         return True
 
+    def cleanup(self):
+        """{
+          "責務": "今回生成した一時領域だけを片付けます。",
+          "処理": ["絶対パスが専用領域内か再確認します。", "自分の出力を削除します。", "ロックによる残存を記録します。"],
+          "引数": {}, "戻り値": null
+        }"""
+        path = Path(self.temporary_directory.name)
+        allowed = (self.root / "tools/local-check/.tmp").resolve()
+        try:
+            if not path.resolve().is_relative_to(allowed) or path.resolve() == allowed:
+                raise ValueError("Refusing cleanup outside this run directory")
+            self.temporary_directory.cleanup()
+            if path.exists():
+                self.record("SKIP", "temporary cleanup", f"Generated files remain busy at {path}")
+        except (OSError, ValueError) as error:
+            self.record("SKIP", "temporary cleanup", str(error))
+
     def finish(self):
         """{
           "責務": "未検証を成功扱いせず結果を表示します。",
           "処理": ["全状態を表示します。", "必須検査の不成立を終了値へ反映します。"],
           "引数": {}, "戻り値": "成功は0、失敗・未検証は1です。"
         }"""
+        self.cleanup()
         print(f"\nLocal check summary ({time.monotonic() - self.started:.1f}s)")
         for status, name, reason in self.results:
             print(f"{status} {name}: {reason}")
