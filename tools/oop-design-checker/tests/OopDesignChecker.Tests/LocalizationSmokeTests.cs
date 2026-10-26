@@ -134,7 +134,7 @@ internal static class 表示言語スモークテスト
 
         try
         {
-            new JSON診断書き込み器(パス).Write([診断], verbose: true);
+            new JSON診断書き込み器(パス).Write([診断]);
             var JSON文字列 = File.ReadAllText(パス);
             if (
                 !JSON文字列.Contains("Excessive inheritance depth", StringComparison.Ordinal)
@@ -319,7 +319,7 @@ internal static class 表示言語スモークテスト
         var パス = Path.Combine(Path.GetTempPath(), $"oop-localization-{Guid.NewGuid():N}.txt");
         try
         {
-            new コンソール診断書き込み器(パス, 言語).Write([診断], 詳細表示);
+            new コンソール診断書き込み器(パス, 言語, 詳細表示).Write([診断]);
             return File.ReadAllText(パス);
         }
         finally

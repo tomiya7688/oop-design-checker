@@ -4,9 +4,13 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - '.github/actions/setup-python-trust/**'
+      - 'tools/oop-design-checker/tests/python-security/**'
       - '.github/workflows/release-candidate.yml'
       - '.github/workflows/ci.yml'
       - '.github/workflows/release.yml'
+      - '.github/actions/attest-release/**'
+      - 'tools/oop-design-checker/tests/release-provenance/**'
       - '.github/workflows/ui-appium.yml'
       - '.github/workflows/ui-ai-panel.yml'
       - 'tools/oop-design-checker/tests/release/BuildUiReleaseEvidence.py'
@@ -26,9 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
+      - uses: ./.github/actions/setup-python-trust
 
       - name: Test candidate evidence and prerequisite contracts
         run: |
@@ -45,6 +47,8 @@ jobs:
       candidate-sha: ${{ steps.identity.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-python-trust
 
       - name: Fix candidate SHA
         id: identity
@@ -86,6 +90,8 @@ jobs:
     needs: ci
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     uses: ./.github/workflows/release.yml
 
   native-ui:
@@ -101,6 +107,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-python-trust
 
       - name: Download Windows Appium evidence
         uses: actions/download-artifact@v4

@@ -138,7 +138,22 @@ dotnet run --project src/frontends/cui/OopDesignChecker.Cui.csproj -- src --form
 
 `--output <file>`は`text`、`json`、`sarif`で利用できます。GitHub annotationは意図的に常にstdoutへ出します。出力形式はprocess exit codeへ影響せず、CI失敗条件は`--fail-on`だけが決めます。
 
+規則の見出しも確認する場合は、`--format text --verbose`を指定してください。`--verbose`はtext本文だけに見出しを追加し、JSON・SARIF・GitHub annotationの本文は変更しません。設定ファイルを読み込んだ場合は、そのパスも通知します。通知先はtextの標準出力時にはstdout、それ以外ではstderrです。内部の共通writer契約は診断一覧だけを受け取り、言語と詳細表示はtext writerの生成時に設定します。
+
 値が必要なオプションの直後に別の既知オプションがある場合は、値の省略としてエラーにします。例えば`--output --verbose`では、`--verbose`を出力先にしません。`-report.json`のようなファイル名は値として使えます。オプションと同名のファイルは、`--output ./--verbose`のように相対パスで指定してください。
+
+### 出力契約の責務
+
+CLIとGUIの保存処理を独立して保守できるよう、共有writerの形式と生成処理は`Output`が所有します。`Output`は`Application`の型を参照しません。
+
+| 契約 | 対応形式と責務 |
+|---|---|
+| `Output.診断出力形式` | text・JSON・SARIF・GitHub annotationを表す内部の共有契約です。 |
+| `Application`のCLI引数解析 | `--format`を共有形式へ変換します。未定義値・数値形式を拒否し、GitHub annotationでの`--output`を禁止します。 |
+| `Output.DiagnosticExportFormat` | JSON・SARIFだけを公開する保存専用の契約です。公開型名と数値は維持します。 |
+| `DiagnosticExportService.Export` | 診断一覧と保存先を検証し、`ファイル保存用を作る`から取得したwriterで保存します。未定義形式は書き込み前に拒否します。 |
+
+CLIでは上記の`--format`を指定してください。GUIからはJSONまたはSARIFを選んで保存してください。新しい共有writerを追加するときは、CLIで選択できる形式とGUIで保存できる形式をそれぞれ確認してください。
 
 ## 設定
 
@@ -223,6 +238,21 @@ var failed = result.ShouldFail;
 
 ```bash
 dotnet run --project tests/OopDesignChecker.ContractTests -c Release -- --filter-class '*解析ユースケース契約テスト' '*公開解析API互換性テスト'
+```
+
+### OOP401・OOP403のメソッド利用解析（開発者向け）
+
+helper経由の利用追跡が二つの規則でずれないよう、通常インスタンスメソッドの選定・同一型の呼出関係・到達先の利用集計は`Analysis.同一クラスメソッド利用グラフ`が所有します。フィールドとプロパティの参照を収集し、規則から渡された型と条件で対象を選別します。
+
+- OOP401は、同じ型のインスタンス状態の選別と、各群の状態3個以上・メソッド3個以上という条件を所有します。
+- OOP403は、プロジェクト型の依存フィールド選別、共通抽象による接続、2依存以上の群が3個以上という条件を所有します。
+- グラフは訪問済みのメソッドを再探索せず、再帰・循環・合流で利用を重複計上しません。返却した集合を変更しても次の集計へ影響しません。
+- 既存の解析範囲を維持します。別のpartial宣言や基底型・staticメソッドへ探索を広げません。同じ型の別インスタンスへの呼出は従来どおり追跡し、呼出記号をOriginalDefinitionへ変換しません。
+
+変更した場合は、モジュールのルートで次を実行してください。25ケースが、共有グラフの到達可能性と両規則の閾値・結合条件を確認します。
+
+```bash
+dotnet run --project tests/OopDesignChecker.ContractTests -c Release -- --filter-class '*メソッド利用グラフ契約テスト' '*メソッド利用規則回帰テスト'
 ```
 
 ## GUI

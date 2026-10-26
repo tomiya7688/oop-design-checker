@@ -3,28 +3,80 @@ using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Output;
 
+/*
+{
+  "責務": {
+    "コンソール診断書き込み器": "言語と詳細表示を保持し、診断と集計をtext形式で出力します。"
+  }
+}
+*/
 internal sealed class コンソール診断書き込み器 : 診断書き込み器
 {
     private readonly 診断出力先 _診断出力先;
     private readonly UserInterfaceLanguage _表示言語;
+    private readonly bool _詳細表示;
 
+    /*
+    {
+      "責務": {
+        "コンソール診断書き込み器": "text専用の表示設定と出力先を保持します。"
+      },
+      "処理": [
+        "言語と詳細表示を固定して出力先を生成します。"
+      ],
+      "引数": {
+        "outputPath": "未指定時は標準出力です。",
+        "language": "診断を表示する言語です。",
+        "詳細表示": "規則の見出しも出力する場合にtrueです。"
+      },
+      "戻り値": []
+    }
+    */
     public コンソール診断書き込み器(
         string? outputPath = null,
-        UserInterfaceLanguage language = UserInterfaceLanguage.Japanese
+        UserInterfaceLanguage language = UserInterfaceLanguage.Japanese,
+        bool 詳細表示 = false
     )
     {
         _診断出力先 = new 診断出力先(outputPath);
         _表示言語 = language;
+        _詳細表示 = 詳細表示;
     }
 
-    public void Write(IReadOnlyList<DesignDiagnostic> 診断群, bool 詳細表示) =>
-        _診断出力先.Write(書き込み先 => 診断を書き出す(書き込み先, 診断群, 詳細表示));
+    /*
+    {
+      "責務": {
+        "Write": "言語と詳細表示を保持し、診断と集計をtext形式で出力します。"
+      },
+      "処理": [
+        "保持した出力設定に従って診断一覧を書き込みます。"
+      ],
+      "引数": {
+        "診断群": "出力する診断一覧です。"
+      },
+      "戻り値": []
+    }
+    */
+    public void Write(IReadOnlyList<DesignDiagnostic> 診断群) =>
+        _診断出力先.Write(書き込み先 => 診断を書き出す(書き込み先, 診断群));
 
-    private void 診断を書き出す(
-        TextWriter 書き込み先,
-        IReadOnlyList<DesignDiagnostic> 診断群,
-        bool 詳細表示
-    )
+    /*
+    {
+      "責務": {
+        "診断を書き出す": "保持した表示設定で診断本文と集計を書き込みます。"
+      },
+      "処理": [
+        "診断本文と必要な場合の見出しを出力します。",
+        "重要度ごとの件数を出力します。"
+      ],
+      "引数": {
+        "書き込み先": "textの出力先です。",
+        "診断群": "出力する診断一覧です。"
+      },
+      "戻り値": []
+    }
+    */
+    private void 診断を書き出す(TextWriter 書き込み先, IReadOnlyList<DesignDiagnostic> 診断群)
     {
         foreach (var 診断 in 診断群)
         {
@@ -36,7 +88,7 @@ internal sealed class コンソール診断書き込み器 : 診断書き込み�
                     + 本文
             );
 
-            if (詳細表示)
+            if (_詳細表示)
             {
                 書き込み先.WriteLine($"  {DiagnosticTextLocalizer.Title(診断, _表示言語)}");
             }

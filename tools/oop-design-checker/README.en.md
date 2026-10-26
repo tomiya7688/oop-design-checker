@@ -138,7 +138,22 @@ Supported formats:
 
 `--output <file>` can be used with `text`, `json`, and `sarif`. GitHub annotations intentionally always go to stdout. Output format never changes the process exit code: `--fail-on` continues to control CI failure independently.
 
+Use `--format text --verbose` to include rule titles. Verbose mode adds titles only to text diagnostics; JSON, SARIF, and GitHub annotation payloads remain unchanged. When a configuration file is loaded, its path is reported to stdout for text on stdout and to stderr otherwise. Internally, the common writer contract accepts only diagnostics; language and verbosity are configured when creating the text writer.
+
 A known option immediately after an option requiring a value produces a missing-value error. For example, `--output --verbose` does not treat `--verbose` as the output path. Dash-prefixed filenames such as `-report.json` remain valid values. Use a relative path for a filename matching an option, for example `--output ./--verbose`.
+
+### Output contract ownership
+
+`Output` owns shared writer formats and creation so CLI selection and GUI file export can evolve independently. It does not reference types in `Application`.
+
+| Contract | Formats and responsibility |
+|---|---|
+| `Output.診断出力形式` | Internal shared contract for text, JSON, SARIF, and GitHub annotations. |
+| CLI parsing in `Application` | Maps `--format` to the shared contract, rejects undefined/numeric values, and rejects `--output` for GitHub annotations. |
+| `Output.DiagnosticExportFormat` | Public file export contract limited to JSON and SARIF; its type name and numeric values remain unchanged. |
+| `DiagnosticExportService.Export` | Validates diagnostics and the destination, then uses the file export factory path. Undefined formats are rejected before writing. |
+
+Use `--format` in the CLI, or choose JSON/SARIF when exporting from the GUI. When adding a shared writer, check CLI selection and GUI file export capabilities separately.
 
 ## Configuration
 
@@ -223,6 +238,21 @@ After changing composition, run the following from the module root. Seventeen us
 
 ```bash
 dotnet run --project tests/OopDesignChecker.ContractTests -c Release -- --filter-class '*解析ユースケース契約テスト' '*公開解析API互換性テスト'
+```
+
+### Shared method usage for OOP401 and OOP403
+
+`Analysis.同一クラスメソッド利用グラフ` owns ordinary instance method selection, same-type call edges, and reachable member usage so helper traversal stays consistent between both rules. It collects field/property references, then applies each rule's member type and selection predicate.
+
+- OOP401 retains same-type instance state selection and its minimum of three state members and three methods per cluster.
+- OOP403 retains project dependency candidates, shared abstraction connections, and its minimum of three groups with two dependencies each.
+- A visited set handles recursion, cycles, and converging calls without duplicate usage. Mutating returned sets does not affect later queries.
+- Existing scope is preserved: other partial declarations, inherited methods, and static methods are not traversed. Calls on another instance of the same type still count; resolved call symbols are not normalized to OriginalDefinition.
+
+From the module root, run the 25 graph and rule regression cases after changes:
+
+```bash
+dotnet run --project tests/OopDesignChecker.ContractTests -c Release -- --filter-class '*メソッド利用グラフ契約テスト' '*メソッド利用規則回帰テスト'
 ```
 
 ## GUI

@@ -5,6 +5,13 @@ using OopDesignChecker.Core;
 
 namespace OopDesignChecker.Rules;
 
+/*
+{
+  "責務": {
+    "過剰無関係依存規則": "独立した依存群を判定します。依存候補・共通抽象の接続・群の閾値を所有し、helper到達可能性は共有グラフに委譲します。"
+  }
+}
+*/
 internal sealed class 過剰無関係依存規則 : I解析規則
 {
     private const int 最低依存群数 = 3;
@@ -13,6 +20,21 @@ internal sealed class 過剰無関係依存規則 : I解析規則
     public RuleDescriptor 規則情報 { get; } =
         new("OOP403", "Excessive unrelated dependencies", DesignDiagnosticSeverity.Warning);
 
+    /*
+    {
+      "責務": {
+        "解析する": "独立した依存群を判定します。依存候補・共通抽象の接続・群の閾値を所有し、helper到達可能性は共有グラフに委譲します。"
+      },
+      "処理": [
+        "対象クラスのメンバー利用を共有グラフで集計します。",
+        "規則固有の接続と閾値を判定して警告を生成します。"
+      ],
+      "引数": {
+        "解析文脈": "解析するプロジェクトと周辺情報です。"
+      },
+      "戻り値": "条件を満たしたクラスの診断です。"
+    }
+    */
     public IEnumerable<DesignDiagnostic> 解析する(解析文脈 解析文脈)
     {
         foreach (var 構文木 in 解析文脈.対象プロジェクト.構文木群)
@@ -33,8 +55,13 @@ internal sealed class 過剰無関係依存規則 : I解析規則
                     continue;
                 }
 
-                var メソッド使用状況 = メソッド使用状況を読む(シンボル, 宣言, 依存先群, 意味モデル);
-                var 実効使用状況 = 実効依存使用状況を作る(メソッド使用状況);
+                // 依存候補の条件とクラスタ判定は、この規則に残します。
+                var 依存先集合 = new HashSet<IFieldSymbol>(
+                    依存先群,
+                    SymbolEqualityComparer.Default
+                );
+                var 利用グラフ = new 同一クラスメソッド利用グラフ(シンボル, 宣言, 意味モデル);
+                var 実効使用状況 = 利用グラフ.有効利用を集計する<IFieldSymbol>(依存先集合.Contains);
                 var 依存群数 = 依存群数を数える(依存先群, 実効使用状況);
                 if (依存群数 < 最低依存群数)
                 {
@@ -61,103 +88,6 @@ internal sealed class 過剰無関係依存規則 : I解析規則
                 && namedType.Locations.Any(location => location.IsInSource)
             )
             .ToArray();
-
-    private static Dictionary<IMethodSymbol, メソッド使用状況> メソッド使用状況を読む(
-        INamedTypeSymbol 所属型,
-        ClassDeclarationSyntax 宣言,
-        IReadOnlyCollection<IFieldSymbol> 依存先群,
-        SemanticModel 意味モデル
-    )
-    {
-        var 依存先集合 = new HashSet<IFieldSymbol>(依存先群, SymbolEqualityComparer.Default);
-        var 結果 = new Dictionary<IMethodSymbol, メソッド使用状況>(SymbolEqualityComparer.Default);
-
-        foreach (var メソッド宣言 in 宣言.Members.OfType<MethodDeclarationSyntax>())
-        {
-            if (
-                意味モデル.GetDeclaredSymbol(メソッド宣言) is not IMethodSymbol メソッド
-                || メソッド.IsStatic
-                || メソッド.MethodKind != MethodKind.Ordinary
-            )
-            {
-                continue;
-            }
-
-            var 使用依存先群 = new HashSet<IFieldSymbol>(
-                メソッド宣言
-                    .DescendantNodes()
-                    .OfType<IdentifierNameSyntax>()
-                    .Select(identifier => 意味モデル.GetSymbolInfo(identifier).Symbol)
-                    .OfType<IFieldSymbol>()
-                    .Where(依存先集合.Contains),
-                SymbolEqualityComparer.Default
-            );
-
-            var 呼び出し先メソッド群 = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
-            foreach (
-                var 呼び出し in メソッド宣言.DescendantNodes().OfType<InvocationExpressionSyntax>()
-            )
-            {
-                if (
-                    意味モデル.GetSymbolInfo(呼び出し).Symbol is IMethodSymbol 呼び出し先メソッド
-                    && !呼び出し先メソッド.IsStatic
-                    && 呼び出し先メソッド.MethodKind == MethodKind.Ordinary
-                    && SymbolEqualityComparer.Default.Equals(
-                        呼び出し先メソッド.ContainingType,
-                        所属型
-                    )
-                )
-                {
-                    呼び出し先メソッド群.Add(呼び出し先メソッド);
-                }
-            }
-
-            結果[メソッド] = new メソッド使用状況(使用依存先群, 呼び出し先メソッド群);
-        }
-
-        return 結果;
-    }
-
-    private static Dictionary<IMethodSymbol, HashSet<IFieldSymbol>> 実効依存使用状況を作る(
-        IReadOnlyDictionary<IMethodSymbol, メソッド使用状況> メソッド使用状況
-    )
-    {
-        var 結果 = new Dictionary<IMethodSymbol, HashSet<IFieldSymbol>>(
-            SymbolEqualityComparer.Default
-        );
-
-        foreach (var メソッド in メソッド使用状況.Keys)
-        {
-            var 依存先群 = new HashSet<IFieldSymbol>(SymbolEqualityComparer.Default);
-            var 訪問済みメソッド群 = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
-            var 探索待ち行列 = new Queue<IMethodSymbol>();
-            探索待ち行列.Enqueue(メソッド);
-
-            while (探索待ち行列.TryDequeue(out var 現在の要素))
-            {
-                if (
-                    !訪問済みメソッド群.Add(現在の要素)
-                    || !メソッド使用状況.TryGetValue(現在の要素, out var 使用状況)
-                )
-                {
-                    continue;
-                }
-
-                依存先群.UnionWith(使用状況.依存先群);
-                foreach (var 呼び出し先メソッド in 使用状況.呼び出し先メソッド群)
-                {
-                    探索待ち行列.Enqueue(呼び出し先メソッド);
-                }
-            }
-
-            if (依存先群.Count > 0)
-            {
-                結果[メソッド] = 依存先群;
-            }
-        }
-
-        return 結果;
-    }
 
     private static int 依存群数を数える(
         IReadOnlyCollection<IFieldSymbol> 依存先群,
@@ -275,9 +205,4 @@ internal sealed class 過剰無関係依存規則 : I解析規則
 
         return 結果;
     }
-
-    private sealed record メソッド使用状況(
-        HashSet<IFieldSymbol> 依存先群,
-        HashSet<IMethodSymbol> 呼び出し先メソッド群
-    );
 }

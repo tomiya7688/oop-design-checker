@@ -1,0 +1,50 @@
+name: Set up audited Python
+description: Bootstrap verified pip and inspect actual CA sources before Python tooling runs
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      with:
+        python-version: '3.13.17'
+    - name: Bootstrap verified pip and update certifi
+      shell: bash
+      run: |
+        set -euo pipefail
+        python -m pip install --disable-pip-version-check --no-deps --upgrade 'pip @ https://files.pythonhosted.org/packages/3f/06/3e4420302363fbb71be3c7f35ce042f54bfca330e3e66b3a2e3c4cca579f/pip-26.2.2-py3-none-any.whl#sha256=fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70'
+        python -m pip install --disable-pip-version-check --upgrade 'certifi>=2026.10.19'
+    - name: Select the updated CA bundle for this job
+      shell: python
+      run: |
+        import certifi
+        import os
+        with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as output:
+            for name in ("SSL_CERT_FILE", "REQUESTS_CA_BUNDLE", "PIP_CERT"):
+                output.write(f"{name}={certifi.where()}\n")
+            output.write("SSL_CERT_DIR=\n")
+    - name: Remove the compromised root from disposable Windows runner stores
+      if: runner.os == 'Windows' && runner.environment == 'github-hosted'
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        if ($env:GITHUB_ACTIONS -ne 'true') { throw 'This cleanup is limited to disposable CI runners.' }
+        $blockedSha256 = '86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b'
+        foreach ($location in @('LocalMachine', 'CurrentUser')) {
+          foreach ($storeName in @('Root', 'CA')) {
+            $store = [System.Security.Cryptography.X509Certificates.X509Store]::new($storeName, $location)
+            try {
+              $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+              foreach ($certificate in $store.Certificates) {
+                $actualSha256 = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($certificate.RawData)).ToLowerInvariant()
+                if ($actualSha256 -eq $blockedSha256) {
+                  Write-Output "Removing blocked certificate from $location/$storeName (SHA-256 $actualSha256)"
+                  $store.Remove($certificate)
+                }
+              }
+            } finally {
+              $store.Dispose()
+            }
+          }
+        }
+    - name: Audit Python and actual CA sources
+      shell: bash
+      run: python tools/oop-design-checker/tests/python-security/audit_python_trust.py
