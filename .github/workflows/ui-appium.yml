@@ -151,6 +151,7 @@ jobs:
           npm install --global appium@3
           python -m pip install --requirement tools/oop-design-checker/tests/ui-appium/requirements.txt
           python tools/oop-design-checker/tests/python-security/audit_python_trust.py
+          python -m unittest discover -s tools/oop-design-checker/tests/ui-appium -p 'test_visibility.py' -v
 
       - name: Install Windows Appium driver
         if: matrix.platform == 'windows'

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -10,6 +11,9 @@ namespace OopDesignChecker.Gui;
 
 internal sealed class メイン画面 : Grid
 {
+    // 長い診断をスクロール可能にし、入力欄が占有する高さを抑えます。
+    private const double 入力エラー表示最大高 = 120;
+
     internal メインメニュー メインメニュー部品 { get; } = new();
     internal TextBox 対象パス欄 { get; } = new();
     internal TextBox 設定パス欄 { get; } = new();
@@ -363,7 +367,15 @@ internal sealed class メイン画面 : Grid
         エラー枠.Child = 入力欄;
         var panel = new StackPanel();
         panel.Children.Add(エラー枠);
-        panel.Children.Add(エラー表示);
+        // 長いエラーでも入力欄や他の操作を画面内に保ちます。
+        panel.Children.Add(
+            new ScrollViewer
+            {
+                MaxHeight = 入力エラー表示最大高,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Content = エラー表示,
+            }
+        );
         return panel;
     }
 

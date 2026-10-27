@@ -12,7 +12,11 @@ from pathlib import Path
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+)
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.command import Command
 from selenium.webdriver.support.ui import WebDriverWait
@@ -151,7 +155,7 @@ def 要素を探す(driver, automation_id):
 def 要素が表示される(driver, automation_id):
     try:
         return 要素を探す(driver, automation_id).is_displayed()
-    except Exception:
+    except (NoSuchElementException, StaleElementReferenceException):
         return False
 
 

@@ -1,5 +1,7 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia.Styling;
 using OopDesignChecker.Analysis;
 using OopDesignChecker.Localization;
@@ -177,6 +179,31 @@ public sealed partial class 画面視覚回帰テスト
                 ウィンドウ.テスト用画面.状態表示.Text,
                 StringComparison.Ordinal
             );
+        }
+        finally
+        {
+            ウィンドウ.Close();
+        }
+    }
+
+    [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void 長い入力エラーをスクロール可能な範囲に収める()
+    {
+        var ウィンドウ = ウィンドウを作る(900, 600);
+        try
+        {
+            var 画面 = ウィンドウ.テスト用画面;
+            画面.対象エラーを表示する(
+                string.Join("\n", Enumerable.Repeat("長い診断メッセージ", 30))
+            );
+            画面更新を完了する();
+            var スクロール領域 = Assert.Single(
+                画面.対象エラー.GetLogicalAncestors().OfType<ScrollViewer>()
+            );
+            Assert.True(スクロール領域.MaxHeight <= 120);
+            Assert.Equal(ScrollBarVisibility.Auto, スクロール領域.VerticalScrollBarVisibility);
+            Assert.True(スクロール領域.Bounds.Height <= スクロール領域.MaxHeight);
+            Assert.True(画面.解析ボタン.IsVisible);
         }
         finally
         {
