@@ -191,15 +191,17 @@ internal static class Slnxプロジェクト一覧読み取り器
       "戻り値": "元の原因と日英の説明を持つ入力例外です。"
     }
     */
-    private static 解析入力例外 形式エラーを作る(
+    private static AnalysisFailureException 形式エラーを作る(
         string ソリューションパス,
         string 日本語理由,
         string 英語理由,
         Exception? 原因 = null
     ) =>
         new(
+            AnalysisFailureKind.ProjectLoad,
             $"ソリューションファイルを読み込めませんでした: {ソリューションパス}\n{日本語理由}",
             $"Invalid .slnx file '{ソリューションパス}': {英語理由}",
+            ソリューションパス,
             原因
         );
 }

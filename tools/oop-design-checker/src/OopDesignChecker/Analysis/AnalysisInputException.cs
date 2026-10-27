@@ -2,56 +2,71 @@ using OopDesignChecker.Localization;
 
 namespace OopDesignChecker.Analysis;
 
+public enum AnalysisFailureKind
+{
+    Target,
+    Configuration,
+    ProjectLoad,
+    Compilation,
+    Permission,
+    Output,
+    Internal,
+}
+
 /*
 {
   "責務": {
-    "解析入力例外": "入力に原因がある解析失敗について、原因例外と日英の利用者向け説明を保持します。"
+    "AnalysisFailureException": "利用者が修正場所を判断できるように、解析失敗の種別・対象パス・日英の説明を保持します。"
   },
   "フィールド": {
-    "_日本語説明": "英語のMessageとは別に保持する利用者向け説明です。"
+    "_日本語説明": "日本語UIで表示する利用者向け説明です。",
+    "Kind": "GUIやCUIが表示先と要約を決めるための失敗種別です。",
+    "Path": "原因に直接関係する対象または設定のパスです。"
   }
 }
 */
-internal sealed class 解析入力例外 : InvalidOperationException
+public class AnalysisFailureException : InvalidOperationException
 {
     private readonly string _日本語説明;
 
-    /*
+    public AnalysisFailureKind Kind { get; }
+
+    public string? Path { get; }
+
+    public AnalysisFailureException(
+        AnalysisFailureKind kind,
+        string japaneseMessage,
+        string englishMessage,
+        string? path = null,
+        Exception? innerException = null
+    )
+        : base(englishMessage, innerException)
     {
-      "責務": {
-        "解析入力例外": "互換性のため英語のMessageを保持し、日本語表示用の説明も保存します。"
-      },
-      "処理": [
-        "互換性のため英語のMessageを保持し、日本語表示用の説明も保存します。"
-      ],
-      "引数": {
-        "日本語説明": "日本語表示で使用する説明です。",
-        "英語説明": "既存のMessageおよび英語表示で使用する説明です。",
-        "原因": "入力に起因する元の例外です。"
-      },
-      "戻り値": []
-    }
-    */
-    public 解析入力例外(string 日本語説明, string 英語説明, Exception? 原因 = null)
-        : base(英語説明, 原因)
-    {
-        _日本語説明 = 日本語説明;
+        Kind = kind;
+        Path = path;
+        _日本語説明 = japaneseMessage;
     }
 
-    /*
-    {
-      "責務": {
-        "説明文を選ぶ": "表示言語に対応する入力エラーの説明を返します。"
-      },
-      "処理": [
-        "表示言語に対応する入力エラーの説明を返します。"
-      ],
-      "引数": {
-        "言語": "利用者が指定した表示言語です。"
-      },
-      "戻り値": "表示言語に対応するエラー説明です。"
-    }
-    */
-    public string 説明文を選ぶ(UserInterfaceLanguage 言語) =>
-        言語 == UserInterfaceLanguage.Japanese ? _日本語説明 : Message;
+    public string GetLocalizedMessage(UserInterfaceLanguage language) =>
+        language == UserInterfaceLanguage.Japanese ? _日本語説明 : Message;
+}
+
+/*
+{
+  "責務": {
+    "解析入力例外": "既存の内部呼び出し形を維持しつつ、構造化された解析失敗として入力エラーを伝えます。"
+  },
+  "フィールド": []
+}
+*/
+internal sealed class 解析入力例外 : AnalysisFailureException
+{
+    public 解析入力例外(
+        string 日本語説明,
+        string 英語説明,
+        Exception? 原因 = null,
+        AnalysisFailureKind 種別 = AnalysisFailureKind.Target,
+        string? パス = null
+    )
+        : base(種別, 日本語説明, 英語説明, パス, 原因) { }
 }

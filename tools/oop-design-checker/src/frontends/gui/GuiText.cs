@@ -53,6 +53,12 @@ internal enum GUI文言キー
     位置詳細,
     診断選択案内,
     対象必須,
+    解析失敗対象確認,
+    解析失敗設定確認,
+    解析失敗プロジェクト,
+    解析失敗コンパイル,
+    解析失敗権限,
+    解析失敗内部,
     解析キャンセル済み,
     キャンセル中,
     完了,
@@ -142,6 +148,16 @@ internal static class GUI文言
         [GUI文言キー.診断選択案内] = "診断を選択すると詳細を表示します。",
         [GUI文言キー.対象必須] =
             "解析するファイル、プロジェクト、またはフォルダーを指定してください。",
+        [GUI文言キー.解析失敗対象確認] = "解析できませんでした。上の「対象」を確認してください。",
+        [GUI文言キー.解析失敗設定確認] = "解析できませんでした。上の「設定」を確認してください。",
+        [GUI文言キー.解析失敗プロジェクト] =
+            "対象は見つかりましたが、プロジェクトを読み込めませんでした。上の「対象」の詳細を確認してください。",
+        [GUI文言キー.解析失敗コンパイル] =
+            "対象は読み込めましたが、C#コードにコンパイルエラーがあります。上の「対象」の詳細を確認してください。",
+        [GUI文言キー.解析失敗権限] =
+            "対象を読み取る権限がありません。上の「対象」の詳細とアクセス権を確認してください。",
+        [GUI文言キー.解析失敗内部] =
+            "解析中に内部エラーが発生しました。入力を確認しても解決しない場合は不具合として報告してください。",
         [GUI文言キー.解析キャンセル済み] = "解析をキャンセルしました。",
         [GUI文言キー.キャンセル中] = "キャンセル中...",
         [GUI文言キー.完了] = "完了: 診断 {0}件。",
@@ -232,6 +248,17 @@ internal static class GUI文言
         [GUI文言キー.位置詳細] = "Location: {0}",
         [GUI文言キー.診断選択案内] = "Select a diagnostic to see its full message.",
         [GUI文言キー.対象必須] = "Target path is required.",
+        [GUI文言キー.解析失敗対象確認] = "Analysis could not start. Check the Target field above.",
+        [GUI文言キー.解析失敗設定確認] =
+            "Analysis could not start. Check the Configuration field above.",
+        [GUI文言キー.解析失敗プロジェクト] =
+            "The target was found, but the project could not be loaded. Check the Target details above.",
+        [GUI文言キー.解析失敗コンパイル] =
+            "The target loaded, but the C# code has compilation errors. Check the Target details above.",
+        [GUI文言キー.解析失敗権限] =
+            "The target cannot be read with the current permissions. Check the Target details above.",
+        [GUI文言キー.解析失敗内部] =
+            "An internal error occurred during analysis. If the input is valid, report this as a checker bug.",
         [GUI文言キー.解析キャンセル済み] = "Analysis cancelled.",
         [GUI文言キー.キャンセル中] = "Cancelling...",
         [GUI文言キー.完了] = "Completed: {0} diagnostic(s).",

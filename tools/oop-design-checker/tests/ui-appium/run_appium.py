@@ -12,7 +12,11 @@ from pathlib import Path
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+)
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.command import Command
 from selenium.webdriver.support.ui import WebDriverWait
@@ -148,6 +152,13 @@ def 要素を探す(driver, automation_id):
     return driver.find_element(AppiumBy.ACCESSIBILITY_ID, automation_id)
 
 
+def 要素が表示される(driver, automation_id):
+    try:
+        return 要素を探す(driver, automation_id).is_displayed()
+    except (NoSuchElementException, StaleElementReferenceException):
+        return False
+
+
 def 条件成立まで待つ(driver, predicate, timeout=90, expected_condition=None, automation_id=None):
     caller = inspect.currentframe().f_back
     try:
@@ -249,6 +260,12 @@ def コントロールがキーボードフォーカスを持つ(driver, automat
 
 def 入力欄を書き換える(driver, automation_id, value):
     element = 要素を探す(driver, automation_id)
+    # Windowsではキーボード入力の送信先を明示してから値を変更します。
+    if driver.capabilities.get("platformName", "").lower() == "windows" and automation_id in (
+        "TargetPath",
+        "ConfigurationPath",
+    ):
+        element.click()
     element.clear()
     element.send_keys(value)
     return element
@@ -497,7 +514,11 @@ def main():
         "05-config-editor": {"disabledRules": ["OOP105"]},
         "06-export": {"count": len(diagnostics), "formats": ["json", "sarif"]},
         "07-source-open-fallback": {"ruleId": "OOP106"},
-        "08-error-state": {"diagnostics": 0},
+        "08-error-state": {
+            "diagnostics": 0,
+            "fields": ["Target", "Configuration"],
+            "correction": "success",
+        },
         "09-keyboard-menu": {
             "topMenus": ["File", "Analyze", "View"],
             "analyzeCancel": "menu-access-key",
@@ -910,7 +931,7 @@ def main():
 
         要素を探す(driver, "ClearConfigurationButton").click()
         条件成立まで待つ(driver, lambda: 要素を探す(driver, "AnalyzeButton").is_enabled(), timeout=20)
-        要素を探す(driver, "AnalyzeButton").click()
+        メニューアクセスキーを押す(driver, Keys.F5)
         条件成立まで待つ(driver, lambda: 集計が一致する(driver, expected_counts), timeout=120)
         記録する("06-export", "reanalyze-defaults")
 
@@ -971,22 +992,116 @@ def main():
                 backup_path.rename(source_path)
             moved_source = None
 
-        missing_target = evidence / "08-error-state" / "missing-target"
+        error_evidence = evidence / "08-error-state"
+        missing_target = fixture / "__missing-target__.cs"
+        if missing_target.exists():
+            raise AssertionError(f"Missing-target fixture unexpectedly exists: {missing_target}")
+        入力欄を書き換える(driver, "ConfigurationPath", "")
         入力欄を書き換える(driver, "TargetPath", str(missing_target))
-        要素を探す(driver, "AnalyzeButton").click()
-        条件成立まで待つ(driver, lambda: 要素を探す(driver, "AnalyzeButton").is_enabled(), timeout=120)
+        メニューアクセスキーを押す(driver, Keys.F5)
         条件成立まで待つ(
             driver,
-            lambda: 集計が一致する(
-                driver, {"danger": 0, "warning": 0, "attention": 0}
-            ),
-            timeout=20,
+            lambda: 要素が表示される(driver, "TargetError"),
+            timeout=120,
+            expected_condition="TargetError is visible after a missing target",
+            automation_id="TargetError",
         )
-        error_status = 要素の文字列を取得する(driver, "Status")
-        if not error_status.strip():
-            raise AssertionError("Error state did not expose a visible status message.")
-        記録する("08-error-state", "analyze-invalid-target", status=error_status)
-        証跡を撮影する(driver, "08-error-state", extra={"target": str(missing_target)})
+        if 要素が表示される(driver, "ConfigurationError"):
+            raise AssertionError("Missing target incorrectly marked the configuration field.")
+        target_error = 要素の文字列を取得する(driver, "TargetError")
+        if not target_error.strip():
+            raise AssertionError("Target field did not expose an inline error message.")
+        target_status = 要素の文字列を取得する(driver, "Status")
+        if "target" not in target_status.lower():
+            raise AssertionError(
+                f"Status did not direct the user to the Target field: {target_status}"
+            )
+        記録する(
+            "08-error-state",
+            "missing-target",
+            status=要素の文字列を取得する(driver, "Status"),
+            field="Target",
+        )
+        証跡を撮影する(
+            driver,
+            "08-error-state",
+            "missing-target.png",
+            {"target": str(missing_target), "field": "Target"},
+        )
+
+        missing_config = error_evidence / "missing-config.json"
+        入力欄を書き換える(driver, "TargetPath", str(fixture))
+        入力欄を書き換える(driver, "ConfigurationPath", str(missing_config))
+        メニューアクセスキーを押す(driver, Keys.F5)
+        条件成立まで待つ(
+            driver,
+            lambda: 要素が表示される(driver, "ConfigurationError"),
+            timeout=120,
+            expected_condition="ConfigurationError is visible after a missing explicit config",
+            automation_id="ConfigurationError",
+        )
+        if 要素が表示される(driver, "TargetError"):
+            raise AssertionError("Missing config incorrectly marked the target field.")
+        config_error = 要素の文字列を取得する(driver, "ConfigurationError")
+        if "configuration" not in config_error.lower():
+            raise AssertionError(
+                f"Configuration error did not explain the missing config: {config_error}"
+            )
+        記録する(
+            "08-error-state",
+            "missing-configuration",
+            status=要素の文字列を取得する(driver, "Status"),
+            field="Configuration",
+        )
+        証跡を撮影する(
+            driver,
+            "08-error-state",
+            "missing-configuration.png",
+            {"configurationPath": str(missing_config), "field": "Configuration"},
+        )
+
+        invalid_config = error_evidence / "invalid-config.json"
+        invalid_config.write_text("{ not-json", encoding="utf-8")
+        入力欄を書き換える(driver, "ConfigurationPath", str(invalid_config))
+        メニューアクセスキーを押す(driver, Keys.F5)
+        条件成立まで待つ(
+            driver,
+            lambda: 要素が表示される(driver, "ConfigurationError"),
+            timeout=120,
+            expected_condition="ConfigurationError is visible after invalid JSON",
+            automation_id="ConfigurationError",
+        )
+        invalid_config_error = 要素の文字列を取得する(driver, "ConfigurationError")
+        if "configuration" not in invalid_config_error.lower():
+            raise AssertionError(
+                f"Invalid config did not remain classified as configuration: {invalid_config_error}"
+            )
+        記録する(
+            "08-error-state",
+            "invalid-configuration",
+            status=要素の文字列を取得する(driver, "Status"),
+            field="Configuration",
+        )
+        証跡を撮影する(
+            driver,
+            "08-error-state",
+            extra={"configurationPath": str(invalid_config), "field": "Configuration"},
+        )
+
+        入力欄を書き換える(driver, "ConfigurationPath", "")
+        要素を探す(driver, "AnalyzeButton").click()
+        条件成立まで待つ(driver, lambda: 集計が一致する(driver, expected_counts), timeout=120)
+        if 要素が表示される(driver, "TargetError") or 要素が表示される(
+            driver, "ConfigurationError"
+        ):
+            raise AssertionError("Corrected inputs left an inline error visible.")
+        記録する("08-error-state", "correct-input-and-reanalyze", result="pass")
+        証跡を撮影する(
+            driver,
+            "08-error-state",
+            "corrected.png",
+            {"target": str(fixture), "configurationPath": ""},
+        )
 
         return 0
     except Exception as exc:

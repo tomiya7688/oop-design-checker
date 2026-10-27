@@ -1,3 +1,4 @@
+using OopDesignChecker.Analysis;
 using OopDesignChecker.Core;
 using Xunit;
 
@@ -26,7 +27,7 @@ public sealed class 公開解析API互換性テスト
             Path.GetTempPath(),
             "missing-analysis-" + Guid.NewGuid().ToString("N")
         );
-        var 例外 = Assert.Throws<InvalidOperationException>(() =>
+        var 例外 = Assert.Throws<AnalysisFailureException>(() =>
             CheckerService.Analyze(
                 targetPath: 対象,
                 configurationPath: "must-not-read.json",
@@ -34,6 +35,8 @@ public sealed class 公開解析API互換性テスト
                 cancellationToken: TestContext.Current.CancellationToken
             )
         );
+        Assert.Equal(AnalysisFailureKind.Target, 例外.Kind);
+        Assert.Equal(対象, 例外.Path);
         Assert.Equal($"Target does not exist: {対象}", 例外.Message);
     }
 

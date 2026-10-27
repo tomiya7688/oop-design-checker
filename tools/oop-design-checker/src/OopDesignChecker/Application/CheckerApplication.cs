@@ -64,8 +64,8 @@ internal sealed class チェッカーアプリケーション
         catch (Exception 例外)
             when (例外 is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
-            var 説明文 = 例外 is 解析入力例外 入力失敗
-                ? 入力失敗.説明文を選ぶ(options.Language)
+            var 説明文 = 例外 is AnalysisFailureException 解析失敗
+                ? 解析失敗.GetLocalizedMessage(options.Language)
                 : LocalizedText.AnalysisFailed(options.Language, 例外.Message);
             Console.Error.WriteLine(説明文);
             return 2;
