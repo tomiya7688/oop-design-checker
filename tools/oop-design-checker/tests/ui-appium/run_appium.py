@@ -256,6 +256,12 @@ def コントロールがキーボードフォーカスを持つ(driver, automat
 
 def 入力欄を書き換える(driver, automation_id, value):
     element = 要素を探す(driver, automation_id)
+    # Windowsではキーボード入力の送信先を明示してから値を変更します。
+    if driver.capabilities.get("platformName", "").lower() == "windows" and automation_id in (
+        "TargetPath",
+        "ConfigurationPath",
+    ):
+        element.click()
     element.clear()
     element.send_keys(value)
     return element

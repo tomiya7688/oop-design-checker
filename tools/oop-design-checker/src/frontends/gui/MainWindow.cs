@@ -44,6 +44,9 @@ internal sealed class メインウィンドウ : Window
 
     internal void テスト用エラーを表示する(string message) => エラーを表示する(message);
 
+    internal void テスト用解析失敗を表示する(AnalysisFailureException failure) =>
+        解析失敗を表示する(failure);
+
     internal void テスト用絞り込みを適用する() => 絞り込みを適用する();
 
     internal void テスト用選択診断を更新する() => 選択した診断を更新する();
@@ -358,7 +361,8 @@ internal sealed class メインウィンドウ : Window
             case AnalysisFailureKind.Output:
             case AnalysisFailureKind.Internal:
             default:
-                _画面.状態表示.Text = GUI文言.取得する(GUI文言キー.解析失敗内部, _表示言語);
+                _画面.状態表示.Text =
+                    $"{GUI文言.取得する(GUI文言キー.解析失敗内部, _表示言語)} {詳細}";
                 break;
         }
 
@@ -392,10 +396,10 @@ internal sealed class メインウィンドウ : Window
 
     private static bool 失敗が対象欄に属する(AnalysisFailureKind 種別) =>
         種別
-        is AnalysisFailureKind.Target
-            or AnalysisFailureKind.ProjectLoad
-            or AnalysisFailureKind.Compilation
-            or AnalysisFailureKind.Permission;
+            is AnalysisFailureKind.Target
+                or AnalysisFailureKind.ProjectLoad
+                or AnalysisFailureKind.Compilation
+                or AnalysisFailureKind.Permission;
 
     private void 絞り込みを適用する()
     {

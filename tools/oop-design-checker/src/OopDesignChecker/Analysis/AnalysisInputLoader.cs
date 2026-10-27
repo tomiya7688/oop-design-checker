@@ -42,16 +42,23 @@ internal static class 解析入力読み込み器
             throw;
         }
         catch (Exception 例外)
-            when (例外 is IOException or UnauthorizedAccessException or InvalidOperationException)
+            when (例外
+                    is IOException
+                        or UnauthorizedAccessException
+                        or InvalidOperationException
+                        or ArgumentException
+                        or NotSupportedException
+            )
         {
-            var 日本語説明 = string.IsNullOrWhiteSpace(設定パス)
-                ? "自動的に見つけた設定ファイルを読み込めませんでした。JSONの形式や設定値を確認してください。"
-                : $"設定ファイルを読み込めませんでした: {設定パス}\n設定欄のパスとJSONの内容を確認してください。";
+            var 問題の設定パス = (例外 as 設定ファイル読込例外)?.設定ファイルパス ?? 設定パス;
+            var 日本語説明 = string.IsNullOrWhiteSpace(問題の設定パス)
+                ? "設定ファイルを読み込めませんでした。JSONの形式や設定値を確認してください。"
+                : $"設定ファイルを読み込めませんでした: {問題の設定パス}\n設定欄のパスとJSONの内容を確認してください。";
             throw new AnalysisFailureException(
                 AnalysisFailureKind.Configuration,
                 日本語説明,
                 例外.Message,
-                string.IsNullOrWhiteSpace(設定パス) ? null : 設定パス,
+                string.IsNullOrWhiteSpace(問題の設定パス) ? null : 問題の設定パス,
                 例外
             );
         }

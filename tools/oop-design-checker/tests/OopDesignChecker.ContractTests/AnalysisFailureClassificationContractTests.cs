@@ -58,6 +58,15 @@ public sealed class 解析失敗分類契約テスト
         );
         Assert.Equal(AnalysisFailureKind.Configuration, 設定不正.Kind);
 
+        var 不正な設定パス = Assert.Throws<AnalysisFailureException>(() =>
+            CheckerService.Analyze(
+                正常ソース,
+                "invalid\0path",
+                cancellationToken: TestContext.Current.CancellationToken
+            )
+        );
+        Assert.Equal(AnalysisFailureKind.Configuration, 不正な設定パス.Kind);
+
         var 読込失敗 = Assert.Throws<AnalysisFailureException>(() =>
             CheckerService.Analyze(
                 壊れたSLNX,
@@ -81,6 +90,21 @@ public sealed class 解析失敗分類契約テスト
         Assert.Contains(
             "コンパイルエラー",
             コンパイル失敗.GetLocalizedMessage(UserInterfaceLanguage.Japanese),
+            StringComparison.Ordinal
+        );
+
+        var 自動検出した設定 = 環境.書く("oop-design-checker.json", "{ not-json");
+        var 自動設定失敗 = Assert.Throws<AnalysisFailureException>(() =>
+            CheckerService.Analyze(
+                正常ソース,
+                cancellationToken: TestContext.Current.CancellationToken
+            )
+        );
+        Assert.Equal(AnalysisFailureKind.Configuration, 自動設定失敗.Kind);
+        Assert.Equal(自動検出した設定, 自動設定失敗.Path);
+        Assert.Contains(
+            自動検出した設定,
+            自動設定失敗.GetLocalizedMessage(UserInterfaceLanguage.Japanese),
             StringComparison.Ordinal
         );
     }

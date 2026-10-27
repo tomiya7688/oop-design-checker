@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Styling;
+using OopDesignChecker.Analysis;
 using OopDesignChecker.Localization;
 using Xunit;
 
@@ -153,13 +154,44 @@ public sealed partial class 画面視覚回帰テスト
         }
     }
 
+    [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void 内部エラーの詳細を状態に表示する()
+    {
+        var ウィンドウ = ウィンドウを作る(1280, 820);
+        try
+        {
+            var 失敗 = new AnalysisFailureException(
+                AnalysisFailureKind.Internal,
+                "日本語の詳細",
+                "English detail"
+            );
+            ウィンドウ.テスト用解析失敗を表示する(失敗);
+            Assert.Contains(
+                "日本語の詳細",
+                ウィンドウ.テスト用画面.状態表示.Text,
+                StringComparison.Ordinal
+            );
+            ウィンドウ.テスト用表示言語を設定する(UserInterfaceLanguage.English);
+            Assert.Contains(
+                "English detail",
+                ウィンドウ.テスト用画面.状態表示.Text,
+                StringComparison.Ordinal
+            );
+        }
+        finally
+        {
+            ウィンドウ.Close();
+        }
+    }
+
     private sealed class GUI失敗テスト環境 : IDisposable
     {
-        public string ルート { get; } = Path.Combine(
-            Path.GetTempPath(),
-            "oop-design-checker-gui-failure",
-            Guid.NewGuid().ToString("N")
-        );
+        public string ルート { get; } =
+            Path.Combine(
+                Path.GetTempPath(),
+                "oop-design-checker-gui-failure",
+                Guid.NewGuid().ToString("N")
+            );
 
         public GUI失敗テスト環境()
         {
