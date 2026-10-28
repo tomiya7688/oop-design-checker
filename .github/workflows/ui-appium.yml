@@ -49,6 +49,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+          check-latest: true
+
+      - name: Verify patched Node.js
+        shell: bash
+        run: |
+          node tools/oop-design-checker/tests/ui-appium/check-node-version.cjs
+          node --test tools/oop-design-checker/tests/ui-appium/test-node-version.cjs
 
       - uses: ./.github/actions/setup-python-trust
 
