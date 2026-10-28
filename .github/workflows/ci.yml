@@ -220,6 +220,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          check-latest: true
+      - name: Verify patched Node.js
+        run: |
+          node tools/oop-design-checker/tests/ui-appium/check-node-version.cjs 22
+          node --test tools/oop-design-checker/tests/ui-appium/test-node-version.cjs
       - name: Install pinned formatters
         run: |
           python -m pip install -r tools/formatting/requirements.txt
