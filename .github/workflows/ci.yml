@@ -220,6 +220,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          check-latest: true
+      - name: Verify patched Node.js
+        run: |
+          node tools/oop-design-checker/tests/ui-appium/check-node-version.cjs 22
+          node --test tools/oop-design-checker/tests/ui-appium/test-node-version.cjs
       - name: Install pinned formatters
         run: |
           python -m pip install -r tools/formatting/requirements.txt
@@ -227,4 +232,4 @@ jobs:
       - name: Check Python security formatting
         run: python -m ruff format --check --config tools/formatting/ruff.toml tools/oop-design-checker/tests/python-security tools/oop-design-checker/tests/release-provenance tools/local-check check_local.py
       - name: Check workflow and documentation formatting
-        run: npm run --prefix tools/formatting format:check -- ../../.github/actions/setup-python-trust/action.yml ../../.github/actions/attest-release/action.yml ../../.github/workflows/ci.yml ../../.github/workflows/release-candidate.yml ../../.github/workflows/release.yml ../../.github/workflows/ui-ai-contract.yml ../../.github/workflows/ui-ai-panel.yml ../../.github/workflows/ui-appium.yml ../../README.md ../../README.en.md ../oop-design-checker/docs/python-trust.md ../oop-design-checker/docs/release-authenticity.md package.json package-lock.json .prettierrc.json README.md ../local-check/README.md
+        run: npm run --prefix tools/formatting format:check -- ../../.github/actions/setup-python-trust/action.yml ../../.github/actions/attest-release/action.yml ../../.github/workflows/ci.yml ../../.github/workflows/release-candidate.yml ../../.github/workflows/release.yml ../../.github/workflows/ui-ai-contract.yml ../../.github/workflows/ui-ai-panel.yml ../../.github/workflows/ui-appium.yml ../oop-design-checker/tests/ui-appium/check-node-version.cjs ../oop-design-checker/tests/ui-appium/test-node-version.cjs ../../README.md ../../README.en.md ../oop-design-checker/docs/python-trust.md ../oop-design-checker/docs/release-authenticity.md package.json package-lock.json .prettierrc.json README.md ../local-check/README.md
