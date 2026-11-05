@@ -27,9 +27,11 @@ jobs:
           - platform: windows
             os: windows-latest
             rid: win-x64
+            driver_package: appium-novawindows-driver
           - platform: macos
             os: macos-15
             rid: osx-arm64
+            driver_package: appium-mac2-driver
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -169,6 +171,16 @@ jobs:
         if: matrix.platform == 'macos'
         shell: bash
         run: appium driver install mac2
+
+      - name: Record installed Appium dependencies
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/ui-appium-evidence"
+          python tools/oop-design-checker/tests/ui-appium/inventory_appium.py \
+            --appium "$(npm root --global)/appium" \
+            --drivers "$HOME/.appium/node_modules" \
+            --driver-package "${{ matrix.driver_package }}" \
+            --output "$RUNNER_TEMP/ui-appium-evidence/appium-dependency-inventory.json"
 
       - name: Start Appium
         shell: pwsh
