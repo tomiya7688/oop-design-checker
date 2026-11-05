@@ -48,7 +48,7 @@ def inventory_tree(label, root):
                     )
                 )
             ):
-                data = json.loads(item.read_text(encoding="utf-8"))
+                data = json.loads(item.read_text(encoding="utf-8-sig"))
                 packages.append(
                     {"path": relative, "name": data.get("name"), "version": data.get("version")}
                 )

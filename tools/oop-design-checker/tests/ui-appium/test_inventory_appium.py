@@ -21,7 +21,7 @@ class InventoryTests(unittest.TestCase):
             package.mkdir(parents=True)
             (package / "package.json").write_text(
                 json.dumps({"name": "example", "version": "1.2.3", "private": "omit"}),
-                encoding="utf-8",
+                encoding="utf-8-sig",
             )
             (package / "binding.node").write_bytes(b"native")
             (package / "ignored.txt").write_text("ignore", encoding="utf-8")
